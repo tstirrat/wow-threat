@@ -1,0 +1,6 @@
+# WCL API Credentials
+WCL_CLIENT_ID=your_client_id_here
+WCL_CLIENT_SECRET=your_client_secret_here
+
+# API Authentication
+API_KEY_SALT=your_random_salt_here

@@ -1,0 +1,30 @@
+{
+  "name": "@wcl-threat/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "wrangler deploy --dry-run",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@wcl-threat/threat-config": "workspace:*",
+    "@wcl-threat/wcl-types": "workspace:*",
+    "@wcl-threat/shared": "workspace:*",
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.5.0",
+    "@cloudflare/workers-types": "^4.20241205.0",
+    "@wcl-threat/typescript-config": "workspace:*",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0",
+    "wrangler": "^3.99.0"
+  }
+}

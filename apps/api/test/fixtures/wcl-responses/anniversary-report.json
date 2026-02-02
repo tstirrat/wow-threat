@@ -1,0 +1,105 @@
+{
+  "data": {
+    "reportData": {
+      "report": {
+        "code": "ABC123xyz",
+        "title": "Naxxramas 25 - Test Raid",
+        "owner": {
+          "name": "TestGuild"
+        },
+        "startTime": 1704067200000,
+        "endTime": 1704078000000,
+        "zone": {
+          "id": 1015,
+          "name": "Naxxramas"
+        },
+        "fights": [
+          {
+            "id": 1,
+            "name": "Patchwerk",
+            "startTime": 0,
+            "endTime": 180000,
+            "kill": true,
+            "difficulty": null,
+            "bossPercentage": 0,
+            "fightPercentage": 100
+          },
+          {
+            "id": 2,
+            "name": "Grobbulus",
+            "startTime": 200000,
+            "endTime": 380000,
+            "kill": true,
+            "difficulty": null,
+            "bossPercentage": 0,
+            "fightPercentage": 100
+          },
+          {
+            "id": 3,
+            "name": "Gluth",
+            "startTime": 400000,
+            "endTime": 650000,
+            "kill": false,
+            "difficulty": null,
+            "bossPercentage": 35,
+            "fightPercentage": 65
+          }
+        ],
+        "masterData": {
+          "gameVersion": 1,
+          "actors": [
+            {
+              "id": 1,
+              "name": "Tankwarrior",
+              "type": "Player",
+              "subType": "Warrior",
+              "petOwner": null
+            },
+            {
+              "id": 2,
+              "name": "Healpriest",
+              "type": "Player",
+              "subType": "Priest",
+              "petOwner": null
+            },
+            {
+              "id": 3,
+              "name": "Damagemage",
+              "type": "Player",
+              "subType": "Mage",
+              "petOwner": null
+            },
+            {
+              "id": 4,
+              "name": "Huntershot",
+              "type": "Player",
+              "subType": "Hunter",
+              "petOwner": null
+            },
+            {
+              "id": 5,
+              "name": "Huntershot's Pet",
+              "type": "Pet",
+              "subType": "Beast",
+              "petOwner": 4
+            },
+            {
+              "id": 25,
+              "name": "Patchwerk",
+              "type": "Boss",
+              "subType": "Undead",
+              "petOwner": null
+            },
+            {
+              "id": 26,
+              "name": "Grobbulus",
+              "type": "NPC",
+              "subType": "Undead",
+              "petOwner": null
+            }
+          ]
+        }
+      }
+    }
+  }
+}

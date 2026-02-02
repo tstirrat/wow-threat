@@ -1,0 +1,35 @@
+name = "wcl-threat-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+[observability]
+enabled = true
+
+[vars]
+ENVIRONMENT = "production"
+
+# KV Namespaces - IDs to be set after creation
+[[kv_namespaces]]
+binding = "WCL_CACHE"
+id = "YOUR_WCL_CACHE_ID"
+preview_id = "YOUR_WCL_CACHE_PREVIEW_ID"
+
+[[kv_namespaces]]
+binding = "AUGMENTED_CACHE"
+id = "YOUR_AUGMENTED_CACHE_ID"
+preview_id = "YOUR_AUGMENTED_CACHE_PREVIEW_ID"
+
+# Secrets (set via `wrangler secret put`)
+# WCL_CLIENT_ID
+# WCL_CLIENT_SECRET
+# API_KEY_SALT
+
+[env.staging]
+name = "wcl-threat-api-staging"
+vars = { ENVIRONMENT = "staging" }
+
+[env.development]
+name = "wcl-threat-api-dev"
+vars = { ENVIRONMENT = "development" }
+# KV bindings are optional in development - memory cache used instead

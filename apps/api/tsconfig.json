@@ -1,0 +1,12 @@
+{
+  "extends": "@wcl-threat/typescript-config/worker.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["**/*.test.ts", "test/**/*"]
+}
