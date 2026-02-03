@@ -9,7 +9,7 @@ import {
   type Enemy,
   type Actor,
 } from '@wcl-threat/threat-config'
-import { calculateThreat, AuraTracker } from './threat'
+import { calculateThreat } from './threat'
 import { anniversaryConfig } from '@wcl-threat/threat-config'
 
 // Test helpers
@@ -372,118 +372,5 @@ describe('calculateThreat', () => {
   })
 })
 
-describe('AuraTracker', () => {
-  it('tracks applied buffs', () => {
-    const tracker = new AuraTracker()
 
-    tracker.processEvent({
-      timestamp: 0,
-      type: 'applybuff',
-      sourceID: 1,
-      sourceIsFriendly: true,
-      targetID: 1,
-      targetIsFriendly: true,
-      ability: { guid: 71, name: 'Defensive Stance', type: 1, abilityIcon: '' },
-    } as WCLEvent)
-
-    const auras = tracker.getAuras(1)
-    expect(auras.has(71)).toBe(true)
-  })
-
-  it('removes buffs on removebuff event', () => {
-    const tracker = new AuraTracker()
-
-    tracker.processEvent({
-      timestamp: 0,
-      type: 'applybuff',
-      sourceID: 1,
-      sourceIsFriendly: true,
-      targetID: 1,
-      targetIsFriendly: true,
-      ability: { guid: 71, name: 'Defensive Stance', type: 1, abilityIcon: '' },
-    } as WCLEvent)
-
-    tracker.processEvent({
-      timestamp: 100,
-      type: 'removebuff',
-      sourceID: 1,
-      sourceIsFriendly: true,
-      targetID: 1,
-      targetIsFriendly: true,
-      ability: { guid: 71, name: 'Defensive Stance', type: 1, abilityIcon: '' },
-    } as WCLEvent)
-
-    const auras = tracker.getAuras(1)
-    expect(auras.has(71)).toBe(false)
-  })
-
-  it('returns empty set for unknown actors', () => {
-    const tracker = new AuraTracker()
-    const auras = tracker.getAuras(999)
-    expect(auras.size).toBe(0)
-  })
-
-  it('tracks applied debuffs', () => {
-    const tracker = new AuraTracker()
-
-    tracker.processEvent({
-      timestamp: 0,
-      type: 'applydebuff',
-      sourceID: 1,
-      sourceIsFriendly: true,
-      targetID: 25,
-      targetIsFriendly: false,
-      ability: { guid: 12345, name: 'Sunder Armor', type: 1, abilityIcon: '' },
-    } as WCLEvent)
-
-    const auras = tracker.getAuras(25)
-    expect(auras.has(12345)).toBe(true)
-  })
-
-  it('removes debuffs on removedebuff event', () => {
-    const tracker = new AuraTracker()
-
-    tracker.processEvent({
-      timestamp: 0,
-      type: 'applydebuff',
-      sourceID: 1,
-      sourceIsFriendly: true,
-      targetID: 25,
-      targetIsFriendly: false,
-      ability: { guid: 12345, name: 'Sunder Armor', type: 1, abilityIcon: '' },
-    } as WCLEvent)
-
-    tracker.processEvent({
-      timestamp: 100,
-      type: 'removedebuff',
-      sourceID: 1,
-      sourceIsFriendly: true,
-      targetID: 25,
-      targetIsFriendly: false,
-      ability: { guid: 12345, name: 'Sunder Armor', type: 1, abilityIcon: '' },
-    } as WCLEvent)
-
-    const auras = tracker.getAuras(25)
-    expect(auras.has(12345)).toBe(false)
-  })
-
-  it('ignores non-aura events', () => {
-    const tracker = new AuraTracker()
-
-    tracker.processEvent({
-      timestamp: 0,
-      type: 'damage',
-      sourceID: 1,
-      sourceIsFriendly: true,
-      targetID: 25,
-      targetIsFriendly: false,
-      ability: { guid: 100, name: 'Attack', type: 1, abilityIcon: '' },
-      amount: 500,
-    } as WCLEvent)
-
-    // Should not track damage events as auras
-    expect(tracker.getAuras(1).size).toBe(0)
-    expect(tracker.getAuras(25).size).toBe(0)
-  })
-})
 

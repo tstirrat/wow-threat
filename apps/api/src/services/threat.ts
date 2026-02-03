@@ -9,7 +9,6 @@ import {
   type ThreatConfig,
   type ThreatContext,
   type ThreatResult,
-  type ThreatModifier,
   type ClassThreatConfig,
   type WowClass,
   type Actor,
@@ -197,38 +196,4 @@ function buildThreatValues(
   }))
 }
 
-/**
- * Track active auras throughout a fight
- */
-export class AuraTracker {
-  private activeAuras = new Map<number, Set<number>>() // actorId -> Set<spellId>
 
-  /**
-   * Process an aura event and update tracking
-   */
-  processEvent(event: WCLEvent): void {
-    if (event.type === 'applybuff' || event.type === 'applydebuff') {
-      this.addAura(event.targetID, event.ability.guid)
-    } else if (event.type === 'removebuff' || event.type === 'removedebuff') {
-      this.removeAura(event.targetID, event.ability.guid)
-    }
-  }
-
-  /**
-   * Get active auras for an actor
-   */
-  getAuras(actorId: number): Set<number> {
-    return this.activeAuras.get(actorId) ?? new Set()
-  }
-
-  private addAura(actorId: number, spellId: number): void {
-    if (!this.activeAuras.has(actorId)) {
-      this.activeAuras.set(actorId, new Set())
-    }
-    this.activeAuras.get(actorId)!.add(spellId)
-  }
-
-  private removeAura(actorId: number, spellId: number): void {
-    this.activeAuras.get(actorId)?.delete(spellId)
-  }
-}

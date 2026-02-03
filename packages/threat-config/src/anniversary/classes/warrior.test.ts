@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from 'vitest'
 import type { ThreatContext } from '../../types'
-import { warriorConfig, Spells, stanceSets } from './warrior'
+import { warriorConfig, Spells, stanceSets, SetIds } from './warrior'
 
 // Mock ThreatContext factory
 function createMockContext(overrides: Partial<ThreatContext> = {}): ThreatContext {
@@ -33,6 +33,17 @@ describe('Spell constants', () => {
     expect(Spells.DefensiveStance).toBe(71)
     expect(Spells.BerserkerStance).toBe(2458)
     expect(Spells.BattleStance).toBe(2457)
+  })
+
+  it('has correct set bonus spell IDs', () => {
+    expect(Spells.T1_8pc).toBe(23561)
+    expect(Spells.T25_4pc).toBe(23302)
+  })
+})
+
+describe('SetIds', () => {
+  it('has correct set ID for T1', () => {
+    expect(SetIds.T1).toBe(209)
   })
 })
 
@@ -89,6 +100,66 @@ describe('auraModifiers', () => {
     expect(modifier.name).toBe('Conqueror 4pc')
     expect(modifier.value).toBe(1.1)
     expect(modifier.source).toBe('gear')
+  })
+
+  it('returns T1 8pc set bonus modifier scoped to Sunder Armor', () => {
+    const modifierFn = warriorConfig.auraModifiers[Spells.T1_8pc]
+    expect(modifierFn).toBeDefined()
+
+    const modifier = modifierFn!(createMockContext())
+
+    expect(modifier.name).toBe('Might 8pc')
+    expect(modifier.value).toBe(1.15)
+    expect(modifier.source).toBe('gear')
+    expect(modifier.spellIds).toBeDefined()
+    expect(modifier.spellIds!.has(Spells.SunderArmor)).toBe(true)
+  })
+})
+
+describe('gearImplications', () => {
+  it('returns T1_8pc when 8+ Might pieces equipped', () => {
+    const gear = [
+      { id: 1, setID: SetIds.T1 },
+      { id: 2, setID: SetIds.T1 },
+      { id: 3, setID: SetIds.T1 },
+      { id: 4, setID: SetIds.T1 },
+      { id: 5, setID: SetIds.T1 },
+      { id: 6, setID: SetIds.T1 },
+      { id: 7, setID: SetIds.T1 },
+      { id: 8, setID: SetIds.T1 },
+    ]
+
+    const result = warriorConfig.gearImplications!(gear)
+
+    expect(result).toContain(Spells.T1_8pc)
+  })
+
+  it('returns empty when fewer than 8 Might pieces equipped', () => {
+    const gear = [
+      { id: 1, setID: SetIds.T1 },
+      { id: 2, setID: SetIds.T1 },
+      { id: 3, setID: SetIds.T1 },
+      { id: 4, setID: SetIds.T1 },
+      { id: 5, setID: SetIds.T1 },
+      { id: 6, setID: SetIds.T1 },
+      { id: 7, setID: SetIds.T1 },
+    ]
+
+    const result = warriorConfig.gearImplications!(gear)
+
+    expect(result).toHaveLength(0)
+  })
+
+  it('returns empty when no set pieces equipped', () => {
+    const gear = [
+      { id: 1 },
+      { id: 2 },
+      { id: 3 },
+    ]
+
+    const result = warriorConfig.gearImplications!(gear)
+
+    expect(result).toHaveLength(0)
   })
 })
 

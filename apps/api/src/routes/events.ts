@@ -12,7 +12,8 @@ import { getConfig, getConfigVersion } from '@wcl-threat/threat-config'
 import { WCLClient } from '../services/wcl'
 import { CacheKeys, createCache } from '../services/cache'
 import { invalidFightId, reportNotFound, fightNotFound } from '../middleware/error'
-import { calculateThreat, AuraTracker } from '../services/threat'
+import { calculateThreat } from '../services/threat'
+import { FightState } from '../services/fight-state'
 
 export const eventsRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
@@ -86,15 +87,15 @@ eventsRoutes.get('/', async (c) => {
     }))
 
   // Process events and calculate threat
-  const auraTracker = new AuraTracker()
+  const fightState = new FightState(actorMap)
   const augmentedEvents: AugmentedEvent[] = []
   const eventCounts: Record<string, number> = {}
 
   for (const rawEvent of rawEvents) {
     const event = rawEvent as WCLEvent
 
-    // Track auras
-    auraTracker.processEvent(event)
+    // Update fight state (auras, gear, combatant info)
+    fightState.processEvent(event, config)
 
     // Count event types
     eventCounts[event.type] = (eventCounts[event.type] ?? 0) + 1
@@ -115,14 +116,14 @@ eventsRoutes.get('/', async (c) => {
       const threatResult = calculateThreat(
         event,
         {
-          sourceAuras: auraTracker.getAuras(event.sourceID),
-          targetAuras: auraTracker.getAuras(event.targetID),
+          sourceAuras: fightState.getAuras(event.sourceID),
+          targetAuras: fightState.getAuras(event.targetID),
           enemies,
           sourceActor,
           targetActor,
           encounterId: null,
         },
-        config
+        config,
       )
 
       augmentedEvents.push(buildAugmentedEvent(event, threatResult))

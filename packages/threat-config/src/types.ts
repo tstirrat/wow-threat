@@ -5,7 +5,9 @@
  * for different game versions.
  */
 
-import type { WCLEvent, Ability } from '@wcl-threat/wcl-types'
+import type { WCLEvent, Ability, GearItem } from '@wcl-threat/wcl-types'
+
+export type { GearItem }
 
 // ============================================================================
 // Core Types
@@ -124,12 +126,6 @@ export interface BaseThreatConfig {
   damage: ThreatFormula
   heal: ThreatFormula
   energize: ThreatFormula
-}
-
-export interface GearItem {
-  id: number
-  setID?: number
-  temporaryEnchant?: number
 }
 
 export interface ClassThreatConfig {

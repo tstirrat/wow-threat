@@ -4,7 +4,7 @@
  * Spell IDs and threat values are based on Classic/Anniversary Edition mechanics.
  */
 
-import type { ClassThreatConfig, ThreatContext } from '../../types'
+import type { ClassThreatConfig, ThreatContext, GearItem } from '../../types'
 import { flat, modAmountFlat, tauntTarget } from '../../shared/formulas'
 
 // ============================================================================
@@ -39,6 +39,7 @@ export const Spells = {
   BattleStance: 2457,
 
   // Buffs/Set Bonuses
+  T1_8pc: 23561, // Might 8pc - Sunder Armor threat +15%
   T25_4pc: 23302, // AQ40 Conqueror 4pc
 
   // Talents (detected via auras)
@@ -48,6 +49,14 @@ export const Spells = {
   DefianceRank3: 12303,
   DefianceRank4: 12304,
   DefianceRank5: 12305,
+} as const
+
+// ============================================================================
+// Set IDs for gear detection
+// ============================================================================
+
+export const SetIds = {
+  T1: 209, // Battlegear of Might (Warrior Tier 1)
 } as const
 
 // ============================================================================
@@ -113,6 +122,12 @@ export const warriorConfig: ClassThreatConfig = {
     }),
 
     // Gear set bonuses
+    [Spells.T1_8pc]: () => ({
+      source: 'gear',
+      name: 'Might 8pc',
+      spellIds: new Set([Spells.SunderArmor]),
+      value: 1.15,
+    }),
     [Spells.T25_4pc]: () => ({
       source: 'gear',
       name: 'Conqueror 4pc',
@@ -174,4 +189,11 @@ export const warriorConfig: ClassThreatConfig = {
     7402,
     20559,
   ]),
+
+  gearImplications: (gear: GearItem[]) => {
+    const syntheticAuras: number[] = []
+    const t1Pieces = gear.filter((g) => g.setID === SetIds.T1).length
+    if (t1Pieces >= 8) syntheticAuras.push(Spells.T1_8pc)
+    return syntheticAuras
+  },
 }

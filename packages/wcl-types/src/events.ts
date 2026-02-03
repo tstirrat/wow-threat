@@ -148,16 +148,31 @@ export interface SummonEvent extends BaseWCLEvent {
   ability: Ability
 }
 
+// ======================================================================
+// Combatant Info Types
+// ======================================================================
+
+/** A single equipped item from WCL combatant info */
+export interface GearItem {
+  id: number
+  setID?: number
+  temporaryEnchant?: number
+  permanentEnchant?: number
+}
+
+/** Aura snapshot from combatant info at fight start */
+export interface CombatantInfoAura {
+  source: number
+  ability: number
+  stacks: number
+  icon: string
+  name: string
+}
+
 export interface CombatantInfoEvent extends BaseWCLEvent {
   type: 'combatantinfo'
-  gear?: unknown[]
-  auras?: Array<{
-    source: number
-    ability: number
-    stacks: number
-    icon: string
-    name: string
-  }>
+  gear?: GearItem[]
+  auras?: CombatantInfoAura[]
   talents?: unknown[]
   specID?: number
 }
