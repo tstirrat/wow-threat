@@ -30,7 +30,17 @@ export function getActiveModifiers(
   for (const [spellIdStr, modifierFn] of Object.entries(auraModifiers)) {
     const spellId = parseInt(spellIdStr, 10)
     if (ctx.sourceAuras.has(spellId)) {
-      modifiers.push(modifierFn(ctx))
+      const modifier = modifierFn(ctx)
+      
+      // If modifier relies on specific spell IDs, check if current event matches
+      if (modifier.spellIds) {
+        const eventAbilityId = 'ability' in ctx.event ? ctx.event.ability?.guid : undefined
+        if (!eventAbilityId || !modifier.spellIds.has(eventAbilityId)) {
+          continue
+        }
+      }
+
+      modifiers.push(modifier)
     }
   }
 

@@ -53,7 +53,7 @@ const globalModifiers = {
     26400: () => ({
       source: 'gear' as const,
       name: 'Fetish of the Sand Reaver',
-      spellId: 26400,
+
       value: 0.3,
     }),
   },

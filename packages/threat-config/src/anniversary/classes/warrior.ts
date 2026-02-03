@@ -67,14 +67,14 @@ export const warriorConfig: ClassThreatConfig = {
     [Spells.DefensiveStance]: () => ({
       source: 'stance',
       name: 'Defensive Stance',
-      spellId: Spells.DefensiveStance,
+
       value: 1.3,
     }),
 
     [Spells.BerserkerStance]: () => ({
       source: 'stance',
       name: 'Berserker Stance',
-      spellId: Spells.BerserkerStance,
+
       value: 0.8,
     }),
 
@@ -84,31 +84,31 @@ export const warriorConfig: ClassThreatConfig = {
     [Spells.DefianceRank1]: () => ({
       source: 'talent',
       name: 'Defiance (Rank 1)',
-      spellId: Spells.DefianceRank1,
+
       value: 1.03,
     }),
     [Spells.DefianceRank2]: () => ({
       source: 'talent',
       name: 'Defiance (Rank 2)',
-      spellId: Spells.DefianceRank2,
+
       value: 1.06,
     }),
     [Spells.DefianceRank3]: () => ({
       source: 'talent',
       name: 'Defiance (Rank 3)',
-      spellId: Spells.DefianceRank3,
+
       value: 1.09,
     }),
     [Spells.DefianceRank4]: () => ({
       source: 'talent',
       name: 'Defiance (Rank 4)',
-      spellId: Spells.DefianceRank4,
+
       value: 1.12,
     }),
     [Spells.DefianceRank5]: () => ({
       source: 'talent',
       name: 'Defiance (Rank 5)',
-      spellId: Spells.DefianceRank5,
+
       value: 1.15,
     }),
 
@@ -116,7 +116,7 @@ export const warriorConfig: ClassThreatConfig = {
     [Spells.T25_4pc]: () => ({
       source: 'gear',
       name: 'Conqueror 4pc',
-      spellId: Spells.T25_4pc,
+
       value: 1.1,
     }),
   },

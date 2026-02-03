@@ -82,7 +82,7 @@ export interface Enemy {
 export interface ThreatModifier {
   source: ModifierSource
   name: string
-  spellId?: number
+  spellIds?: Set<number>
   /** Multiplier value, e.g., 1.3 */
   value: number
   /** If specified, modifier only applies to these spell schools. Omit for all schools. */

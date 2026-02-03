@@ -55,7 +55,7 @@ describe('auraModifiers', () => {
     expect(modifier.name).toBe('Defensive Stance')
     expect(modifier.value).toBe(1.3)
     expect(modifier.source).toBe('stance')
-    expect(modifier.spellId).toBe(Spells.DefensiveStance)
+
   })
 
   it('returns Berserker Stance modifier with threat reduction', () => {

@@ -106,7 +106,7 @@ export const druidConfig: ClassThreatConfig = {
     [Spells.BearForm]: () => ({
       source: 'class',
       name: 'Bear Form',
-      spellId: Spells.BearForm,
+
       value: Mods.DireBear,
     }),
 
@@ -114,7 +114,7 @@ export const druidConfig: ClassThreatConfig = {
     [Spells.DireBearForm]: () => ({
       source: 'class',
       name: 'Dire Bear Form',
-      spellId: Spells.DireBearForm,
+
       value: Mods.DireBear,
     }),
 
@@ -122,7 +122,7 @@ export const druidConfig: ClassThreatConfig = {
     [Spells.CatForm]: () => ({
       source: 'class',
       name: 'Cat Form',
-      spellId: Spells.CatForm,
+
       value: Mods.Cat,
     }),
 

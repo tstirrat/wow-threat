@@ -42,7 +42,7 @@ export const shamanConfig: ClassThreatConfig = {
     [Spells.TranquilAirTotem]: () => ({
       source: 'aura',
       name: 'Tranquil Air Totem',
-      spellId: Spells.TranquilAirTotem,
+
       value: Mods.TranquilAirTotem,
     }),
 

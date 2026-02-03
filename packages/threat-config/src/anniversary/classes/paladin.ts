@@ -47,7 +47,7 @@ export const paladinConfig: ClassThreatConfig = {
     [Spells.RighteousFury]: () => ({
       source: 'stance',
       name: 'Righteous Fury',
-      spellId: Spells.RighteousFury,
+
       value: 1.6, // Base value, improved by talent
       schools: new Set(['holy']),
     }),
@@ -56,7 +56,7 @@ export const paladinConfig: ClassThreatConfig = {
     [Spells.BlessingOfSalvation]: () => ({
       source: 'buff',
       name: 'Blessing of Salvation',
-      spellId: Spells.BlessingOfSalvation,
+
       value: 0.7,
     }),
 
@@ -64,7 +64,7 @@ export const paladinConfig: ClassThreatConfig = {
     [Spells.GreaterBlessingOfSalvation]: () => ({
       source: 'buff',
       name: 'Greater Blessing of Salvation',
-      spellId: Spells.GreaterBlessingOfSalvation,
+
       value: 0.7,
     }),
 
@@ -72,7 +72,7 @@ export const paladinConfig: ClassThreatConfig = {
     [Spells.BlessingOfSanctuary]: () => ({
       source: 'buff',
       name: 'Blessing of Sanctuary',
-      spellId: Spells.BlessingOfSanctuary,
+
       value: 1.0, // Damage dealt by the buff generates threat
     }),
   },
