@@ -3,10 +3,10 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import app from '../../src/index'
-import { mockFetch, restoreFetch } from '../helpers/mock-fetch'
-import { createMockBindings } from '../setup'
-import mockReportData from '../fixtures/wcl-responses/anniversary-report.json'
+import app from '../index'
+import { mockFetch, restoreFetch } from '../../test/helpers/mock-fetch'
+import { createMockBindings } from '../../test/setup'
+import mockReportData from '../../test/fixtures/wcl-responses/anniversary-report.json'
 
 // Extract the actual report object from the nested fixture
 const reportData = mockReportData.data.reportData.report
