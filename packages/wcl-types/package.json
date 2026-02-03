@@ -7,9 +7,7 @@
   "types": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src/",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "lint": "eslint src/"
   },
   "devDependencies": {
     "@wcl-threat/typescript-config": "workspace:*",
