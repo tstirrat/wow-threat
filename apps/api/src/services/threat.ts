@@ -9,6 +9,7 @@ import {
   type ThreatConfig,
   type ThreatContext,
   type ThreatResult,
+  type ThreatModifier,
   type ClassThreatConfig,
   type WowClass,
   type Actor,
@@ -53,26 +54,38 @@ export function calculateThreat(
   // Collect all modifiers (class auras, etc.)
   const allModifiers = [...formulaResult.modifiers]
 
-  // Add class-specific modifiers
+  // Add class-specific base threat factor
   const classConfig = getClassConfig(options.sourceActor.class, config)
-  if (classConfig) {
-    // 1. Base class modifier (e.g. Rogue 0.71x)
-    if (classConfig.baseThreatFactor && classConfig.baseThreatFactor !== 1) {
-      const className = options.sourceActor.class
-        ? options.sourceActor.class.charAt(0).toUpperCase() + options.sourceActor.class.slice(1)
-        : 'Class'
-      
-      allModifiers.push({
-        source: 'class',
-        name: className,
-        value: classConfig.baseThreatFactor,
-      })
-    }
-
-    // 2. Class aura modifiers (talents, stances, specific buffs)
-    const auraModifiers = getActiveModifiers(ctx, classConfig.auraModifiers)
-    allModifiers.push(...auraModifiers)
+  if (classConfig?.baseThreatFactor && classConfig.baseThreatFactor !== 1) {
+    const className = options.sourceActor.class
+      ? options.sourceActor.class.charAt(0).toUpperCase() + options.sourceActor.class.slice(1)
+      : 'Class'
+    
+    allModifiers.push({
+      source: 'class',
+      name: className,
+      value: classConfig.baseThreatFactor,
+    })
   }
+
+  // Merge all aura modifiers (global + all classes) into a single structure.
+  // This allows cross-class buffs (e.g., Blessing of Salvation) to apply to any actor.
+  // The game validates which buffs can be applied, so we merge everything and let
+  // the sourceAuras set determine which modifiers actually apply.
+  const mergedAuraModifiers: Record<number, (ctx: ThreatContext) => ThreatModifier> = {
+    ...config.auraModifiers,
+  }
+
+  // Add aura modifiers from all class configs
+  for (const classConfig of Object.values(config.classes)) {
+    if (classConfig?.auraModifiers) {
+      Object.assign(mergedAuraModifiers, classConfig.auraModifiers)
+    }
+  }
+
+  // Apply the merged aura modifiers based on active auras
+  const auraModifiers = getActiveModifiers(ctx, mergedAuraModifiers)
+  allModifiers.push(...auraModifiers)
 
   // Calculate total multiplier
   const totalMultiplier = getTotalMultiplier(allModifiers)

@@ -153,11 +153,6 @@ export interface ClassThreatConfig {
   invulnerabilityBuffs?: Set<number>
 }
 
-export interface GlobalModifierConfig {
-  /** World buffs that affect threat */
-  worldBuffs?: Record<number, (ctx: ThreatContext) => ThreatModifier>
-}
-
 export interface ThreatConfig {
   /** Semantic version of this config */
   version: string
@@ -167,10 +162,14 @@ export interface ThreatConfig {
   baseThreat: BaseThreatConfig
   /** Class-specific configurations */
   classes: Partial<Record<WowClass, ClassThreatConfig>>
+  /** 
+   * Global aura modifiers (items, consumables, cross-class buffs).
+   * Merged with all class aura modifiers at runtime and applied based on which 
+   * auras the source actor has active.
+   */
+  auraModifiers: Record<number, (ctx: ThreatContext) => ThreatModifier>
   /** Enemies that cannot be taunted (by creature guid) */
   untauntableEnemies: Set<number>
-  /** Global modifiers (world buffs, etc.) */
-  globalModifiers?: GlobalModifierConfig
   /** Buffs that indicate fixate (taunt) state */
   fixateBuffs?: Set<number>
   /** Buffs that indicate aggro loss state */

@@ -42,5 +42,6 @@ export const retailConfig: ThreatConfig = {
     // Note: Tank threat multipliers are much higher in Retail
   },
 
+  auraModifiers: {},
   untauntableEnemies: new Set(),
 }

@@ -4,7 +4,8 @@
  * This is the main entry point for Anniversary Edition (gameVersion: 1) threat config.
  */
 
-import type { ThreatConfig, ThreatContext } from '../types'
+import type { ThreatConfig, ThreatContext, ThreatModifier } from '../types'
+import { validateAuraModifiers } from '../shared/utils'
 import { baseThreat } from './general'
 import { warriorConfig } from './classes/warrior'
 import { paladinConfig } from './classes/paladin'
@@ -46,22 +47,19 @@ const invulnerabilityBuffs = new Set<number>([
   6724, // Light of Elune
 ])
 
-// Global modifiers (item effects that aren't class-specific)
-const globalModifiers = {
-  worldBuffs: {
-    // Fetish of the Sand Reaver - 0.3x threat
-    26400: () => ({
-      source: 'gear' as const,
-      name: 'Fetish of the Sand Reaver',
-
-      value: 0.3,
-    }),
-  },
+// Global aura modifiers (items, consumables, cross-class buffs)
+const globalAuraModifiers: Record<number, (ctx: ThreatContext) => ThreatModifier> = {
+  // Fetish of the Sand Reaver - 0.3x threat
+  26400: () => ({
+    source: 'gear',
+    name: 'Fetish of the Sand Reaver',
+    value: 0.3,
+  }),
 }
 
 export const anniversaryConfig: ThreatConfig = {
   version: '1.1.0',
-  gameVersion: 1, // WCL gameVersion integer
+  gameVersion: 1,
 
   baseThreat,
 
@@ -77,10 +75,13 @@ export const anniversaryConfig: ThreatConfig = {
     shaman: shamanConfig,
   },
 
+  auraModifiers: globalAuraModifiers,
   untauntableEnemies,
-  globalModifiers,
   fixateBuffs,
   aggroLossBuffs,
   invulnerabilityBuffs,
 }
+
+// Validate for duplicate spell IDs (dev-time warning)
+validateAuraModifiers(anniversaryConfig)
 

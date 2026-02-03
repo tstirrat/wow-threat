@@ -370,7 +370,305 @@ describe('calculateThreat', () => {
       expect(result.calculation.baseThreat).toBe(1000)
     })
   })
+
+  describe('aura modifiers', () => {
+    describe('cross-class aura modifiers', () => {
+      it('applies Blessing of Salvation to Warriors', () => {
+        const event = createDamageEvent({ amount: 1000 })
+
+        const result = calculateThreat(
+          event,
+          {
+            sourceAuras: new Set([25846]), // Blessing of Salvation
+            targetAuras: new Set(),
+            enemies: [defaultEnemy],
+            sourceActor: { id: 1, name: 'WarriorPlayer', class: 'warrior' },
+            targetActor: { id: 25, name: 'Boss', class: null },
+            encounterId: null,
+          },
+          config
+        )
+
+        expect(result.calculation.modifiers).toContainEqual(
+          expect.objectContaining({ name: 'Blessing of Salvation', value: 0.7 })
+        )
+        // 1000 * 0.7 = 700
+        expect(result.calculation.threatToEnemy).toBe(700)
+      })
+
+      it('applies Blessing of Salvation to Rogues and stacks with base threat', () => {
+        const event = createDamageEvent({ amount: 1000 })
+
+        const result = calculateThreat(
+          event,
+          {
+            sourceAuras: new Set([25846]), // Blessing of Salvation
+            targetAuras: new Set(),
+            enemies: [defaultEnemy],
+            sourceActor: { id: 1, name: 'RoguePlayer', class: 'rogue' },
+            targetActor: { id: 25, name: 'Boss', class: null },
+            encounterId: null,
+          },
+          config
+        )
+
+        expect(result.calculation.modifiers).toContainEqual(
+          expect.objectContaining({ name: 'Rogue', value: 0.71 })
+        )
+        expect(result.calculation.modifiers).toContainEqual(
+          expect.objectContaining({ name: 'Blessing of Salvation', value: 0.7 })
+        )
+        // 1000 * 0.71 * 0.7 = 497
+        expect(result.calculation.threatToEnemy).toBeCloseTo(497, 0)
+      })
+
+      it('applies Greater Blessing of Salvation to Mages', () => {
+        const event = createDamageEvent({ amount: 1000 })
+
+        const result = calculateThreat(
+          event,
+          {
+            sourceAuras: new Set([25895]), // Greater Blessing of Salvation
+            targetAuras: new Set(),
+            enemies: [defaultEnemy],
+            sourceActor: { id: 1, name: 'MagePlayer', class: 'mage' },
+            targetActor: { id: 25, name: 'Boss', class: null },
+            encounterId: null,
+          },
+          config
+        )
+
+        expect(result.calculation.modifiers).toContainEqual(
+          expect.objectContaining({ name: 'Greater Blessing of Salvation', value: 0.7 })
+        )
+        // 1000 * 0.7 = 700
+        expect(result.calculation.threatToEnemy).toBe(700)
+      })
+    })
+
+    describe('global aura modifiers', () => {
+      it('applies Fetish of the Sand Reaver to Warriors', () => {
+        const event = createDamageEvent({ amount: 1000 })
+
+        const result = calculateThreat(
+          event,
+          {
+            sourceAuras: new Set([26400]), // Fetish of the Sand Reaver
+            targetAuras: new Set(),
+            enemies: [defaultEnemy],
+            sourceActor: { id: 1, name: 'WarriorPlayer', class: 'warrior' },
+            targetActor: { id: 25, name: 'Boss', class: null },
+            encounterId: null,
+          },
+          config
+        )
+
+        expect(result.calculation.modifiers).toContainEqual(
+          expect.objectContaining({ name: 'Fetish of the Sand Reaver', value: 0.3 })
+        )
+        // 1000 * 0.3 = 300
+        expect(result.calculation.threatToEnemy).toBe(300)
+      })
+
+      it('applies Fetish of the Sand Reaver to Mages', () => {
+        const event = createDamageEvent({ amount: 1000 })
+
+        const result = calculateThreat(
+          event,
+          {
+            sourceAuras: new Set([26400]), // Fetish of the Sand Reaver
+            targetAuras: new Set(),
+            enemies: [defaultEnemy],
+            sourceActor: { id: 1, name: 'MagePlayer', class: 'mage' },
+            targetActor: { id: 25, name: 'Boss', class: null },
+            encounterId: null,
+          },
+          config
+        )
+
+        expect(result.calculation.modifiers).toContainEqual(
+          expect.objectContaining({ name: 'Fetish of the Sand Reaver', value: 0.3 })
+        )
+        // 1000 * 0.3 = 300
+        expect(result.calculation.threatToEnemy).toBe(300)
+      })
+    })
+
+    describe('aura modifier stacking and merge behavior', () => {
+      it('stacks cross-class buff with class-specific stance', () => {
+        const event = createDamageEvent({ amount: 1000 })
+
+        const result = calculateThreat(
+          event,
+          {
+            // Defensive Stance (1.3x) + Blessing of Salvation (0.7x)
+            sourceAuras: new Set([71, 25846]),
+            targetAuras: new Set(),
+            enemies: [defaultEnemy],
+            sourceActor: { id: 1, name: 'WarriorPlayer', class: 'warrior' },
+            targetActor: { id: 25, name: 'Boss', class: null },
+            encounterId: null,
+          },
+          config
+        )
+
+        expect(result.calculation.modifiers).toContainEqual(
+          expect.objectContaining({ name: 'Defensive Stance', value: 1.3 })
+        )
+        expect(result.calculation.modifiers).toContainEqual(
+          expect.objectContaining({ name: 'Blessing of Salvation', value: 0.7 })
+        )
+        // 1000 * 1.3 * 0.7 = 910
+        expect(result.calculation.threatToEnemy).toBeCloseTo(910, 0)
+      })
+
+      it('stacks multiple cross-class buffs', () => {
+        const event = createDamageEvent({ amount: 1000 })
+
+        const result = calculateThreat(
+          event,
+          {
+            // Blessing of Salvation (0.7x) + Fetish of the Sand Reaver (0.3x)
+            sourceAuras: new Set([25846, 26400]),
+            targetAuras: new Set(),
+            enemies: [defaultEnemy],
+            sourceActor: { id: 1, name: 'WarriorPlayer', class: 'warrior' },
+            targetActor: { id: 25, name: 'Boss', class: null },
+            encounterId: null,
+          },
+          config
+        )
+
+        expect(result.calculation.modifiers).toContainEqual(
+          expect.objectContaining({ name: 'Blessing of Salvation', value: 0.7 })
+        )
+        expect(result.calculation.modifiers).toContainEqual(
+          expect.objectContaining({ name: 'Fetish of the Sand Reaver', value: 0.3 })
+        )
+        // 1000 * 0.7 * 0.3 = 210
+        expect(result.calculation.threatToEnemy).toBe(210)
+      })
+
+      it('stacks three modifiers (class stance + talent + cross-class buff)', () => {
+        const event = createDamageEvent({ amount: 1000 })
+
+        const result = calculateThreat(
+          event,
+          {
+            // Defensive Stance (1.3x) + Defiance Rank 5 (1.15x) + Blessing of Salvation (0.7x)
+            sourceAuras: new Set([71, 12305, 25846]),
+            targetAuras: new Set(),
+            enemies: [defaultEnemy],
+            sourceActor: { id: 1, name: 'WarriorPlayer', class: 'warrior' },
+            targetActor: { id: 25, name: 'Boss', class: null },
+            encounterId: null,
+          },
+          config
+        )
+
+        expect(result.calculation.modifiers).toHaveLength(3)
+        // 1000 * 1.3 * 1.15 * 0.7 = 1046.5
+        expect(result.calculation.threatToEnemy).toBeCloseTo(1046.5, 0)
+      })
+    })
+
+    describe('class-specific aura modifiers still work', () => {
+      it('applies Defensive Stance to Warriors', () => {
+        const event = createDamageEvent({ amount: 1000 })
+
+        const result = calculateThreat(
+          event,
+          {
+            sourceAuras: new Set([71]), // Defensive Stance
+            targetAuras: new Set(),
+            enemies: [defaultEnemy],
+            sourceActor: { id: 1, name: 'WarriorPlayer', class: 'warrior' },
+            targetActor: { id: 25, name: 'Boss', class: null },
+            encounterId: null,
+          },
+          config
+        )
+
+        expect(result.calculation.modifiers).toContainEqual(
+          expect.objectContaining({ name: 'Defensive Stance', value: 1.3 })
+        )
+        expect(result.calculation.threatToEnemy).toBe(1300)
+      })
+
+      it('applies Bear Form to Druids', () => {
+        const event = createDamageEvent({ amount: 1000 })
+
+        const result = calculateThreat(
+          event,
+          {
+            sourceAuras: new Set([5487]), // Bear Form
+            targetAuras: new Set(),
+            enemies: [defaultEnemy],
+            sourceActor: { id: 1, name: 'DruidPlayer', class: 'druid' },
+            targetActor: { id: 25, name: 'Boss', class: null },
+            encounterId: null,
+          },
+          config
+        )
+
+        expect(result.calculation.modifiers).toContainEqual(
+          expect.objectContaining({ name: 'Bear Form', value: 1.3 })
+        )
+        expect(result.calculation.threatToEnemy).toBe(1300)
+      })
+
+      it('applies Righteous Fury to Paladin holy spells only', () => {
+        // Test a damage event with a holy spell
+        const holyDamageEvent = createDamageEvent({
+          amount: 1000,
+          ability: {
+            guid: 25742, // Seal of Righteousness (holy school)
+            name: 'Seal of Righteousness',
+            type: 2,
+            abilityIcon: 'ability_thunderbolt.jpg',
+          },
+        })
+
+        const result = calculateThreat(
+          holyDamageEvent,
+          {
+            sourceAuras: new Set([25780]), // Righteous Fury
+            targetAuras: new Set(),
+            enemies: [defaultEnemy],
+            sourceActor: { id: 1, name: 'PaladinPlayer', class: 'paladin' },
+            targetActor: { id: 25, name: 'Boss', class: null },
+            encounterId: null,
+          },
+          config
+        )
+
+        // Righteous Fury should apply to holy spells
+        expect(result.calculation.modifiers).toContainEqual(
+          expect.objectContaining({ name: 'Righteous Fury', value: 1.6 })
+        )
+      })
+
+      it('applies Defiance talent to Warriors', () => {
+        const event = createDamageEvent({ amount: 1000 })
+
+        const result = calculateThreat(
+          event,
+          {
+            sourceAuras: new Set([12305]), // Defiance Rank 5
+            targetAuras: new Set(),
+            enemies: [defaultEnemy],
+            sourceActor: { id: 1, name: 'WarriorPlayer', class: 'warrior' },
+            targetActor: { id: 25, name: 'Boss', class: null },
+            encounterId: null,
+          },
+          config
+        )
+
+        expect(result.calculation.modifiers).toContainEqual(
+          expect.objectContaining({ name: 'Defiance (Rank 5)', value: 1.15 })
+        )
+        expect(result.calculation.threatToEnemy).toBe(1150)
+      })
+    })
+  })
 })
-
-
-

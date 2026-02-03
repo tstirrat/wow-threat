@@ -41,5 +41,6 @@ export const sodConfig: ThreatConfig = {
     // TODO: Implement SoD class configs with runes
   },
 
+  auraModifiers: {},
   untauntableEnemies: new Set(),
 }
