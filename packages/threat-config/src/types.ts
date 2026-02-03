@@ -129,8 +129,8 @@ export interface BaseThreatConfig {
 }
 
 export interface ClassThreatConfig {
-  /** Stance sets - engine auto-removes others when one is applied */
-  stanceSets?: number[][]
+  /** Exclusive aura sets - engine auto-removes others when one is applied */
+  exclusiveAuras?: Set<number>[]
 
   /** Base threat factor for the class (default: 1.0) */
   baseThreatFactor?: number

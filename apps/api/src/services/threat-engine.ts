@@ -47,7 +47,7 @@ export interface ProcessEventsOutput {
 export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
   const { rawEvents, actorMap, enemies, config } = input
 
-  const fightState = new FightState(actorMap)
+  const fightState = new FightState(actorMap, config)
   const augmentedEvents: AugmentedEvent[] = []
   const eventCounts: Record<string, number> = {}
 

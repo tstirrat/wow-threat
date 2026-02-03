@@ -55,16 +55,16 @@ export function getTotalMultiplier(modifiers: ThreatModifier[]): number {
 }
 
 /**
- * Finds which stance (if any) is active from a set of mutually exclusive stances
+ * Finds which exclusive aura (if any) is active from a set of mutually exclusive auras
  */
-export function getActiveStance(
+export function getActiveExclusiveAura(
   ctx: ThreatContext,
-  stanceSets: number[][]
+  exclusiveAuras: Set<number>[]
 ): number | null {
-  for (const stanceSet of stanceSets) {
-    for (const stanceId of stanceSet) {
-      if (ctx.sourceAuras.has(stanceId)) {
-        return stanceId
+  for (const auraSet of exclusiveAuras) {
+    for (const auraId of auraSet) {
+      if (ctx.sourceAuras.has(auraId)) {
+        return auraId
       }
     }
   }

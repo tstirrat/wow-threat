@@ -41,7 +41,23 @@ export const Spells = {
 // Configuration
 // ============================================================================
 
+/** Exclusive aura sets - only one blessing can be active at a time */
+export const exclusiveAuras: Set<number>[] = [
+  // All blessings (normal and greater) are mutually exclusive
+  new Set([
+    Spells.BlessingOfKings,
+    Spells.BlessingOfSalvation,
+    Spells.BlessingOfMight,
+    Spells.BlessingOfWisdom,
+    Spells.BlessingOfSanctuary,
+    Spells.BlessingOfLight,
+    Spells.GreaterBlessingOfKings,
+    Spells.GreaterBlessingOfSalvation,
+  ]),
+]
+
 export const paladinConfig: ClassThreatConfig = {
+  exclusiveAuras,
   auraModifiers: {
     // Righteous Fury: 1.6x (base 60% bonus) or 1.9x with Improved RF talent
     [Spells.RighteousFury]: () => ({

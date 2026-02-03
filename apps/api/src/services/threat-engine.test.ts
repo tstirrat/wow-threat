@@ -82,7 +82,7 @@ function createMockConfig(): ThreatConfig {
 
     classes: {
       warrior: {
-        stanceSets: [[SPELLS.DEFENSIVE_STANCE, SPELLS.BATTLE_STANCE, SPELLS.BERSERKER_STANCE]],
+        exclusiveAuras: [new Set([SPELLS.DEFENSIVE_STANCE, SPELLS.BATTLE_STANCE, SPELLS.BERSERKER_STANCE])],
         baseThreatFactor: 1.3,
 
         auraModifiers: {

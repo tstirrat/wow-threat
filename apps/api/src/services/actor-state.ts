@@ -13,8 +13,12 @@ import { GearTracker } from './gear-tracker'
 
 /** Composite state for a single actor during a fight */
 export class ActorState {
-  readonly auraTracker = new AuraTracker()
+  auraTracker: AuraTracker
   readonly gearTracker = new GearTracker()
+
+  constructor(exclusiveAuras?: Set<number>[]) {
+    this.auraTracker = new AuraTracker(exclusiveAuras)
+  }
 
   /** Get active aura spell IDs */
   get auras(): Set<number> {

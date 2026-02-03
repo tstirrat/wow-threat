@@ -63,13 +63,13 @@ export const SetIds = {
 // Configuration
 // ============================================================================
 
-/** Stance sets - engine will auto-remove others when one is applied */
-export const stanceSets: number[][] = [
-  [Spells.DefensiveStance, Spells.BerserkerStance, Spells.BattleStance],
+/** Exclusive aura sets - engine auto-removes others when one is applied */
+export const exclusiveAuras: Set<number>[] = [
+  new Set([Spells.DefensiveStance, Spells.BerserkerStance, Spells.BattleStance]),
 ]
 
 export const warriorConfig: ClassThreatConfig = {
-  stanceSets,
+  exclusiveAuras,
 
   auraModifiers: {
     // Stances

@@ -15,9 +15,25 @@ import { ActorState } from './actor-state'
 export class FightState {
   private actors = new Map<number, ActorState>()
   private actorMap: Map<number, Actor>
+  private config: ThreatConfig
+  private allExclusiveAuras: Set<number>[]
 
-  constructor(actorMap: Map<number, Actor>) {
+  constructor(actorMap: Map<number, Actor>, config: ThreatConfig) {
     this.actorMap = actorMap
+    this.config = config
+    // Consolidate all exclusive auras from all class configs
+    this.allExclusiveAuras = this.collectAllExclusiveAuras(config)
+  }
+
+  /** Collect all exclusive aura sets from all class configs */
+  private collectAllExclusiveAuras(config: ThreatConfig): Set<number>[] {
+    const allSets: Set<number>[] = []
+    for (const classConfig of Object.values(config.classes)) {
+      if (classConfig?.exclusiveAuras) {
+        allSets.push(...classConfig.exclusiveAuras)
+      }
+    }
+    return allSets
   }
 
   /** Process a WCL event and update relevant actor state */
@@ -91,7 +107,9 @@ export class FightState {
   private getOrCreateActorState(actorId: number): ActorState {
     let state = this.actors.get(actorId)
     if (!state) {
-      state = new ActorState()
+      // Use consolidated exclusive auras from all classes
+      // (e.g., paladin blessings can be applied to any class)
+      state = new ActorState(this.allExclusiveAuras)
       this.actors.set(actorId, state)
     }
     return state

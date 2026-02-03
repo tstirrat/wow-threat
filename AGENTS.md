@@ -99,7 +99,7 @@ Use relative paths for local imports (the `@/*` alias exists but is not used in 
 | Classes             | PascalCase    | `AppError`, `WCLClient`, `AuraTracker`      |
 | Interfaces/Types    | PascalCase    | `ThreatConfig`, `CacheService`, `WCLEvent`  |
 | Constants (strings) | UPPER_CASE    | `WCL_API_URL`, `REPORT_CODE_REGEX`          |
-| Constants (objects) | camelCase     | `baseThreat`, `stanceSets`                  |
+| Constants (objects) | camelCase     | `baseThreat`, `exclusiveAuras`              |
 | Enum-like keys      | PascalCase    | `ErrorCodes.INVALID_REPORT_CODE`, `Spells.ShieldSlam` |
 | Test files          | `.test.ts`    | `threat.test.ts`, `warrior.test.ts`         |
 

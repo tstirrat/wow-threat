@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from 'vitest'
 import type { ThreatContext } from '../../types'
-import { warriorConfig, Spells, stanceSets, SetIds } from './warrior'
+import { warriorConfig, Spells, exclusiveAuras, SetIds } from './warrior'
 
 // Mock ThreatContext factory
 function createMockContext(overrides: Partial<ThreatContext> = {}): ThreatContext {
@@ -47,12 +47,12 @@ describe('SetIds', () => {
   })
 })
 
-describe('stanceSets', () => {
+describe('exclusiveAuras', () => {
   it('defines mutually exclusive stances', () => {
-    expect(stanceSets).toHaveLength(1)
-    expect(stanceSets[0]).toContain(Spells.DefensiveStance)
-    expect(stanceSets[0]).toContain(Spells.BerserkerStance)
-    expect(stanceSets[0]).toContain(Spells.BattleStance)
+    expect(exclusiveAuras).toHaveLength(1)
+    expect(exclusiveAuras[0]!.has(Spells.DefensiveStance)).toBe(true)
+    expect(exclusiveAuras[0]!.has(Spells.BerserkerStance)).toBe(true)
+    expect(exclusiveAuras[0]!.has(Spells.BattleStance)).toBe(true)
   })
 })
 

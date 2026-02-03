@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from 'vitest'
 import type { ThreatContext } from '../../types'
-import { druidConfig, Spells } from './druid'
+import { druidConfig, Spells, exclusiveAuras } from './druid'
 
 // Mock ThreatContext factory
 function createMockContext(overrides: Partial<ThreatContext> = {}): ThreatContext {
@@ -131,6 +131,16 @@ describe('Druid Config', () => {
       expect(druidConfig.fixateBuffs).toBeDefined()
       expect(druidConfig.fixateBuffs?.has(Spells.Growl)).toBe(true)
       expect(druidConfig.fixateBuffs?.has(Spells.ChallengingRoar)).toBe(true)
+    })
+  })
+
+  describe('exclusiveAuras', () => {
+    it('defines mutually exclusive druid forms', () => {
+      expect(exclusiveAuras).toHaveLength(1)
+      expect(exclusiveAuras[0]!.has(Spells.BearForm)).toBe(true)
+      expect(exclusiveAuras[0]!.has(Spells.DireBearForm)).toBe(true)
+      expect(exclusiveAuras[0]!.has(Spells.CatForm)).toBe(true)
+      expect(exclusiveAuras[0]!.has(Spells.MoonkinForm)).toBe(true)
     })
   })
 })

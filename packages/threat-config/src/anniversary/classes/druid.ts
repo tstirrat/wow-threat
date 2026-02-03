@@ -93,13 +93,13 @@ const Mods = {
 // Configuration
 // ============================================================================
 
-/** Form sets - engine will auto-remove others when one is applied */
-export const stanceSets: number[][] = [
-  [Spells.BearForm, Spells.DireBearForm, Spells.CatForm, Spells.MoonkinForm],
+/** Exclusive aura sets - engine auto-removes others when one is applied */
+export const exclusiveAuras: Set<number>[] = [
+  new Set([Spells.BearForm, Spells.DireBearForm, Spells.CatForm, Spells.MoonkinForm]),
 ]
 
 export const druidConfig: ClassThreatConfig = {
-  stanceSets,
+  exclusiveAuras,
 
   auraModifiers: {
     // Bear Form (same modifier as Dire Bear)
