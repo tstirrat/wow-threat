@@ -94,20 +94,21 @@ let memoryCache: CacheService | null = null
  * Factory to create appropriate cache based on environment
  */
 export function createCache(env: Bindings, namespace: 'wcl' | 'augmented'): CacheService {
-  // Use no-op cache in development for immediate code change testing
-  if (env.ENVIRONMENT === 'development') {
+  // Use no-op cache for augmented data in development for immediate code change testing
+  if (env.ENVIRONMENT === 'development' && namespace === 'augmented') {
     return createNoOpCache()
   }
 
-  // Use memory cache for tests (faster, isolated)
-  if (env.ENVIRONMENT === 'test') {
+  // Use memory cache for:
+  // 1. Tests (all namespaces)
+  // 2. Development (WCL data only - to avoid re-fetching static data)
+  if (env.ENVIRONMENT === 'test' || env.ENVIRONMENT === 'development') {
     if (!memoryCache) {
       memoryCache = createMemoryCache()
     }
     return memoryCache
   }
 
-  // Use KV cache in production/staging
   const kv = namespace === 'wcl' ? env.WCL_CACHE : env.AUGMENTED_CACHE
   return createKVCache(kv)
 }
