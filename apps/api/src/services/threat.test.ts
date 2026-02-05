@@ -8,11 +8,135 @@ import {
   type ThreatConfig,
   type Enemy,
   type Actor,
+  type ThreatContext,
+  type ActorContext,
+  type SpellSchool,
 } from '@wcl-threat/threat-config'
 import { calculateThreat } from './threat'
-import { anniversaryConfig } from '@wcl-threat/threat-config'
 
-// Test helpers
+// ============================================================================
+// Mock Actor Context
+// ============================================================================
+
+function createMockActorContext(): ActorContext {
+  return {
+    getPosition: () => null,
+    getDistance: () => null,
+    getActorsInRange: () => [],
+    getThreat: () => 0,
+    getTopActorsByThreat: () => [],
+  }
+}
+
+// ============================================================================
+// Mock Threat Config (self-contained, no external dependencies)
+// ============================================================================
+
+const mockThreatConfig: ThreatConfig = {
+  version: '1.0.0-test',
+  gameVersion: 100000,
+  baseThreat: {
+    damage: (ctx: ThreatContext) => ({
+      formula: 'amount',
+      value: ctx.amount,
+      splitAmongEnemies: false,
+    }),
+    heal: (ctx: ThreatContext) => {
+      // Effective healing: amount - overheal
+      const effectiveHeal = ctx.amount
+      const baseThreat = effectiveHeal * 0.5 // 50% of heal
+      return {
+        formula: 'amount * 0.5',
+        value: baseThreat,
+        splitAmongEnemies: true,
+      }
+    },
+    energize: (ctx: ThreatContext) => ({
+      formula: 'amount * 5',
+      value: ctx.amount * 5,
+      splitAmongEnemies: true,
+    }),
+  },
+  classes: {
+    warrior: {
+      baseThreatFactor: 1.0,
+      auraModifiers: {
+        71: (ctx: ThreatContext) => ({
+          source: 'stance',
+          name: 'Defensive Stance',
+          value: 1.3,
+        }),
+        12305: (ctx: ThreatContext) => ({
+          source: 'talent',
+          name: 'Defiance (Rank 5)',
+          value: 1.15,
+        }),
+      },
+      abilities: {},
+    },
+    rogue: {
+      baseThreatFactor: 0.71,
+      auraModifiers: {},
+      abilities: {},
+    },
+    priest: {
+      baseThreatFactor: 1.0,
+      auraModifiers: {},
+      abilities: {},
+    },
+    druid: {
+      baseThreatFactor: 1.0,
+      auraModifiers: {
+        5487: (ctx: ThreatContext) => ({
+          source: 'stance',
+          name: 'Bear Form',
+          value: 1.3,
+        }),
+      },
+      abilities: {},
+    },
+    paladin: {
+      baseThreatFactor: 1.0,
+      auraModifiers: {
+        25780: (ctx: ThreatContext) => ({
+          source: 'stance',
+          name: 'Righteous Fury',
+          value: 1.6,
+          schools: new Set(['holy'] as SpellSchool[]),
+        }),
+      },
+      abilities: {},
+    },
+    mage: {
+      baseThreatFactor: 1.0,
+      auraModifiers: {},
+      abilities: {},
+    },
+  },
+  auraModifiers: {
+    25846: (ctx: ThreatContext) => ({
+      source: 'aura',
+      name: 'Blessing of Salvation',
+      value: 0.7,
+    }),
+    25895: (ctx: ThreatContext) => ({
+      source: 'aura',
+      name: 'Greater Blessing of Salvation',
+      value: 0.7,
+    }),
+    26400: (ctx: ThreatContext) => ({
+      source: 'aura',
+      name: 'Fetish of the Sand Reaver',
+      value: 0.3,
+    }),
+  },
+  untauntableEnemies: new Set(),
+}
+
+// ============================================================================
+// Test Helpers
+// ============================================================================
+
 function createDamageEvent(overrides: Partial<DamageEvent> = {}): DamageEvent {
   return {
     timestamp: 1000,
@@ -64,24 +188,39 @@ function createHealEvent(overrides: Partial<HealEvent> = {}): HealEvent {
 const defaultActor: Actor = { id: 1, name: 'TestPlayer', class: 'warrior' }
 const defaultEnemy: Enemy = { id: 25, name: 'TestBoss', instance: 0 }
 
-describe('calculateThreat', () => {
-  const config = anniversaryConfig
+interface TestCallOptions {
+  sourceAuras?: Set<number>
+  targetAuras?: Set<number>
+  enemies?: Enemy[]
+  sourceActor?: Actor
+  targetActor?: Actor
+  encounterId?: number | null
+}
 
+/**
+ * Helper to create standardized test options with mocked actor context
+ */
+function createTestOptions(overrides: TestCallOptions = {}) {
+  return {
+    sourceAuras: overrides.sourceAuras ?? new Set(),
+    targetAuras: overrides.targetAuras ?? new Set(),
+    enemies: overrides.enemies ?? [defaultEnemy],
+    sourceActor: overrides.sourceActor ?? defaultActor,
+    targetActor: overrides.targetActor ?? { id: 25, name: 'Boss', class: null },
+    encounterId: overrides.encounterId ?? null,
+    actors: createMockActorContext(),
+  }
+}
+
+describe('calculateThreat', () => {
   describe('damage events', () => {
     it('calculates basic damage threat', () => {
       const event = createDamageEvent({ amount: 1000 })
 
       const result = calculateThreat(
         event,
-        {
-          sourceAuras: new Set(),
-          targetAuras: new Set(),
-          enemies: [defaultEnemy],
-          sourceActor: defaultActor,
-          targetActor: { id: 25, name: 'Boss', class: null },
-          encounterId: null,
-        },
-        config
+        createTestOptions(),
+        mockThreatConfig
       )
 
       expect(result.calculation.baseThreat).toBe(1000)
@@ -96,15 +235,10 @@ describe('calculateThreat', () => {
 
       const result = calculateThreat(
         event,
-        {
+        createTestOptions({
           sourceAuras: new Set([71]), // Defensive Stance
-          targetAuras: new Set(),
-          enemies: [defaultEnemy],
-          sourceActor: defaultActor,
-          targetActor: { id: 25, name: 'Boss', class: null },
-          encounterId: null,
-        },
-        config
+        }),
+        mockThreatConfig
       )
 
       expect(result.calculation.modifiers).toContainEqual(
@@ -118,16 +252,11 @@ describe('calculateThreat', () => {
 
       const result = calculateThreat(
         event,
-        {
+        createTestOptions({
           // Defensive Stance (1.3) + Defiance Rank 5 (1.15)
           sourceAuras: new Set([71, 12305]),
-          targetAuras: new Set(),
-          enemies: [defaultEnemy],
-          sourceActor: defaultActor,
-          targetActor: { id: 25, name: 'Boss', class: null },
-          encounterId: null,
-        },
-        config
+        }),
+        mockThreatConfig
       )
 
       expect(result.calculation.modifiers).toHaveLength(2)
@@ -140,15 +269,10 @@ describe('calculateThreat', () => {
 
       const result = calculateThreat(
         event,
-        {
-          sourceAuras: new Set(),
-          targetAuras: new Set(),
-          enemies: [defaultEnemy],
+        createTestOptions({
           sourceActor: { id: 1, name: 'RoguePlayer', class: 'rogue' },
-          targetActor: { id: 25, name: 'Boss', class: null },
-          encounterId: null,
-        },
-        config
+        }),
+        mockThreatConfig
       )
 
       // Modifiers should contain the base modifier named "Rogue"
@@ -164,21 +288,16 @@ describe('calculateThreat', () => {
 
       const result = calculateThreat(
         event,
-        {
-          sourceAuras: new Set(),
-          targetAuras: new Set(),
-          enemies: [defaultEnemy],
+        createTestOptions({
           sourceActor: { id: 1, name: 'WarriorPlayer', class: 'warrior' },
-          targetActor: { id: 25, name: 'Boss', class: null },
-          encounterId: null,
-        },
-        config
+        }),
+        mockThreatConfig
       )
 
       // Should verify that NO modifier with source 'class' or name 'Warrior' exists
       const baseModifiers = result.calculation.modifiers.filter(m => m.source === 'class')
       expect(baseModifiers).toHaveLength(0)
-      
+
       // Should be 1000 flat
       expect(result.calculation.threatToEnemy).toBe(1000)
     })
@@ -198,15 +317,12 @@ describe('calculateThreat', () => {
 
       const result = calculateThreat(
         event,
-        {
-          sourceAuras: new Set(),
-          targetAuras: new Set(),
+        createTestOptions({
           enemies,
           sourceActor: { id: 2, name: 'Healer', class: 'priest' },
           targetActor: defaultActor,
-          encounterId: null,
-        },
-        config
+        }),
+        mockThreatConfig
       )
 
       // Effective heal: 3500, base threat: 1750, split 2 ways: 875 each
@@ -245,15 +361,11 @@ describe('calculateThreat', () => {
 
       const result = calculateThreat(
         event,
-        {
-          sourceAuras: new Set(),
-          targetAuras: new Set(),
-          enemies: [defaultEnemy],
+        createTestOptions({
           sourceActor: defaultActor,
           targetActor: defaultActor,
-          encounterId: null,
-        },
-        config
+        }),
+        mockThreatConfig
       )
 
       // Energize events generate threat: rage * 5
@@ -272,15 +384,12 @@ describe('calculateThreat', () => {
 
       const result = calculateThreat(
         event,
-        {
-          sourceAuras: new Set(),
-          targetAuras: new Set(),
+        createTestOptions({
           enemies,
           sourceActor: defaultActor,
           targetActor: defaultActor,
-          encounterId: null,
-        },
-        config
+        }),
+        mockThreatConfig
       )
 
       // 40 rage * 5 = 200 base threat, split 2 ways = 100 each
@@ -297,15 +406,11 @@ describe('calculateThreat', () => {
 
       const result = calculateThreat(
         event,
-        {
-          sourceAuras: new Set(),
-          targetAuras: new Set(),
-          enemies: [defaultEnemy],
+        createTestOptions({
           sourceActor: defaultActor,
           targetActor: defaultActor,
-          encounterId: null,
-        },
-        config
+        }),
+        mockThreatConfig
       )
 
       // Only 25 rage actually gained (30 - 5 waste), threat = 25 * 5 = 125
@@ -334,15 +439,8 @@ describe('calculateThreat', () => {
 
       const result = calculateThreat(
         event as WCLEvent,
-        {
-          sourceAuras: new Set(),
-          targetAuras: new Set(),
-          enemies: [defaultEnemy],
-          sourceActor: defaultActor,
-          targetActor: { id: 25, name: 'Boss', class: null },
-          encounterId: null,
-        },
-        config
+        createTestOptions(),
+        mockThreatConfig
       )
 
       expect(result.calculation.baseThreat).toBe(0)
@@ -356,15 +454,10 @@ describe('calculateThreat', () => {
 
       const result = calculateThreat(
         event,
-        {
-          sourceAuras: new Set(),
-          targetAuras: new Set(),
+        createTestOptions({
           enemies: [],
-          sourceActor: defaultActor,
-          targetActor: { id: 25, name: 'Boss', class: null },
-          encounterId: null,
-        },
-        config
+        }),
+        mockThreatConfig
       )
 
       // With no enemies, threat values should be empty or have no enemy to apply to
@@ -376,15 +469,10 @@ describe('calculateThreat', () => {
 
       const result = calculateThreat(
         event,
-        {
-          sourceAuras: new Set(),
-          targetAuras: new Set(),
-          enemies: [defaultEnemy],
+        createTestOptions({
           sourceActor: { id: 99, name: 'Pet', class: null },
-          targetActor: { id: 25, name: 'Boss', class: null },
-          encounterId: null,
-        },
-        config
+        }),
+        mockThreatConfig
       )
 
       // Should still calculate base threat without class modifiers
@@ -399,15 +487,11 @@ describe('calculateThreat', () => {
 
         const result = calculateThreat(
           event,
-          {
+          createTestOptions({
             sourceAuras: new Set([25846]), // Blessing of Salvation
-            targetAuras: new Set(),
-            enemies: [defaultEnemy],
             sourceActor: { id: 1, name: 'WarriorPlayer', class: 'warrior' },
-            targetActor: { id: 25, name: 'Boss', class: null },
-            encounterId: null,
-          },
-          config
+          }),
+          mockThreatConfig
         )
 
         expect(result.calculation.modifiers).toContainEqual(
@@ -422,15 +506,11 @@ describe('calculateThreat', () => {
 
         const result = calculateThreat(
           event,
-          {
+          createTestOptions({
             sourceAuras: new Set([25846]), // Blessing of Salvation
-            targetAuras: new Set(),
-            enemies: [defaultEnemy],
             sourceActor: { id: 1, name: 'RoguePlayer', class: 'rogue' },
-            targetActor: { id: 25, name: 'Boss', class: null },
-            encounterId: null,
-          },
-          config
+          }),
+          mockThreatConfig
         )
 
         expect(result.calculation.modifiers).toContainEqual(
@@ -448,15 +528,11 @@ describe('calculateThreat', () => {
 
         const result = calculateThreat(
           event,
-          {
+          createTestOptions({
             sourceAuras: new Set([25895]), // Greater Blessing of Salvation
-            targetAuras: new Set(),
-            enemies: [defaultEnemy],
             sourceActor: { id: 1, name: 'MagePlayer', class: 'mage' },
-            targetActor: { id: 25, name: 'Boss', class: null },
-            encounterId: null,
-          },
-          config
+          }),
+          mockThreatConfig
         )
 
         expect(result.calculation.modifiers).toContainEqual(
@@ -473,15 +549,11 @@ describe('calculateThreat', () => {
 
         const result = calculateThreat(
           event,
-          {
+          createTestOptions({
             sourceAuras: new Set([26400]), // Fetish of the Sand Reaver
-            targetAuras: new Set(),
-            enemies: [defaultEnemy],
             sourceActor: { id: 1, name: 'WarriorPlayer', class: 'warrior' },
-            targetActor: { id: 25, name: 'Boss', class: null },
-            encounterId: null,
-          },
-          config
+          }),
+          mockThreatConfig
         )
 
         expect(result.calculation.modifiers).toContainEqual(
@@ -496,15 +568,11 @@ describe('calculateThreat', () => {
 
         const result = calculateThreat(
           event,
-          {
+          createTestOptions({
             sourceAuras: new Set([26400]), // Fetish of the Sand Reaver
-            targetAuras: new Set(),
-            enemies: [defaultEnemy],
             sourceActor: { id: 1, name: 'MagePlayer', class: 'mage' },
-            targetActor: { id: 25, name: 'Boss', class: null },
-            encounterId: null,
-          },
-          config
+          }),
+          mockThreatConfig
         )
 
         expect(result.calculation.modifiers).toContainEqual(
@@ -521,16 +589,12 @@ describe('calculateThreat', () => {
 
         const result = calculateThreat(
           event,
-          {
+          createTestOptions({
             // Defensive Stance (1.3x) + Blessing of Salvation (0.7x)
             sourceAuras: new Set([71, 25846]),
-            targetAuras: new Set(),
-            enemies: [defaultEnemy],
             sourceActor: { id: 1, name: 'WarriorPlayer', class: 'warrior' },
-            targetActor: { id: 25, name: 'Boss', class: null },
-            encounterId: null,
-          },
-          config
+          }),
+          mockThreatConfig
         )
 
         expect(result.calculation.modifiers).toContainEqual(
@@ -548,16 +612,12 @@ describe('calculateThreat', () => {
 
         const result = calculateThreat(
           event,
-          {
+          createTestOptions({
             // Blessing of Salvation (0.7x) + Fetish of the Sand Reaver (0.3x)
             sourceAuras: new Set([25846, 26400]),
-            targetAuras: new Set(),
-            enemies: [defaultEnemy],
             sourceActor: { id: 1, name: 'WarriorPlayer', class: 'warrior' },
-            targetActor: { id: 25, name: 'Boss', class: null },
-            encounterId: null,
-          },
-          config
+          }),
+          mockThreatConfig
         )
 
         expect(result.calculation.modifiers).toContainEqual(
@@ -575,16 +635,12 @@ describe('calculateThreat', () => {
 
         const result = calculateThreat(
           event,
-          {
+          createTestOptions({
             // Defensive Stance (1.3x) + Defiance Rank 5 (1.15x) + Blessing of Salvation (0.7x)
             sourceAuras: new Set([71, 12305, 25846]),
-            targetAuras: new Set(),
-            enemies: [defaultEnemy],
             sourceActor: { id: 1, name: 'WarriorPlayer', class: 'warrior' },
-            targetActor: { id: 25, name: 'Boss', class: null },
-            encounterId: null,
-          },
-          config
+          }),
+          mockThreatConfig
         )
 
         expect(result.calculation.modifiers).toHaveLength(3)
@@ -599,15 +655,11 @@ describe('calculateThreat', () => {
 
         const result = calculateThreat(
           event,
-          {
+          createTestOptions({
             sourceAuras: new Set([71]), // Defensive Stance
-            targetAuras: new Set(),
-            enemies: [defaultEnemy],
             sourceActor: { id: 1, name: 'WarriorPlayer', class: 'warrior' },
-            targetActor: { id: 25, name: 'Boss', class: null },
-            encounterId: null,
-          },
-          config
+          }),
+          mockThreatConfig
         )
 
         expect(result.calculation.modifiers).toContainEqual(
@@ -621,15 +673,11 @@ describe('calculateThreat', () => {
 
         const result = calculateThreat(
           event,
-          {
+          createTestOptions({
             sourceAuras: new Set([5487]), // Bear Form
-            targetAuras: new Set(),
-            enemies: [defaultEnemy],
             sourceActor: { id: 1, name: 'DruidPlayer', class: 'druid' },
-            targetActor: { id: 25, name: 'Boss', class: null },
-            encounterId: null,
-          },
-          config
+          }),
+          mockThreatConfig
         )
 
         expect(result.calculation.modifiers).toContainEqual(
@@ -652,15 +700,11 @@ describe('calculateThreat', () => {
 
         const result = calculateThreat(
           holyDamageEvent,
-          {
+          createTestOptions({
             sourceAuras: new Set([25780]), // Righteous Fury
-            targetAuras: new Set(),
-            enemies: [defaultEnemy],
             sourceActor: { id: 1, name: 'PaladinPlayer', class: 'paladin' },
-            targetActor: { id: 25, name: 'Boss', class: null },
-            encounterId: null,
-          },
-          config
+          }),
+          mockThreatConfig
         )
 
         // Righteous Fury should apply to holy spells
@@ -674,15 +718,11 @@ describe('calculateThreat', () => {
 
         const result = calculateThreat(
           event,
-          {
+          createTestOptions({
             sourceAuras: new Set([12305]), // Defiance Rank 5
-            targetAuras: new Set(),
-            enemies: [defaultEnemy],
             sourceActor: { id: 1, name: 'WarriorPlayer', class: 'warrior' },
-            targetActor: { id: 25, name: 'Boss', class: null },
-            encounterId: null,
-          },
-          config
+          }),
+          mockThreatConfig
         )
 
         expect(result.calculation.modifiers).toContainEqual(
