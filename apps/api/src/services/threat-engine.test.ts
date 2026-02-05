@@ -1284,4 +1284,67 @@ describe('Custom Threat Integration', () => {
      expect(enemy2Threat.amount).toBe(50)
      expect(enemy2Threat.cumulative).toBe(50)
    })
- })
+ 
+  describe('environmental threat filtering', () => {
+    it('generates zero threat when targeting environment (ID -1)', () => {
+      const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
+      const events: WCLEvent[] = [
+        createDamageEvent({
+          sourceID: warriorActor.id,
+          targetID: -1,
+          amount: 1000,
+        }),
+      ]
+
+      const result = processEvents({
+        rawEvents: events,
+        actorMap,
+        enemies,
+        config: mockConfig,
+      })
+
+      expect(result.augmentedEvents.length).toBe(0)
+    })
+
+    it('excludes environment from split threat calculations', () => {
+      const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
+      
+      const config = createMockThreatConfig({
+        abilities: {
+          [SPELLS.MOCK_ABILITY_1]: () => ({
+            formula: '1 * amt',
+            value: 100,
+            splitAmongEnemies: true,
+          }),
+        },
+      })
+      
+      const mixedEnemies = [
+        bossEnemy,
+        { id: -1, name: 'Environment', instance: 0 }
+      ]
+
+      const events: WCLEvent[] = [
+        createDamageEvent({
+          sourceID: warriorActor.id,
+          targetID: bossEnemy.id,
+          abilityGameID: SPELLS.MOCK_ABILITY_1,
+          amount: 100,
+        }),
+      ]
+
+      const result = processEvents({
+        rawEvents: events,
+        actorMap,
+        enemies: mixedEnemies,
+        config,
+      })
+
+      const augmented = result.augmentedEvents[0]
+      expect(augmented.threat.values.length).toBe(1)
+      expect(augmented.threat.values[0].id).toBe(bossEnemy.id)
+      // Should receive full threat (100) not split (50)
+      expect(augmented.threat.values[0].amount).toBe(100)
+    })
+  })
+})

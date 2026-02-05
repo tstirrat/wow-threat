@@ -88,11 +88,14 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
 
       // Update threat tracker with threat
       if (calculation.isSplit) {
-        const splitThreat = calculation.modifiedThreat / enemies.length;
-        let values: TargetThreatValue[] = [];
-        for (const enemy of enemies) {
+        // Filter out environment targets from split threat
+        const validEnemies = enemies.filter((e) => e.id !== ENVIRONMENT_TARGET_ID)
+        const splitThreat = calculation.modifiedThreat / validEnemies.length
+
+        let values: TargetThreatValue[] = []
+        for (const enemy of validEnemies) {
           // TODO: check enemies are alive
-          fightState.addThreat(event.sourceID, enemy.id, splitThreat);
+          fightState.addThreat(event.sourceID, enemy.id, splitThreat)
           values.push({
             id: enemy.id,
             instance: enemy.instance,
@@ -138,11 +141,16 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
   }
 }
 
+const ENVIRONMENT_TARGET_ID = -1
+
 /**
  * Determine if an event should have threat calculated
  */
 function shouldCalculateThreat(event: WCLEvent): boolean {
   if (event.type === 'damage' && event.targetIsFriendly) {
+    return false
+  }
+  if (event.targetID === ENVIRONMENT_TARGET_ID) {
     return false
   }
   return ['damage', 'heal', 'energize', 'cast'].includes(event.type)
