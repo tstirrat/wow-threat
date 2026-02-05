@@ -1,7 +1,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { ThreatContext, ThreatConfig } from '../types'
-import { getActiveModifiers, validateAuraModifiers } from './utils'
+import { getActiveModifiers, validateAuraModifiers, validateAbilities } from './utils'
 
 // Mock context factory
 function createMockContext(overrides: Partial<ThreatContext> = {}): ThreatContext {
@@ -10,10 +10,16 @@ function createMockContext(overrides: Partial<ThreatContext> = {}): ThreatContex
     amount: 100,
     sourceAuras: new Set(),
     targetAuras: new Set(),
-    enemies: [],
     sourceActor: { id: 1, name: 'TestPlayer', class: 'warrior' },
     targetActor: { id: 2, name: 'TestEnemy', class: null },
     encounterId: null,
+    actors: {
+      getPosition: () => null,
+      getDistance: () => null,
+      getActorsInRange: () => [],
+      getThreat: () => 0,
+      getTopActorsByThreat: () => [],
+    },
     ...overrides,
   }
 }
@@ -244,6 +250,161 @@ describe('validateAuraModifiers', () => {
     )
 
     validateAuraModifiers(config)
+
+    expect(consoleWarnSpy).not.toHaveBeenCalled()
+  })
+})
+
+describe('validateAbilities', () => {
+  let consoleWarnSpy: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    consoleWarnSpy.mockRestore()
+  })
+
+  // Mock config factory for abilities
+  function createMockConfig(
+    globalAbilities: Record<number, any> = {},
+    classAbilities: Record<string, Record<number, any>> = {}
+  ): ThreatConfig {
+    const classes: any = {}
+    for (const [className, abilities] of Object.entries(classAbilities)) {
+      classes[className] = {
+        abilities,
+        auraModifiers: {},
+      }
+    }
+
+    return {
+      version: '1.0.0',
+      gameVersion: 1,
+      baseThreat: {} as any,
+      classes,
+      abilities: globalAbilities,
+      auraModifiers: {},
+      untauntableEnemies: new Set(),
+    }
+  }
+
+  it('does not warn when all spell IDs are unique', () => {
+    const config = createMockConfig(
+      { 100: () => ({ formula: 'test', value: 100, splitAmongEnemies: false }) },
+      {
+        warrior: { 200: () => ({ formula: 'test', value: 200, splitAmongEnemies: false }) },
+        paladin: { 300: () => ({ formula: 'test', value: 300, splitAmongEnemies: false }) },
+      }
+    )
+
+    validateAbilities(config)
+
+    expect(consoleWarnSpy).not.toHaveBeenCalled()
+  })
+
+  it('warns when spell ID exists in global and class config', () => {
+    const config = createMockConfig(
+      { 100: () => ({ formula: 'global', value: 100, splitAmongEnemies: false }) },
+      {
+        warrior: { 100: () => ({ formula: 'warrior', value: 100, splitAmongEnemies: false }) },
+      }
+    )
+
+    validateAbilities(config)
+
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Duplicate spell IDs found in abilities')
+    )
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Spell ID 100: global, warrior')
+    )
+  })
+
+  it('warns when spell ID exists in multiple class configs', () => {
+    const config = createMockConfig(
+      {},
+      {
+        warrior: { 200: () => ({ formula: 'warrior', value: 200, splitAmongEnemies: false }) },
+        paladin: { 200: () => ({ formula: 'paladin', value: 200, splitAmongEnemies: false }) },
+      }
+    )
+
+    validateAbilities(config)
+
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Duplicate spell IDs found in abilities')
+    )
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Spell ID 200: warrior, paladin')
+    )
+  })
+
+  it('reports all duplicates found', () => {
+    const config = createMockConfig(
+      { 100: () => ({ formula: 'global', value: 100, splitAmongEnemies: false }) },
+      {
+        warrior: {
+          100: () => ({ formula: 'warrior', value: 100, splitAmongEnemies: false }),
+          200: () => ({ formula: 'warrior', value: 200, splitAmongEnemies: false }),
+        },
+        paladin: {
+          200: () => ({ formula: 'paladin', value: 200, splitAmongEnemies: false }),
+          300: () => ({ formula: 'paladin', value: 300, splitAmongEnemies: false }),
+        },
+        druid: {
+          300: () => ({ formula: 'druid', value: 300, splitAmongEnemies: false }),
+        },
+      }
+    )
+
+    validateAbilities(config)
+
+    // Should report all 3 duplicates: 100, 200, 300
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Duplicate spell IDs found in abilities')
+    )
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Spell ID 100')
+    )
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Spell ID 200')
+    )
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Spell ID 300')
+    )
+  })
+
+  it('handles empty class abilities gracefully', () => {
+    const config = createMockConfig(
+      { 100: () => ({ formula: 'global', value: 100, splitAmongEnemies: false }) },
+      {
+        warrior: {},
+      }
+    )
+
+    validateAbilities(config)
+
+    expect(consoleWarnSpy).not.toHaveBeenCalled()
+  })
+
+  it('handles config with no global abilities', () => {
+    const config: ThreatConfig = {
+      version: '1.0.0',
+      gameVersion: 1,
+      baseThreat: {} as any,
+      classes: {
+        warrior: {
+          abilities: { 100: () => ({ formula: 'warrior', value: 100, splitAmongEnemies: false }) },
+          auraModifiers: {},
+        },
+      },
+      auraModifiers: {},
+      untauntableEnemies: new Set(),
+    }
+
+    validateAbilities(config)
 
     expect(consoleWarnSpy).not.toHaveBeenCalled()
   })

@@ -116,18 +116,15 @@ function getEventAmount(event: WCLEvent): number {
 function getFormulaResult(ctx: ThreatContext, config: ThreatConfig) {
   const event = ctx.event
 
-  // Check for global ability-specific formula first (boss mechanics)
-  if ('ability' in event && event.ability && config.abilities) {
-    const globalAbilityFormula = config.abilities[event.ability.guid]
-    if (globalAbilityFormula) {
-      return globalAbilityFormula(ctx)
-    }
-  }
-
-  // Check for class-specific ability formula
+  // Merge abilities: global first, then class (class overrides global on duplicates)
   if ('ability' in event && event.ability) {
     const classConfig = getClassConfig(ctx.sourceActor.class, config)
-    const abilityFormula = classConfig?.abilities[event.ability.guid]
+    const mergedAbilities = {
+      ...(config.abilities ?? {}),
+      ...(classConfig?.abilities ?? {}),
+    }
+    
+    const abilityFormula = mergedAbilities[event.ability.guid]
     if (abilityFormula) {
       return abilityFormula(ctx)
     }

@@ -698,12 +698,13 @@ describe('processEvents', () => {
   })
 
   describe('global config properties', () => {
-    it('should use global abilities config and override class-specific abilities', () => {
+    it('should merge global and class abilities with class taking precedence', () => {
       const GLOBAL_ABILITY_ID = 88888
+      const CLASS_ONLY_ABILITY_ID = 99999
       
       const customConfig: ThreatConfig = {
         ...mockConfig,
-        // Global ability that overrides class-specific
+        // Global ability
         abilities: {
           [GLOBAL_ABILITY_ID]: (ctx: ThreatContext) => ({
             formula: 'global: 5 * amt',
@@ -716,10 +717,16 @@ describe('processEvents', () => {
           warrior: {
             ...mockConfig.classes.warrior!,
             abilities: {
-              // This should be overridden by global config
+              // This should override global config
               [GLOBAL_ABILITY_ID]: (ctx: ThreatContext) => ({
                 formula: 'class: 2 * amt',
                 value: ctx.amount * 2,
+                splitAmongEnemies: false,
+              }),
+              // This is class-only
+              [CLASS_ONLY_ABILITY_ID]: (ctx: ThreatContext) => ({
+                formula: 'class-only: 3 * amt',
+                value: ctx.amount * 3,
                 splitAmongEnemies: false,
               }),
             },
@@ -730,11 +737,20 @@ describe('processEvents', () => {
       const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
 
       const events: WCLEvent[] = [
+        // Duplicate ability: class overrides global
         createDamageEvent({
           sourceID: warriorActor.id,
           targetID: bossEnemy.id,
           abilityId: GLOBAL_ABILITY_ID,
           abilityName: 'Global Ability',
+          amount: 100,
+        }),
+        // Class-only ability
+        createDamageEvent({
+          sourceID: warriorActor.id,
+          targetID: bossEnemy.id,
+          abilityId: CLASS_ONLY_ABILITY_ID,
+          abilityName: 'Class Only Ability',
           amount: 100,
         }),
       ]
@@ -746,10 +762,15 @@ describe('processEvents', () => {
         config: customConfig,
       })
 
-      const augmented = result.augmentedEvents[0]
-      // Should use global formula (5x) not class formula (2x)
-      expect(augmented.threat.calculation.baseThreat).toBe(500)
-      expect(augmented.threat.calculation.formula).toBe('global: 5 * amt')
+      // First event: class formula (2x) overrides global (5x)
+      const augmented1 = result.augmentedEvents[0]
+      expect(augmented1.threat.calculation.baseThreat).toBe(200)
+      expect(augmented1.threat.calculation.formula).toBe('class: 2 * amt')
+
+      // Second event: class-only formula (3x)
+      const augmented2 = result.augmentedEvents[1]
+      expect(augmented2.threat.calculation.baseThreat).toBe(300)
+      expect(augmented2.threat.calculation.formula).toBe('class-only: 3 * amt')
     })
 
     it('should use global auraModifiers and merge with class auraModifiers', () => {

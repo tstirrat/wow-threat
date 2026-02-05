@@ -5,7 +5,7 @@
  */
 
 import type { ThreatConfig, ThreatContext, ThreatModifier } from '../types'
-import { validateAuraModifiers } from '../shared/utils'
+import { validateAuraModifiers, validateAbilities } from '../shared/utils'
 import { baseThreat } from './general'
 import { warriorConfig } from './classes/warrior'
 import { paladinConfig } from './classes/paladin'
@@ -87,4 +87,5 @@ export const anniversaryConfig: ThreatConfig = {
 
 // Validate for duplicate spell IDs (dev-time warning)
 validateAuraModifiers(anniversaryConfig)
+validateAbilities(anniversaryConfig)
 
