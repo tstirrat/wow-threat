@@ -123,7 +123,7 @@ export interface ThreatModification {
 
 export type ThreatSpecial =
   | { type: 'taunt'; fixateDuration: number }
-  | { type: 'threatDrop' }
+  | { type: 'modifyThreat'; multiplier: number }
   | { type: 'noThreatWindow'; duration: number }
   | { type: 'fixate' }
   | { type: 'fixateEnd' }

@@ -15,7 +15,7 @@ import type {
   ActorContext,
 } from '@wcl-threat/threat-config'
 
-import { calculateThreat, type CalculateThreatOptions } from './threat'
+import { calculateThreat, calculateThreatModification, type CalculateThreatOptions } from './threat'
 import { FightState } from './fight-state'
 
 export interface ProcessEventsInput {
@@ -102,6 +102,17 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
           fightState.addThreat(mod.actorId, mod.enemyId, mod.amount)
         }
       }
+
+      // Process threat modifications (boss abilities that modify threat)
+      if (threatResult.calculation.special?.type === 'modifyThreat') {
+        const currentThreat = fightState.getThreat(event.targetID, event.sourceID)
+        const newThreat = calculateThreatModification(
+          currentThreat,
+          threatResult.calculation.special.multiplier
+        )
+        fightState.setThreat(event.targetID, event.sourceID, newThreat)
+      }
+
       augmentedEvents.push(buildAugmentedEvent(event, threatResult))
     }
   }

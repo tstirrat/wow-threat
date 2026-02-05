@@ -43,7 +43,7 @@ export class FightState {
   /** Process a WCL event and update relevant actor state */
   processEvent(event: WCLEvent, config: ThreatConfig): void {
     // Update positions if available
-    if ('x' in event && 'y' in event && event.x != null && event.y != null) {
+    if ('x' in event && 'y' in event && typeof event.x === 'number' && typeof event.y === 'number') {
       this.positionTracker.updatePosition(event.sourceID, event.x, event.y)
     }
 
@@ -148,5 +148,9 @@ export class FightState {
 
   addThreat(actorId: number, enemyId: number, amount: number) {
     this.threatTracker.addThreat(actorId, enemyId, amount)
+  }
+
+  setThreat(actorId: number, enemyId: number, amount: number) {
+    this.threatTracker.setThreat(actorId, enemyId, amount)
   }
 }

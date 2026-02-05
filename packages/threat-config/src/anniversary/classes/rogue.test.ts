@@ -13,10 +13,16 @@ function createMockContext(overrides: Partial<ThreatContext> = {}): ThreatContex
     amount: 100,
     sourceAuras: new Set(),
     targetAuras: new Set(),
-    enemies: [],
     sourceActor: { id: 1, name: 'TestRogue', class: 'rogue' },
     targetActor: { id: 2, name: 'TestEnemy', class: null },
     encounterId: null,
+    actors: {
+      getPosition: () => null,
+      getDistance: () => null,
+      getActorsInRange: () => [],
+      getThreat: () => 0,
+      getTopActorsByThreat: () => [],
+    },
     ...overrides,
   }
 }
@@ -38,7 +44,7 @@ describe('Rogue Config', () => {
         const result = formula!(ctx)
 
         expect(result.formula).toBe('-150')
-        expect(result.baseThreat).toBe(-150)
+        expect(result.value).toBe(-150)
       })
     })
 
@@ -50,7 +56,7 @@ describe('Rogue Config', () => {
         const ctx = createMockContext()
         const result = formula!(ctx)
 
-        expect(result.special).toEqual({ type: 'threatDrop' })
+        expect(result.special).toEqual({ type: 'modifyThreat', multiplier: 0 })
       })
     })
   })

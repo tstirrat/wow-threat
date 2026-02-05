@@ -7,7 +7,7 @@ import type { ThreatContext } from '../types'
 import {
   calculateThreat,
   tauntTarget,
-  threatDrop,
+  modifyThreat,
   noThreat,
 } from './formulas'
 
@@ -18,10 +18,16 @@ function createMockContext(overrides: Partial<ThreatContext> = {}): ThreatContex
     amount: 100,
     sourceAuras: new Set(),
     targetAuras: new Set(),
-    enemies: [],
     sourceActor: { id: 1, name: 'TestPlayer', class: 'warrior' },
     targetActor: { id: 2, name: 'TestEnemy', class: null },
     encounterId: null,
+    actors: {
+      getPosition: () => null,
+      getDistance: () => null,
+      getActorsInRange: () => [],
+      getThreat: () => 0,
+      getTopActorsByThreat: () => [],
+    },
     ...overrides,
   }
 }
@@ -34,9 +40,8 @@ describe('calculateThreat', () => {
     const result = formula(ctx)
 
     expect(result.formula).toBe('amt')
-    expect(result.baseThreat).toBe(500)
+    expect(result.value).toBe(500)
     expect(result.splitAmongEnemies).toBe(false)
-    expect(result.modifiers).toEqual([])
   })
 
   it('applies modifier to amount', () => {
@@ -46,7 +51,7 @@ describe('calculateThreat', () => {
     const result = formula(ctx)
 
     expect(result.formula).toBe('amt * 2')
-    expect(result.baseThreat).toBe(200)
+    expect(result.value).toBe(200)
   })
 
   it('applies modifier with decimal values', () => {
@@ -56,7 +61,7 @@ describe('calculateThreat', () => {
     const result = formula(ctx)
 
     expect(result.formula).toBe('amt * 0.5')
-    expect(result.baseThreat).toBe(50)
+    expect(result.value).toBe(50)
   })
 
   it('returns flat bonus threat with modifier: 0', () => {
@@ -66,7 +71,7 @@ describe('calculateThreat', () => {
     const result = formula(ctx)
 
     expect(result.formula).toBe('301')
-    expect(result.baseThreat).toBe(301)
+    expect(result.value).toBe(301)
   })
 
   it('applies both modifier and bonus', () => {
@@ -76,7 +81,7 @@ describe('calculateThreat', () => {
     const result = formula(ctx)
 
     expect(result.formula).toBe('(amt * 2) + 150')
-    expect(result.baseThreat).toBe(350) // (100 * 2) + 150
+    expect(result.value).toBe(350) // (100 * 2) + 150
   })
 
   it('applies bonus without modifier', () => {
@@ -86,7 +91,7 @@ describe('calculateThreat', () => {
     const result = formula(ctx)
 
     expect(result.formula).toBe('amt + 145')
-    expect(result.baseThreat).toBe(245)
+    expect(result.value).toBe(245)
   })
 
   it('supports split option', () => {
@@ -96,7 +101,7 @@ describe('calculateThreat', () => {
     const result = formula(ctx)
 
     expect(result.formula).toBe('70')
-    expect(result.baseThreat).toBe(70)
+    expect(result.value).toBe(70)
     expect(result.splitAmongEnemies).toBe(true)
   })
 
@@ -107,7 +112,7 @@ describe('calculateThreat', () => {
     const result = formula(ctx)
 
     expect(result.formula).toBe('-240')
-    expect(result.baseThreat).toBe(-240)
+    expect(result.value).toBe(-240)
   })
 
   it('handles zero threat', () => {
@@ -117,7 +122,7 @@ describe('calculateThreat', () => {
     const result = formula(ctx)
 
     expect(result.formula).toBe('0')
-    expect(result.baseThreat).toBe(0)
+    expect(result.value).toBe(0)
   })
 
   it('handles complex formula with modifier and split', () => {
@@ -127,7 +132,7 @@ describe('calculateThreat', () => {
     const result = formula(ctx)
 
     expect(result.formula).toBe('amt * 0.5')
-    expect(result.baseThreat).toBe(500)
+    expect(result.value).toBe(500)
     expect(result.splitAmongEnemies).toBe(true)
   })
 
@@ -138,7 +143,7 @@ describe('calculateThreat', () => {
     const result = formula(ctx)
 
     expect(result.formula).toBe('(amt * 1.75) + 50')
-    expect(result.baseThreat).toBe(225) // (100 * 1.75) + 50
+    expect(result.value).toBe(225) // (100 * 1.75) + 50
     expect(result.splitAmongEnemies).toBe(false)
   })
 })
@@ -151,7 +156,7 @@ describe('tauntTarget', () => {
     const result = formula(ctx)
 
     expect(result.formula).toBe('topThreat + 1')
-    expect(result.baseThreat).toBe(1)
+    expect(result.value).toBe(1)
     expect(result.special).toEqual({ type: 'taunt', fixateDuration: 3000 })
     expect(result.splitAmongEnemies).toBe(false)
   })
@@ -163,7 +168,7 @@ describe('tauntTarget', () => {
     const result = formula(ctx)
 
     expect(result.formula).toBe('topThreat + amt + 0')
-    expect(result.baseThreat).toBe(500) // Just the damage, bonus is 0
+    expect(result.value).toBe(500) // Just the damage, bonus is 0
     expect(result.special).toEqual({ type: 'taunt', fixateDuration: 6000 })
   })
 
@@ -174,21 +179,42 @@ describe('tauntTarget', () => {
     const result = formula(ctx)
 
     expect(result.formula).toBe('topThreat + amt + 100')
-    expect(result.baseThreat).toBe(400) // 300 damage + 100 bonus
+    expect(result.value).toBe(400) // 300 damage + 100 bonus
   })
 })
 
-describe('threatDrop', () => {
-  it('returns threat drop special', () => {
-    const formula = threatDrop()
+describe('modifyThreat', () => {
+  it('returns modifyThreat special with multiplier', () => {
+    const formula = modifyThreat(0.5)
     const ctx = createMockContext()
 
     const result = formula(ctx)
 
-    expect(result.formula).toBe('threatDrop')
-    expect(result.baseThreat).toBe(0)
-    expect(result.special).toEqual({ type: 'threatDrop' })
+    expect(result.formula).toBe('threat * 0.5')
+    expect(result.value).toBe(0)
+    expect(result.special).toEqual({ type: 'modifyThreat', multiplier: 0.5 })
     expect(result.splitAmongEnemies).toBe(false)
+  })
+
+  it('handles threat wipe (multiplier 0)', () => {
+    const formula = modifyThreat(0)
+    const ctx = createMockContext()
+
+    const result = formula(ctx)
+
+    expect(result.formula).toBe('threatWipe')
+    expect(result.value).toBe(0)
+    expect(result.special).toEqual({ type: 'modifyThreat', multiplier: 0 })
+  })
+
+  it('handles threat doubling', () => {
+    const formula = modifyThreat(2)
+    const ctx = createMockContext()
+
+    const result = formula(ctx)
+
+    expect(result.formula).toBe('threat * 2')
+    expect(result.special).toEqual({ type: 'modifyThreat', multiplier: 2 })
   })
 })
 
@@ -200,7 +226,7 @@ describe('noThreat', () => {
     const result = formula(ctx)
 
     expect(result.formula).toBe('0')
-    expect(result.baseThreat).toBe(0)
+    expect(result.value).toBe(0)
     expect(result.special).toBeUndefined()
   })
 
@@ -211,7 +237,7 @@ describe('noThreat', () => {
     const result = formula(ctx)
 
     expect(result.formula).toBe('0')
-    expect(result.baseThreat).toBe(0)
+    expect(result.value).toBe(0)
     expect(result.special).toEqual({ type: 'noThreatWindow', duration: 30000 })
   })
 })

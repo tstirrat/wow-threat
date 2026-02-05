@@ -12,7 +12,7 @@ import {
   type ActorContext,
   type SpellSchool,
 } from '@wcl-threat/threat-config'
-import { calculateThreat } from './threat'
+import { calculateThreat, calculateThreatModification } from './threat'
 import { createMockThreatConfig, createMockActorContext } from '../../test/helpers/config'
 import { createDamageEvent, createHealEvent, createEnergizeEvent } from '../../test/helpers/events'
 
@@ -640,5 +640,43 @@ describe('calculateThreat', () => {
         expect(result.calculation.threatToEnemy).toBe(1150)
       })
     })
+  })
+})
+
+// ============================================================================
+// Threat Modification Tests
+// ============================================================================
+
+describe('calculateThreatModification', () => {
+  it('multiplies current threat by multiplier', () => {
+    expect(calculateThreatModification(1000, 0.5)).toBe(500)
+    expect(calculateThreatModification(5000, 0.25)).toBe(1250)
+    expect(calculateThreatModification(1000, 2)).toBe(2000)
+  })
+
+  it('wipes threat when multiplier is 0', () => {
+    expect(calculateThreatModification(10000, 0)).toBe(0)
+    expect(calculateThreatModification(1, 0)).toBe(0)
+  })
+
+  it('clamps negative results to 0', () => {
+    expect(calculateThreatModification(1000, -1)).toBe(0)
+    expect(calculateThreatModification(500, -0.5)).toBe(0)
+  })
+
+  it('handles edge cases', () => {
+    expect(calculateThreatModification(0, 0.5)).toBe(0)
+    expect(calculateThreatModification(0, 0)).toBe(0)
+    expect(calculateThreatModification(1000, 1)).toBe(1000)
+    expect(calculateThreatModification(1000, 1.5)).toBe(1500)
+  })
+
+  it('handles very large multipliers', () => {
+    expect(calculateThreatModification(1000, 100)).toBe(100000)
+  })
+
+  it('handles very small multipliers', () => {
+    expect(calculateThreatModification(1000, 0.001)).toBe(1)
+    expect(calculateThreatModification(1000, 0.0001)).toBe(0.1)
   })
 })

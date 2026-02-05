@@ -92,6 +92,16 @@ export function calculateThreat(
 }
 
 /**
+ * Calculate threat modification: multiply current threat by multiplier, floor at 0
+ */
+export function calculateThreatModification(
+  currentThreat: number,
+  multiplier: number
+): number {
+  return Math.max(0, currentThreat * multiplier)
+}
+
+/**
  * Get the relevant amount from an event (damage, heal, etc.)
  */
 function getEventAmount(event: WCLEvent): number {

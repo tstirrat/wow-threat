@@ -22,6 +22,19 @@ export class ThreatTracker {
   }
 
   /**
+   * Set threat for an actor against an enemy (replaces current value)
+   * Clamps to minimum of 0
+   */
+  setThreat(actorId: number, enemyId: number, amount: number): void {
+    const clampedAmount = Math.max(0, amount)
+    if (!this.threat.has(actorId)) {
+      this.threat.set(actorId, new Map())
+    }
+    const actorThreat = this.threat.get(actorId)!
+    actorThreat.set(enemyId, clampedAmount)
+  }
+
+  /**
    * Get the current threat for an actor against an enemy
    */
   getThreat(actorId: number, enemyId: number): number {

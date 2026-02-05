@@ -5,7 +5,7 @@
  */
 
 import type { ClassThreatConfig } from '../../types'
-import { calculateThreat, threatDrop } from '../../shared/formulas'
+import { calculateThreat, modifyThreat } from '../../shared/formulas'
 
 // ============================================================================
 // Spell IDs
@@ -33,7 +33,7 @@ export const hunterConfig: ClassThreatConfig = {
 
   abilities: {
     // Feign Death - threat drop
-    [Spells.FeignDeath]: threatDrop(),
+    [Spells.FeignDeath]: modifyThreat(0),
 
     // Distracting Shot - damage + flat threat per rank
     [Spells.DistractingShotR1]: calculateThreat({ modifier: 1, bonus: 110 }),

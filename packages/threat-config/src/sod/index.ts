@@ -11,22 +11,19 @@ import type { ThreatConfig, ThreatContext, ThreatFormulaResult } from '../types'
 const baseThreat = {
   damage: (ctx: ThreatContext): ThreatFormulaResult => ({
     formula: 'amt',
-    baseThreat: ctx.amount,
-    modifiers: [],
+    value: ctx.amount,
     splitAmongEnemies: false,
   }),
 
   heal: (ctx: ThreatContext): ThreatFormulaResult => ({
     formula: 'effectiveHeal * 0.5',
-    baseThreat: ctx.amount * 0.5,
-    modifiers: [],
+    value: ctx.amount * 0.5,
     splitAmongEnemies: true,
   }),
 
   energize: (ctx: ThreatContext): ThreatFormulaResult => ({
     formula: 'resource * 0.5',
-    baseThreat: ctx.amount * 0.5,
-    modifiers: [],
+    value: ctx.amount * 0.5,
     splitAmongEnemies: true,
   }),
 }

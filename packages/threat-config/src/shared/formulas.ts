@@ -103,16 +103,20 @@ export function tauntTarget(
 }
 
 /**
- * Threat drop: removes all threat on target (if not resisted)
- * Example: Vanish, Feign Death
+ * Threat modification: multiplies target's current threat against source
+ * Examples:
+ *   modifyThreat(0) - Threat wipe (Vanish, Feign Death)
+ *   modifyThreat(0.5) - Halve threat (Onyxia's Knockaway)
+ *   modifyThreat(2) - Double threat (theoretical boss mechanic)
  */
-export function threatDrop(): FormulaFn {
+export function modifyThreat(multiplier: number): FormulaFn {
   return () => ({
-    formula: 'threatDrop',
+    formula: multiplier === 0 ? 'threatWipe' : `threat * ${multiplier}`,
     value: 0,
     splitAmongEnemies: false,
     special: {
-      type: 'threatDrop',
+      type: 'modifyThreat',
+      multiplier,
     },
   })
 }

@@ -13,10 +13,16 @@ function createMockContext(overrides: Partial<ThreatContext> = {}): ThreatContex
     amount: 100,
     sourceAuras: new Set(),
     targetAuras: new Set(),
-    enemies: [],
     sourceActor: { id: 1, name: 'TestPaladin', class: 'paladin' },
     targetActor: { id: 2, name: 'TestEnemy', class: null },
     encounterId: null,
+    actors: {
+      getPosition: () => null,
+      getDistance: () => null,
+      getActorsInRange: () => [],
+      getThreat: () => 0,
+      getTopActorsByThreat: () => [],
+    },
     ...overrides,
   }
 }
@@ -58,7 +64,7 @@ describe('Paladin Config', () => {
         const result = formula!(ctx)
 
         expect(result.formula).toBe('194')
-        expect(result.baseThreat).toBe(194)
+        expect(result.value).toBe(194)
       })
     })
 
@@ -71,7 +77,7 @@ describe('Paladin Config', () => {
         const result = formula!(ctx)
 
         expect(result.formula).toBe('amt + 35')
-        expect(result.baseThreat).toBe(85) // 50 + 35
+        expect(result.value).toBe(85) // 50 + 35
       })
     })
   })

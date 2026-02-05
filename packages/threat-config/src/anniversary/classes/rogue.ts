@@ -5,7 +5,7 @@
  */
 
 import type { ClassThreatConfig } from '../../types'
-import { calculateThreat, threatDrop } from '../../shared/formulas'
+import { calculateThreat, modifyThreat } from '../../shared/formulas'
 
 // ============================================================================
 // Spell IDs
@@ -40,8 +40,8 @@ export const rogueConfig: ClassThreatConfig = {
 
   abilities: {
     // Vanish - threat drop
-    [Spells.VanishR1]: threatDrop(),
-    [Spells.VanishR2]: threatDrop(),
+    [Spells.VanishR1]: modifyThreat(0),
+    [Spells.VanishR2]: modifyThreat(0),
 
     // Feint - negative threat (no coefficient applied)
     [Spells.FeintR1]: calculateThreat({ modifier: 0, bonus: -150 }),

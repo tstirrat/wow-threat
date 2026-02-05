@@ -13,10 +13,16 @@ function createMockContext(overrides: Partial<ThreatContext> = {}): ThreatContex
     amount: 100,
     sourceAuras: new Set(),
     targetAuras: new Set(),
-    enemies: [],
     sourceActor: { id: 1, name: 'TestDruid', class: 'druid' },
     targetActor: { id: 2, name: 'TestEnemy', class: null },
     encounterId: null,
+    actors: {
+      getPosition: () => null,
+      getDistance: () => null,
+      getActorsInRange: () => [],
+      getThreat: () => 0,
+      getTopActorsByThreat: () => [],
+    },
     ...overrides,
   }
 }
@@ -56,7 +62,7 @@ describe('Druid Config', () => {
         const result = formula!(ctx)
 
         expect(result.formula).toBe('amt * 1.75')
-        expect(result.baseThreat).toBe(1750)
+        expect(result.value).toBe(1750)
       })
     })
 
@@ -69,7 +75,7 @@ describe('Druid Config', () => {
         const result = formula!(ctx)
 
         expect(result.formula).toBe('amt * 1.75')
-        expect(result.baseThreat).toBe(175)
+        expect(result.value).toBe(175)
       })
     })
 
@@ -95,7 +101,7 @@ describe('Druid Config', () => {
         const result = formula!(ctx)
 
         expect(result.formula).toBe('-240')
-        expect(result.baseThreat).toBe(-240)
+        expect(result.value).toBe(-240)
       })
     })
 
@@ -108,7 +114,7 @@ describe('Druid Config', () => {
         const result = formula!(ctx)
 
         expect(result.formula).toBe('108')
-        expect(result.baseThreat).toBe(108)
+        expect(result.value).toBe(108)
       })
     })
 
@@ -121,7 +127,7 @@ describe('Druid Config', () => {
         const ctx = createMockContext()
         const result = formula!(ctx)
 
-        expect(result.baseThreat).toBe(0)
+        expect(result.value).toBe(0)
       })
     })
   })

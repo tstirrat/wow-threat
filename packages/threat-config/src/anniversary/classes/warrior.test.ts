@@ -13,10 +13,16 @@ function createMockContext(overrides: Partial<ThreatContext> = {}): ThreatContex
     amount: 100,
     sourceAuras: new Set(),
     targetAuras: new Set(),
-    enemies: [],
     sourceActor: { id: 1, name: 'TestWarrior', class: 'warrior' },
     targetActor: { id: 2, name: 'TestEnemy', class: null },
     encounterId: null,
+    actors: {
+      getPosition: () => null,
+      getDistance: () => null,
+      getActorsInRange: () => [],
+      getThreat: () => 0,
+      getTopActorsByThreat: () => [],
+    },
     ...overrides,
   }
 }
@@ -173,7 +179,7 @@ describe('abilities', () => {
       const result = formula!(ctx)
 
       expect(result.formula).toBe('(amt * 2) + 150')
-      expect(result.baseThreat).toBe(5150) // (2500 * 2) + 150
+      expect(result.value).toBe(5150) // (2500 * 2) + 150
       expect(result.splitAmongEnemies).toBe(false)
     })
   })
@@ -187,7 +193,7 @@ describe('abilities', () => {
       const result = formula!(ctx)
 
       expect(result.formula).toBe('301')
-      expect(result.baseThreat).toBe(301)
+      expect(result.value).toBe(301)
     })
   })
 
@@ -200,7 +206,7 @@ describe('abilities', () => {
       const result = formula!(ctx)
 
       expect(result.formula).toBe('amt + 355')
-      expect(result.baseThreat).toBe(855)
+      expect(result.value).toBe(855)
     })
   })
 
@@ -213,7 +219,7 @@ describe('abilities', () => {
       const result = formula!(ctx)
 
       expect(result.formula).toBe('amt + 145')
-      expect(result.baseThreat).toBe(1145)
+      expect(result.value).toBe(1145)
     })
   })
 
@@ -226,7 +232,7 @@ describe('abilities', () => {
       const result = formula!(ctx)
 
       expect(result.formula).toBe('70')
-      expect(result.baseThreat).toBe(70)
+      expect(result.value).toBe(70)
       expect(result.splitAmongEnemies).toBe(true)
     })
   })
@@ -240,7 +246,7 @@ describe('abilities', () => {
       const result = formula!(ctx)
 
       expect(result.formula).toBe('56')
-      expect(result.baseThreat).toBe(56)
+      expect(result.value).toBe(56)
       expect(result.splitAmongEnemies).toBe(false)
     })
   })
@@ -267,7 +273,7 @@ describe('abilities', () => {
       const result = formula!(ctx)
 
       expect(result.formula).toBe('topThreat + amt + 0')
-      expect(result.baseThreat).toBe(500)
+      expect(result.value).toBe(500)
       expect(result.special).toEqual({ type: 'taunt', fixateDuration: 6000 })
     })
   })

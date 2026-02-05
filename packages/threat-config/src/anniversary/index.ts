@@ -17,6 +17,7 @@ import { mageConfig } from './classes/mage'
 import { warlockConfig } from './classes/warlock'
 import { shamanConfig } from './classes/shaman'
 import { naxxAbilities } from './naxx'
+import { onyxiaAbilities } from './ony'
 
 // Creature GUIDs that cannot be taunted
 const untauntableEnemies = new Set<number>([
@@ -76,7 +77,10 @@ export const anniversaryConfig: ThreatConfig = {
     shaman: shamanConfig,
   },
 
-  abilities: naxxAbilities,
+  abilities: {
+    ...naxxAbilities,
+    ...onyxiaAbilities,
+  },
 
   auraModifiers: globalAuraModifiers,
   untauntableEnemies,
