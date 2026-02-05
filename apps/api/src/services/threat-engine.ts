@@ -160,8 +160,8 @@ function buildAugmentedEvent(
   }
 
   // Add event-specific fields
-  if ('ability' in event) {
-    base.ability = event.ability
+  if ('abilityGameID' in event) {
+    base.abilityGameID = event.abilityGameID
   }
   if ('amount' in event) {
     base.amount = event.amount

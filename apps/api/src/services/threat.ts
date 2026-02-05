@@ -128,14 +128,14 @@ function getFormulaResult(ctx: ThreatContext, config: ThreatConfig) {
   const event = ctx.event
 
   // Merge abilities: global first, then class (class overrides global on duplicates)
-  if ('ability' in event && event.ability) {
+  if ('abilityGameID' in event && event.abilityGameID) {
     const classConfig = getClassConfig(ctx.sourceActor.class, config)
     const mergedAbilities = {
       ...(config.abilities ?? {}),
       ...(classConfig?.abilities ?? {}),
     }
     
-    const abilityFormula = mergedAbilities[event.ability.guid]
+    const abilityFormula = mergedAbilities[event.abilityGameID]
     if (abilityFormula) {
       return abilityFormula(ctx)
     }

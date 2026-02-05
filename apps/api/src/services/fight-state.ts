@@ -54,13 +54,13 @@ export class FightState {
       case 'applybuff':
       case 'applydebuff':
         this.getOrCreateActorState(event.targetID).auraTracker.addAura(
-          event.ability.guid,
+          event.abilityGameID,
         )
         break
       case 'removebuff':
       case 'removedebuff':
         this.getOrCreateActorState(event.targetID).auraTracker.removeAura(
-          event.ability.guid,
+          event.abilityGameID,
         )
         break
     }
@@ -91,7 +91,7 @@ export class FightState {
     // Seed initial auras from combatant info
     if (event.auras) {
       actorState.auraTracker.seedAuras(
-        event.auras.map((a) => a.ability),
+        event.auras.map((a) => a.abilityGameID),
       )
     }
 

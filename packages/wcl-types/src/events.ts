@@ -62,7 +62,7 @@ export interface BaseWCLEvent {
 
 export interface DamageEvent extends BaseWCLEvent {
   type: 'damage'
-  ability: Ability
+  abilityGameID: number
   amount: number
   absorbed: number
   blocked: number
@@ -75,7 +75,7 @@ export interface DamageEvent extends BaseWCLEvent {
 
 export interface HealEvent extends BaseWCLEvent {
   type: 'heal'
-  ability: Ability
+  abilityGameID: number
   amount: number
   absorbed: number // Absorbed healing
   overheal: number
@@ -84,33 +84,33 @@ export interface HealEvent extends BaseWCLEvent {
 
 export interface ApplyBuffEvent extends BaseWCLEvent {
   type: 'applybuff'
-  ability: Ability
+  abilityGameID: number
   absorb?: number // Initial absorb shield amount
   stacks?: number
 }
 
 export interface RemoveBuffEvent extends BaseWCLEvent {
   type: 'removebuff'
-  ability: Ability
+  abilityGameID: number
   absorb?: number // Remaining absorb when removed
   stacks?: number
 }
 
 export interface ApplyDebuffEvent extends BaseWCLEvent {
   type: 'applydebuff'
-  ability: Ability
+  abilityGameID: number
   stacks?: number
 }
 
 export interface RemoveDebuffEvent extends BaseWCLEvent {
   type: 'removedebuff'
-  ability: Ability
+  abilityGameID: number
   stacks?: number
 }
 
 export interface EnergizeEvent extends BaseWCLEvent {
   type: 'energize'
-  ability: Ability
+  abilityGameID: number
   resourceChange: number
   resourceChangeType: ResourceType
   waste: number
@@ -118,34 +118,34 @@ export interface EnergizeEvent extends BaseWCLEvent {
 
 export interface CastEvent extends BaseWCLEvent {
   type: 'cast'
-  ability: Ability
+  abilityGameID: number
 }
 
 export interface BeginCastEvent extends BaseWCLEvent {
   type: 'begincast'
-  ability: Ability
+  abilityGameID: number
 }
 
 export interface InterruptEvent extends BaseWCLEvent {
   type: 'interrupt'
-  ability: Ability
+  abilityGameID: number
   extraAbility?: Ability // The interrupted ability
 }
 
 export interface DeathEvent extends BaseWCLEvent {
   type: 'death'
-  ability?: Ability // Killing blow ability
+  abilityGameID?: number // Killing blow ability
   killerID?: number
 }
 
 export interface ResurrectEvent extends BaseWCLEvent {
   type: 'resurrect'
-  ability: Ability
+  abilityGameID: number
 }
 
 export interface SummonEvent extends BaseWCLEvent {
   type: 'summon'
-  ability: Ability
+  abilityGameID: number
 }
 
 // ======================================================================

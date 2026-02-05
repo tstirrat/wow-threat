@@ -34,7 +34,7 @@ export function getActiveModifiers(
       
       // If modifier relies on specific spell IDs, check if current event matches
       if (modifier.spellIds) {
-        const eventAbilityId = 'ability' in ctx.event ? ctx.event.ability?.guid : undefined
+        const eventAbilityId = 'abilityGameID' in ctx.event ? ctx.event.abilityGameID : undefined
         if (!eventAbilityId || !modifier.spellIds.has(eventAbilityId)) {
           continue
         }

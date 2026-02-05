@@ -253,7 +253,7 @@ export interface AugmentedEvent {
   targetIsFriendly: boolean
   sourceInstance?: number
   targetInstance?: number
-  ability?: Ability
+  abilityGameID?: number
 
   /** Event-specific fields preserved from WCL */
   amount?: number
