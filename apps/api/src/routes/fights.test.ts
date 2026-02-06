@@ -1,12 +1,14 @@
 /**
  * Integration Tests for Fights API
  */
+import type { ApiError } from '@/middleware/error'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import mockReportData from '../../test/fixtures/wcl-responses/anniversary-report.json'
 import { mockFetch, restoreFetch } from '../../test/helpers/mock-fetch'
 import { createMockBindings } from '../../test/setup'
 import app from '../index'
+import type { FightsResponse } from './fights'
 
 // Extract the actual report object from the fixture
 const reportData = mockReportData.data.reportData.report
@@ -30,7 +32,7 @@ describe('Fights API', () => {
 
       expect(res.status).toBe(200)
 
-      const data = await res.json()
+      const data = await res.json<FightsResponse>()
       expect(data.id).toBe(1)
       expect(data.name).toBe('Patchwerk')
       expect(data.kill).toBe(true)
@@ -47,7 +49,7 @@ describe('Fights API', () => {
 
       expect(res.status).toBe(400)
 
-      const data = await res.json()
+      const data = await res.json<ApiError>()
       expect(data.error.code).toBe('INVALID_FIGHT_ID')
     })
 
@@ -60,7 +62,7 @@ describe('Fights API', () => {
 
       expect(res.status).toBe(404)
 
-      const data = await res.json()
+      const data = await res.json<ApiError>()
       expect(data.error.code).toBe('FIGHT_NOT_FOUND')
     })
 
@@ -71,7 +73,7 @@ describe('Fights API', () => {
         createMockBindings(),
       )
 
-      const data = await res.json()
+      const data = await res.json<FightsResponse>()
       expect(data.actors).toBeDefined()
       expect(data.enemies).toBeDefined()
       expect(
@@ -86,7 +88,7 @@ describe('Fights API', () => {
         createMockBindings(),
       )
 
-      const data = await res.json()
+      const data = await res.json<FightsResponse>()
       expect(data.id).toBe(3)
       expect(data.name).toBe('Gluth')
       expect(data.kill).toBe(false)

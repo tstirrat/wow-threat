@@ -83,7 +83,7 @@ describe('ThreatTracker', () => {
     const topActors = tracker.getTopActorsByThreat(100, 10)
 
     expect(topActors).toHaveLength(1)
-    expect(topActors[0].actorId).toBe(1)
+    expect(topActors[0]?.actorId).toBe(1)
   })
 
   it('should return empty array for unknown enemy', () => {

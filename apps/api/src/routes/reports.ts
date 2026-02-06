@@ -3,6 +3,11 @@
  *
  * GET /reports/:code - Get report metadata
  */
+import type {
+  ReportActor as WCLReportActor,
+  ReportFight as WCLReportFight,
+  Zone as WCLZone,
+} from '@wcl-threat/wcl-types'
 import { Hono } from 'hono'
 
 import { invalidReportCode, reportNotFound } from '../middleware/error'
@@ -17,6 +22,18 @@ export const reportRoutes = new Hono<{
   Bindings: Bindings
   Variables: Variables
 }>()
+
+export interface ReportResponse {
+  code: string
+  title: string
+  owner: string
+  startTime: number
+  endTime: number
+  gameVersion: number
+  zone: WCLZone
+  fights: WCLReportFight[]
+  actors: WCLReportActor[]
+}
 
 /**
  * GET /reports/:code
@@ -40,19 +57,12 @@ reportRoutes.get('/:code', async (c) => {
   const report = data.reportData.report
   const masterData = report.masterData
 
-  // Categorize actors
-  const players = masterData.actors.filter((a) => a.type === 'Player')
-  const enemies = masterData.actors.filter(
-    (a) => a.type === 'NPC' || a.type === 'Boss',
-  )
-  const pets = masterData.actors.filter((a) => a.type === 'Pet')
-
   const cacheControl =
     c.env.ENVIRONMENT === 'development'
       ? 'no-store, no-cache, must-revalidate'
       : 'public, max-age=31536000, immutable'
 
-  return c.json(
+  return c.json<ReportResponse>(
     {
       code: report.code,
       title: report.title,
@@ -62,11 +72,7 @@ reportRoutes.get('/:code', async (c) => {
       gameVersion: masterData.gameVersion,
       zone: report.zone,
       fights: report.fights,
-      actors: {
-        players,
-        enemies,
-        pets,
-      },
+      actors: masterData.actors,
     },
     200,
     {

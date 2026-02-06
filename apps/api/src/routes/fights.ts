@@ -3,6 +3,8 @@
  *
  * GET /reports/:code/fights/:id - Get fight details
  */
+import { exists } from '@wcl-threat/shared'
+import type { ReportActor } from '@wcl-threat/wcl-types'
 import { Hono } from 'hono'
 
 import {
@@ -18,6 +20,18 @@ export const fightsRoutes = new Hono<{
   Bindings: Bindings
   Variables: Variables
 }>()
+
+export interface FightsResponse {
+  id: number
+  reportCode: string
+  name: string
+  startTime: number
+  endTime: number
+  kill: boolean
+  difficulty: number | null
+  enemies: ReportActor[]
+  actors: ReportActor[]
+}
 
 /**
  * GET /reports/:code/fights/:id
@@ -52,45 +66,29 @@ fightsRoutes.get('/:id', async (c) => {
   const masterData = report.masterData
 
   // Build a lookup map for faster actor resolution
-  const actorLookup = new Map(masterData.actors.map((a) => [a.id, a]))
+  const reportActors = new Map(masterData.actors.map((a) => [a.id, a]))
 
   // Build actors from fight participants
+  const petActors = (fight.friendlyPets ?? [])
+    .map((pet) => reportActors.get(pet.id))
+    .filter(exists)
+
   const actors = (fight.friendlyPlayers ?? [])
-    .map((playerId) => ({ id: playerId, actor: actorLookup.get(playerId) }))
-    .map(({ id, actor }) => ({
-      id,
-      name: actor?.name ?? 'Unknown',
-      type: (actor?.type ?? 'Player') as
-        | 'Player'
-        | 'Pet'
-        | 'Guardian'
-        | 'Companion',
-      class: actor?.type === 'Player' ? actor.subType : null,
-      spec: null, // Would need combatantinfo events
-      role: null, // Would need combatantinfo events
-      petOwner: actor?.petOwner ?? null,
-    }))
+    .map((id) => reportActors.get(id))
+    .filter(exists)
+    .concat(petActors)
 
   // Build enemies from fight-level enemyNPCs + enemyPets
   const enemies = [...(fight.enemyNPCs ?? []), ...(fight.enemyPets ?? [])]
-    .map((npc) => ({ npc, actor: actorLookup.get(npc.id) }))
-    .map(({ npc, actor }) => ({
-      id: npc.id,
-      guid: npc.gameID,
-      name: actor?.name ?? 'Unknown',
-      instanceCount: npc.instanceCount,
-      type: (actor?.type === 'Boss' ? 'Boss' : 'Add') as
-        | 'Boss'
-        | 'Add'
-        | 'Trash',
-    }))
+    .map((npc) => reportActors.get(npc.id))
+    .filter(exists)
 
   const cacheControl =
     c.env.ENVIRONMENT === 'development'
       ? 'no-store, no-cache, must-revalidate'
       : 'public, max-age=31536000, immutable'
 
-  return c.json(
+  return c.json<FightsResponse>(
     {
       id: fight.id,
       reportCode: code,
@@ -101,7 +99,6 @@ fightsRoutes.get('/:id', async (c) => {
       difficulty: fight.difficulty,
       enemies,
       actors,
-      phases: [], // Would need phase data from WCL
     },
     200,
     {

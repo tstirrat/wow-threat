@@ -1,12 +1,14 @@
 /**
  * Integration Tests for Events API
  */
+import type { ApiError } from '@/middleware/error'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
-import mockReportData from '../../test/fixtures/wcl-responses/anniversary-report.json'
+import anniversaryReport from '../../test/fixtures/wcl-responses/anniversary-report.json'
 import { mockFetch, restoreFetch } from '../../test/helpers/mock-fetch'
 import { createMockBindings } from '../../test/setup'
 import app from '../index'
+import type { AugmentedEventsResponse } from './events'
 
 // Sample events fixture
 const mockEvents = [
@@ -67,7 +69,7 @@ const mockEvents = [
 ]
 
 // Extract the actual report object from the fixture
-const reportData = mockReportData.data.reportData.report
+const reportData = anniversaryReport.data.reportData.report
 
 describe('Events API', () => {
   beforeEach(() => {
@@ -91,7 +93,7 @@ describe('Events API', () => {
 
       expect(res.status).toBe(200)
 
-      const data = await res.json()
+      const data: AugmentedEventsResponse = await res.json()
       expect(data.reportCode).toBe('ABC123xyz')
       expect(data.fightId).toBe(1)
       expect(data.fightName).toBe('Patchwerk')
@@ -107,15 +109,15 @@ describe('Events API', () => {
         createMockBindings(),
       )
 
-      const data = await res.json()
+      const data: AugmentedEventsResponse = await res.json()
       const damageEvent = data.events.find(
         (e: { type: string }) => e.type === 'damage',
       )
 
       expect(damageEvent).toBeDefined()
-      expect(damageEvent.threat).toBeDefined()
-      expect(damageEvent.threat.calculation).toBeDefined()
-      expect(damageEvent.threat.values).toBeDefined()
+      expect(damageEvent!.threat).toBeDefined()
+      expect(damageEvent!.threat.calculation).toBeDefined()
+      expect(damageEvent!.threat.values).toBeDefined()
     })
 
     it('includes threat data for heal events', async () => {
@@ -125,13 +127,13 @@ describe('Events API', () => {
         createMockBindings(),
       )
 
-      const data = await res.json()
+      const data: AugmentedEventsResponse = await res.json()
       const healEvent = data.events.find(
         (e: { type: string }) => e.type === 'heal',
       )
 
       expect(healEvent).toBeDefined()
-      expect(healEvent.threat).toBeDefined()
+      expect(healEvent!.threat).toBeDefined()
     })
 
     it('returns event counts in summary', async () => {
@@ -141,7 +143,7 @@ describe('Events API', () => {
         createMockBindings(),
       )
 
-      const data = await res.json()
+      const data: AugmentedEventsResponse = await res.json()
       expect(data.summary.eventCounts).toBeDefined()
       expect(data.summary.duration).toBe(180000)
     })
@@ -166,7 +168,7 @@ describe('Events API', () => {
 
       expect(res.status).toBe(404)
 
-      const data = await res.json()
+      const data: ApiError = await res.json()
       expect(data.error.code).toBe('FIGHT_NOT_FOUND')
     })
 
@@ -177,19 +179,19 @@ describe('Events API', () => {
         createMockBindings(),
       )
 
-      const data = await res.json()
+      const data: AugmentedEventsResponse = await res.json()
       const healEvent = data.events.find(
         (e: { type: string }) => e.type === 'heal',
       )
 
       expect(healEvent).toBeDefined()
-      expect(healEvent.threat.calculation.isSplit).toBe(true)
-      expect(healEvent.threat.values).toBeDefined()
+      expect(healEvent!.threat.calculation.isSplit).toBe(true)
+      expect(healEvent!.threat.values).toBeDefined()
 
       // Fight 1 (Patchwerk) should only have threat split to Patchwerk (id 25),
       // NOT Grobbulus (id 26) which is in fight 2
-      expect(healEvent.threat.values).toHaveLength(1)
-      expect(healEvent.threat.values[0].id).toBe(25)
+      expect(healEvent!.threat.values).toHaveLength(1)
+      expect(healEvent!.threat.values[0]?.id).toBe(25)
     })
   })
 })

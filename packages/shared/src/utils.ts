@@ -52,3 +52,7 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
     timeoutId = setTimeout(() => func(...args), wait)
   }
 }
+
+export function exists<T>(value: T | null | undefined): value is T {
+  return value !== null && value !== undefined
+}

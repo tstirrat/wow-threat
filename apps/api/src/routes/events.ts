@@ -179,7 +179,7 @@ eventsRoutes.get('/', async (c) => {
   })
 })
 
-interface AugmentedEventsResponse {
+export interface AugmentedEventsResponse {
   reportCode: string
   fightId: number
   fightName: string

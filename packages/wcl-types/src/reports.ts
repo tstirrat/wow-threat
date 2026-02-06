@@ -1,36 +1,23 @@
+import type { WCLEvent } from './events'
+
 /**
  * WCL Report and Fight Types
  */
-
 export interface Zone {
   id: number
   name: string
 }
 
-export interface FightNPC {
-  id: number // Report actor ID (matches event sourceID/targetID)
-  gameID: number // Global creature ID
-  instanceCount: number
-  groupCount: number
-  petOwner: number | null
-}
-
-export interface FightSummary {
+export interface ReportFightNPC {
   id: number
-  name: string // e.g., "Ragnaros"
-  startTime: number // Relative to report start
-  endTime: number
-  kill: boolean
-  difficulty: number | null
-  bossPercentage: number | null
-  fightPercentage: number | null
-  enemyNPCs: FightNPC[]
-  enemyPets: FightNPC[]
-  friendlyPlayers: number[]
-  friendlyPets: FightNPC[]
+  gameID: number
+  name: string
+  instanceCount: number // Multiple of same enemy
+  groupCount: number
+  petOwner?: number
 }
 
-export interface Phase {
+export interface PhaseMetadata {
   id: number
   name: string
   startTime: number
@@ -45,25 +32,63 @@ export interface Report {
   endTime: number
   gameVersion: number // WCL gameVersion integer (determines threat config)
   zone: Zone
-  fights: FightSummary[]
-  actors: {
-    players: import('./actors').Actor[]
-    enemies: import('./actors').Actor[]
-    pets: import('./actors').Actor[]
-  }
+  fights: ReportFight[]
 }
 
-export interface Fight {
+export interface ReportFight {
   id: number
-  reportCode: string
   name: string
   startTime: number
   endTime: number
   kill: boolean
   difficulty: number | null
-  enemies: import('./actors').Enemy[]
-  actors: import('./actors').FightActor[]
-  phases: Phase[]
+  bossPercentage: number | null
+  fightPercentage: number | null
+  enemyNPCs: ReportFightNPC[]
+  enemyPets: ReportFightNPC[]
+  friendlyPlayers: number[]
+  friendlyPets: ReportFightNPC[]
+  // friendlyNPCs: ReportFightNPC[] // unused
+}
+
+export type PlayerClass =
+  | 'Warrior'
+  | 'Paladin'
+  | 'Hunter'
+  | 'Rogue'
+  | 'Priest'
+  | 'Death Knight'
+  | 'Shaman'
+  | 'Mage'
+  | 'Warlock'
+  | 'Monk'
+  | 'Druid'
+  | 'Demon Hunter'
+  | 'Evoker'
+
+export type ReportActor = {
+  /** report id */
+  id: number
+  /** Game id */
+  gameID: number
+  icon: string
+  name: string
+  server: string
+} & (ReportActorPlayer | ReportActorNPC | ReportActorPet)
+
+export interface ReportActorNPC {
+  type: 'NPC'
+  subType: 'Boss' | 'NPC'
+}
+
+export interface ReportActorPlayer {
+  type: 'Player'
+  subType: PlayerClass
+}
+
+export interface ReportActorPet {
+  type: 'Pet'
+  petOwner: number | null
 }
 
 /** WCL GraphQL response wrapper for report data */
@@ -77,29 +102,10 @@ export interface WCLReportResponse {
         startTime: number
         endTime: number
         zone: Zone
-        fights: Array<{
-          id: number
-          name: string
-          startTime: number
-          endTime: number
-          kill: boolean
-          difficulty: number | null
-          bossPercentage: number | null
-          fightPercentage: number | null
-          enemyNPCs: FightNPC[]
-          enemyPets: FightNPC[]
-          friendlyPlayers: number[]
-          friendlyPets: FightNPC[]
-        }>
+        fights: ReportFight[]
         masterData: {
           gameVersion: number
-          actors: Array<{
-            id: number
-            name: string
-            type: string
-            subType: string
-            petOwner: number | null
-          }>
+          actors: ReportActor[]
         }
       }
     }
@@ -112,7 +118,7 @@ export interface WCLEventsResponse {
     reportData: {
       report: {
         events: {
-          data: unknown[]
+          data: WCLEvent[]
           nextPageTimestamp: number | null
         }
       }

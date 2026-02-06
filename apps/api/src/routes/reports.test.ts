@@ -1,12 +1,15 @@
 /**
  * Integration Tests for Reports API
  */
+import type { ApiError } from '@/middleware/error'
+import type { HealthCheckResponse } from '@/types/bindings'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import mockReportData from '../../test/fixtures/wcl-responses/anniversary-report.json'
 import { mockFetch, restoreFetch } from '../../test/helpers/mock-fetch'
 import { createMockBindings } from '../../test/setup'
 import app from '../index'
+import type { ReportResponse } from './reports'
 
 // Extract the actual report object from the nested fixture
 const reportData = mockReportData.data.reportData.report
@@ -31,15 +34,13 @@ describe('Reports API', () => {
 
       expect(res.status).toBe(200)
 
-      const data = await res.json()
+      const data: ReportResponse = await res.json()
       expect(data.code).toBe('ABC123xyz')
       expect(data.title).toBe('Naxxramas 25 - Test Raid')
       expect(data.owner).toBe('TestGuild')
       expect(data.gameVersion).toBe(1)
       expect(data.fights).toHaveLength(3)
-      expect(data.actors.players).toHaveLength(4)
-      expect(data.actors.enemies).toHaveLength(2)
-      expect(data.actors.pets).toHaveLength(1)
+      expect(data.actors).toHaveLength(7)
     })
 
     it('returns 400 for invalid report code format', async () => {
@@ -51,7 +52,7 @@ describe('Reports API', () => {
 
       expect(res.status).toBe(400)
 
-      const data = await res.json()
+      const data: ApiError = await res.json()
       expect(data.error.code).toBe('INVALID_REPORT_CODE')
     })
 
@@ -68,7 +69,7 @@ describe('Reports API', () => {
       // WCL returns GraphQL error, which we translate to 502
       expect(res.status).toBe(502)
 
-      const data = await res.json()
+      const data: ApiError = await res.json()
       expect(data.error.code).toBe('WCL_API_ERROR')
     })
 
@@ -94,7 +95,7 @@ describe('Health endpoint', () => {
 
     expect(res.status).toBe(200)
 
-    const data = await res.json()
+    const data: HealthCheckResponse = await res.json()
     expect(data.status).toBe('ok')
     expect(data.environment).toBe('test')
   })

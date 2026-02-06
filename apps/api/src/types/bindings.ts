@@ -25,3 +25,9 @@ export interface Variables {
   requestId: string
   startTime: number
 }
+
+export interface HealthCheckResponse {
+  status: string
+  environment: string
+  requestId: string
+}
