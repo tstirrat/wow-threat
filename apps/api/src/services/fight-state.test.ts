@@ -13,6 +13,13 @@ import type { GearItem, WCLEvent } from '@wcl-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
 import { createMockThreatConfig } from '../../test/helpers/config'
+import {
+  createApplyDebuffEvent,
+  createCombatantInfoAura,
+  createDamageEvent,
+  createRemoveDebuffEvent,
+} from '../../test/helpers/events'
+import { createApplyBuffEvent, createRemoveBuffEvent } from '../../test/setup'
 import { FightState } from './fight-state'
 
 // ============================================================================
@@ -137,20 +144,12 @@ describe('FightState', () => {
       const state = new FightState(defaultActorMap, testConfig)
 
       state.processEvent(
-        {
+        createApplyBuffEvent({
           timestamp: 0,
-          type: 'applybuff',
           sourceID: 2,
-          sourceIsFriendly: true,
           targetID: 1,
-          targetIsFriendly: true,
-          ability: {
-            guid: 71,
-            name: 'Defensive Stance',
-            type: 1,
-            abilityIcon: '',
-          },
-        } as WCLEvent,
+          abilityGameID: 71,
+        }),
         testConfig,
       )
 
@@ -162,38 +161,25 @@ describe('FightState', () => {
       const state = new FightState(defaultActorMap, testConfig)
 
       state.processEvent(
-        {
+        createApplyBuffEvent({
           timestamp: 0,
-          type: 'applybuff',
           sourceID: 1,
-          sourceIsFriendly: true,
           targetID: 1,
-          targetIsFriendly: true,
-          ability: {
-            guid: 71,
-            name: 'Defensive Stance',
-            type: 1,
-            abilityIcon: '',
-          },
-        } as WCLEvent,
+          abilityGameID: 71,
+        }),
         testConfig,
       )
 
       state.processEvent(
-        {
+        createRemoveBuffEvent({
           timestamp: 100,
-          type: 'removebuff',
           sourceID: 1,
           sourceIsFriendly: true,
           targetID: 1,
           targetIsFriendly: true,
-          ability: {
-            guid: 71,
-            name: 'Defensive Stance',
-            type: 1,
-            abilityIcon: '',
-          },
-        } as WCLEvent,
+          abilityGameID: 71,
+        }),
+
         testConfig,
       )
 
@@ -204,20 +190,14 @@ describe('FightState', () => {
       const state = new FightState(defaultActorMap, testConfig)
 
       state.processEvent(
-        {
+        createApplyDebuffEvent({
           timestamp: 0,
-          type: 'applydebuff',
           sourceID: 1,
           sourceIsFriendly: true,
           targetID: 25,
           targetIsFriendly: false,
-          ability: {
-            guid: 12345,
-            name: 'Sunder Armor',
-            type: 1,
-            abilityIcon: '',
-          },
-        } as WCLEvent,
+          abilityGameID: 12345,
+        }),
         testConfig,
       )
 
@@ -228,38 +208,26 @@ describe('FightState', () => {
       const state = new FightState(defaultActorMap, testConfig)
 
       state.processEvent(
-        {
+        createApplyDebuffEvent({
           timestamp: 0,
-          type: 'applydebuff',
           sourceID: 1,
           sourceIsFriendly: true,
           targetID: 25,
           targetIsFriendly: false,
-          ability: {
-            guid: 12345,
-            name: 'Sunder Armor',
-            type: 1,
-            abilityIcon: '',
-          },
-        } as WCLEvent,
+          abilityGameID: 12345,
+        }),
         testConfig,
       )
 
       state.processEvent(
-        {
+        createRemoveDebuffEvent({
           timestamp: 100,
-          type: 'removedebuff',
           sourceID: 1,
           sourceIsFriendly: true,
           targetID: 25,
           targetIsFriendly: false,
-          ability: {
-            guid: 12345,
-            name: 'Sunder Armor',
-            type: 1,
-            abilityIcon: '',
-          },
-        } as WCLEvent,
+          abilityGameID: 12345,
+        }),
         testConfig,
       )
 
@@ -270,16 +238,15 @@ describe('FightState', () => {
       const state = new FightState(defaultActorMap, testConfig)
 
       state.processEvent(
-        {
+        createDamageEvent({
           timestamp: 0,
-          type: 'damage',
           sourceID: 1,
           sourceIsFriendly: true,
           targetID: 25,
           targetIsFriendly: false,
-          ability: { guid: 100, name: 'Attack', type: 1, abilityIcon: '' },
+          abilityGameID: 100,
           amount: 500,
-        } as WCLEvent,
+        }),
         testConfig,
       )
 
@@ -307,20 +274,8 @@ describe('FightState', () => {
           targetID: 1,
           targetIsFriendly: true,
           auras: [
-            {
-              source: 1,
-              ability: 71,
-              stacks: 1,
-              icon: '',
-              name: 'Defensive Stance',
-            },
-            {
-              source: 2,
-              ability: 25780,
-              stacks: 1,
-              icon: '',
-              name: 'Blessing of Might',
-            },
+            createCombatantInfoAura(71, 'Defensive Stance', 1),
+            createCombatantInfoAura(25780, 'Blessing of Might', 2),
           ],
         } as WCLEvent,
         testConfig,
@@ -458,20 +413,14 @@ describe('FightState', () => {
       const state = new FightState(defaultActorMap, testConfig)
 
       state.processEvent(
-        {
+        createApplyBuffEvent({
           timestamp: 0,
-          type: 'applybuff',
           sourceID: 1,
           sourceIsFriendly: true,
           targetID: 1,
           targetIsFriendly: true,
-          ability: {
-            guid: 71,
-            name: 'Defensive Stance',
-            type: 1,
-            abilityIcon: '',
-          },
-        } as WCLEvent,
+          abilityGameID: 71,
+        }),
         testConfig,
       )
 
@@ -488,20 +437,14 @@ describe('FightState', () => {
 
       // Apply Blessing of Might to warrior
       state.processEvent(
-        {
+        createApplyBuffEvent({
           timestamp: 0,
-          type: 'applybuff',
           sourceID: 1,
           sourceIsFriendly: true,
           targetID: 1,
           targetIsFriendly: true,
-          ability: {
-            guid: TEST_SPELLS.BLESSING_OF_MIGHT,
-            name: 'Blessing of Might',
-            type: 1,
-            abilityIcon: '',
-          },
-        } as WCLEvent,
+          abilityGameID: TEST_SPELLS.BLESSING_OF_MIGHT,
+        }),
         testConfig,
       )
 
@@ -509,20 +452,14 @@ describe('FightState', () => {
 
       // Apply Blessing of Salvation - should remove Blessing of Might
       state.processEvent(
-        {
+        createApplyBuffEvent({
           timestamp: 100,
-          type: 'applybuff',
           sourceID: 1,
           sourceIsFriendly: true,
           targetID: 1,
           targetIsFriendly: true,
-          ability: {
-            guid: TEST_SPELLS.BLESSING_OF_SALVATION,
-            name: 'Blessing of Salvation',
-            type: 1,
-            abilityIcon: '',
-          },
-        } as WCLEvent,
+          abilityGameID: TEST_SPELLS.BLESSING_OF_SALVATION,
+        }),
         testConfig,
       )
 
@@ -543,20 +480,14 @@ describe('FightState', () => {
 
       // Apply Bear Form to druid
       state.processEvent(
-        {
+        createApplyBuffEvent({
           timestamp: 0,
-          type: 'applybuff',
           sourceID: 3,
           sourceIsFriendly: true,
           targetID: 3,
           targetIsFriendly: true,
-          ability: {
-            guid: TEST_SPELLS.BEAR_FORM,
-            name: 'Bear Form',
-            type: 1,
-            abilityIcon: '',
-          },
-        } as WCLEvent,
+          abilityGameID: TEST_SPELLS.BEAR_FORM,
+        }),
         testConfig,
       )
 
@@ -564,20 +495,14 @@ describe('FightState', () => {
 
       // Apply Cat Form - should remove Bear Form
       state.processEvent(
-        {
+        createApplyBuffEvent({
           timestamp: 100,
-          type: 'applybuff',
           sourceID: 3,
           sourceIsFriendly: true,
           targetID: 3,
           targetIsFriendly: true,
-          ability: {
-            guid: TEST_SPELLS.CAT_FORM,
-            name: 'Cat Form',
-            type: 1,
-            abilityIcon: '',
-          },
-        } as WCLEvent,
+          abilityGameID: TEST_SPELLS.CAT_FORM,
+        }),
         testConfig,
       )
 

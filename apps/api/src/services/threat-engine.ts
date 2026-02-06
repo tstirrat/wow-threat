@@ -107,7 +107,7 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
         )
         const splitThreat = calculation.modifiedThreat / validEnemies.length
 
-        let values: TargetThreatValue[] = []
+        const values: TargetThreatValue[] = []
         for (const enemy of validEnemies) {
           // TODO: check enemies are alive
           fightState.addThreat(event.sourceID, enemy.id, splitThreat)

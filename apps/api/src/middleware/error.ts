@@ -3,7 +3,7 @@
  *
  * Provides structured error responses and logging.
  */
-import type { Context, ErrorHandler } from 'hono'
+import type { ErrorHandler } from 'hono'
 
 import type { Bindings, Variables } from '../types/bindings'
 

@@ -4,7 +4,7 @@
  * These types define the structure of threat calculation configurations
  * for different game versions.
  */
-import type { Ability, GearItem, WCLEvent } from '@wcl-threat/wcl-types'
+import type { GearItem, WCLEvent } from '@wcl-threat/wcl-types'
 
 export type { GearItem }
 
@@ -159,6 +159,8 @@ export interface BaseThreatConfig {
   energize: ThreatFormula
 }
 
+export type AuraModifierFn = (ctx: ThreatContext) => ThreatModifier
+
 export interface ClassThreatConfig {
   /** Exclusive aura sets - engine auto-removes others when one is applied */
   exclusiveAuras?: Set<number>[]
@@ -167,7 +169,7 @@ export interface ClassThreatConfig {
   baseThreatFactor?: number
 
   /** Aura-based modifiers: spellId -> modifier function */
-  auraModifiers: Record<number, (ctx: ThreatContext) => ThreatModifier>
+  auraModifiers: Record<number, AuraModifierFn>
 
   /** Ability-specific formulas */
   abilities: Record<number, ThreatFormula>

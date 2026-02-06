@@ -8,6 +8,7 @@
 import type { Bindings } from '../types/bindings'
 
 export interface CacheService {
+  readonly type: 'kv' | 'memory' | 'noop'
   get<T>(key: string): Promise<T | null>
   set<T>(key: string, value: T, ttl?: number): Promise<void>
   delete(key: string): Promise<void>
@@ -18,6 +19,7 @@ export interface CacheService {
  */
 export function createKVCache(kv: KVNamespace): CacheService {
   return {
+    type: 'kv',
     async get<T>(key: string): Promise<T | null> {
       const value = await kv.get(key, 'json')
       return value as T | null
@@ -41,6 +43,7 @@ export function createMemoryCache(): CacheService {
   const store = new Map<string, { value: unknown; expires?: number }>()
 
   return {
+    type: 'memory',
     async get<T>(key: string): Promise<T | null> {
       const entry = store.get(key)
       if (!entry) return null
@@ -72,6 +75,7 @@ export function createMemoryCache(): CacheService {
  */
 export function createNoOpCache(): CacheService {
   return {
+    type: 'noop',
     async get<T>(key: string): Promise<T | null> {
       return null
     },

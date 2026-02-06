@@ -1,3 +1,4 @@
+import type { DamageEvent } from '@wcl-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
 import type { ActorContext, ThreatContext } from '../types'
@@ -5,7 +6,6 @@ import { hatefulStrike } from './naxx'
 
 describe('Hateful Strike', () => {
   const PATCHWERK_ID = 16028
-  const MELEE_RANGE = 10
 
   function createMockActorContext(
     topActors: Array<{ actorId: number; threat: number }>,
@@ -25,7 +25,11 @@ describe('Hateful Strike', () => {
 
   function createMockContext(actors: ActorContext): ThreatContext {
     return {
-      event: { sourceID: PATCHWERK_ID, targetID: 1, type: 'damage' } as any,
+      event: {
+        sourceID: PATCHWERK_ID,
+        targetID: 1,
+        type: 'damage',
+      } as DamageEvent,
       amount: 5000,
       sourceAuras: new Set(),
       targetAuras: new Set(),

@@ -6,11 +6,13 @@
  */
 import type {
   ApplyBuffEvent,
+  ApplyDebuffEvent,
   CombatantInfoAura,
   DamageEvent,
   EnergizeEvent,
   HealEvent,
   RemoveBuffEvent,
+  RemoveDebuffEvent,
 } from '@wcl-threat/wcl-types'
 
 /**
@@ -147,6 +149,54 @@ export function createRemoveBuffEvent(
     sourceIsFriendly: true,
     targetID: 1,
     targetIsFriendly: true,
+    abilityGameID: 1,
+    ...overrides,
+  }
+}
+
+/**
+ * Create an applydebuff event with default values
+ *
+ * Defaults:
+ * - timestamp: 1000
+ * - sourceID: 1 (self-buff)
+ * - targetID: 2 (self)
+ * - Basic buff ability (id: 1)
+ */
+export function createApplyDebuffEvent(
+  overrides: Partial<ApplyDebuffEvent> = {},
+): ApplyDebuffEvent {
+  return {
+    timestamp: 1000,
+    type: 'applydebuff',
+    sourceID: 1,
+    sourceIsFriendly: true,
+    targetID: 2,
+    targetIsFriendly: false,
+    abilityGameID: 1,
+    ...overrides,
+  }
+}
+
+/**
+ * Create a removedebuff event with default values
+ *
+ * Defaults:
+ * - timestamp: 1000
+ * - sourceID: 1 (self-buff)
+ * - targetID: 2 (self)
+ * - Basic buff ability (id: 1)
+ */
+export function createRemoveDebuffEvent(
+  overrides: Partial<RemoveDebuffEvent> = {},
+): RemoveDebuffEvent {
+  return {
+    timestamp: 1000,
+    type: 'removedebuff',
+    sourceID: 1,
+    sourceIsFriendly: true,
+    targetID: 2,
+    targetIsFriendly: false,
     abilityGameID: 1,
     ...overrides,
   }

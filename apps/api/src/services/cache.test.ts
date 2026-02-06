@@ -1,6 +1,7 @@
 /**
  * Tests for Cache Service
  */
+import type { Bindings } from '@/types/bindings'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
@@ -122,18 +123,14 @@ describe('createNoOpCache', () => {
 
 describe('createCache', () => {
   it('returns memory cache for test environment', () => {
-    const env = { ENVIRONMENT: 'test' } as any
+    const env = { ENVIRONMENT: 'test' } as Bindings
     const cache = createCache(env, 'augmented')
-    // In test, it should be the memory cache (which allows setting values)
-    // We can verify by checking if it allows setting a value (no-op wouldn't store it)
-    // But better to check identity if we could, but here we can check behavior
-    // Memory cache stores values, No-op doesn't.
-    // However, createCache returns a singleton memory cache in test/dev.
-    // Let's assume testing behavior is enough.
+
+    expect(cache.type).toBe('memory')
   })
 
   it('returns no-op cache for augmented data in development', async () => {
-    const env = { ENVIRONMENT: 'development' } as any
+    const env = { ENVIRONMENT: 'development' } as Bindings
     const cache = createCache(env, 'augmented')
 
     await cache.set('test', 'value')
@@ -141,7 +138,7 @@ describe('createCache', () => {
   })
 
   it('returns memory cache for wcl data in development', async () => {
-    const env = { ENVIRONMENT: 'development' } as any
+    const env = { ENVIRONMENT: 'development' } as Bindings
     const cache = createCache(env, 'wcl')
 
     await cache.set('test', 'value')

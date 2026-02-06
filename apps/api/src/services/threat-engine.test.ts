@@ -12,15 +12,7 @@ import type {
   ThreatContext,
   ThreatModifier,
 } from '@wcl-threat/threat-config'
-import type {
-  ApplyBuffEvent,
-  DamageEvent,
-  EnergizeEvent,
-  GearItem,
-  HealEvent,
-  RemoveBuffEvent,
-  WCLEvent,
-} from '@wcl-threat/wcl-types'
+import type { DamageEvent, GearItem, WCLEvent } from '@wcl-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
 import {

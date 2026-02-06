@@ -4,7 +4,7 @@
  * Spell IDs and threat values are based on Classic/Anniversary Edition mechanics.
  */
 import { calculateThreat, tauntTarget } from '../../shared/formulas'
-import type { ClassThreatConfig, GearItem, ThreatContext } from '../../types'
+import type { ClassThreatConfig, GearItem } from '../../types'
 
 // ============================================================================
 // Spell IDs

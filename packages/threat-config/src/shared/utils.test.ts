@@ -1,6 +1,13 @@
+import type { DamageEvent, EnergizeEvent } from '@wcl-threat/wcl-types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { ThreatConfig, ThreatContext } from '../types'
+import type {
+  AuraModifierFn,
+  ThreatConfig,
+  ThreatContext,
+  ThreatFormula,
+  WowClass,
+} from '../types'
 import {
   getActiveModifiers,
   validateAbilities,
@@ -12,7 +19,7 @@ function createMockContext(
   overrides: Partial<ThreatContext> = {},
 ): ThreatContext {
   return {
-    event: { type: 'damage', ability: { guid: 100 } } as any,
+    event: { type: 'damage', abilityGameID: 100 } as DamageEvent,
     amount: 100,
     sourceAuras: new Set(),
     targetAuras: new Set(),
@@ -50,7 +57,7 @@ describe('getActiveModifiers', () => {
     // Current event ability is 100
     const ctx = createMockContext({
       sourceAuras: new Set([10]),
-      event: { type: 'damage', ability: { guid: 100 } } as any,
+      event: { type: 'damage', abilityGameID: 100 } as DamageEvent,
     })
 
     const modifiers = {
@@ -71,7 +78,7 @@ describe('getActiveModifiers', () => {
     // Current event ability is 100
     const ctx = createMockContext({
       sourceAuras: new Set([10]),
-      event: { type: 'damage', ability: { guid: 100 } } as any,
+      event: { type: 'damage', abilityGameID: 100 } as DamageEvent,
     })
 
     const modifiers = {
@@ -91,7 +98,7 @@ describe('getActiveModifiers', () => {
     // Current event has no ability
     const ctx = createMockContext({
       sourceAuras: new Set([10]),
-      event: { type: 'energize' } as any, // Energize might not have ability in this mock or some events
+      event: { type: 'energize' } as EnergizeEvent,
     })
 
     const modifiers = {
@@ -110,7 +117,7 @@ describe('getActiveModifiers', () => {
   it('includes modifiers without spellIds regardless of event ability', () => {
     const ctx = createMockContext({
       sourceAuras: new Set([10]),
-      event: { type: 'damage', ability: { guid: 100 } } as any,
+      event: { type: 'damage', abilityGameID: 100 } as DamageEvent,
     })
 
     const modifiers = {
@@ -140,12 +147,12 @@ describe('validateAuraModifiers', () => {
 
   // Mock config factory
   function createMockConfig(
-    globalMods: Record<number, any> = {},
-    classMods: Record<string, Record<number, any>> = {},
+    globalMods: Record<number, AuraModifierFn> = {},
+    classMods: Record<string, Record<number, AuraModifierFn>> = {},
   ): ThreatConfig {
-    const classes: any = {}
+    const classes: ThreatConfig['classes'] = {}
     for (const [className, mods] of Object.entries(classMods)) {
-      classes[className] = {
+      classes[className as WowClass] = {
         auraModifiers: mods,
         abilities: {},
       }
@@ -154,7 +161,7 @@ describe('validateAuraModifiers', () => {
     return {
       version: '1.0.0',
       gameVersion: 1,
-      baseThreat: {} as any,
+      baseThreat: {} as ThreatConfig['baseThreat'],
       classes,
       auraModifiers: globalMods,
       untauntableEnemies: new Set(),
@@ -320,12 +327,12 @@ describe('validateAbilities', () => {
 
   // Mock config factory for abilities
   function createMockConfig(
-    globalAbilities: Record<number, any> = {},
-    classAbilities: Record<string, Record<number, any>> = {},
+    globalAbilities: Record<number, ThreatFormula> = {},
+    classAbilities: Record<string, Record<number, ThreatFormula>> = {},
   ): ThreatConfig {
-    const classes: any = {}
+    const classes: ThreatConfig['classes'] = {}
     for (const [className, abilities] of Object.entries(classAbilities)) {
-      classes[className] = {
+      classes[className as WowClass] = {
         abilities,
         auraModifiers: {},
       }
@@ -334,7 +341,7 @@ describe('validateAbilities', () => {
     return {
       version: '1.0.0',
       gameVersion: 1,
-      baseThreat: {} as any,
+      baseThreat: {} as ThreatConfig['baseThreat'],
       classes,
       abilities: globalAbilities,
       auraModifiers: {},
@@ -515,7 +522,7 @@ describe('validateAbilities', () => {
     const config: ThreatConfig = {
       version: '1.0.0',
       gameVersion: 1,
-      baseThreat: {} as any,
+      baseThreat: {} as ThreatConfig['baseThreat'],
       classes: {
         warrior: {
           abilities: {

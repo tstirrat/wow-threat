@@ -3,7 +3,6 @@
  *
  * Mages have talent-based threat reduction. Ice Block grants invulnerability.
  */
-import { noThreat } from '../../shared/formulas'
 import type { ClassThreatConfig } from '../../types'
 
 // ============================================================================
@@ -26,6 +25,7 @@ export const Spells = {
 // Modifiers
 // ============================================================================
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const Mods = {
   BurningSoul: 0.15, // 15% per rank (up to 30%)
   FrostChanneling: 0.1, // 10% per rank (up to 30%)

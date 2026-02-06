@@ -4,7 +4,7 @@
  * Spell IDs and threat values are based on Classic/Anniversary Edition mechanics.
  */
 import { calculateThreat } from '../../shared/formulas'
-import type { ClassThreatConfig, SpellSchool, ThreatContext } from '../../types'
+import type { ClassThreatConfig } from '../../types'
 
 // ============================================================================
 // Spell IDs
