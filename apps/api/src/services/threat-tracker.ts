@@ -81,6 +81,20 @@ export class ThreatTracker {
   }
 
   /**
+   * Get all enemy threat values for a specific actor
+   */
+  getAllEnemyThreat(actorId: number): Map<number, number> {
+    const actorThreat = this.threat.get(actorId)
+    if (!actorThreat) {
+      return new Map()
+    }
+
+    return new Map(
+      Array.from(actorThreat.entries()).filter(([, threat]) => threat > 0),
+    )
+  }
+
+  /**
    * Clear all threat for an actor against all enemies
    * Used when a player dies (threat wipe)
    * @returns Map of enemyId -> previousThreat for all cleared entries

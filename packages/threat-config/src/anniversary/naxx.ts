@@ -3,9 +3,12 @@
  *
  * Custom threat formulas for Naxxramas bosses in Anniversary Edition.
  */
-import type { ThreatFormula, ThreatModification } from '../types'
+import { modifyThreat } from '../shared/formulas'
+import type { ThreatChange, ThreatFormula } from '../types'
 
 const HATEFUL_STRIKE_ID = 28308
+const NOTH_BLINK_ID = 29210
+const NOTH_BLINK_ALT_ID = 29211
 const MELEE_RANGE = 10 // yards
 const HATEFUL_STRIKE_THREAT = 1000 // TODO: Verify exact amount
 
@@ -30,12 +33,19 @@ export const hatefulStrike: ThreatFormula = (ctx) => {
   // Take top 4 in melee range
   const targets = meleeActors.slice(0, 4)
 
-  // Build threat modifications for all 4 targets
-  const modifications: ThreatModification[] = targets.map(({ actorId }) => ({
-    actorId,
-    enemyId: targetEnemyId,
-    amount: HATEFUL_STRIKE_THREAT,
-  }))
+  // Build explicit ThreatChanges for all 4 targets
+  const changes: ThreatChange[] = targets.map(({ actorId, threat }) => {
+    const total = threat + HATEFUL_STRIKE_THREAT
+
+    return {
+      sourceId: actorId,
+      targetId: targetEnemyId,
+      targetInstance: 0,
+      operator: 'add',
+      amount: HATEFUL_STRIKE_THREAT,
+      total,
+    }
+  })
 
   return {
     formula: '0 (customThreat)',
@@ -43,7 +53,7 @@ export const hatefulStrike: ThreatFormula = (ctx) => {
     splitAmongEnemies: false,
     special: {
       type: 'customThreat',
-      modifications,
+      changes,
     },
   }
 }
@@ -53,4 +63,6 @@ export const hatefulStrike: ThreatFormula = (ctx) => {
  */
 export const naxxAbilities = {
   [HATEFUL_STRIKE_ID]: hatefulStrike,
+  [NOTH_BLINK_ID]: modifyThreat({ modifier: 0, target: 'all' }),
+  [NOTH_BLINK_ALT_ID]: modifyThreat({ modifier: 0, target: 'all' }),
 }

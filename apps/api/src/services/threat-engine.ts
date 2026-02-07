@@ -182,36 +182,19 @@ function applyThreat(
     return changes
   }
 
-  if (calculation.special?.type === 'customThreat') {
-    for (const mod of calculation.special.modifications) {
-      fightState.addThreat(mod.actorId, mod.enemyId, mod.amount)
-      changes.push({
-        sourceId: mod.actorId,
-        targetId: mod.enemyId,
-        targetInstance: 0, // TODO: Instance tracking
-        operator: 'add',
-        amount: mod.amount,
-        total: fightState.getThreat(mod.actorId, mod.enemyId),
-      })
+  if (calculation.special) {
+    switch (calculation.special.type) {
+      case 'customThreat':
+        changes.push(
+          ...applyCustomThreatSpecial(fightState, calculation.special),
+        )
+        break
+      case 'modifyThreat':
+        changes.push(
+          ...applyModifyThreatSpecial(fightState, calculation.special, event),
+        )
+        break
     }
-  }
-
-  // Process threat modifications (boss abilities that modify threat)
-  if (calculation.special?.type === 'modifyThreat') {
-    const currentThreat = fightState.getThreat(event.targetID, event.sourceID)
-    const newThreat = calculateThreatModification(
-      currentThreat,
-      calculation.special.multiplier,
-    )
-    fightState.setThreat(event.targetID, event.sourceID, newThreat)
-    changes.push({
-      sourceId: event.targetID,
-      targetId: event.sourceID,
-      targetInstance: event.sourceInstance ?? 0,
-      operator: 'set',
-      amount: newThreat,
-      total: newThreat,
-    })
   }
 
   // split threat among alive enemies only
@@ -250,6 +233,91 @@ function applyThreat(
     })
   }
   return changes
+}
+
+/** Apply explicit custom threat changes */
+function applyCustomThreatSpecial(
+  fightState: FightState,
+  special: Extract<ThreatCalculation['special'], { type: 'customThreat' }>,
+): ThreatChange[] {
+  for (const change of special.changes) {
+    if (change.operator === 'set') {
+      fightState.setThreat(change.sourceId, change.targetId, change.total)
+    } else {
+      const currentThreat = fightState.getThreat(change.sourceId, change.targetId)
+      const delta = change.total - currentThreat
+      fightState.addThreat(change.sourceId, change.targetId, delta)
+    }
+  }
+
+  return [...special.changes]
+}
+
+/** Apply threat multipliers to either a single target or all actors on an enemy */
+function applyModifyThreatSpecial(
+  fightState: FightState,
+  special: Extract<ThreatCalculation['special'], { type: 'modifyThreat' }>,
+  event: WCLEvent,
+): ThreatChange[] {
+  if (special.target === 'all') {
+    // Friendly source abilities (e.g., Vanish, Feign Death):
+    // modify this actor's threat against all enemies.
+    if (event.sourceIsFriendly) {
+      const actorId = event.sourceID
+      const enemyThreat = fightState.getAllEnemyThreat(actorId)
+
+      return Array.from(enemyThreat.entries()).map(([enemyId, currentThreat]) => {
+        const newThreat = calculateThreatModification(
+          currentThreat,
+          special.multiplier,
+        )
+        fightState.setThreat(actorId, enemyId, newThreat)
+
+        return {
+          sourceId: actorId,
+          targetId: enemyId,
+          targetInstance: 0,
+          operator: 'set' as const,
+          amount: newThreat,
+          total: newThreat,
+        }
+      })
+    }
+
+    // Enemy source abilities (e.g., Noth Blink):
+    // modify all actors on this enemy's threat table.
+    const enemyId = event.sourceID
+    const actorThreat = fightState.getAllActorThreat(enemyId)
+
+    return Array.from(actorThreat.entries()).map(([actorId, currentThreat]) => {
+      const newThreat = calculateThreatModification(currentThreat, special.multiplier)
+      fightState.setThreat(actorId, enemyId, newThreat)
+
+      return {
+        sourceId: actorId,
+        targetId: enemyId,
+        targetInstance: event.sourceInstance ?? 0,
+        operator: 'set' as const,
+        amount: newThreat,
+        total: newThreat,
+      }
+    })
+  }
+
+  const currentThreat = fightState.getThreat(event.targetID, event.sourceID)
+  const newThreat = calculateThreatModification(currentThreat, special.multiplier)
+  fightState.setThreat(event.targetID, event.sourceID, newThreat)
+
+  return [
+    {
+      sourceId: event.targetID,
+      targetId: event.sourceID,
+      targetInstance: event.sourceInstance ?? 0,
+      operator: 'set',
+      amount: newThreat,
+      total: newThreat,
+    },
+  ]
 }
 
 /** Build set-to-zero threat changes for a dead player */

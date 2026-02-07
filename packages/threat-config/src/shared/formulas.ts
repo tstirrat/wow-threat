@@ -76,6 +76,13 @@ export interface TauntOptions {
   addDamage?: boolean
 }
 
+export interface ModifyThreatOptions {
+  /** Threat multiplier to apply */
+  modifier: number
+  /** Target scope for threat modification */
+  target?: 'target' | 'all'
+}
+
 /**
  * Taunt: sets threat to top threat + bonus, fixates target
  * Example: Taunt (top + 1, fixate 3s), Mocking Blow (top + damage, fixate 6s)
@@ -104,18 +111,21 @@ export function tauntTarget(
 /**
  * Threat modification: multiplies target's current threat against source
  * Examples:
- *   modifyThreat(0) - Threat wipe (Vanish, Feign Death)
- *   modifyThreat(0.5) - Halve threat (Onyxia's Knockaway)
- *   modifyThreat(2) - Double threat (theoretical boss mechanic)
+ *   modifyThreat({ modifier: 0 }) - Threat wipe on event target (Vanish, Feign Death)
+ *   modifyThreat({ modifier: 0.5 }) - Halve threat on event target (Onyxia's Knockaway)
+ *   modifyThreat({ modifier: 0, target: 'all' }) - Wipe all threat on source enemy (Noth Blink)
  */
-export function modifyThreat(multiplier: number): FormulaFn {
+export function modifyThreat(options: ModifyThreatOptions): FormulaFn {
+  const { modifier, target = 'target' } = options
+
   return () => ({
-    formula: multiplier === 0 ? 'threatWipe' : `threat * ${multiplier}`,
+    formula: modifier === 0 ? 'threatWipe' : `threat * ${modifier}`,
     value: 0,
     splitAmongEnemies: false,
     special: {
       type: 'modifyThreat',
-      multiplier,
+      multiplier: modifier,
+      target,
     },
   })
 }

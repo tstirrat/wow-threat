@@ -118,19 +118,6 @@ export interface ThreatModifier {
   schools?: Set<SpellSchool>
 }
 
-/**
- * Threat modification for custom threat mechanics
- * Used in customThreat special type
- */
-export interface ThreatModification {
-  /** Actor receiving the threat */
-  actorId: number
-  /** Enemy the threat is against */
-  enemyId: number
-  /** Amount of threat to add */
-  amount: number
-}
-
 // ============================================================================
 // Effect Handler System
 // ============================================================================
@@ -174,7 +161,7 @@ export type EffectHandler = (
 
 export type ThreatSpecial =
   | { type: 'taunt'; fixateDuration: number }
-  | { type: 'modifyThreat'; multiplier: number }
+  | { type: 'modifyThreat'; multiplier: number; target: 'target' | 'all' }
   | { type: 'noThreatWindow'; duration: number }
   | { type: 'fixate' }
   | { type: 'fixateEnd' }
@@ -182,7 +169,7 @@ export type ThreatSpecial =
   | { type: 'aggroLossEnd' }
   | { type: 'invulnerable' }
   | { type: 'invulnerableEnd' }
-  | { type: 'customThreat'; modifications: ThreatModification[] }
+  | { type: 'customThreat'; changes: ThreatChange[] }
   | { type: 'installHandler'; handler: EffectHandler }
 
 export interface ThreatFormulaResult {

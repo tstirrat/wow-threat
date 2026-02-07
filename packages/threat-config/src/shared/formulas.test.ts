@@ -187,36 +187,61 @@ describe('tauntTarget', () => {
 
 describe('modifyThreat', () => {
   it('returns modifyThreat special with multiplier', () => {
-    const formula = modifyThreat(0.5)
+    const formula = modifyThreat({ modifier: 0.5 })
     const ctx = createMockContext()
 
     const result = formula(ctx)
 
     expect(result.formula).toBe('threat * 0.5')
     expect(result.value).toBe(0)
-    expect(result.special).toEqual({ type: 'modifyThreat', multiplier: 0.5 })
+    expect(result.special).toEqual({
+      type: 'modifyThreat',
+      multiplier: 0.5,
+      target: 'target',
+    })
     expect(result.splitAmongEnemies).toBe(false)
   })
 
   it('handles threat wipe (multiplier 0)', () => {
-    const formula = modifyThreat(0)
+    const formula = modifyThreat({ modifier: 0 })
     const ctx = createMockContext()
 
     const result = formula(ctx)
 
     expect(result.formula).toBe('threatWipe')
     expect(result.value).toBe(0)
-    expect(result.special).toEqual({ type: 'modifyThreat', multiplier: 0 })
+    expect(result.special).toEqual({
+      type: 'modifyThreat',
+      multiplier: 0,
+      target: 'target',
+    })
   })
 
   it('handles threat doubling', () => {
-    const formula = modifyThreat(2)
+    const formula = modifyThreat({ modifier: 2 })
     const ctx = createMockContext()
 
     const result = formula(ctx)
 
     expect(result.formula).toBe('threat * 2')
-    expect(result.special).toEqual({ type: 'modifyThreat', multiplier: 2 })
+    expect(result.special).toEqual({
+      type: 'modifyThreat',
+      multiplier: 2,
+      target: 'target',
+    })
+  })
+
+  it('supports target=all option for boss-wide wipes', () => {
+    const formula = modifyThreat({ modifier: 0, target: 'all' })
+    const ctx = createMockContext()
+
+    const result = formula(ctx)
+
+    expect(result.special).toEqual({
+      type: 'modifyThreat',
+      multiplier: 0,
+      target: 'all',
+    })
   })
 })
 

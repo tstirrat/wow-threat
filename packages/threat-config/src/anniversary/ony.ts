@@ -16,7 +16,7 @@ export const Spells = {
  * Knocks back the target and reduces their threat by 25%.
  * Applied to the target hit by the knockback.
  */
-export const knockAway: ThreatFormula = modifyThreat(0.75)
+export const knockAway: ThreatFormula = modifyThreat({ modifier: 0.75 })
 
 /**
  * Onyxia boss abilities

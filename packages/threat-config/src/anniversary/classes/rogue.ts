@@ -39,8 +39,8 @@ export const rogueConfig: ClassThreatConfig = {
 
   abilities: {
     // Vanish - threat drop
-    [Spells.VanishR1]: modifyThreat(0),
-    [Spells.VanishR2]: modifyThreat(0),
+    [Spells.VanishR1]: modifyThreat({ modifier: 0, target: 'all' }),
+    [Spells.VanishR2]: modifyThreat({ modifier: 0, target: 'all' }),
 
     // Feint - negative threat (no coefficient applied)
     [Spells.FeintR1]: calculateThreat({ modifier: 0, bonus: -150 }),

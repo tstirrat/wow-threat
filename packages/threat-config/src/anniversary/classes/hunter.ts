@@ -81,7 +81,7 @@ export const hunterConfig: ClassThreatConfig = {
 
   abilities: {
     // Feign Death - threat drop
-    [Spells.FeignDeath]: modifyThreat(0),
+    [Spells.FeignDeath]: modifyThreat({ modifier: 0, target: 'all' }),
 
     // Misdirection - redirect threat to ally
     [Spells.Misdirection]: (ctx) => ({

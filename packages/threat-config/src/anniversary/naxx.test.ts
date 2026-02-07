@@ -2,7 +2,7 @@ import type { DamageEvent } from '@wcl-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
 import type { ActorContext, ThreatContext } from '../types'
-import { hatefulStrike } from './naxx'
+import { hatefulStrike, naxxAbilities } from './naxx'
 
 describe('Hateful Strike', () => {
   const PATCHWERK_ID = 16028
@@ -69,16 +69,15 @@ describe('Hateful Strike', () => {
     expect(result.special?.type).toBe('customThreat')
 
     if (result.special?.type === 'customThreat') {
-      expect(result.special.modifications).toHaveLength(4)
-      expect(result.special.modifications.map((m) => m.actorId)).toEqual([
+      expect(result.special.changes).toHaveLength(4)
+      expect(result.special.changes.map((c) => c.sourceId)).toEqual([
         1, 2, 3, 4,
       ])
-      expect(
-        result.special.modifications.every((m) => m.enemyId === PATCHWERK_ID),
-      ).toBe(true)
-      expect(result.special.modifications.every((m) => m.amount === 1000)).toBe(
+      expect(result.special.changes.every((c) => c.targetId === PATCHWERK_ID)).toBe(
         true,
       )
+      expect(result.special.changes.every((c) => c.amount === 1000)).toBe(true)
+      expect(result.special.changes.every((c) => c.operator === 'add')).toBe(true)
     }
   })
 
@@ -99,8 +98,8 @@ describe('Hateful Strike', () => {
     const result = hatefulStrike(ctx)
 
     if (result.special?.type === 'customThreat') {
-      expect(result.special.modifications).toHaveLength(2)
-      expect(result.special.modifications.map((m) => m.actorId)).toEqual([1, 2])
+      expect(result.special.changes).toHaveLength(2)
+      expect(result.special.changes.map((c) => c.sourceId)).toEqual([1, 2])
     }
   })
 
@@ -129,9 +128,9 @@ describe('Hateful Strike', () => {
     const result = hatefulStrike(ctx)
 
     if (result.special?.type === 'customThreat') {
-      expect(result.special.modifications).toHaveLength(4)
+      expect(result.special.changes).toHaveLength(4)
       // Should be actors 1, 3, 5, 6 (in melee range, sorted by threat)
-      expect(result.special.modifications.map((m) => m.actorId)).toEqual([
+      expect(result.special.changes.map((c) => c.sourceId)).toEqual([
         1, 3, 5, 6,
       ])
     }
@@ -157,8 +156,8 @@ describe('Hateful Strike', () => {
 
     if (result.special?.type === 'customThreat') {
       // Should only include actors 1 and 3 (with valid distances)
-      expect(result.special.modifications).toHaveLength(2)
-      expect(result.special.modifications.map((m) => m.actorId)).toEqual([1, 3])
+      expect(result.special.changes).toHaveLength(2)
+      expect(result.special.changes.map((c) => c.sourceId)).toEqual([1, 3])
     }
   })
 
@@ -179,7 +178,7 @@ describe('Hateful Strike', () => {
     const result = hatefulStrike(ctx)
 
     if (result.special?.type === 'customThreat') {
-      expect(result.special.modifications).toHaveLength(0)
+      expect(result.special.changes).toHaveLength(0)
     }
   })
 
@@ -191,5 +190,66 @@ describe('Hateful Strike', () => {
 
     expect(result.formula).toBe('0 (customThreat)')
     expect(result.splitAmongEnemies).toBe(false)
+  })
+})
+
+describe('Boss Threat Wipe on Cast', () => {
+  function createThreatWipeContext(abilityGameID: number): ThreatContext {
+    return {
+      event: {
+        sourceID: 15954,
+        targetID: 1,
+        type: 'cast',
+        abilityGameID,
+      } as DamageEvent,
+      amount: 0,
+      sourceAuras: new Set(),
+      targetAuras: new Set(),
+      sourceActor: { id: 15954, name: 'Noth the Plaguebringer', class: null },
+      targetActor: { id: 1, name: 'Tank', class: 'warrior' },
+      encounterId: null,
+      actors: {
+        getPosition: () => null,
+        getDistance: () => null,
+        getActorsInRange: () => [],
+        getThreat: () => 0,
+        getTopActorsByThreat: () => [],
+        isActorAlive: () => true,
+      },
+    }
+  }
+
+  it('returns modifyThreat special that targets all actors on source enemy', () => {
+    const result = naxxAbilities[29210]!(createThreatWipeContext(29210))
+
+    expect(result.formula).toBe('threatWipe')
+    expect(result.value).toBe(0)
+    expect(result.special).toEqual({
+      type: 'modifyThreat',
+      multiplier: 0,
+      target: 'all',
+    })
+  })
+
+  it('registers both known Noth blink spell IDs', () => {
+    const blink = naxxAbilities[29210]
+    const blinkAlt = naxxAbilities[29211]
+
+    expect(blink).toBeDefined()
+    expect(blinkAlt).toBeDefined()
+
+    const blinkResult = blink!(createThreatWipeContext(29210))
+    const blinkAltResult = blinkAlt!(createThreatWipeContext(29211))
+
+    expect(blinkResult.special).toEqual({
+      type: 'modifyThreat',
+      multiplier: 0,
+      target: 'all',
+    })
+    expect(blinkAltResult.special).toEqual({
+      type: 'modifyThreat',
+      multiplier: 0,
+      target: 'all',
+    })
   })
 })

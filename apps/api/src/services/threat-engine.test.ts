@@ -1780,9 +1780,23 @@ describe('Custom Threat Integration', () => {
           splitAmongEnemies: false,
           special: {
             type: 'customThreat',
-            modifications: [
-              { actorId: 2, enemyId: bossEnemy.id, amount: 500 },
-              { actorId: 3, enemyId: bossEnemy.id, amount: 300 },
+            changes: [
+              {
+                sourceId: 2,
+                targetId: bossEnemy.id,
+                targetInstance: 0,
+                operator: 'add',
+                amount: 500,
+                total: 500,
+              },
+              {
+                sourceId: 3,
+                targetId: bossEnemy.id,
+                targetInstance: 0,
+                operator: 'add',
+                amount: 300,
+                total: 300,
+              },
             ],
           },
         }),
@@ -1817,16 +1831,22 @@ describe('Custom Threat Integration', () => {
     expect(event?.threat?.calculation.special?.type).toBe('customThreat')
 
     if (event?.threat?.calculation.special?.type === 'customThreat') {
-      expect(event?.threat.calculation.special.modifications).toHaveLength(2)
-      expect(event?.threat.calculation.special.modifications).toContainEqual({
-        actorId: 2,
-        enemyId: bossEnemy.id,
+      expect(event?.threat.calculation.special.changes).toHaveLength(2)
+      expect(event?.threat.calculation.special.changes).toContainEqual({
+        sourceId: 2,
+        targetId: bossEnemy.id,
+        targetInstance: 0,
+        operator: 'add',
         amount: 500,
+        total: 500,
       })
-      expect(event?.threat.calculation.special.modifications).toContainEqual({
-        actorId: 3,
-        enemyId: bossEnemy.id,
+      expect(event?.threat.calculation.special.changes).toContainEqual({
+        sourceId: 3,
+        targetId: bossEnemy.id,
+        targetInstance: 0,
+        operator: 'add',
         amount: 300,
+        total: 300,
       })
     }
   })
@@ -1890,7 +1910,16 @@ describe('Custom Threat Integration', () => {
           splitAmongEnemies: false,
           special: {
             type: 'customThreat',
-            modifications: [{ actorId: 2, enemyId: bossEnemy.id, amount: 500 }],
+            changes: [
+              {
+                sourceId: 2,
+                targetId: bossEnemy.id,
+                targetInstance: 0,
+                operator: 'add',
+                amount: 500,
+                total: 500,
+              },
+            ],
           },
         }),
       },
@@ -2040,6 +2069,7 @@ describe('cumulative threat tracking', () => {
           special: {
             type: 'modifyThreat',
             multiplier: 0.5,
+            target: 'target',
           },
         }),
       },
@@ -2271,6 +2301,7 @@ describe('ThreatChange Generation', () => {
           special: {
             type: 'modifyThreat',
             multiplier: 0.5,
+            target: 'target',
           },
         }),
       },
@@ -2316,6 +2347,154 @@ describe('ThreatChange Generation', () => {
     })
   })
 
+  it('supports modifyThreat target=all by setting all actor threat on source enemy', () => {
+    const actorMap = new Map<number, Actor>([
+      [warriorActor.id, warriorActor],
+      [priestActor.id, priestActor],
+    ])
+
+    const specializedConfig = createMockThreatConfig({
+      ...mockConfig,
+      abilities: {
+        [7777]: () => ({
+          formula: 'wipe all',
+          value: 0,
+          splitAmongEnemies: false,
+          special: {
+            type: 'modifyThreat',
+            multiplier: 0,
+            target: 'all',
+          },
+        }),
+      },
+    })
+
+    const events: WCLEvent[] = [
+      createDamageEvent({
+        sourceID: warriorActor.id,
+        targetID: bossEnemy.id,
+        amount: 100,
+      }),
+      createDamageEvent({
+        sourceID: priestActor.id,
+        targetID: bossEnemy.id,
+        amount: 100,
+      }),
+      {
+        ...createDamageEvent({
+          sourceID: bossEnemy.id,
+          targetID: warriorActor.id,
+          amount: 0,
+        }),
+        type: 'cast',
+        sourceIsFriendly: false,
+        targetIsFriendly: true,
+        abilityGameID: 7777,
+      },
+    ]
+
+    const result = processEvents({
+      rawEvents: events,
+      actorMap,
+      enemies,
+      config: specializedConfig,
+    })
+
+    const wipeEvent = result.augmentedEvents[2]
+    expect(wipeEvent?.threat.changes).toHaveLength(2)
+    expect(wipeEvent?.threat.changes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceId: warriorActor.id,
+          targetId: bossEnemy.id,
+          operator: 'set',
+          total: 0,
+        }),
+        expect.objectContaining({
+          sourceId: priestActor.id,
+          targetId: bossEnemy.id,
+          operator: 'set',
+          total: 0,
+        }),
+      ]),
+    )
+  })
+
+  it('supports modifyThreat target=all from friendly source by setting actor threat on all enemies', () => {
+    const actorMap = new Map<number, Actor>([
+      [warriorActor.id, warriorActor],
+      [priestActor.id, priestActor],
+    ])
+
+    const enemy2: Enemy = { id: 555, name: 'Boss 2', instance: 0 }
+
+    const specializedConfig = createMockThreatConfig({
+      ...mockConfig,
+      abilities: {
+        [8887]: () => ({
+          formula: 'wipe self all enemies',
+          value: 0,
+          splitAmongEnemies: false,
+          special: {
+            type: 'modifyThreat',
+            multiplier: 0,
+            target: 'all',
+          },
+        }),
+      },
+    })
+
+    const events: WCLEvent[] = [
+      createDamageEvent({
+        sourceID: warriorActor.id,
+        targetID: bossEnemy.id,
+        amount: 100,
+      }),
+      createDamageEvent({
+        sourceID: warriorActor.id,
+        targetID: enemy2.id,
+        amount: 100,
+      }),
+      {
+        ...createDamageEvent({
+          sourceID: warriorActor.id,
+          targetID: warriorActor.id,
+          amount: 0,
+        }),
+        type: 'cast',
+        sourceIsFriendly: true,
+        targetIsFriendly: true,
+        abilityGameID: 8887,
+      },
+    ]
+
+    const result = processEvents({
+      rawEvents: events,
+      actorMap,
+      enemies: [bossEnemy, enemy2],
+      config: specializedConfig,
+    })
+
+    const wipeEvent = result.augmentedEvents[2]
+    expect(wipeEvent?.threat.changes).toHaveLength(2)
+    expect(wipeEvent?.threat.changes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceId: warriorActor.id,
+          targetId: bossEnemy.id,
+          operator: 'set',
+          total: 0,
+        }),
+        expect.objectContaining({
+          sourceId: warriorActor.id,
+          targetId: enemy2.id,
+          operator: 'set',
+          total: 0,
+        }),
+      ]),
+    )
+  })
+
   it('generates multiple ThreatChanges for customThreat operation', () => {
     const customAbilityId = 8888
     const specializedConfig = createMockThreatConfig({
@@ -2328,16 +2507,22 @@ describe('ThreatChange Generation', () => {
           modifiedThreat: 0,
           special: {
             type: 'customThreat',
-            modifications: [
+            changes: [
               {
-                actorId: warriorActor.id,
-                enemyId: bossEnemy.id,
+                sourceId: warriorActor.id,
+                targetId: bossEnemy.id,
+                targetInstance: 0,
+                operator: 'add',
                 amount: 500,
+                total: 500,
               },
               {
-                actorId: priestActor.id,
-                enemyId: bossEnemy.id,
+                sourceId: priestActor.id,
+                targetId: bossEnemy.id,
+                targetInstance: 0,
+                operator: 'add',
                 amount: 300,
+                total: 300,
               },
             ],
           },

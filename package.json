@@ -4,6 +4,7 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
+    "chart:threat": "node apps/web/generate-threat-chart.mjs",
     "test": "turbo test",
     "test:watch": "turbo test:watch",
     "lint": "turbo lint",

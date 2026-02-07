@@ -155,6 +155,14 @@ export class FightState {
     return this.threatTracker.getTopActorsByThreat(enemyId, count)
   }
 
+  getAllActorThreat(enemyId: number) {
+    return this.threatTracker.getAllActorThreat(enemyId)
+  }
+
+  getAllEnemyThreat(actorId: number) {
+    return this.threatTracker.getAllEnemyThreat(actorId)
+  }
+
   addThreat(actorId: number, enemyId: number, amount: number) {
     this.threatTracker.addThreat(actorId, enemyId, amount)
   }
