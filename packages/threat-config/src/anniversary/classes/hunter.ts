@@ -2,8 +2,10 @@
  * Hunter Threat Configuration - Anniversary Edition
  *
  * Feign Death drops threat. Distracting Shot generates fixed threat.
+ * Misdirection redirects threat to an ally.
  */
 import { calculateThreat, modifyThreat } from '../../shared/formulas'
+import type { EffectHandler } from '../../types'
 import type { ClassThreatConfig } from '../../types'
 
 // ============================================================================
@@ -12,6 +14,7 @@ import type { ClassThreatConfig } from '../../types'
 
 export const Spells = {
   FeignDeath: 5384,
+  Misdirection: 34477,
   DistractingShotR1: 20736,
   DistractingShotR2: 14274,
   DistractingShotR3: 15629,
@@ -23,6 +26,47 @@ export const Spells = {
   DisengageR3: 14273,
 } as const
 
+/**
+ * Misdirection - Redirects threat from the hunter to a target ally
+ *
+ * The hunter casts Misdirection on an ally, which redirects the hunter's
+ * threat on their next 3 damage attacks to that ally, or expires after 30 seconds.
+ *
+ * @param hunterId - The hunter casting Misdirection
+ * @param targetId - The ally receiving redirected threat
+ */
+function createMisdirectionHandler(
+  hunterId: number,
+  targetId: number,
+): EffectHandler {
+  let chargesRemaining = 3
+  const DURATION_MS = 30000
+
+  return (event, ctx) => {
+    // Expire after 30 seconds
+    if (ctx.timestamp - ctx.installedAt > DURATION_MS) {
+      ctx.uninstall()
+      return { action: 'passthrough' }
+    }
+
+    // Only redirect hunter's damage events
+    if (event.type !== 'damage' || event.sourceID !== hunterId) {
+      return { action: 'passthrough' }
+    }
+
+    chargesRemaining--
+    if (chargesRemaining <= 0) {
+      ctx.uninstall()
+    }
+
+    // Redirect threat to the target
+    return {
+      action: 'augment',
+      threatRecipientOverride: targetId,
+    }
+  }
+}
+
 // ============================================================================
 // Configuration
 // ============================================================================
@@ -33,6 +77,20 @@ export const hunterConfig: ClassThreatConfig = {
   abilities: {
     // Feign Death - threat drop
     [Spells.FeignDeath]: modifyThreat(0),
+
+    // Misdirection - redirect threat to ally
+    [Spells.Misdirection]: (ctx) => ({
+      formula: '0',
+      value: 0,
+      splitAmongEnemies: false,
+      special: {
+        type: 'installHandler',
+        handler: createMisdirectionHandler(
+          ctx.sourceActor.id,
+          ctx.event.targetID,
+        ),
+      },
+    }),
 
     // Distracting Shot - damage + flat threat per rank
     [Spells.DistractingShotR1]: calculateThreat({ modifier: 1, bonus: 110 }),

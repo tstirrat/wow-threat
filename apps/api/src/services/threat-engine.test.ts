@@ -7,13 +7,14 @@
  */
 import type {
   Actor,
+  EffectHandler,
   Enemy,
   ThreatConfig,
   ThreatContext,
   ThreatModifier,
 } from '@wcl-threat/threat-config'
 import type { DamageEvent, GearItem, WCLEvent } from '@wcl-threat/wcl-types'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import {
   createMockActorContext,
@@ -2276,5 +2277,461 @@ describe('ThreatChange Generation', () => {
         }),
       ]),
     )
+  })
+})
+
+describe('Effect Handler Integration', () => {
+  describe('installHandler special type', () => {
+    it('installs a handler that runs on subsequent events', () => {
+      const hunterActor: Actor = { id: 5, name: 'Hunter', class: 'hunter' }
+      const actorMap = new Map([[hunterActor.id, hunterActor]])
+
+      const INSTALL_SPELL = 99999
+      const mockHandler = vi.fn(() => ({
+        action: 'passthrough',
+      })) as EffectHandler
+
+      const config = createMockThreatConfig({
+        abilities: {
+          [INSTALL_SPELL]: () => ({
+            formula: '0',
+            value: 0,
+            splitAmongEnemies: false,
+            special: {
+              type: 'installHandler',
+              handler: mockHandler,
+            },
+          }),
+        },
+      })
+
+      const events: WCLEvent[] = [
+        {
+          timestamp: 1000,
+          type: 'cast',
+          sourceID: hunterActor.id,
+          sourceIsFriendly: true,
+          targetID: hunterActor.id,
+          targetIsFriendly: true,
+          abilityGameID: INSTALL_SPELL,
+        },
+        createDamageEvent({
+          timestamp: 2000,
+          sourceID: hunterActor.id,
+          targetID: bossEnemy.id,
+          amount: 500,
+        }),
+      ]
+
+      processEvents({
+        rawEvents: events,
+        actorMap,
+        enemies: [bossEnemy],
+        config,
+      })
+
+      // Handler should be called with the damage event
+      expect(mockHandler).toHaveBeenCalled()
+      expect(mockHandler).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'damage',
+          timestamp: 2000,
+          sourceID: hunterActor.id,
+        }),
+        expect.any(Object), // EffectHandlerContext
+      )
+    })
+
+    it('passthrough action yields augmented event without modification', () => {
+      const hunterActor: Actor = { id: 5, name: 'Hunter', class: 'hunter' }
+      const actorMap = new Map([[hunterActor.id, hunterActor]])
+
+      const PASSTHROUGH_SPELL = 88888
+      const mockHandler = vi.fn(() => ({
+        action: 'passthrough',
+      })) as EffectHandler
+
+      const config = createMockThreatConfig({
+        abilities: {
+          [PASSTHROUGH_SPELL]: () => ({
+            formula: '0',
+            value: 0,
+            splitAmongEnemies: false,
+            special: {
+              type: 'installHandler',
+              handler: mockHandler,
+            },
+          }),
+        },
+      })
+
+      const damageEvent = createDamageEvent({
+        timestamp: 2000,
+        sourceID: hunterActor.id,
+        targetID: bossEnemy.id,
+        amount: 500,
+      })
+
+      const events: WCLEvent[] = [
+        {
+          timestamp: 1000,
+          type: 'cast',
+          sourceID: hunterActor.id,
+          sourceIsFriendly: true,
+          targetID: hunterActor.id,
+          targetIsFriendly: true,
+          abilityGameID: PASSTHROUGH_SPELL,
+        },
+        damageEvent,
+      ]
+
+      const result = processEvents({
+        rawEvents: events,
+        actorMap,
+        enemies: [bossEnemy],
+        config,
+      })
+
+      // Second event: damage should be processed normally
+      const damageAugmented = result.augmentedEvents[1]
+      expect(damageAugmented?.threat.changes).toHaveLength(1)
+      // Default mock config is 1:1 damage threat
+      expect(damageAugmented?.threat.changes?.[0]).toMatchObject({
+        sourceId: hunterActor.id,
+        targetId: bossEnemy.id,
+        amount: 500,
+        operator: 'add',
+      })
+
+      // Handler should have been called for the damage event
+      expect(mockHandler).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'damage',
+          sourceID: hunterActor.id,
+        }),
+        expect.any(Object),
+      )
+    })
+  })
+
+  describe('threatRecipientOverride', () => {
+    it('redirects threat to a different actor', () => {
+      const hunterActor: Actor = { id: 5, name: 'Hunter', class: 'hunter' }
+      const tankActor: Actor = { id: 10, name: 'Tank', class: 'warrior' }
+      const actorMap = new Map([
+        [hunterActor.id, hunterActor],
+        [tankActor.id, tankActor],
+      ])
+
+      const MISDIRECTION_SPELL = 34477
+
+      const config = createMockThreatConfig({
+        abilities: {
+          [MISDIRECTION_SPELL]: () => ({
+            formula: '0',
+            value: 0,
+            splitAmongEnemies: false,
+            special: {
+              type: 'installHandler',
+              handler: (event, ctx) => {
+                // Only redirect hunter's damage
+                if (
+                  event.type !== 'damage' ||
+                  event.sourceID !== hunterActor.id
+                ) {
+                  return { action: 'passthrough' }
+                }
+
+                ctx.uninstall()
+                return {
+                  action: 'augment',
+                  threatRecipientOverride: tankActor.id,
+                }
+              },
+            },
+          }),
+        },
+      })
+
+      const events: WCLEvent[] = [
+        // Hunter casts Misdirection on tank
+        {
+          timestamp: 1000,
+          type: 'cast',
+          sourceID: hunterActor.id,
+          sourceIsFriendly: true,
+          targetID: tankActor.id,
+          targetIsFriendly: true,
+          abilityGameID: MISDIRECTION_SPELL,
+        },
+        // Hunter deals damage
+        createDamageEvent({
+          timestamp: 2000,
+          sourceID: hunterActor.id,
+          targetID: bossEnemy.id,
+          amount: 500,
+        }),
+      ]
+
+      const result = processEvents({
+        rawEvents: events,
+        actorMap,
+        enemies: [bossEnemy],
+        config,
+      })
+
+      // First event: Misdirection cast (no threat changes)
+      const misdirectionEvent = result.augmentedEvents[0]
+      expect(misdirectionEvent?.threat.calculation.special?.type).toBe(
+        'installHandler',
+      )
+
+      // Second event: Damage threat goes to tank, not hunter
+      const damageEvent = result.augmentedEvents[1]
+      expect(damageEvent?.threat.changes).toHaveLength(1)
+      expect(damageEvent?.threat.changes?.[0]).toMatchObject({
+        sourceId: tankActor.id, // Threat attributed to tank
+        targetId: bossEnemy.id,
+        operator: 'add',
+      })
+      // Base threat: 500 (mockConfig default is 1:1)
+      expect(damageEvent?.threat.changes?.[0]?.amount).toBe(500)
+    })
+
+    it('redirects split threat correctly', () => {
+      const priestActor: Actor = { id: 2, name: 'Priest', class: 'priest' }
+      const tankActor: Actor = { id: 10, name: 'Tank', class: 'warrior' }
+      const actorMap = new Map([
+        [priestActor.id, priestActor],
+        [tankActor.id, tankActor],
+      ])
+
+      const REDIRECT_SPELL = 88888
+
+      const config = createMockThreatConfig({
+        abilities: {
+          [REDIRECT_SPELL]: () => ({
+            formula: '0',
+            value: 0,
+            splitAmongEnemies: false,
+            special: {
+              type: 'installHandler',
+              handler: (event, ctx) => {
+                if (
+                  event.type !== 'heal' ||
+                  event.sourceID !== priestActor.id
+                ) {
+                  return { action: 'passthrough' }
+                }
+
+                ctx.uninstall()
+                return {
+                  action: 'augment',
+                  threatRecipientOverride: tankActor.id,
+                }
+              },
+            },
+          }),
+        },
+      })
+
+      const events: WCLEvent[] = [
+        {
+          timestamp: 1000,
+          type: 'cast',
+          sourceID: priestActor.id,
+          sourceIsFriendly: true,
+          targetID: tankActor.id,
+          targetIsFriendly: true,
+          abilityGameID: REDIRECT_SPELL,
+        },
+        createHealEvent({
+          timestamp: 2000,
+          sourceID: priestActor.id,
+          targetID: priestActor.id,
+          amount: 1000,
+        }),
+      ]
+
+      const enemies: Enemy[] = [bossEnemy, addEnemy]
+
+      const result = processEvents({
+        rawEvents: events,
+        actorMap,
+        enemies,
+        config,
+      })
+
+      const healEvent = result.augmentedEvents[1]
+      // Heal is split among 2 enemies
+      expect(healEvent?.threat.changes).toHaveLength(2)
+
+      // Both threat changes should be attributed to tank
+      for (const change of healEvent?.threat.changes ?? []) {
+        expect(change.sourceId).toBe(tankActor.id)
+      }
+    })
+  })
+
+  describe('skip action', () => {
+    it('suppresses threat generation for intercepted events', () => {
+      const hunterActor: Actor = { id: 5, name: 'Hunter', class: 'hunter' }
+      const actorMap = new Map([[hunterActor.id, hunterActor]])
+
+      const NO_THREAT_SPELL = 77777
+
+      const config = createMockThreatConfig({
+        abilities: {
+          [NO_THREAT_SPELL]: () => ({
+            formula: '0',
+            value: 0,
+            splitAmongEnemies: false,
+            special: {
+              type: 'installHandler',
+              handler: (event, ctx) => {
+                const elapsed = ctx.timestamp - ctx.installedAt
+
+                // Suppress threat for 5 seconds
+                if (elapsed > 5000) {
+                  ctx.uninstall()
+                  return { action: 'passthrough' }
+                }
+
+                if (event.sourceID === hunterActor.id) {
+                  return { action: 'skip' }
+                }
+
+                return { action: 'passthrough' }
+              },
+            },
+          }),
+        },
+      })
+
+      const events: WCLEvent[] = [
+        {
+          timestamp: 1000,
+          type: 'cast',
+          sourceID: hunterActor.id,
+          sourceIsFriendly: true,
+          targetID: hunterActor.id,
+          targetIsFriendly: true,
+          abilityGameID: NO_THREAT_SPELL,
+        },
+        // Damage within window - should be suppressed
+        createDamageEvent({
+          timestamp: 3000,
+          sourceID: hunterActor.id,
+          targetID: bossEnemy.id,
+          amount: 500,
+        }),
+        // Damage after window - should generate threat
+        createDamageEvent({
+          timestamp: 7000,
+          sourceID: hunterActor.id,
+          targetID: bossEnemy.id,
+          amount: 500,
+        }),
+      ]
+
+      const result = processEvents({
+        rawEvents: events,
+        actorMap,
+        enemies: [bossEnemy],
+        config,
+      })
+
+      // Second event: suppressed
+      const suppressedEvent = result.augmentedEvents[1]
+      expect(suppressedEvent?.threat.calculation.modifiedThreat).toBe(0)
+      expect(suppressedEvent?.threat.calculation.formula).toBe(
+        '0 (suppressed by effect)',
+      )
+      expect(suppressedEvent?.threat.changes).toEqual([])
+
+      // Third event: normal threat
+      const normalEvent = result.augmentedEvents[2]
+      expect(normalEvent?.threat.calculation.modifiedThreat).toBe(500)
+      expect(normalEvent?.threat.changes).toHaveLength(1)
+      expect(normalEvent?.threat.changes?.[0]).toMatchObject({
+        sourceId: hunterActor.id,
+        targetId: bossEnemy.id,
+        amount: 500,
+      })
+    })
+  })
+
+  describe('handler context', () => {
+    it('provides access to fight state via actors context', () => {
+      const warriorActor: Actor = { id: 1, name: 'Warrior', class: 'warrior' }
+      const actorMap = new Map([[warriorActor.id, warriorActor]])
+
+      const TEST_SPELL = 55555
+
+      const mockHandler = vi.fn((event, ctx) => {
+        // Verify we can access fight state
+        expect(ctx.actors).toBeDefined()
+        // These methods should exist and be callable
+        ctx.actors.getThreat(1, 99)
+        ctx.actors.getPosition(1)
+        ctx.uninstall()
+        return { action: 'passthrough' }
+      }) as EffectHandler
+
+      const config = createMockThreatConfig({
+        abilities: {
+          [TEST_SPELL]: () => ({
+            formula: '0',
+            value: 0,
+            splitAmongEnemies: false,
+            special: {
+              type: 'installHandler',
+              handler: mockHandler,
+            },
+          }),
+        },
+      })
+
+      const damageEvent = createDamageEvent({
+        timestamp: 2000,
+        sourceID: warriorActor.id,
+        targetID: bossEnemy.id,
+        amount: 100,
+      })
+
+      const events: WCLEvent[] = [
+        {
+          timestamp: 1000,
+          type: 'cast',
+          sourceID: warriorActor.id,
+          sourceIsFriendly: true,
+          targetID: warriorActor.id,
+          targetIsFriendly: true,
+          abilityGameID: TEST_SPELL,
+        },
+        damageEvent,
+      ]
+
+      processEvents({
+        rawEvents: events,
+        actorMap,
+        enemies: [bossEnemy],
+        config,
+      })
+
+      // Verify the handler was called with the damage event and context
+      expect(mockHandler).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'damage',
+          timestamp: 2000,
+          sourceID: warriorActor.id,
+        }),
+        expect.objectContaining({
+          timestamp: 2000,
+          actors: expect.any(Object),
+          uninstall: expect.any(Function),
+        }),
+      )
+    })
   })
 })

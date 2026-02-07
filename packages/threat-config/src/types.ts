@@ -123,6 +123,47 @@ export interface ThreatModification {
   amount: number
 }
 
+// ============================================================================
+// Effect Handler System
+// ============================================================================
+
+/**
+ * Context provided to effect handlers when they intercept events
+ */
+export interface EffectHandlerContext {
+  /** Current event timestamp */
+  timestamp: number
+  /** Timestamp when this handler was installed */
+  installedAt: number
+  /** Access to actor state (positions, threat, auras) */
+  actors: ActorContext
+  /** Uninstall this handler (call when effect expires) */
+  uninstall: () => void
+}
+
+/**
+ * Result returned by an effect handler after intercepting an event
+ */
+export type EffectHandlerResult =
+  | { action: 'passthrough' }
+  | { action: 'skip' }
+  | {
+      action: 'augment'
+      /** Override who receives threat credit (e.g., Misdirection) */
+      threatRecipientOverride?: number
+      /** Additional special behavior to apply */
+      special?: ThreatSpecial
+    }
+
+/**
+ * Handler function that intercepts future events
+ * Installed by abilities to implement deferred effects (Misdirection, delayed threat drops, etc.)
+ */
+export type EffectHandler = (
+  event: WCLEvent,
+  ctx: EffectHandlerContext,
+) => EffectHandlerResult
+
 export type ThreatSpecial =
   | { type: 'taunt'; fixateDuration: number }
   | { type: 'modifyThreat'; multiplier: number }
@@ -134,6 +175,7 @@ export type ThreatSpecial =
   | { type: 'invulnerable' }
   | { type: 'invulnerableEnd' }
   | { type: 'customThreat'; modifications: ThreatModification[] }
+  | { type: 'installHandler'; handler: EffectHandler }
 
 export interface ThreatFormulaResult {
   /** Human-readable formula, e.g., "(2 * amt) + 115" */

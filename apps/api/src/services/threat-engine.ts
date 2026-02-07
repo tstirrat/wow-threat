@@ -25,6 +25,7 @@ import {
 } from '@wcl-threat/threat-config'
 import type { WCLEvent } from '@wcl-threat/wcl-types'
 
+import { EffectTracker } from './effect-tracker'
 import { FightState } from './fight-state'
 
 const ENVIRONMENT_TARGET_ID = -1
@@ -64,6 +65,7 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
   const { rawEvents, actorMap, enemies, config } = input
 
   const fightState = new FightState(actorMap, config)
+  const effectTracker = new EffectTracker()
   const augmentedEvents: AugmentedEvent[] = []
   const eventCounts: Record<string, number> = {}
 
@@ -76,6 +78,35 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
 
     // Calculate threat for relevant event types
     if (shouldCalculateThreat(event)) {
+      // Run effect handlers first
+      const handlerResults = effectTracker.runHandlers(
+        event,
+        event.timestamp,
+        fightState,
+      )
+
+      // Check if any handler wants to skip this event
+      const shouldSkip = handlerResults.some((r) => r.action === 'skip')
+      if (shouldSkip) {
+        // Create zero-threat augmented event
+        const zeroCalculation: ThreatCalculation = {
+          formula: '0 (suppressed by effect)',
+          amount: 0,
+          baseThreat: 0,
+          modifiedThreat: 0,
+          isSplit: false,
+          modifiers: [],
+        }
+        augmentedEvents.push(buildAugmentedEvent(event, zeroCalculation, []))
+        continue
+      }
+
+      // Collect augmentations from handlers
+      const augmentations = handlerResults.filter((r) => r.action === 'augment')
+      const threatRecipientOverride = augmentations.find(
+        (a) => a.action === 'augment' && a.threatRecipientOverride,
+      )?.threatRecipientOverride
+
       const sourceActor = actorMap.get(event.sourceID) ?? {
         id: event.sourceID,
         name: 'Unknown',
@@ -99,9 +130,20 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
 
       const calculation = calculateModifiedThreat(event, threatOptions, config)
 
+      // Handle installHandler special
+      if (calculation.special?.type === 'installHandler') {
+        effectTracker.install(calculation.special.handler, event.timestamp)
+      }
+
       const validEnemies = enemies.filter((e) => e.id !== ENVIRONMENT_TARGET_ID)
 
-      const changes = applyThreat(fightState, calculation, event, validEnemies)
+      const changes = applyThreat(
+        fightState,
+        calculation,
+        event,
+        validEnemies,
+        threatRecipientOverride,
+      )
 
       augmentedEvents.push(
         buildAugmentedEvent(
@@ -125,8 +167,10 @@ function applyThreat(
   calculation: ThreatCalculation,
   event: WCLEvent,
   enemies: Enemy[],
+  threatRecipientOverride?: number,
 ): ThreatChange[] {
   const changes: ThreatChange[] = []
+  const threatRecipient = threatRecipientOverride ?? event.sourceID
 
   if (calculation.special?.type === 'customThreat') {
     for (const mod of calculation.special.modifications) {
@@ -167,30 +211,30 @@ function applyThreat(
 
     for (const enemy of enemies) {
       // TODO: check enemies are alive
-      fightState.addThreat(event.sourceID, enemy.id, splitThreat)
+      fightState.addThreat(threatRecipient, enemy.id, splitThreat)
       changes.push({
-        sourceId: event.sourceID,
+        sourceId: threatRecipient,
         targetId: enemy.id,
         targetInstance: enemy.instance,
         operator: 'add',
         amount: splitThreat,
-        total: fightState.getThreat(event.sourceID, enemy.id),
+        total: fightState.getThreat(threatRecipient, enemy.id),
       })
     }
   } else if (calculation.modifiedThreat > 0) {
     // single target event
     fightState.addThreat(
-      event.sourceID,
+      threatRecipient,
       event.targetID,
       calculation.modifiedThreat,
     )
     changes.push({
-      sourceId: event.sourceID,
+      sourceId: threatRecipient,
       targetId: event.targetID,
       targetInstance: event.targetInstance ?? 0,
       operator: 'add',
       amount: calculation.modifiedThreat,
-      total: fightState.getThreat(event.sourceID, event.targetID),
+      total: fightState.getThreat(threatRecipient, event.targetID),
     })
   }
   return changes
