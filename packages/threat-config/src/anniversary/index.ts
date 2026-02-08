@@ -18,12 +18,6 @@ import { baseThreat } from './general'
 import { naxxAbilities } from './naxx'
 import { onyxiaAbilities } from './ony'
 
-// Creature GUIDs that cannot be taunted
-const untauntableEnemies = new Set<number>([
-  // Add boss GUIDs here as needed
-  // e.g., 15990 for Kel'Thuzad during certain phases
-])
-
 // Fixate buffs (taunt effects)
 // Class-specific fixates are in class configs
 const fixateBuffs = new Set<number>([])
@@ -87,7 +81,6 @@ export const anniversaryConfig: ThreatConfig = {
   },
 
   auraModifiers: globalAuraModifiers,
-  untauntableEnemies,
   fixateBuffs,
   aggroLossBuffs,
   invulnerabilityBuffs,

@@ -78,7 +78,6 @@ export function createMockThreatConfig(
     },
 
     auraModifiers: {},
-    untauntableEnemies: new Set(),
     fixateBuffs: new Set(),
     aggroLossBuffs: new Set(),
     invulnerabilityBuffs: new Set(),

@@ -243,8 +243,6 @@ export interface ThreatConfig {
    * auras the source actor has active.
    */
   auraModifiers: Record<number, (ctx: ThreatContext) => ThreatModifier>
-  /** Enemies that cannot be taunted (by creature guid) */
-  untauntableEnemies: Set<number>
   /** Buffs that indicate fixate (taunt) state */
   fixateBuffs?: Set<number>
   /** Buffs that indicate aggro loss state */

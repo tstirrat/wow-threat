@@ -38,5 +38,4 @@ export const sodConfig: ThreatConfig = {
   },
 
   auraModifiers: {},
-  untauntableEnemies: new Set(),
 }

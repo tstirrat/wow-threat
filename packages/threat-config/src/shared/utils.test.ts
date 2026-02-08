@@ -164,7 +164,6 @@ describe('validateAuraModifiers', () => {
       baseThreat: {} as ThreatConfig['baseThreat'],
       classes,
       auraModifiers: globalMods,
-      untauntableEnemies: new Set(),
     }
   }
 
@@ -345,7 +344,6 @@ describe('validateAbilities', () => {
       classes,
       abilities: globalAbilities,
       auraModifiers: {},
-      untauntableEnemies: new Set(),
     }
   }
 
@@ -536,7 +534,6 @@ describe('validateAbilities', () => {
         },
       },
       auraModifiers: {},
-      untauntableEnemies: new Set(),
     }
 
     validateAbilities(config)

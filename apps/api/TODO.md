@@ -6,9 +6,9 @@ Legend:
 
 ## P0 - Core Engine Semantics
 
-- [ ] **[P0][C4]** Implement missing `ThreatSpecial` runtime behaviors (`taunt`, `fixate*`, `aggroLoss*`, `invulnerable*`) and wire config sets into output/state.
-- [ ] **[P0][C4]** Implement `taunt` special semantics in the engine (set to top threat + bonus, not flat add), and gate it with `untauntableEnemies`.
-- [ ] **[P0][C3]** Wire runtime handling for `fixate`, `fixateEnd`, `aggroLoss`, `aggroLossEnd`, `invulnerable`, `invulnerableEnd`.
+- [x] **[P0][C4]** Implement missing `ThreatSpecial` runtime behaviors (`taunt`, `fixate*`, `aggroLoss*`, `invulnerable*`) and wire config sets into output/state.
+- [x] **[P0][C4]** Implement `taunt` special semantics in the engine (set to top threat + bonus, not flat add).
+- [x] **[P0][C3]** Wire runtime handling for `fixate`, `fixateEnd`, `aggroLoss`, `aggroLossEnd`, `invulnerable`, `invulnerableEnd`.
 - [x] **[P0][C1]** Remove `noThreatWindow` special from the contract (deprecated).
 - [ ] **[P0][C3]** Allow effect handlers to pass `augment.special` through to core threat application (today only `threatRecipientOverride` is used).
 - [x] **[P0][C2]** Support negative threat deltas (Feint/Cower/Disengage-style) with floor-at-zero semantics.
@@ -43,4 +43,4 @@ Legend:
 ## P2 - Config Completion and Validation
 
 - [ ] **[P2][C3]** After engine gaps above, port remaining class-level mechanics now marked TODO in Anniversary config (mage/priest/shaman/druid/warlock talent/handler gaps).
-- [ ] **[P2][C3]** Expand tests to cover runtime semantics above (currently no engine tests for taunt/fixate/aggro-loss/invuln/noThreatWindow).
+- [ ] **[P2][C3]** Expand tests to cover remaining runtime semantics above (notably aggro-loss state coverage).

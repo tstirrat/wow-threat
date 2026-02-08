@@ -39,5 +39,4 @@ export const retailConfig: ThreatConfig = {
   },
 
   auraModifiers: {},
-  untauntableEnemies: new Set(),
 }
