@@ -178,13 +178,13 @@ export const warriorConfig: ClassThreatConfig = {
     [Spells.Disarm]: calculateThreat({ modifier: 1, bonus: 104 }),
 
     // Taunt: match top threat + 1
-    [Spells.Taunt]: tauntTarget(1),
+    [Spells.Taunt]: tauntTarget({ bonus: 1 }),
 
     // Mocking Blow: match top threat + damage
-    [Spells.MockingBlow]: tauntTarget(0, { addDamage: true }),
+    [Spells.MockingBlow]: tauntTarget({ modifier: 1, bonus: 0 }),
 
     // Challenging Shout: match top threat
-    [Spells.ChallengingShout]: tauntTarget(0),
+    [Spells.ChallengingShout]: tauntTarget({ bonus: 0 }),
   },
 
   fixateBuffs: new Set([

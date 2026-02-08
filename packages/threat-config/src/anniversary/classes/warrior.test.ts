@@ -303,7 +303,7 @@ describe('Taunt', () => {
       })
       const result = formula!(ctx)
 
-      expect(result.formula).toBe('topThreat + amt + 0')
+      expect(result.formula).toBe('topThreat + amt')
       expect(result.value).toBe(0)
       expect(result.special).toEqual({
         type: 'customThreat',

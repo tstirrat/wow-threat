@@ -72,8 +72,10 @@ export function calculateThreat(
 }
 
 export interface TauntOptions {
-  /** Add damage amount to threat (e.g., Mocking Blow) */
-  addDamage?: boolean
+  /** Multiplier applied to event amount (default: 0) */
+  modifier?: number
+  /** Flat bonus threat added after modifier (default: 0) */
+  bonus?: number
 }
 
 export interface ModifyThreatOptions {
@@ -84,13 +86,13 @@ export interface ModifyThreatOptions {
 }
 
 /**
- * Taunt: sets source threat to top threat + bonus on the event target enemy.
- * Example: Taunt (top + 1), Mocking Blow (top + damage)
+ * Taunt: sets source threat to top threat + ((amount * modifier) + bonus)
+ * on the event target enemy.
+ * Example: Taunt ({ bonus: 1 }), Mocking Blow ({ modifier: 1 })
  */
-export function tauntTarget(
-  bonusThreat: number,
-  options?: TauntOptions,
-): FormulaFn {
+export function tauntTarget(options: TauntOptions = {}): FormulaFn {
+  const { modifier = 0, bonus = 0 } = options
+
   return (ctx) => {
     if (ctx.event.type !== 'applybuff' && ctx.event.type !== 'applydebuff') {
       return {
@@ -100,18 +102,32 @@ export function tauntTarget(
       }
     }
 
-    const bonus = options?.addDamage ? ctx.amount + bonusThreat : bonusThreat
+    const bonusThreat = ctx.amount * modifier + bonus
     const sourceId = ctx.sourceActor.id
     const targetId = ctx.targetActor.id
     const targetInstance = ctx.event.targetInstance ?? 0
     const currentThreat = ctx.actors.getThreat(sourceId, targetId)
-    const topThreat = ctx.actors.getTopActorsByThreat(targetId, 1)[0]?.threat ?? 0
-    const nextThreat = Math.max(currentThreat, topThreat + bonus)
+    const topThreat = ctx.actors.getTopActorsByThreat(
+      targetId,
+      1,
+    )[0]?.threat ?? 0
+    const nextThreat = Math.max(currentThreat, topThreat + bonusThreat)
+
+    let formula: string
+    if (modifier === 0) {
+      formula = `topThreat + ${bonus}`
+    } else if (modifier === 1 && bonus === 0) {
+      formula = 'topThreat + amt'
+    } else if (modifier === 1) {
+      formula = `topThreat + amt + ${bonus}`
+    } else if (bonus === 0) {
+      formula = `topThreat + (amt * ${modifier})`
+    } else {
+      formula = `topThreat + (amt * ${modifier}) + ${bonus}`
+    }
 
     return {
-      formula: options?.addDamage
-        ? `topThreat + amt + ${bonusThreat}`
-        : `topThreat + ${bonusThreat}`,
+      formula,
       value: 0,
       splitAmongEnemies: false,
       special: {

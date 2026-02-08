@@ -153,7 +153,7 @@ describe('calculateThreat', () => {
 
 describe('tauntTarget', () => {
   it('returns customThreat set to top threat + bonus', () => {
-    const formula = tauntTarget(1)
+    const formula = tauntTarget({ bonus: 1 })
     const ctx = createMockContext({
       event: { type: 'applydebuff' } as ThreatContext['event'],
       amount: 0,
@@ -187,8 +187,8 @@ describe('tauntTarget', () => {
     expect(result.splitAmongEnemies).toBe(false)
   })
 
-  it('includes damage when addDamage option set', () => {
-    const formula = tauntTarget(0, { addDamage: true })
+  it('includes damage when modifier set', () => {
+    const formula = tauntTarget({ modifier: 1, bonus: 0 })
     const ctx = createMockContext({
       event: { type: 'applydebuff' } as ThreatContext['event'],
       amount: 500,
@@ -204,7 +204,7 @@ describe('tauntTarget', () => {
 
     const result = formula(ctx)
 
-    expect(result.formula).toBe('topThreat + amt + 0')
+    expect(result.formula).toBe('topThreat + amt')
     expect(result.value).toBe(0)
     expect(result.special).toEqual({
       type: 'customThreat',
@@ -222,7 +222,7 @@ describe('tauntTarget', () => {
   })
 
   it('does not lower threat when already above taunt threshold', () => {
-    const formula = tauntTarget(100, { addDamage: true })
+    const formula = tauntTarget({ modifier: 1, bonus: 100 })
     const ctx = createMockContext({
       event: { type: 'applydebuff' } as ThreatContext['event'],
       amount: 300,

@@ -170,10 +170,10 @@ export const druidConfig: ClassThreatConfig = {
     [Spells.DemoRoarR5]: threatOnDebuff(39),
 
     // Growl - taunt
-    [Spells.Growl]: tauntTarget(0),
+    [Spells.Growl]: tauntTarget({ bonus: 0 }),
 
     // Challenging Roar - taunt
-    [Spells.ChallengingRoar]: tauntTarget(0),
+    [Spells.ChallengingRoar]: tauntTarget({ bonus: 0 }),
 
     // Bash - zero threat (needs verification)
     [Spells.Bash]: noThreat(),
