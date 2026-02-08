@@ -83,8 +83,9 @@ Query params:
 Behavior notes:
 
 - The endpoint returns events that the threat engine processes, not every raw WCL event type.
-- Threat is currently calculated for `damage`, `heal`, `energize`, `cast`, and `death`.
+- Threat is currently calculated for `damage`, `heal`, `energize`, `cast`, `death`, and aura apply/remove events (`applybuff`, `removebuff`, `applydebuff`, `removedebuff`).
 - Each returned event includes a `threat` object with a calculation breakdown and optional threat `changes`.
+- Fixate/taunt chart-state markers are derived from aura apply/remove events. AoE fixate/taunt charting assumes logs emit per-target debuff apply/remove events for each affected enemy.
 
 ## Cache Headers
 

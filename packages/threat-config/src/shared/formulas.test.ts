@@ -29,6 +29,7 @@ function createMockContext(
       getActorsInRange: () => [],
       getThreat: () => 0,
       getTopActorsByThreat: () => [],
+      isActorAlive: () => true,
     },
     ...overrides,
   }
@@ -151,37 +152,106 @@ describe('calculateThreat', () => {
 })
 
 describe('tauntTarget', () => {
-  it('returns taunt special with fixate duration', () => {
-    const formula = tauntTarget(1, 3000)
-    const ctx = createMockContext({ amount: 0 })
+  it('returns customThreat set to top threat + bonus', () => {
+    const formula = tauntTarget(1)
+    const ctx = createMockContext({
+      event: { type: 'applydebuff' } as ThreatContext['event'],
+      amount: 0,
+      actors: {
+        getPosition: () => null,
+        getDistance: () => null,
+        getActorsInRange: () => [],
+        getThreat: () => 100,
+        getTopActorsByThreat: () => [{ actorId: 99, threat: 500 }],
+        isActorAlive: () => true,
+      },
+    })
 
     const result = formula(ctx)
 
     expect(result.formula).toBe('topThreat + 1')
-    expect(result.value).toBe(1)
-    expect(result.special).toEqual({ type: 'taunt', fixateDuration: 3000 })
+    expect(result.value).toBe(0)
+    expect(result.special).toEqual({
+      type: 'customThreat',
+      changes: [
+        {
+          sourceId: 1,
+          targetId: 2,
+          targetInstance: 0,
+          operator: 'set',
+          amount: 501,
+          total: 501,
+        },
+      ],
+    })
     expect(result.splitAmongEnemies).toBe(false)
   })
 
   it('includes damage when addDamage option set', () => {
-    const formula = tauntTarget(0, 6000, { addDamage: true })
-    const ctx = createMockContext({ amount: 500 })
+    const formula = tauntTarget(0, { addDamage: true })
+    const ctx = createMockContext({
+      event: { type: 'applydebuff' } as ThreatContext['event'],
+      amount: 500,
+      actors: {
+        getPosition: () => null,
+        getDistance: () => null,
+        getActorsInRange: () => [],
+        getThreat: () => 100,
+        getTopActorsByThreat: () => [{ actorId: 99, threat: 400 }],
+        isActorAlive: () => true,
+      },
+    })
 
     const result = formula(ctx)
 
     expect(result.formula).toBe('topThreat + amt + 0')
-    expect(result.value).toBe(500) // Just the damage, bonus is 0
-    expect(result.special).toEqual({ type: 'taunt', fixateDuration: 6000 })
+    expect(result.value).toBe(0)
+    expect(result.special).toEqual({
+      type: 'customThreat',
+      changes: [
+        {
+          sourceId: 1,
+          targetId: 2,
+          targetInstance: 0,
+          operator: 'set',
+          amount: 900,
+          total: 900,
+        },
+      ],
+    })
   })
 
-  it('adds damage + bonus threat together', () => {
-    const formula = tauntTarget(100, 4000, { addDamage: true })
-    const ctx = createMockContext({ amount: 300 })
+  it('does not lower threat when already above taunt threshold', () => {
+    const formula = tauntTarget(100, { addDamage: true })
+    const ctx = createMockContext({
+      event: { type: 'applydebuff' } as ThreatContext['event'],
+      amount: 300,
+      actors: {
+        getPosition: () => null,
+        getDistance: () => null,
+        getActorsInRange: () => [],
+        getThreat: () => 1000,
+        getTopActorsByThreat: () => [{ actorId: 99, threat: 500 }],
+        isActorAlive: () => true,
+      },
+    })
 
     const result = formula(ctx)
 
     expect(result.formula).toBe('topThreat + amt + 100')
-    expect(result.value).toBe(400) // 300 damage + 100 bonus
+    expect(result.special).toEqual({
+      type: 'customThreat',
+      changes: [
+        {
+          sourceId: 1,
+          targetId: 2,
+          targetInstance: 0,
+          operator: 'set',
+          amount: 1000,
+          total: 1000,
+        },
+      ],
+    })
   })
 })
 
@@ -246,7 +316,7 @@ describe('modifyThreat', () => {
 })
 
 describe('noThreat', () => {
-  it('returns zero threat without duration', () => {
+  it('returns zero threat', () => {
     const formula = noThreat()
     const ctx = createMockContext()
 
@@ -255,16 +325,5 @@ describe('noThreat', () => {
     expect(result.formula).toBe('0')
     expect(result.value).toBe(0)
     expect(result.special).toBeUndefined()
-  })
-
-  it('returns no threat window with duration', () => {
-    const formula = noThreat(30000)
-    const ctx = createMockContext()
-
-    const result = formula(ctx)
-
-    expect(result.formula).toBe('0')
-    expect(result.value).toBe(0)
-    expect(result.special).toEqual({ type: 'noThreatWindow', duration: 30000 })
   })
 })

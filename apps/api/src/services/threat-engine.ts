@@ -11,9 +11,11 @@ import type {
   AugmentedEvent,
   ClassThreatConfig,
   Enemy,
+  ThreatSpecial,
   ThreatCalculation,
   ThreatChange,
   ThreatConfig,
+  ThreatStateKind,
   ThreatContext,
   ThreatModifier,
   ThreatResult,
@@ -66,6 +68,7 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
 
   const fightState = new FightState(actorMap, config)
   const effectTracker = new EffectTracker()
+  const stateSpellSets = buildStateSpellSets(config)
   const augmentedEvents: AugmentedEvent[] = []
   const eventCounts: Record<string, number> = {}
 
@@ -129,6 +132,7 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
       }
 
       const calculation = calculateModifiedThreat(event, threatOptions, config)
+      const stateSpecial = buildStateSpecialFromAuraEvent(event, stateSpellSets)
 
       // Handle installHandler special
       if (calculation.special?.type === 'installHandler') {
@@ -148,7 +152,7 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
       augmentedEvents.push(
         buildAugmentedEvent(
           event,
-          calculation,
+          stateSpecial ? { ...calculation, special: stateSpecial } : calculation,
           changes.length > 0 ? changes : undefined,
         ),
       )
@@ -376,7 +380,134 @@ function shouldCalculateThreat(event: WCLEvent): boolean {
   if (event.targetID === ENVIRONMENT_TARGET_ID) {
     return false
   }
-  return ['damage', 'heal', 'energize', 'cast'].includes(event.type)
+  return [
+    'damage',
+    'heal',
+    'energize',
+    'cast',
+    'applybuff',
+    'removebuff',
+    'applydebuff',
+    'removedebuff',
+  ].includes(event.type)
+}
+
+interface ThreatStateSpellSets {
+  fixate: Set<number>
+  aggroLoss: Set<number>
+  invulnerable: Set<number>
+}
+
+/** Build merged spell sets for threat state markers from global + class config. */
+function buildStateSpellSets(config: ThreatConfig): ThreatStateSpellSets {
+  const fixate = new Set<number>(config.fixateBuffs ?? [])
+  const aggroLoss = new Set<number>(config.aggroLossBuffs ?? [])
+  const invulnerable = new Set<number>(config.invulnerabilityBuffs ?? [])
+
+  for (const classConfig of Object.values(config.classes)) {
+    for (const spellId of classConfig?.fixateBuffs ?? []) {
+      fixate.add(spellId)
+    }
+    for (const spellId of classConfig?.aggroLossBuffs ?? []) {
+      aggroLoss.add(spellId)
+    }
+    for (const spellId of classConfig?.invulnerabilityBuffs ?? []) {
+      invulnerable.add(spellId)
+    }
+  }
+
+  return {
+    fixate,
+    aggroLoss,
+    invulnerable,
+  }
+}
+
+/** Derive state-style threat special markers from aura apply/remove events. */
+function buildStateSpecialFromAuraEvent(
+  event: WCLEvent,
+  stateSpellSets: ThreatStateSpellSets,
+): Extract<ThreatSpecial, { type: 'state' }> | undefined {
+  if (!('abilityGameID' in event)) {
+    return undefined
+  }
+
+  const phase = getStatePhase(event)
+  if (!phase) {
+    return undefined
+  }
+
+  const spellId = event.abilityGameID
+  const kind = getStateKind(spellId, stateSpellSets)
+  if (!kind) {
+    return undefined
+  }
+
+  const baseState = {
+    kind,
+    phase,
+    spellId,
+    actorId: kind === 'fixate' ? event.sourceID : event.targetID,
+    name: phase === 'start' ? getAbilityName(event) : undefined,
+  } as const
+
+  if (kind === 'fixate') {
+    return {
+      type: 'state',
+      state: {
+        ...baseState,
+        targetId: event.targetID,
+        targetInstance: event.targetInstance ?? 0,
+      },
+    }
+  }
+
+  return {
+    type: 'state',
+    state: baseState,
+  }
+}
+
+function getStatePhase(event: WCLEvent): 'start' | 'end' | undefined {
+  if (event.type === 'applybuff' || event.type === 'applydebuff') {
+    return 'start'
+  }
+  if (event.type === 'removebuff' || event.type === 'removedebuff') {
+    return 'end'
+  }
+  return undefined
+}
+
+function getStateKind(
+  spellId: number,
+  stateSpellSets: ThreatStateSpellSets,
+): ThreatStateKind | undefined {
+  if (stateSpellSets.fixate.has(spellId)) {
+    return 'fixate'
+  }
+  if (stateSpellSets.aggroLoss.has(spellId)) {
+    return 'aggroLoss'
+  }
+  if (stateSpellSets.invulnerable.has(spellId)) {
+    return 'invulnerable'
+  }
+  return undefined
+}
+
+function getAbilityName(event: WCLEvent): string | undefined {
+  const fallback =
+    'abilityGameID' in event ? `Spell ${event.abilityGameID}` : undefined
+
+  if (!('ability' in event)) {
+    return fallback
+  }
+
+  const ability = event.ability as { name?: unknown } | undefined
+  if (!ability || typeof ability.name !== 'string') {
+    return fallback
+  }
+
+  return ability.name
 }
 
 /**

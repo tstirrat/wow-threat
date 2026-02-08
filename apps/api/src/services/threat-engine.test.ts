@@ -21,12 +21,14 @@ import {
   createMockThreatConfig,
 } from '../../test/helpers/config'
 import {
+  createApplyDebuffEvent,
   createApplyBuffEvent,
   createCombatantInfoAura,
   createDamageEvent,
   createEnergizeEvent,
   createHealEvent,
   createRemoveBuffEvent,
+  createRemoveDebuffEvent,
 } from '../../test/helpers/events'
 import {
   calculateModifiedThreat,
@@ -1025,7 +1027,7 @@ describe('combatantinfo processing', () => {
     expect(result.eventCounts.combatantinfo).toBe(1)
 
     // The damage event should have the aura modifier from combatantinfo
-    const damageEvent = result.augmentedEvents[0]
+    const damageEvent = result.augmentedEvents.find((e) => e.type === 'damage')
     const threatUpModifier = damageEvent?.threat.calculation.modifiers.find(
       (m: ThreatModifier) => m.name === 'Test Threat Up',
     )
@@ -1068,7 +1070,7 @@ describe('combatantinfo processing', () => {
 
     // Damage event should be present with the synthetic aura modifier
     expect(result.augmentedEvents.length).toBe(1)
-    const damageEvent = result.augmentedEvents[0]
+    const damageEvent = result.augmentedEvents.find((e) => e.type === 'damage')
     const setBonusModifier = damageEvent?.threat.calculation.modifiers.find(
       (m: ThreatModifier) => m.source === 'gear',
     )
@@ -1145,11 +1147,11 @@ describe('aura tracking', () => {
       config: mockConfig,
     })
 
-    // Both damage events should be present
-    expect(result.augmentedEvents.length).toBe(2)
+    // Apply/remove aura events are now augmented too
+    expect(result.augmentedEvents.length).toBe(4)
 
     // First event should have the threat up modifier (1.5x)
-    const firstEvent = result.augmentedEvents[0]
+    const firstEvent = result.augmentedEvents.find((e) => e.type === 'damage')
     expect(firstEvent?.threat).toBeDefined()
     const firstThreatUpModifier = firstEvent?.threat.calculation.modifiers.find(
       (m: ThreatModifier) => m.name === 'Test Threat Up',
@@ -1157,13 +1159,167 @@ describe('aura tracking', () => {
     expect(firstThreatUpModifier).toBeDefined()
     expect(firstThreatUpModifier?.value).toBe(1.5)
 
-    // Second event should not have the threat up modifier
-    const secondEvent = result.augmentedEvents[1]
+    // Second damage event should not have the threat up modifier
+    const secondEvent = result.augmentedEvents
+      .filter((e) => e.type === 'damage')
+      .at(1)
     const secondThreatUpModifier =
       secondEvent?.threat.calculation.modifiers.find(
         (m: ThreatModifier) => m.name === 'Test Threat Up',
       )
     expect(secondThreatUpModifier).toBeUndefined()
+  })
+
+  it('emits phased state specials for invulnerability aura events', () => {
+    const INVULN_SPELL = 642
+    const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
+    const config = createMockThreatConfig({
+      invulnerabilityBuffs: new Set([INVULN_SPELL]),
+    })
+
+    const result = processEvents({
+      rawEvents: [
+        createApplyBuffEvent({
+          sourceID: warriorActor.id,
+          targetID: warriorActor.id,
+          abilityGameID: INVULN_SPELL,
+        }),
+        createRemoveBuffEvent({
+          sourceID: warriorActor.id,
+          targetID: warriorActor.id,
+          abilityGameID: INVULN_SPELL,
+        }),
+      ],
+      actorMap,
+      enemies,
+      config,
+    })
+
+    expect(result.augmentedEvents).toHaveLength(2)
+
+    const startSpecial = result.augmentedEvents[0]?.threat.calculation.special
+    expect(startSpecial).toEqual({
+      type: 'state',
+      state: {
+        kind: 'invulnerable',
+        phase: 'start',
+        spellId: INVULN_SPELL,
+        actorId: warriorActor.id,
+        name: `Spell ${INVULN_SPELL}`,
+      },
+    })
+
+    const endSpecial = result.augmentedEvents[1]?.threat.calculation.special
+    expect(endSpecial).toEqual({
+      type: 'state',
+      state: {
+        kind: 'invulnerable',
+        phase: 'end',
+        spellId: INVULN_SPELL,
+        actorId: warriorActor.id,
+      },
+    })
+  })
+
+  it('applies taunt custom threat and emits fixate state on aura events', () => {
+    const TAUNT_SPELL = 355
+    const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
+    const config = createMockThreatConfig({
+      classes: {
+        warrior: {
+          baseThreatFactor: 1.0,
+          auraModifiers: {},
+          abilities: {
+            [TAUNT_SPELL]: (ctx) =>
+              ctx.event.type === 'applydebuff'
+                ? {
+                    formula: 'taunt set',
+                    value: 0,
+                    splitAmongEnemies: false,
+                    special: {
+                      type: 'customThreat',
+                      changes: [
+                        {
+                          sourceId: warriorActor.id,
+                          targetId: bossEnemy.id,
+                          targetInstance: 0,
+                          operator: 'set',
+                          amount: 501,
+                          total: 501,
+                        },
+                      ],
+                    },
+                  }
+                : {
+                    formula: '0',
+                    value: 0,
+                    splitAmongEnemies: false,
+                  },
+          },
+          fixateBuffs: new Set([TAUNT_SPELL]),
+        },
+      },
+    })
+
+    const result = processEvents({
+      rawEvents: [
+        createApplyDebuffEvent({
+          sourceID: warriorActor.id,
+          sourceIsFriendly: true,
+          targetID: bossEnemy.id,
+          targetIsFriendly: false,
+          abilityGameID: TAUNT_SPELL,
+        }),
+        createRemoveDebuffEvent({
+          sourceID: warriorActor.id,
+          sourceIsFriendly: true,
+          targetID: bossEnemy.id,
+          targetIsFriendly: false,
+          abilityGameID: TAUNT_SPELL,
+        }),
+      ],
+      actorMap,
+      enemies: [bossEnemy],
+      config,
+    })
+
+    const startEvent = result.augmentedEvents[0]
+    expect(startEvent?.threat.changes).toEqual([
+      {
+        sourceId: warriorActor.id,
+        targetId: bossEnemy.id,
+        targetInstance: 0,
+        operator: 'set',
+        amount: 501,
+        total: 501,
+      },
+    ])
+    expect(startEvent?.threat.calculation.special).toEqual({
+      type: 'state',
+      state: {
+        kind: 'fixate',
+        phase: 'start',
+        spellId: TAUNT_SPELL,
+        actorId: warriorActor.id,
+        targetId: bossEnemy.id,
+        targetInstance: 0,
+        name: `Spell ${TAUNT_SPELL}`,
+      },
+    })
+
+    const endEvent = result.augmentedEvents[1]
+    expect(endEvent?.threat.changes).toBeUndefined()
+    expect(endEvent?.threat.calculation.special).toEqual({
+      type: 'state',
+      state: {
+        kind: 'fixate',
+        phase: 'end',
+        spellId: TAUNT_SPELL,
+        actorId: warriorActor.id,
+        targetId: bossEnemy.id,
+        targetInstance: 0,
+      },
+    })
   })
 
   it('applies aura modifiers correctly from combatantinfo', () => {
@@ -1198,7 +1354,7 @@ describe('aura tracking', () => {
       config: mockConfig,
     })
 
-    const damageEvent = result.augmentedEvents[0]
+    const damageEvent = result.augmentedEvents.find((e) => e.type === 'damage')
     expect(damageEvent?.threat).toBeDefined()
 
     // Check for the threat up modifier
@@ -1227,7 +1383,7 @@ describe('aura tracking', () => {
       config: mockConfig,
     })
 
-    const damageEvent = result.augmentedEvents[0]
+    const damageEvent = result.augmentedEvents.find((e) => e.type === 'damage')
     const classModifier = damageEvent?.threat.calculation.modifiers.find(
       (m: ThreatModifier) => m.source === 'class',
     )
@@ -1634,7 +1790,7 @@ describe('global config properties', () => {
       config: customConfig,
     })
 
-    const damageEvent = result.augmentedEvents[0]
+    const damageEvent = result.augmentedEvents.find((e) => e.type === 'damage')
     const globalModifier = damageEvent?.threat.calculation.modifiers.find(
       (m: ThreatModifier) => m.name === 'Global Threat Modifier',
     )
@@ -1697,7 +1853,7 @@ describe('global config properties', () => {
       config: customConfig,
     })
 
-    const damageEvent = result.augmentedEvents[0]
+    const damageEvent = result.augmentedEvents.find((e) => e.type === 'damage')
 
     // Should have global modifier
     const globalModifier = damageEvent?.threat.calculation.modifiers.find(
@@ -1759,7 +1915,7 @@ describe('global config properties', () => {
       config: customConfig,
     })
 
-    const healEvent = result.augmentedEvents[0]
+    const healEvent = result.augmentedEvents.find((e) => e.type === 'heal')
     const globalModifier = healEvent?.threat.calculation.modifiers.find(
       (m: ThreatModifier) => m.name === 'Global Threat Modifier',
     )

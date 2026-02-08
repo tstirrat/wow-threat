@@ -6,10 +6,10 @@ Legend:
 
 ## P0 - Core Engine Semantics
 
-- [ ] **[P0][C4]** Implement missing `ThreatSpecial` runtime behaviors (`taunt`, `fixate*`, `aggroLoss*`, `invulnerable*`, `noThreatWindow`) and wire config sets into output/state.
+- [ ] **[P0][C4]** Implement missing `ThreatSpecial` runtime behaviors (`taunt`, `fixate*`, `aggroLoss*`, `invulnerable*`) and wire config sets into output/state.
 - [ ] **[P0][C4]** Implement `taunt` special semantics in the engine (set to top threat + bonus, not flat add), and gate it with `untauntableEnemies`.
 - [ ] **[P0][C3]** Wire runtime handling for `fixate`, `fixateEnd`, `aggroLoss`, `aggroLossEnd`, `invulnerable`, `invulnerableEnd`.
-- [ ] **[P0][C2]** Add runtime handling for `noThreatWindow` suppression (currently defined but not applied).
+- [x] **[P0][C1]** Remove `noThreatWindow` special from the contract (deprecated).
 - [ ] **[P0][C3]** Allow effect handlers to pass `augment.special` through to core threat application (today only `threatRecipientOverride` is used).
 - [x] **[P0][C2]** Support negative threat deltas (Feint/Cower/Disengage-style) with floor-at-zero semantics.
 - [ ] **[P0][C3]** Add per-formula control for applying multipliers/coefs (Era has both coeff and no-coeff variants, e.g. `handler_castCanMissNoCoefficient`, `handler_resourcechange`).

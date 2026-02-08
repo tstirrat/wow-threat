@@ -24,6 +24,7 @@ function createMockContext(
       getActorsInRange: () => [],
       getThreat: () => 0,
       getTopActorsByThreat: () => [],
+      isActorAlive: () => true,
     },
     ...overrides,
   }
@@ -86,11 +87,33 @@ describe('Druid Config', () => {
         const formula = druidConfig.abilities[Spells.Growl]
         expect(formula).toBeDefined()
 
-        const ctx = createMockContext()
+        const ctx = createMockContext({
+          event: { type: 'applydebuff' } as ThreatContext['event'],
+          actors: {
+            getPosition: () => null,
+            getDistance: () => null,
+            getActorsInRange: () => [],
+            getThreat: () => 100,
+            getTopActorsByThreat: () => [{ actorId: 99, threat: 500 }],
+            isActorAlive: () => true,
+          },
+        })
         const result = formula!(ctx)
 
         expect(result.formula).toBe('topThreat + 0')
-        expect(result.special).toEqual({ type: 'taunt', fixateDuration: 3000 })
+        expect(result.special).toEqual({
+          type: 'customThreat',
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 2,
+              targetInstance: 0,
+              operator: 'set',
+              amount: 500,
+              total: 500,
+            },
+          ],
+        })
       })
     })
 

@@ -84,25 +84,48 @@ export interface ModifyThreatOptions {
 }
 
 /**
- * Taunt: sets threat to top threat + bonus, fixates target
- * Example: Taunt (top + 1, fixate 3s), Mocking Blow (top + damage, fixate 6s)
+ * Taunt: sets source threat to top threat + bonus on the event target enemy.
+ * Example: Taunt (top + 1), Mocking Blow (top + damage)
  */
 export function tauntTarget(
   bonusThreat: number,
-  fixateDuration: number,
   options?: TauntOptions,
 ): FormulaFn {
   return (ctx) => {
+    if (ctx.event.type !== 'applybuff' && ctx.event.type !== 'applydebuff') {
+      return {
+        formula: '0 (taunt on aura apply)',
+        value: 0,
+        splitAmongEnemies: false,
+      }
+    }
+
     const bonus = options?.addDamage ? ctx.amount + bonusThreat : bonusThreat
+    const sourceId = ctx.sourceActor.id
+    const targetId = ctx.targetActor.id
+    const targetInstance = ctx.event.targetInstance ?? 0
+    const currentThreat = ctx.actors.getThreat(sourceId, targetId)
+    const topThreat = ctx.actors.getTopActorsByThreat(targetId, 1)[0]?.threat ?? 0
+    const nextThreat = Math.max(currentThreat, topThreat + bonus)
+
     return {
       formula: options?.addDamage
         ? `topThreat + amt + ${bonusThreat}`
         : `topThreat + ${bonusThreat}`,
-      value: bonus, // Engine adds this to current top threat
+      value: 0,
       splitAmongEnemies: false,
       special: {
-        type: 'taunt',
-        fixateDuration,
+        type: 'customThreat',
+        changes: [
+          {
+            sourceId,
+            targetId,
+            targetInstance,
+            operator: 'set',
+            amount: nextThreat,
+            total: nextThreat,
+          },
+        ],
       },
     }
   }
@@ -131,20 +154,13 @@ export function modifyThreat(options: ModifyThreatOptions): FormulaFn {
 }
 
 /**
- * No threat: spell generates zero threat, optionally for a time window
- * Example: Misdirection (no threat for 30s after cast)
+ * No threat: spell generates zero threat
  */
-export function noThreat(durationMs?: number): FormulaFn {
+export function noThreat(): FormulaFn {
   return () => ({
     formula: '0',
     value: 0,
     splitAmongEnemies: false,
-    special: durationMs
-      ? {
-          type: 'noThreatWindow',
-          duration: durationMs,
-        }
-      : undefined,
   })
 }
 

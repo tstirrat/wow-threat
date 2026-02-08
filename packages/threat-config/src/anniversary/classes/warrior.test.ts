@@ -24,6 +24,7 @@ function createMockContext(
       getActorsInRange: () => [],
       getThreat: () => 0,
       getTopActorsByThreat: () => [],
+      isActorAlive: () => true,
     },
     ...overrides,
   }
@@ -248,30 +249,75 @@ describe('abilities', () => {
     })
   })
 
-  describe('Taunt', () => {
-    it('returns taunt with fixate', () => {
+describe('Taunt', () => {
+    it('returns custom threat set behavior', () => {
       const formula = warriorConfig.abilities[Spells.Taunt]
       expect(formula).toBeDefined()
 
-      const ctx = createMockContext()
+      const ctx = createMockContext({
+        event: { type: 'applydebuff' } as ThreatContext['event'],
+        actors: {
+          getPosition: () => null,
+          getDistance: () => null,
+          getActorsInRange: () => [],
+          getThreat: () => 100,
+          getTopActorsByThreat: () => [{ actorId: 99, threat: 500 }],
+          isActorAlive: () => true,
+        },
+      })
       const result = formula!(ctx)
 
       expect(result.formula).toBe('topThreat + 1')
-      expect(result.special).toEqual({ type: 'taunt', fixateDuration: 3000 })
+      expect(result.special).toEqual({
+        type: 'customThreat',
+        changes: [
+          {
+            sourceId: 1,
+            targetId: 2,
+            targetInstance: 0,
+            operator: 'set',
+            amount: 501,
+            total: 501,
+          },
+        ],
+      })
     })
   })
 
   describe('Mocking Blow', () => {
-    it('returns taunt with damage and 6s fixate', () => {
+    it('returns custom threat set behavior with damage bonus', () => {
       const formula = warriorConfig.abilities[Spells.MockingBlow]
       expect(formula).toBeDefined()
 
-      const ctx = createMockContext({ amount: 500 })
+      const ctx = createMockContext({
+        event: { type: 'applydebuff' } as ThreatContext['event'],
+        amount: 500,
+        actors: {
+          getPosition: () => null,
+          getDistance: () => null,
+          getActorsInRange: () => [],
+          getThreat: () => 100,
+          getTopActorsByThreat: () => [{ actorId: 99, threat: 400 }],
+          isActorAlive: () => true,
+        },
+      })
       const result = formula!(ctx)
 
       expect(result.formula).toBe('topThreat + amt + 0')
-      expect(result.value).toBe(500)
-      expect(result.special).toEqual({ type: 'taunt', fixateDuration: 6000 })
+      expect(result.value).toBe(0)
+      expect(result.special).toEqual({
+        type: 'customThreat',
+        changes: [
+          {
+            sourceId: 1,
+            targetId: 2,
+            targetInstance: 0,
+            operator: 'set',
+            amount: 900,
+            total: 900,
+          },
+        ],
+      })
     })
   })
 })

@@ -159,16 +159,22 @@ export type EffectHandler = (
   ctx: EffectHandlerContext,
 ) => EffectHandlerResult
 
+export type ThreatStateKind = 'fixate' | 'aggroLoss' | 'invulnerable'
+export type ThreatStatePhase = 'start' | 'end'
+
+export interface ThreatStatePayload {
+  kind: ThreatStateKind
+  phase: ThreatStatePhase
+  spellId: number
+  actorId: number
+  targetId?: number
+  targetInstance?: number
+  name?: string
+}
+
 export type ThreatSpecial =
-  | { type: 'taunt'; fixateDuration: number }
   | { type: 'modifyThreat'; multiplier: number; target: 'target' | 'all' }
-  | { type: 'noThreatWindow'; duration: number }
-  | { type: 'fixate' }
-  | { type: 'fixateEnd' }
-  | { type: 'aggroLoss' }
-  | { type: 'aggroLossEnd' }
-  | { type: 'invulnerable' }
-  | { type: 'invulnerableEnd' }
+  | { type: 'state'; state: ThreatStatePayload }
   | { type: 'customThreat'; changes: ThreatChange[] }
   | { type: 'installHandler'; handler: EffectHandler }
 
