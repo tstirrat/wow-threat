@@ -10,6 +10,7 @@ import type { GearItem, WCLEvent } from '@wcl-threat/wcl-types'
 
 import { ActorState } from './actor-state'
 import { PositionTracker } from './position-tracker'
+import { TargetTracker } from './target-tracker'
 import { ThreatTracker } from './threat-tracker'
 
 const TALENT_ID_KEYS = [
@@ -162,6 +163,7 @@ export class FightState {
   private config: ThreatConfig
   private allExclusiveAuras: Set<number>[]
   private positionTracker = new PositionTracker()
+  private targetTracker = new TargetTracker()
   private threatTracker = new ThreatTracker()
   private deadActors = new Set<number>()
 
@@ -198,6 +200,22 @@ export class FightState {
     switch (event.type) {
       case 'combatantinfo':
         this.processCombatantInfo(event, config)
+        break
+      case 'cast':
+      case 'begincast':
+        // Cast activity marks actors as alive and updates target selection.
+        this.deadActors.delete(event.sourceID)
+        if (event.targetID !== -1) {
+          this.targetTracker.setTarget(event.sourceID, {
+            targetId: event.targetID,
+            targetInstance: event.targetInstance ?? 0,
+          })
+        }
+        break
+      case 'damage':
+        if (event.overkill > 0) {
+          this.deadActors.add(event.targetID)
+        }
         break
       case 'applybuff':
       case 'refreshbuff':
@@ -240,6 +258,16 @@ export class FightState {
   /** Get active auras for an actor (convenience method) */
   getAuras(actorId: number): Set<number> {
     return this.actors.get(actorId)?.auras ?? new Set()
+  }
+
+  /** Ensure an aura is active on an actor. */
+  setAura(actorId: number, spellId: number): void {
+    this.getOrCreateActorState(actorId).auraTracker.addAura(spellId)
+  }
+
+  /** Remove an aura from an actor. */
+  removeAura(actorId: number, spellId: number): void {
+    this.getOrCreateActorState(actorId).auraTracker.removeAura(spellId)
   }
 
   /** Get equipped gear for an actor (convenience method) */
@@ -315,6 +343,14 @@ export class FightState {
 
   getActorsInRange(actorId: number, maxDistance: number) {
     return this.positionTracker.getActorsInRange(actorId, maxDistance)
+  }
+
+  getCurrentTarget(actorId: number) {
+    return this.targetTracker.getCurrentTarget(actorId)
+  }
+
+  getLastTarget(actorId: number) {
+    return this.targetTracker.getLastTarget(actorId)
   }
 
   // Threat tracking methods

@@ -2,19 +2,26 @@
  * EffectTracker Tests
  */
 import type { ActorContext, EffectHandler } from '@wcl-threat/threat-config'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createDamageEvent, createHealEvent } from '../../test/helpers/events'
 import { EffectTracker } from './effect-tracker'
 
 // Mock actor context for tests
-const mockActorContext: ActorContext = {
+const mockActorContext: ActorContext & {
+  setAura: (actorId: number, spellId: number) => void
+  removeAura: (actorId: number, spellId: number) => void
+} = {
   getPosition: () => null,
   getDistance: () => null,
   getActorsInRange: () => [],
   getThreat: () => 0,
   getTopActorsByThreat: () => [],
   isActorAlive: () => true,
+  getCurrentTarget: () => null,
+  getLastTarget: () => null,
+  setAura: () => {},
+  removeAura: () => {},
 }
 
 describe('EffectTracker', () => {
@@ -87,6 +94,31 @@ describe('EffectTracker', () => {
       expect(receivedContext.installedAt).toBe(1000)
       expect(receivedContext.actors).toBe(mockActorContext)
       expect(typeof receivedContext.uninstall).toBe('function')
+      expect(typeof receivedContext.setAura).toBe('function')
+      expect(typeof receivedContext.removeAura).toBe('function')
+    })
+
+    it('exposes safe aura mutation helpers to handlers', () => {
+      const setAura = vi.fn()
+      const removeAura = vi.fn()
+      const actorContext = {
+        ...mockActorContext,
+        setAura,
+        removeAura,
+      }
+
+      const handler: EffectHandler = (event, ctx) => {
+        ctx.setAura(11, 2458)
+        ctx.removeAura(11, 71)
+        return { action: 'passthrough' }
+      }
+
+      tracker.install(handler, 1000)
+
+      tracker.runHandlers(createDamageEvent({ timestamp: 2000 }), 2000, actorContext)
+
+      expect(setAura).toHaveBeenCalledWith(11, 2458)
+      expect(removeAura).toHaveBeenCalledWith(11, 71)
     })
 
     it('allows handlers to uninstall themselves', () => {

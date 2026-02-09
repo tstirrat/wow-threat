@@ -19,6 +19,7 @@ import type {
   ThreatContext,
   ThreatModifier,
   ThreatResult,
+  ThreatFormulaResult,
   WowClass,
 } from '@wcl-threat/threat-config'
 import {
@@ -48,11 +49,11 @@ const THREAT_EVENT_TYPES = new Set<WCLEvent['type']>([
   'removedebuffstack',
 ])
 
-const NO_THREAT_FORMULA_RESULT = {
+const NO_THREAT_FORMULA_RESULT: ThreatFormulaResult = {
   formula: '0',
   value: 0,
   splitAmongEnemies: false,
-} as const
+}
 
 // ============================================================================
 // Event Processing

@@ -77,6 +77,14 @@ export interface ActorContext {
   ) => Array<{ actorId: number; threat: number }>
   /** Check if an actor is alive (false if dead or not tracked) */
   isActorAlive: (actorId: number) => boolean
+  /** Get the actor's current target (with instance), if known */
+  getCurrentTarget: (
+    actorId: number,
+  ) => { targetId: number; targetInstance: number } | null
+  /** Get the actor's previously tracked target (with instance), if known */
+  getLastTarget: (
+    actorId: number,
+  ) => { targetId: number; targetInstance: number } | null
 }
 
 export interface ThreatContext {
@@ -138,6 +146,10 @@ export interface EffectHandlerContext {
   actors: ActorContext
   /** Uninstall this handler (call when effect expires) */
   uninstall: () => void
+  /** Ensure an aura is active on an actor (enforces exclusive aura eviction) */
+  setAura: (actorId: number, spellId: number) => void
+  /** Remove an aura from an actor */
+  removeAura: (actorId: number, spellId: number) => void
 }
 
 /**

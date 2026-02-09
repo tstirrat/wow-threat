@@ -22,6 +22,11 @@ interface ActiveHandler {
   installedAt: number
 }
 
+interface EffectRuntimeActorContext extends ActorContext {
+  setAura: (actorId: number, spellId: number) => void
+  removeAura: (actorId: number, spellId: number) => void
+}
+
 /**
  * Tracks and executes effect handlers
  */
@@ -49,7 +54,7 @@ export class EffectTracker {
   runHandlers(
     event: WCLEvent,
     timestamp: number,
-    actors: ActorContext,
+    actors: EffectRuntimeActorContext,
   ): EffectHandlerResult[] {
     const results: EffectHandlerResult[] = []
 
@@ -60,6 +65,12 @@ export class EffectTracker {
         actors,
         uninstall: () => {
           this.handlers.delete(id)
+        },
+        setAura: (actorId, spellId) => {
+          actors.setAura(actorId, spellId)
+        },
+        removeAura: (actorId, spellId) => {
+          actors.removeAura(actorId, spellId)
         },
       }
 

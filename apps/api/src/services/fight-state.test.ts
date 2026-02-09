@@ -668,6 +668,150 @@ describe('FightState', () => {
     })
   })
 
+  describe('engine lifecycle state', () => {
+    it('marks actors dead on death and alive on cast activity', () => {
+      const state = new FightState(defaultActorMap, testConfig)
+
+      state.processEvent(
+        {
+          timestamp: 100,
+          type: 'death',
+          sourceID: 25,
+          sourceIsFriendly: false,
+          targetID: 1,
+          targetIsFriendly: true,
+        },
+        testConfig,
+      )
+      expect(state.isActorAlive(1)).toBe(false)
+
+      state.processEvent(
+        {
+          timestamp: 200,
+          type: 'cast',
+          sourceID: 1,
+          sourceIsFriendly: true,
+          targetID: 25,
+          targetIsFriendly: false,
+          abilityGameID: 123,
+        },
+        testConfig,
+      )
+      expect(state.isActorAlive(1)).toBe(true)
+    })
+
+    it('marks actors dead on overkill damage events', () => {
+      const state = new FightState(defaultActorMap, testConfig)
+
+      state.processEvent(
+        createDamageEvent({
+          timestamp: 100,
+          sourceID: 25,
+          sourceIsFriendly: false,
+          targetID: 1,
+          targetIsFriendly: true,
+          overkill: 350,
+        }),
+        testConfig,
+      )
+
+      expect(state.isActorAlive(1)).toBe(false)
+    })
+  })
+
+  describe('target tracking', () => {
+    it('tracks current and last target including instance', () => {
+      const state = new FightState(defaultActorMap, testConfig)
+
+      state.processEvent(
+        {
+          timestamp: 100,
+          type: 'cast',
+          sourceID: 1,
+          sourceIsFriendly: true,
+          targetID: 99,
+          targetIsFriendly: false,
+          targetInstance: 1,
+          abilityGameID: 111,
+        },
+        testConfig,
+      )
+
+      expect(state.getCurrentTarget(1)).toEqual({
+        targetId: 99,
+        targetInstance: 1,
+      })
+      expect(state.getLastTarget(1)).toBeNull()
+
+      state.processEvent(
+        {
+          timestamp: 200,
+          type: 'cast',
+          sourceID: 1,
+          sourceIsFriendly: true,
+          targetID: 99,
+          targetIsFriendly: false,
+          targetInstance: 2,
+          abilityGameID: 222,
+        },
+        testConfig,
+      )
+
+      expect(state.getCurrentTarget(1)).toEqual({
+        targetId: 99,
+        targetInstance: 2,
+      })
+      expect(state.getLastTarget(1)).toEqual({
+        targetId: 99,
+        targetInstance: 1,
+      })
+    })
+
+    it('ignores environment targets when tracking cast targets', () => {
+      const state = new FightState(defaultActorMap, testConfig)
+
+      state.processEvent(
+        {
+          timestamp: 100,
+          type: 'cast',
+          sourceID: 1,
+          sourceIsFriendly: true,
+          targetID: -1,
+          targetIsFriendly: false,
+          abilityGameID: 999,
+        },
+        testConfig,
+      )
+
+      expect(state.getCurrentTarget(1)).toBeNull()
+      expect(state.getLastTarget(1)).toBeNull()
+    })
+  })
+
+  describe('direct aura operations', () => {
+    it('setAura enforces exclusivity for matching aura sets', () => {
+      const state = new FightState(defaultActorMap, testConfig)
+
+      state.setAura(1, TEST_SPELLS.BATTLE_STANCE)
+      expect(state.getAuras(1).has(TEST_SPELLS.BATTLE_STANCE)).toBe(true)
+
+      state.setAura(1, TEST_SPELLS.DEFENSIVE_STANCE)
+
+      expect(state.getAuras(1).has(TEST_SPELLS.BATTLE_STANCE)).toBe(false)
+      expect(state.getAuras(1).has(TEST_SPELLS.DEFENSIVE_STANCE)).toBe(true)
+    })
+
+    it('removeAura removes an existing aura', () => {
+      const state = new FightState(defaultActorMap, testConfig)
+
+      state.setAura(1, TEST_SPELLS.DEFENSIVE_STANCE)
+      expect(state.getAuras(1).has(TEST_SPELLS.DEFENSIVE_STANCE)).toBe(true)
+
+      state.removeAura(1, TEST_SPELLS.DEFENSIVE_STANCE)
+      expect(state.getAuras(1).has(TEST_SPELLS.DEFENSIVE_STANCE)).toBe(false)
+    })
+  })
+
   describe('cross-class exclusive auras', () => {
     it('applies paladin blessing exclusivity to warriors', () => {
       // Warrior (actor ID 1) receives paladin blessings
