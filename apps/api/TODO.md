@@ -16,8 +16,8 @@ Legend:
 - [x] **[REQ-004][P0][C1]** Remove `noThreatWindow` special from the contract (deprecated).
 - [x] **[REQ-005][P0][C3]** Allow event interceptors to pass `augment.effects` through to core threat application (alongside `threatRecipientOverride`).
 - [x] **[REQ-006][P0][C2]** Support negative threat deltas (Feint/Cower/Disengage-style) with floor-at-zero semantics.
-- [ ] **[REQ-007][P0][C3]** Add per-formula control for applying multipliers/coefs (Era has both coeff and no-coeff variants, e.g. `handler_castCanMissNoCoefficient`, `handler_resourcechange`).
-- [ ] **[REQ-008][P0][C3]** Implement true cast-can-miss two-phase behavior (add on cast, rollback on miss/immune/resist result), not static one-shot.
+- [x] **[REQ-007][P0][C3]** Add per-formula control for applying multipliers/coefs (Era has both coeff and no-coeff variants, e.g. `handler_castCanMissNoCoefficient`, `handler_resourcechange`).
+- [x] **[REQ-008][P0][C3]** Implement true cast-can-miss two-phase behavior (add on cast, rollback on miss/immune/resist result), not static one-shot.
 - [x] **[REQ-009][P0][C3]** Enforce school-specific modifiers in runtime (and pass spell school through context).
 - [x] **[REQ-010][P0][C3]** Enforce school-scoped modifiers at runtime (`ThreatModifier.schools` exists but is not applied).
 - [x] **[REQ-011][P0][C3]** Carry spell school in event/context so school-based talents (Mage/Priest/Paladin holy-only) can be evaluated correctly.

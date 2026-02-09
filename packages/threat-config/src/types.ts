@@ -86,9 +86,13 @@ export interface ActorContext {
   /** Check if an actor is alive (false if dead or not tracked) */
   isActorAlive: (actor: ActorRef) => boolean
   /** Get the actor's current target (with instance), if known */
-  getCurrentTarget: (actor: ActorRef) => { targetId: number; targetInstance: number } | null
+  getCurrentTarget: (
+    actor: ActorRef,
+  ) => { targetId: number; targetInstance: number } | null
   /** Get the actor's previously tracked target (with instance), if known */
-  getLastTarget: (actor: ActorRef) => { targetId: number; targetInstance: number } | null
+  getLastTarget: (
+    actor: ActorRef,
+  ) => { targetId: number; targetInstance: number } | null
 }
 
 export interface ActorRef {
@@ -215,12 +219,16 @@ export interface ThreatFormulaResult {
   value: number
   /** Whether to divide threat among all enemies */
   splitAmongEnemies: boolean
+  /** Whether to apply player multipliers (class/aura/talent). Defaults to true. */
+  applyPlayerMultipliers?: boolean
   /** Event effects (taunt, threat drop, custom threat, etc.) */
   effects?: ThreatEffect[]
 }
 
 /** Threat formula function signature */
-export type ThreatFormula = (ctx: ThreatContext) => ThreatFormulaResult | undefined
+export type ThreatFormula = (
+  ctx: ThreatContext,
+) => ThreatFormulaResult | undefined
 
 // ============================================================================
 // Configuration Structures
@@ -241,9 +249,7 @@ export interface TalentImplicationContext {
   specId: number | null
 }
 
-export type TalentImplicationsFn = (
-  ctx: TalentImplicationContext,
-) => number[]
+export type TalentImplicationsFn = (ctx: TalentImplicationContext) => number[]
 
 export type AuraImplications = ReadonlyMap<SpellId, ReadonlySet<SpellId>>
 

@@ -43,7 +43,12 @@ export const baseThreat: BaseThreatConfig = {
 
     // Energy gains do not generate threat
     if (event.resourceChangeType === 'energy') {
-      return { formula: '0', value: 0, splitAmongEnemies: false }
+      return {
+        formula: '0',
+        value: 0,
+        splitAmongEnemies: false,
+        applyPlayerMultipliers: false,
+      }
     }
 
     // Rage: 5x threat, Mana: 0.5x threat
@@ -54,6 +59,7 @@ export const baseThreat: BaseThreatConfig = {
       formula: `${resourceLabel} * ${multiplier}`,
       value: ctx.amount * multiplier,
       splitAmongEnemies: true,
+      applyPlayerMultipliers: false,
     }
   },
 }

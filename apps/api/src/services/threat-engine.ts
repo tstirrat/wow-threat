@@ -733,14 +733,16 @@ export function calculateModifiedThreat(
   // Get the threat formula result
   const formulaResult = getFormulaResult(ctx, config)
 
-  // Era parity: resource generation threat does not use player coefficients/modifiers.
-  const allModifiers: ThreatModifier[] =
-    event.type === 'energize'
-      ? []
-      : [
-          ...getClassModifiers(options.sourceActor.class, config),
-          ...getAuraModifiers(ctx, config),
-        ]
+  // Ability formulas can explicitly opt in/out of player multipliers.
+  // Default keeps existing energize behavior (no multipliers) unless overridden.
+  const shouldApplyPlayerMultipliers =
+    formulaResult.applyPlayerMultipliers ?? event.type !== 'energize'
+  const allModifiers: ThreatModifier[] = shouldApplyPlayerMultipliers
+    ? [
+        ...getClassModifiers(options.sourceActor.class, config),
+        ...getAuraModifiers(ctx, config),
+      ]
+    : []
 
   // Calculate total multiplier
   const totalMultiplier = getTotalMultiplier(allModifiers)

@@ -15,6 +15,8 @@ export interface FormulaOptions {
   split?: boolean
   /** Event types that should trigger this formula */
   eventTypes?: EventType[]
+  /** Whether to apply player multipliers (class/aura/talent). Defaults to true. */
+  applyPlayerMultipliers?: boolean
 }
 
 export interface CalculateThreatOptions {
@@ -26,6 +28,8 @@ export interface CalculateThreatOptions {
   split?: boolean
   /** Event types that should trigger this formula */
   eventTypes?: EventType[]
+  /** Whether to apply player multipliers (class/aura/talent). Defaults to true. */
+  applyPlayerMultipliers?: boolean
 }
 
 const buffAuraEventTypes: EventType[] = [
@@ -42,7 +46,7 @@ const tauntAuraEventTypes: EventType[] = [
   ...buffAuraEventTypes,
   ...debuffAuraEventTypes,
 ]
-const castCanMissRollbackHitTypes = new Set<HitType>([
+const castRollbackHitTypes = new Set<HitType>([
   'miss',
   'dodge',
   'parry',
@@ -74,7 +78,13 @@ function isEventTypeAllowed(
 export function calculateThreat(
   options: CalculateThreatOptions = {},
 ): FormulaFn {
-  const { modifier = 1, bonus = 0, split = false, eventTypes } = options
+  const {
+    modifier = 1,
+    bonus = 0,
+    split = false,
+    eventTypes,
+    applyPlayerMultipliers,
+  } = options
 
   return (ctx) => {
     if (!isEventTypeAllowed(ctx.event.type, eventTypes)) {
@@ -109,6 +119,7 @@ export function calculateThreat(
       formula,
       value,
       splitAmongEnemies: split,
+      applyPlayerMultipliers,
     }
   }
 }
@@ -127,6 +138,11 @@ export interface ModifyThreatOptions {
   modifier: number
   /** Target scope for threat modification */
   target?: 'target' | 'all'
+}
+
+export interface ThreatOnCastRollbackOnMissOptions {
+  /** Whether to apply player multipliers (class/aura/talent). Defaults to true. */
+  applyPlayerMultipliers?: boolean
 }
 
 /**
@@ -236,11 +252,14 @@ export function noThreat(): FormulaFn {
 
 /**
  * Flat threat on debuff application (e.g., Demoralizing Shout)
- * Note: For abilities that miss, this should be paired with castCanMiss
+ * Note: For abilities that miss, this should be paired with
+ * threatOnCastRollbackOnMiss
  */
 export function threatOnDebuff(value: number): FormulaFn {
+  const eventTypes = debuffAuraEventTypes
+
   return (ctx) => {
-    if (!isEventTypeAllowed(ctx.event.type, debuffAuraEventTypes)) {
+    if (!isEventTypeAllowed(ctx.event.type, eventTypes)) {
       return undefined
     }
 
@@ -271,6 +290,7 @@ export function threatOnBuff(
       formula: `${value}`,
       value,
       splitAmongEnemies: options?.split ?? true,
+      applyPlayerMultipliers: options?.applyPlayerMultipliers,
     }
   }
 }
@@ -293,24 +313,29 @@ export function modHeal(multiplier: number): FormulaFn {
  * then removed if the ability misses (damage event with hitType > 6)
  * Example: Sunder Armor
  */
-export function castCanMiss(value: number): FormulaFn {
+export function threatOnCastRollbackOnMiss(
+  value: number,
+  options: ThreatOnCastRollbackOnMissOptions = {},
+): FormulaFn {
   return (ctx) => {
     if (ctx.event.type === 'cast') {
       return {
         formula: `${value} (cast)`,
         value,
         splitAmongEnemies: false,
+        applyPlayerMultipliers: options.applyPlayerMultipliers,
       }
     }
 
     if (
       ctx.event.type === 'damage' &&
-      castCanMissRollbackHitTypes.has(ctx.event.hitType)
+      castRollbackHitTypes.has(ctx.event.hitType)
     ) {
       return {
         formula: `-${value} (miss rollback)`,
         value: -value,
         splitAmongEnemies: false,
+        applyPlayerMultipliers: options.applyPlayerMultipliers,
       }
     }
 

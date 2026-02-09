@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { ThreatContext } from '../types'
 import {
-  castCanMiss,
+  threatOnCastRollbackOnMiss,
   calculateThreat,
   modifyThreat,
   noThreat,
@@ -21,6 +21,7 @@ function createMockContext(
   return {
     event: { type: 'damage' } as ThreatContext['event'],
     amount: 100,
+    spellSchoolMask: 0,
     sourceAuras: new Set(),
     targetAuras: new Set(),
     sourceActor: { id: 1, name: 'TestPlayer', class: 'warrior' },
@@ -153,6 +154,17 @@ describe('calculateThreat', () => {
     expect(result.formula).toBe('(amt * 1.75) + 50')
     expect(result.value).toBe(225) // (100 * 1.75) + 50
     expect(result.splitAmongEnemies).toBe(false)
+  })
+
+  it('allows formulas to disable player multipliers', () => {
+    const formula = calculateThreat({
+      modifier: 0,
+      bonus: 100,
+      applyPlayerMultipliers: false,
+    })
+    const result = formula(createMockContext())
+
+    expect(result.applyPlayerMultipliers).toBe(false)
   })
 })
 
@@ -452,9 +464,9 @@ describe('threatOnBuff', () => {
   })
 })
 
-describe('castCanMiss', () => {
+describe('threatOnCastRollbackOnMiss', () => {
   it('applies flat threat on cast events', () => {
-    const formula = castCanMiss(301)
+    const formula = threatOnCastRollbackOnMiss(301)
     const ctx = createMockContext({
       event: { type: 'cast' } as ThreatContext['event'],
     })
@@ -466,7 +478,7 @@ describe('castCanMiss', () => {
   })
 
   it('returns negative threat on miss damage events', () => {
-    const formula = castCanMiss(301)
+    const formula = threatOnCastRollbackOnMiss(301)
     const ctx = createMockContext({
       event: { type: 'damage', hitType: 'miss' } as ThreatContext['event'],
     })
@@ -477,8 +489,32 @@ describe('castCanMiss', () => {
     expect(result.value).toBe(-301)
   })
 
+  it('returns negative threat on immune damage events', () => {
+    const formula = threatOnCastRollbackOnMiss(301)
+    const ctx = createMockContext({
+      event: { type: 'damage', hitType: 'immune' } as ThreatContext['event'],
+    })
+
+    const result = formula(ctx)
+
+    expect(result.formula).toBe('-301 (miss rollback)')
+    expect(result.value).toBe(-301)
+  })
+
+  it('returns negative threat on resist damage events', () => {
+    const formula = threatOnCastRollbackOnMiss(301)
+    const ctx = createMockContext({
+      event: { type: 'damage', hitType: 'resist' } as ThreatContext['event'],
+    })
+
+    const result = formula(ctx)
+
+    expect(result.formula).toBe('-301 (miss rollback)')
+    expect(result.value).toBe(-301)
+  })
+
   it('returns undefined for non-miss damage events', () => {
-    const formula = castCanMiss(301)
+    const formula = threatOnCastRollbackOnMiss(301)
     const ctx = createMockContext({
       event: { type: 'damage', hitType: 'hit' } as ThreatContext['event'],
     })
@@ -489,7 +525,7 @@ describe('castCanMiss', () => {
   })
 
   it('returns undefined for non-cast/non-damage phases', () => {
-    const formula = castCanMiss(301)
+    const formula = threatOnCastRollbackOnMiss(301)
     const ctx = createMockContext({
       event: { type: 'applydebuff' } as ThreatContext['event'],
     })
@@ -497,6 +533,21 @@ describe('castCanMiss', () => {
     const result = formula(ctx)
 
     expect(result).toBeUndefined()
+  })
+
+  it('supports disabling player multipliers for both phases', () => {
+    const formula = threatOnCastRollbackOnMiss(301, { applyPlayerMultipliers: false })
+    const castResult = formula(
+      createMockContext({ event: { type: 'cast' } as ThreatContext['event'] }),
+    )
+    const rollbackResult = formula(
+      createMockContext({
+        event: { type: 'damage', hitType: 'miss' } as ThreatContext['event'],
+      }),
+    )
+
+    expect(castResult.applyPlayerMultipliers).toBe(false)
+    expect(rollbackResult.applyPlayerMultipliers).toBe(false)
   })
 })
 

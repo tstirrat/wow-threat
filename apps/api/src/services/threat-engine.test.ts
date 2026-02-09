@@ -6,7 +6,7 @@
  * real config evolution.
  */
 import {
-  castCanMiss,
+  threatOnCastRollbackOnMiss,
   SpellSchool,
 } from '@wcl-threat/threat-config'
 import type {
@@ -66,6 +66,7 @@ const SPELLS = {
   MOCK_ABILITY_1: 1001,
   MOCK_ABILITY_2: 1002,
   MOCK_CAST_CAN_MISS: 1003,
+  MOCK_CAST_CAN_MISS_NO_COEFF: 1004,
   RAKE: 9904,
   // Auras
   MOCK_AURA_THREAT_UP: 2001,
@@ -157,7 +158,10 @@ const mockConfig = createMockThreatConfig({
           value: ctx.amount * 0.5,
           splitAmongEnemies: true,
         }),
-        [SPELLS.MOCK_CAST_CAN_MISS]: castCanMiss(301),
+        [SPELLS.MOCK_CAST_CAN_MISS]: threatOnCastRollbackOnMiss(301),
+        [SPELLS.MOCK_CAST_CAN_MISS_NO_COEFF]: threatOnCastRollbackOnMiss(301, {
+          applyPlayerMultipliers: false,
+        }),
       },
 
       gearImplications: (gear: GearItem[]) => {
@@ -870,6 +874,38 @@ describe('calculateModifiedThreat', () => {
       expect(result.baseThreat).toBe(150)
       expect(result.modifiedThreat).toBe(150)
       expect(result.modifiers).toEqual([])
+    })
+
+    it('applies player multipliers when energize formula opts in', () => {
+      const event = createEnergizeEvent({ resourceChange: 30 })
+      const configWithCoeffEnergize = createMockThreatConfig({
+        ...mockThreatConfig,
+        baseThreat: {
+          ...mockThreatConfig.baseThreat,
+          energize: (ctx: ThreatContext) => ({
+            formula: '(base) 5 * resourceChange',
+            value: ctx.amount * 5,
+            splitAmongEnemies: true,
+            applyPlayerMultipliers: true,
+          }),
+        },
+      })
+
+      const result = calculateModifiedThreat(
+        event,
+        createTestOptions({
+          sourceAuras: new Set([SPELLS.DEFENSIVE_STANCE]),
+          sourceActor: defaultActor,
+          targetActor: defaultActor,
+        }),
+        configWithCoeffEnergize,
+      )
+
+      expect(result.baseThreat).toBe(150)
+      expect(result.modifiedThreat).toBe(195)
+      expect(result.modifiers).toContainEqual(
+        expect.objectContaining({ name: 'Defensive Stance', value: 1.3 }),
+      )
     })
   })
 
@@ -1948,7 +1984,7 @@ describe('ability-specific threat calculation', () => {
     expect(augmented?.threat.calculation.formula).toBe('(custom) amt + 100')
   })
 
-  it('rolls back castCanMiss threat on miss damage events', () => {
+  it('rolls back threatOnCastRollbackOnMiss threat on miss damage events', () => {
     const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
 
     const castEvent: WCLEvent = {
@@ -1989,6 +2025,96 @@ describe('ability-specific threat calculation', () => {
       '-301 (miss rollback)',
     )
     expect(missAugmented?.threat.calculation.baseThreat).toBe(-301)
+    expect(missAugmented?.threat.changes?.[0]?.total).toBeCloseTo(0, 8)
+  })
+
+  it('rolls back threatOnCastRollbackOnMiss threat on immune and resist damage events', () => {
+    const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
+    const rollbackHitTypes = ['immune', 'resist'] as const
+
+    rollbackHitTypes.forEach((hitType) => {
+      const castEvent: WCLEvent = {
+        timestamp: 1000,
+        type: 'cast',
+        sourceID: warriorActor.id,
+        sourceIsFriendly: true,
+        targetID: bossEnemy.id,
+        targetIsFriendly: false,
+        abilityGameID: SPELLS.MOCK_CAST_CAN_MISS,
+      }
+
+      const rollbackEvent = createDamageEvent({
+        timestamp: 1010,
+        sourceID: warriorActor.id,
+        targetID: bossEnemy.id,
+        targetIsFriendly: false,
+        abilityGameID: SPELLS.MOCK_CAST_CAN_MISS,
+        amount: 0,
+        hitType,
+      })
+
+      const result = processEvents({
+        rawEvents: [castEvent, rollbackEvent],
+        actorMap,
+        enemies,
+        config: mockConfig,
+      })
+
+      const rollbackAugmented = result.augmentedEvents[1]
+      expect(rollbackAugmented?.threat.calculation.formula).toBe(
+        '-301 (miss rollback)',
+      )
+      expect(rollbackAugmented?.threat.calculation.baseThreat).toBe(-301)
+      expect(rollbackAugmented?.threat.changes?.[0]?.total).toBeCloseTo(0, 8)
+    })
+  })
+
+  it('supports threatOnCastRollbackOnMiss formulas that ignore all player multipliers', () => {
+    const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
+
+    const castEvent: WCLEvent = {
+      timestamp: 1000,
+      type: 'cast',
+      sourceID: warriorActor.id,
+      sourceIsFriendly: true,
+      targetID: bossEnemy.id,
+      targetIsFriendly: false,
+      abilityGameID: SPELLS.MOCK_CAST_CAN_MISS_NO_COEFF,
+    }
+
+    const missEvent = createDamageEvent({
+      timestamp: 1010,
+      sourceID: warriorActor.id,
+      targetID: bossEnemy.id,
+      targetIsFriendly: false,
+      abilityGameID: SPELLS.MOCK_CAST_CAN_MISS_NO_COEFF,
+      amount: 0,
+      hitType: 'miss',
+    })
+
+    const result = processEvents({
+      rawEvents: [
+        createApplyBuffEvent({
+          targetID: warriorActor.id,
+          abilityGameID: SPELLS.DEFENSIVE_STANCE,
+        }),
+        castEvent,
+        missEvent,
+      ],
+      actorMap,
+      enemies,
+      config: mockConfig,
+    })
+
+    const castAugmented = result.augmentedEvents[1]
+    expect(castAugmented?.threat.calculation.formula).toBe('301 (cast)')
+    expect(castAugmented?.threat.calculation.modifiedThreat).toBe(301)
+    expect(castAugmented?.threat.calculation.modifiers).toEqual([])
+
+    const missAugmented = result.augmentedEvents[2]
+    expect(missAugmented?.threat.calculation.formula).toBe('-301 (miss rollback)')
+    expect(missAugmented?.threat.calculation.modifiedThreat).toBe(-301)
+    expect(missAugmented?.threat.calculation.modifiers).toEqual([])
     expect(missAugmented?.threat.changes?.[0]?.total).toBeCloseTo(0, 8)
   })
 

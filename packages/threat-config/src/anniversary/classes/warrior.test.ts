@@ -264,15 +264,30 @@ describe('abilities', () => {
   })
 
   describe('Sunder Armor', () => {
-    it('returns flat 301 threat', () => {
+    it('applies 301 threat on cast and rolls back on miss', () => {
       const formula = warriorConfig.abilities[Spells.SunderArmor]
       expect(formula).toBeDefined()
 
-      const ctx = createMockContext({ amount: 0 })
-      const result = formula!(ctx)
+      const castResult = formula!(
+        createMockContext({
+          event: { type: 'cast' } as ThreatContext['event'],
+          amount: 0,
+        }),
+      )
+      const missResult = formula!(
+        createMockContext({
+          event: {
+            type: 'damage',
+            hitType: 'miss',
+          } as ThreatContext['event'],
+          amount: 0,
+        }),
+      )
 
-      expect(result.formula).toBe('301')
-      expect(result.value).toBe(301)
+      expect(castResult.formula).toBe('301 (cast)')
+      expect(castResult.value).toBe(301)
+      expect(missResult.formula).toBe('-301 (miss rollback)')
+      expect(missResult.value).toBe(-301)
     })
   })
 

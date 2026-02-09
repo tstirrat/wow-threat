@@ -4,6 +4,7 @@
  * Spell IDs and threat values are based on Classic/Anniversary Edition mechanics.
  */
 import {
+  threatOnCastRollbackOnMiss,
   calculateThreat,
   tauntTarget,
   threatOnBuff,
@@ -249,8 +250,8 @@ export const warriorConfig: ClassThreatConfig = {
     // Shield Slam: 2x damage + 150 flat threat
     [Spells.ShieldSlam]: calculateThreat({ modifier: 2, bonus: 150 }),
 
-    // Sunder Armor: flat 301 threat (no damage in Classic)
-    [Spells.SunderArmor]: calculateThreat({ modifier: 0, bonus: 301 }),
+    // Sunder Armor: threat on cast, rollback on miss/immune/resist
+    [Spells.SunderArmor]: threatOnCastRollbackOnMiss(301),
 
     // Revenge: damage + 355 flat threat
     [Spells.Revenge]: calculateThreat({ modifier: 1, bonus: 355 }),
