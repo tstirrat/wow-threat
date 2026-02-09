@@ -180,19 +180,21 @@ export function tauntTarget(options: TauntOptions = {}): FormulaFn {
       formula,
       value: 0,
       splitAmongEnemies: false,
-      special: {
-        type: 'customThreat',
-        changes: [
-          {
-            sourceId,
-            targetId,
-            targetInstance,
-            operator: 'set',
-            amount: nextThreat,
-            total: nextThreat,
-          },
-        ],
-      },
+      effects: [
+        {
+          type: 'customThreat',
+          changes: [
+            {
+              sourceId,
+              targetId,
+              targetInstance,
+              operator: 'set',
+              amount: nextThreat,
+              total: nextThreat,
+            },
+          ],
+        },
+      ],
     }
   }
 }
@@ -211,11 +213,13 @@ export function modifyThreat(options: ModifyThreatOptions): FormulaFn {
     formula: modifier === 0 ? 'threatWipe' : `threat * ${modifier}`,
     value: 0,
     splitAmongEnemies: false,
-    special: {
-      type: 'modifyThreat',
-      multiplier: modifier,
-      target,
-    },
+    effects: [
+      {
+        type: 'modifyThreat',
+        multiplier: modifier,
+        target,
+      },
+    ],
   })
 }
 

@@ -101,7 +101,7 @@ describe('Druid Config', () => {
         const result = formula!(ctx)
 
         expect(result.formula).toBe('topThreat + 0')
-        expect(result.special).toEqual({
+        expect(result.effects?.[0]).toEqual({
           type: 'customThreat',
           changes: [
             {

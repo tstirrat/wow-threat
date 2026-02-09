@@ -145,20 +145,20 @@ export interface ThreatModifier {
 }
 
 // ============================================================================
-// Effect Handler System
+// Event Interceptor System
 // ============================================================================
 
 /**
- * Context provided to effect handlers when they intercept events
+ * Context provided to event interceptors when they intercept events
  */
-export interface EffectHandlerContext {
+export interface EventInterceptorContext {
   /** Current event timestamp */
   timestamp: number
-  /** Timestamp when this handler was installed */
+  /** Timestamp when this interceptor was installed */
   installedAt: number
   /** Access to actor state (positions, threat, auras) */
   actors: ActorContext
-  /** Uninstall this handler (call when effect expires) */
+  /** Uninstall this interceptor (call when effect expires) */
   uninstall: () => void
   /** Ensure an aura is active on an actor (enforces exclusive aura eviction) */
   setAura: (actorId: number, spellId: number) => void
@@ -167,27 +167,27 @@ export interface EffectHandlerContext {
 }
 
 /**
- * Result returned by an effect handler after intercepting an event
+ * Result returned by an event interceptor after intercepting an event
  */
-export type EffectHandlerResult =
+export type EventInterceptorResult =
   | { action: 'passthrough' }
   | { action: 'skip' }
   | {
       action: 'augment'
       /** Override who receives threat credit (e.g., Misdirection) */
       threatRecipientOverride?: number
-      /** Additional special behavior to apply */
-      special?: ThreatSpecial
+      /** Additional effects to apply */
+      effects?: ThreatEffect[]
     }
 
 /**
- * Handler function that intercepts future events
+ * Interceptor function that intercepts future events
  * Installed by abilities to implement deferred effects (Misdirection, delayed threat drops, etc.)
  */
-export type EffectHandler = (
+export type EventInterceptor = (
   event: WCLEvent,
-  ctx: EffectHandlerContext,
-) => EffectHandlerResult
+  ctx: EventInterceptorContext,
+) => EventInterceptorResult
 
 export type ThreatStateKind = 'fixate' | 'aggroLoss' | 'invulnerable'
 export type ThreatStatePhase = 'start' | 'end'
@@ -202,11 +202,11 @@ export interface ThreatStatePayload {
   name?: string
 }
 
-export type ThreatSpecial =
+export type ThreatEffect =
   | { type: 'modifyThreat'; multiplier: number; target: 'target' | 'all' }
   | { type: 'state'; state: ThreatStatePayload }
   | { type: 'customThreat'; changes: ThreatChange[] }
-  | { type: 'installHandler'; handler: EffectHandler }
+  | { type: 'installInterceptor'; interceptor: EventInterceptor }
 
 export interface ThreatFormulaResult {
   /** Human-readable formula, e.g., "(2 * amt) + 115" */
@@ -215,8 +215,8 @@ export interface ThreatFormulaResult {
   value: number
   /** Whether to divide threat among all enemies */
   splitAmongEnemies: boolean
-  /** Special behaviors (taunt, threat drop, custom threat, etc.) */
-  special?: ThreatSpecial
+  /** Event effects (taunt, threat drop, custom threat, etc.) */
+  effects?: ThreatEffect[]
 }
 
 /** Threat formula function signature */
@@ -283,8 +283,8 @@ export interface EncounterPreprocessorContext {
 }
 
 export interface EncounterPreprocessorResult {
-  /** Attach an encounter-level special behavior to the current event */
-  special?: ThreatSpecial
+  /** Attach encounter-level effects to the current event */
+  effects?: ThreatEffect[]
 }
 
 export type EncounterPreprocessor = (
@@ -357,8 +357,8 @@ export interface ThreatCalculation {
   isSplit: boolean
   /** Modifiers applied (multiplicative with each other) */
   modifiers: ThreatModifier[]
-  /** Special behaviors (taunt, threat drop, custom threat, etc.) */
-  special?: ThreatSpecial
+  /** Event effects (taunt, threat drop, custom threat, etc.) */
+  effects?: ThreatEffect[]
 }
 
 export interface ThreatResult {

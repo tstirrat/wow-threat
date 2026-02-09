@@ -58,7 +58,7 @@ describe('Rogue Config', () => {
         const ctx = createMockContext()
         const result = formula!(ctx)
 
-        expect(result.special).toEqual({
+        expect(result.effects?.[0]).toEqual({
           type: 'modifyThreat',
           multiplier: 0,
           target: 'all',

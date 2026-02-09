@@ -23,9 +23,7 @@ const createArlokkPreprocessor: EncounterPreprocessorFactory = (ctx) => {
   const lastCastTimestampBySource = new Map<number, number>()
   const arlokkSourceIds = new Set<number>(
     ctx.enemies
-      .filter((enemy) =>
-        enemy.name.toLowerCase().includes(ARLOKK_NAME_TOKEN)
-      )
+      .filter((enemy) => enemy.name.toLowerCase().includes(ARLOKK_NAME_TOKEN))
       .map((enemy) => enemy.id),
   )
 
@@ -51,11 +49,7 @@ const createArlokkPreprocessor: EncounterPreprocessorFactory = (ctx) => {
     }
 
     return {
-      special: {
-        type: 'modifyThreat',
-        multiplier: 0,
-        target: 'all',
-      },
+      effects: [{ type: 'modifyThreat', multiplier: 0, target: 'all' }],
     }
   }
 }

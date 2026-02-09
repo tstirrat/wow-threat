@@ -187,7 +187,7 @@ describe('tauntTarget', () => {
 
     expect(observedThreatInstance).toBe(3)
     expect(observedTopInstance).toBe(3)
-    expect(result.special).toEqual({
+    expect(result.effects?.[0]).toEqual({
       type: 'customThreat',
       changes: [
         {
@@ -221,7 +221,7 @@ describe('tauntTarget', () => {
 
     expect(result.formula).toBe('topThreat + 1')
     expect(result.value).toBe(0)
-    expect(result.special).toEqual({
+    expect(result.effects?.[0]).toEqual({
       type: 'customThreat',
       changes: [
         {
@@ -256,7 +256,7 @@ describe('tauntTarget', () => {
 
     expect(result.formula).toBe('topThreat + amt')
     expect(result.value).toBe(0)
-    expect(result.special).toEqual({
+    expect(result.effects?.[0]).toEqual({
       type: 'customThreat',
       changes: [
         {
@@ -289,7 +289,7 @@ describe('tauntTarget', () => {
     const result = formula(ctx)
 
     expect(result.formula).toBe('topThreat + amt + 100')
-    expect(result.special).toEqual({
+    expect(result.effects?.[0]).toEqual({
       type: 'customThreat',
       changes: [
         {
@@ -314,7 +314,7 @@ describe('modifyThreat', () => {
 
     expect(result.formula).toBe('threat * 0.5')
     expect(result.value).toBe(0)
-    expect(result.special).toEqual({
+    expect(result.effects?.[0]).toEqual({
       type: 'modifyThreat',
       multiplier: 0.5,
       target: 'target',
@@ -330,7 +330,7 @@ describe('modifyThreat', () => {
 
     expect(result.formula).toBe('threatWipe')
     expect(result.value).toBe(0)
-    expect(result.special).toEqual({
+    expect(result.effects?.[0]).toEqual({
       type: 'modifyThreat',
       multiplier: 0,
       target: 'target',
@@ -344,7 +344,7 @@ describe('modifyThreat', () => {
     const result = formula(ctx)
 
     expect(result.formula).toBe('threat * 2')
-    expect(result.special).toEqual({
+    expect(result.effects?.[0]).toEqual({
       type: 'modifyThreat',
       multiplier: 2,
       target: 'target',
@@ -357,7 +357,7 @@ describe('modifyThreat', () => {
 
     const result = formula(ctx)
 
-    expect(result.special).toEqual({
+    expect(result.effects?.[0]).toEqual({
       type: 'modifyThreat',
       multiplier: 0,
       target: 'all',
@@ -509,6 +509,6 @@ describe('noThreat', () => {
 
     expect(result.formula).toBe('0')
     expect(result.value).toBe(0)
-    expect(result.special).toBeUndefined()
+    expect(result.effects?.[0]).toBeUndefined()
   })
 })

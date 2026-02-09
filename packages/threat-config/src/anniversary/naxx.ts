@@ -61,10 +61,7 @@ export const hatefulStrike: ThreatFormula = (ctx) => {
     formula: '0 (customThreat)',
     value: 0, // Boss ability on player - no base threat
     splitAmongEnemies: false,
-    special: {
-      type: 'customThreat',
-      changes,
-    },
+    effects: [{ type: 'customThreat', changes }],
   }
 }
 

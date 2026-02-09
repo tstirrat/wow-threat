@@ -5,7 +5,7 @@
  * Misdirection redirects threat to an ally.
  */
 import { calculateThreat, modifyThreat } from '../../shared/formulas'
-import type { EffectHandler } from '../../types'
+import type { EventInterceptor } from '../../types'
 import type { ClassThreatConfig } from '../../types'
 
 // ============================================================================
@@ -35,10 +35,10 @@ export const Spells = {
  * @param hunterId - The hunter casting Misdirection
  * @param targetId - The ally receiving redirected threat
  */
-function createMisdirectionHandler(
+function createMisdirectionInterceptor(
   hunterId: number,
   targetId: number,
-): EffectHandler {
+): EventInterceptor {
   let chargesRemaining = 3
   const DURATION_MS = 30000
 
@@ -88,13 +88,15 @@ export const hunterConfig: ClassThreatConfig = {
       formula: '0',
       value: 0,
       splitAmongEnemies: false,
-      special: {
-        type: 'installHandler',
-        handler: createMisdirectionHandler(
-          ctx.sourceActor.id,
-          ctx.event.targetID,
-        ),
-      },
+      effects: [
+        {
+          type: 'installInterceptor',
+          interceptor: createMisdirectionInterceptor(
+            ctx.sourceActor.id,
+            ctx.event.targetID,
+          ),
+        },
+      ],
     }),
 
     // Distracting Shot - damage + flat threat per rank

@@ -14,7 +14,7 @@ Legend:
 - [x] **[REQ-002][P0][C4]** Implement `taunt` special semantics in the engine (set to top threat + bonus, not flat add).
 - [x] **[REQ-003][P0][C3]** Wire runtime handling for `fixate`, `fixateEnd`, `aggroLoss`, `aggroLossEnd`, `invulnerable`, `invulnerableEnd`.
 - [x] **[REQ-004][P0][C1]** Remove `noThreatWindow` special from the contract (deprecated).
-- [ ] **[REQ-005][P0][C3]** Allow effect handlers to pass `augment.special` through to core threat application (today only `threatRecipientOverride` is used).
+- [x] **[REQ-005][P0][C3]** Allow event interceptors to pass `augment.effects` through to core threat application (alongside `threatRecipientOverride`).
 - [x] **[REQ-006][P0][C2]** Support negative threat deltas (Feint/Cower/Disengage-style) with floor-at-zero semantics.
 - [ ] **[REQ-007][P0][C3]** Add per-formula control for applying multipliers/coefs (Era has both coeff and no-coeff variants, e.g. `handler_castCanMissNoCoefficient`, `handler_resourcechange`).
 - [ ] **[REQ-008][P0][C3]** Implement true cast-can-miss two-phase behavior (add on cast, rollback on miss/immune/resist result), not static one-shot.

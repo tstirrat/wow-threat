@@ -13,7 +13,7 @@ import type {
   EncounterId,
   EncounterThreatConfig,
   Enemy,
-  ThreatSpecial,
+  ThreatEffect,
   ThreatCalculation,
   ThreatChange,
   ThreatConfig,
@@ -30,7 +30,7 @@ import {
 } from '@wcl-threat/threat-config'
 import type { WCLEvent } from '@wcl-threat/wcl-types'
 
-import { EffectTracker } from './effect-tracker'
+import { InterceptorTracker } from './interceptor-tracker'
 import { FightState } from './fight-state'
 
 const ENVIRONMENT_TARGET_ID = -1
@@ -103,7 +103,7 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
   } = input
 
   const fightState = new FightState(actorMap, config)
-  const effectTracker = new EffectTracker()
+  const interceptorTracker = new InterceptorTracker()
   const stateSpellSets = buildStateSpellSets(config)
   const augmentedEvents: AugmentedEvent[] = []
   const eventCounts: Record<string, number> = {}
@@ -126,15 +126,15 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
 
     // Calculate threat for relevant event types
     if (shouldCalculateThreat(event)) {
-      // Run effect handlers first
-      const handlerResults = effectTracker.runHandlers(
+      // Run event interceptors first
+      const interceptorResults = interceptorTracker.runInterceptors(
         event,
         event.timestamp,
         fightState,
       )
 
-      // Check if any handler wants to skip this event
-      const shouldSkip = handlerResults.some((r) => r.action === 'skip')
+      // Check if any interceptor wants to skip this event
+      const shouldSkip = interceptorResults.some((r) => r.action === 'skip')
       if (shouldSkip) {
         // Create zero-threat augmented event
         const zeroCalculation: ThreatCalculation = {
@@ -149,11 +149,16 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
         continue
       }
 
-      // Collect augmentations from handlers
-      const augmentations = handlerResults.filter((r) => r.action === 'augment')
+      // Collect augmentations from interceptors
+      const augmentations = interceptorResults.filter(
+        (r) => r.action === 'augment',
+      )
       const threatRecipientOverride = augmentations.find(
         (a) => a.action === 'augment' && a.threatRecipientOverride,
       )?.threatRecipientOverride
+      const interceptorEffects = augmentations.flatMap(
+        (augmentation) => augmentation.effects ?? [],
+      )
 
       const sourceActor = actorMap.get(event.sourceID) ?? {
         id: event.sourceID,
@@ -178,20 +183,24 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
       }
 
       const threatContext = buildThreatContext(event, threatOptions)
-      const encounterSpecial = encounterPreprocessor?.(threatContext)?.special
       const baseCalculation = calculateModifiedThreat(event, threatOptions, config)
-      const calculation: ThreatCalculation = encounterSpecial
-        ? {
-            ...baseCalculation,
-            // Encounter preprocessors are authoritative for encounter mechanics.
-            special: encounterSpecial,
-          }
-        : baseCalculation
-      const stateSpecial = buildStateSpecialFromAuraEvent(event, stateSpellSets)
+      const encounterEffects = encounterPreprocessor?.(threatContext)?.effects ?? []
+      const stateEffect = buildStateEffectFromAuraEvent(event, stateSpellSets)
+      const effects = [
+        ...(baseCalculation.effects ?? []),
+        ...encounterEffects,
+        ...interceptorEffects,
+        ...(stateEffect ? [stateEffect] : []),
+      ]
+      const calculation: ThreatCalculation = {
+        ...baseCalculation,
+        effects: effects.length > 0 ? effects : undefined,
+      }
 
-      // Handle installHandler special
-      if (calculation.special?.type === 'installHandler') {
-        effectTracker.install(calculation.special.handler, event.timestamp)
+      for (const effect of effects) {
+        if (effect.type === 'installInterceptor') {
+          interceptorTracker.install(effect.interceptor, event.timestamp)
+        }
       }
 
       const validEnemies = enemies.filter((e) => e.id !== ENVIRONMENT_TARGET_ID)
@@ -207,7 +216,7 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
       augmentedEvents.push(
         buildAugmentedEvent(
           event,
-          stateSpecial ? { ...calculation, special: stateSpecial } : calculation,
+          calculation,
           changes.length > 0 ? changes : undefined,
         ),
       )
@@ -241,16 +250,16 @@ function applyThreat(
     return changes
   }
 
-  if (calculation.special) {
-    switch (calculation.special.type) {
+  for (const effect of calculation.effects ?? []) {
+    switch (effect.type) {
       case 'customThreat':
         changes.push(
-          ...applyCustomThreatSpecial(fightState, calculation.special),
+          ...applyCustomThreatEffect(fightState, effect),
         )
         break
       case 'modifyThreat':
         changes.push(
-          ...applyModifyThreatSpecial(fightState, calculation.special, event),
+          ...applyModifyThreatEffect(fightState, effect, event),
         )
         break
     }
@@ -323,11 +332,11 @@ function applyThreatDelta(
 }
 
 /** Apply explicit custom threat changes */
-function applyCustomThreatSpecial(
+function applyCustomThreatEffect(
   fightState: FightState,
-  special: Extract<ThreatCalculation['special'], { type: 'customThreat' }>,
+  effect: Extract<ThreatEffect, { type: 'customThreat' }>,
 ): ThreatChange[] {
-  for (const change of special.changes) {
+  for (const change of effect.changes) {
     if (change.operator === 'set') {
       fightState.setThreat(change.sourceId, {
         id: change.targetId,
@@ -349,16 +358,16 @@ function applyCustomThreatSpecial(
     }
   }
 
-  return [...special.changes]
+  return [...effect.changes]
 }
 
 /** Apply threat multipliers to either a single target or all actors on an enemy */
-function applyModifyThreatSpecial(
+function applyModifyThreatEffect(
   fightState: FightState,
-  special: Extract<ThreatCalculation['special'], { type: 'modifyThreat' }>,
+  effect: Extract<ThreatEffect, { type: 'modifyThreat' }>,
   event: WCLEvent,
 ): ThreatChange[] {
-  if (special.target === 'all') {
+  if (effect.target === 'all') {
     // Friendly source abilities (e.g., Vanish, Feign Death):
     // modify this actor's threat against all enemies.
     if (event.sourceIsFriendly) {
@@ -368,7 +377,7 @@ function applyModifyThreatSpecial(
       return enemyThreatEntries.map(({ enemy, threat }) => {
         const newThreat = calculateThreatModification(
           threat,
-          special.multiplier,
+          effect.multiplier,
         )
         fightState.setThreat(actorId, enemy, newThreat)
 
@@ -391,7 +400,7 @@ function applyModifyThreatSpecial(
     const actorThreat = fightState.getAllActorThreat(enemy)
 
     return Array.from(actorThreat.entries()).map(([actorId, currentThreat]) => {
-      const newThreat = calculateThreatModification(currentThreat, special.multiplier)
+      const newThreat = calculateThreatModification(currentThreat, effect.multiplier)
       fightState.setThreat(actorId, enemy, newThreat)
 
       return {
@@ -413,7 +422,7 @@ function applyModifyThreatSpecial(
       instanceId: sourceEnemyInstance,
     },
   )
-  const newThreat = calculateThreatModification(currentThreat, special.multiplier)
+  const newThreat = calculateThreatModification(currentThreat, effect.multiplier)
   fightState.setThreat(
     event.targetID,
     {
@@ -515,11 +524,11 @@ function buildStateSpellSets(config: ThreatConfig): ThreatStateSpellSets {
   }
 }
 
-/** Derive state-style threat special markers from aura apply/remove events. */
-function buildStateSpecialFromAuraEvent(
+/** Derive state-style threat effects from aura apply/remove events. */
+function buildStateEffectFromAuraEvent(
   event: WCLEvent,
   stateSpellSets: ThreatStateSpellSets,
-): Extract<ThreatSpecial, { type: 'state' }> | undefined {
+): Extract<ThreatEffect, { type: 'state' }> | undefined {
   if (
     !('abilityGameID' in event) ||
     typeof event.abilityGameID !== 'number'
@@ -744,7 +753,7 @@ export function calculateModifiedThreat(
     modifiedThreat: modifiedThreat,
     isSplit: formulaResult.splitAmongEnemies,
     modifiers: allModifiers,
-    special: formulaResult.special, // NEW: Include special behaviors
+    effects: formulaResult.effects,
   }
 }
 

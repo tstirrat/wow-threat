@@ -40,9 +40,9 @@ describe('Onyxia Abilities', () => {
     it('returns modifyThreat special with 0.75 multiplier', () => {
       const result = knockAway(createMockContext())
 
-      expect(result.special?.type).toBe('modifyThreat')
-      if (result.special?.type === 'modifyThreat') {
-        expect(result.special.multiplier).toBe(0.75)
+      expect(result.effects?.[0]?.type).toBe('modifyThreat')
+      if (result.effects?.[0]?.type === 'modifyThreat') {
+        expect(result.effects?.[0]?.multiplier).toBe(0.75)
       }
     })
 
@@ -64,10 +64,10 @@ describe('Onyxia Abilities', () => {
     it('reduces threat by 25% (multiplies by 0.75)', () => {
       // This test verifies the math: if threat is 1000, it becomes 750 (25% reduction)
       const result = knockAway(createMockContext())
-      expect(result.special?.type).toBe('modifyThreat')
-      if (result.special?.type === 'modifyThreat') {
+      expect(result.effects?.[0]?.type).toBe('modifyThreat')
+      if (result.effects?.[0]?.type === 'modifyThreat') {
         // Example: 1000 threat * 0.75 = 750 threat (reduced by 250, or 25%)
-        expect(result.special.multiplier).toBe(0.75)
+        expect(result.effects?.[0]?.multiplier).toBe(0.75)
       }
     })
   })

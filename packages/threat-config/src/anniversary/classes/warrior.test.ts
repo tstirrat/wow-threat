@@ -353,7 +353,7 @@ describe('Taunt', () => {
       const result = formula!(ctx)
 
       expect(result.formula).toBe('topThreat + 1')
-      expect(result.special).toEqual({
+      expect(result.effects?.[0]).toEqual({
         type: 'customThreat',
         changes: [
           {
@@ -390,7 +390,7 @@ describe('Taunt', () => {
 
       expect(result.formula).toBe('topThreat + amt')
       expect(result.value).toBe(0)
-      expect(result.special).toEqual({
+      expect(result.effects?.[0]).toEqual({
         type: 'customThreat',
         changes: [
           {

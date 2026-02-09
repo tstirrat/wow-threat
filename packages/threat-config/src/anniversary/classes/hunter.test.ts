@@ -3,7 +3,7 @@
  */
 import { describe, expect, it, vi } from 'vitest'
 
-import type { EffectHandlerContext, ThreatContext } from '../../types'
+import type { EventInterceptorContext, ThreatContext } from '../../types'
 import { Spells, hunterConfig } from './hunter'
 
 // Mock ThreatContext factory
@@ -46,7 +46,7 @@ describe('Hunter Config', () => {
         const ctx = createMockContext()
         const result = formula!(ctx)
 
-        expect(result.special).toEqual({
+        expect(result.effects?.[0]).toEqual({
           type: 'modifyThreat',
           multiplier: 0,
           target: 'all',
@@ -71,8 +71,8 @@ describe('Hunter Config', () => {
 
         expect(result.formula).toBe('0')
         expect(result.value).toBe(0)
-        expect(result.special?.type).toBe('installHandler')
-        expect(result.special).toHaveProperty('handler')
+        expect(result.effects?.[0]?.type).toBe('installInterceptor')
+        expect(result.effects?.[0]).toHaveProperty('interceptor')
       })
 
       it('handler returns passthrough for non-damage events', () => {
@@ -86,12 +86,12 @@ describe('Hunter Config', () => {
         })
 
         const result = formula!(ctx)
-        if (result.special?.type !== 'installHandler') {
-          throw new Error('Expected installHandler special type')
+        if (result.effects?.[0]?.type !== 'installInterceptor') {
+          throw new Error('Expected installInterceptor special type')
         }
 
-        const handler = result.special.handler
-        const mockContext: EffectHandlerContext = {
+        const handler = result.effects?.[0]?.interceptor
+        const mockContext: EventInterceptorContext = {
           timestamp: 2000,
           installedAt: 1000,
           actors: ctx.actors,
@@ -120,12 +120,12 @@ describe('Hunter Config', () => {
         })
 
         const result = formula!(ctx)
-        if (result.special?.type !== 'installHandler') {
-          throw new Error('Expected installHandler special type')
+        if (result.effects?.[0]?.type !== 'installInterceptor') {
+          throw new Error('Expected installInterceptor special type')
         }
 
-        const handler = result.special.handler
-        const mockContext: EffectHandlerContext = {
+        const handler = result.effects?.[0]?.interceptor
+        const mockContext: EventInterceptorContext = {
           timestamp: 2000,
           installedAt: 1000,
           actors: ctx.actors,
@@ -167,12 +167,12 @@ describe('Hunter Config', () => {
         })
 
         const result = formula!(ctx)
-        if (result.special?.type !== 'installHandler') {
-          throw new Error('Expected installHandler special type')
+        if (result.effects?.[0]?.type !== 'installInterceptor') {
+          throw new Error('Expected installInterceptor special type')
         }
 
-        const handler = result.special.handler
-        const mockContext: EffectHandlerContext = {
+        const handler = result.effects?.[0]?.interceptor
+        const mockContext: EventInterceptorContext = {
           timestamp: 2000,
           installedAt: 1000,
           actors: ctx.actors,
@@ -210,13 +210,13 @@ describe('Hunter Config', () => {
         })
 
         const result = formula!(ctx)
-        if (result.special?.type !== 'installHandler') {
-          throw new Error('Expected installHandler special type')
+        if (result.effects?.[0]?.type !== 'installInterceptor') {
+          throw new Error('Expected installInterceptor special type')
         }
 
-        const handler = result.special.handler
+        const handler = result.effects?.[0]?.interceptor
         const uninstallMock = vi.fn()
-        const mockContext: EffectHandlerContext = {
+        const mockContext: EventInterceptorContext = {
           timestamp: 2000,
           installedAt: 1000,
           actors: ctx.actors,
@@ -248,12 +248,12 @@ describe('Hunter Config', () => {
         })
 
         const result = formula!(ctx)
-        if (result.special?.type !== 'installHandler') {
-          throw new Error('Expected installHandler special type')
+        if (result.effects?.[0]?.type !== 'installInterceptor') {
+          throw new Error('Expected installInterceptor special type')
         }
 
-        const handler = result.special.handler
-        const mockContext: EffectHandlerContext = {
+        const handler = result.effects?.[0]?.interceptor
+        const mockContext: EventInterceptorContext = {
           timestamp: 2000,
           installedAt: 1000,
           actors: ctx.actors,
@@ -288,13 +288,13 @@ describe('Hunter Config', () => {
         })
 
         const result = formula!(ctx)
-        if (result.special?.type !== 'installHandler') {
-          throw new Error('Expected installHandler special type')
+        if (result.effects?.[0]?.type !== 'installInterceptor') {
+          throw new Error('Expected installInterceptor special type')
         }
 
-        const handler = result.special.handler
+        const handler = result.effects?.[0]?.interceptor
         const uninstallMock = vi.fn()
-        const mockContext: EffectHandlerContext = {
+        const mockContext: EventInterceptorContext = {
           timestamp: 2000,
           installedAt: 1000,
           actors: ctx.actors,
@@ -348,13 +348,13 @@ describe('Hunter Config', () => {
         })
 
         const result = formula!(ctx)
-        if (result.special?.type !== 'installHandler') {
-          throw new Error('Expected installHandler special type')
+        if (result.effects?.[0]?.type !== 'installInterceptor') {
+          throw new Error('Expected installInterceptor special type')
         }
 
-        const handler = result.special.handler
+        const handler = result.effects?.[0]?.interceptor
         const uninstallMock = vi.fn()
-        const mockContext: EffectHandlerContext = {
+        const mockContext: EventInterceptorContext = {
           timestamp: 2000,
           installedAt: 1000,
           actors: ctx.actors,
@@ -387,15 +387,15 @@ describe('Hunter Config', () => {
         })
 
         const result = formula!(ctx)
-        if (result.special?.type !== 'installHandler') {
-          throw new Error('Expected installHandler special type')
+        if (result.effects?.[0]?.type !== 'installInterceptor') {
+          throw new Error('Expected installInterceptor special type')
         }
 
-        const handler = result.special.handler
+        const handler = result.effects?.[0]?.interceptor
         const uninstallMock = vi.fn()
 
         // Within 30 seconds
-        const withinWindowContext: EffectHandlerContext = {
+        const withinWindowContext: EventInterceptorContext = {
           timestamp: 20000,
           installedAt: 1000,
           actors: ctx.actors,
@@ -414,7 +414,7 @@ describe('Hunter Config', () => {
         expect(uninstallMock).not.toHaveBeenCalled()
 
         // After 30 seconds
-        const afterWindowContext: EffectHandlerContext = {
+        const afterWindowContext: EventInterceptorContext = {
           timestamp: 32000,
           installedAt: 1000,
           actors: ctx.actors,

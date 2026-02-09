@@ -69,18 +69,18 @@ describe('Hateful Strike', () => {
     const result = hatefulStrike(ctx)
 
     expect(result.value).toBe(0) // Boss ability on player
-    expect(result.special?.type).toBe('customThreat')
+    expect(result.effects?.[0]?.type).toBe('customThreat')
 
-    if (result.special?.type === 'customThreat') {
-      expect(result.special.changes).toHaveLength(4)
-      expect(result.special.changes.map((c) => c.sourceId)).toEqual([
+    if (result.effects?.[0]?.type === 'customThreat') {
+      expect(result.effects?.[0]?.changes).toHaveLength(4)
+      expect(result.effects?.[0]?.changes.map((c) => c.sourceId)).toEqual([
         1, 2, 3, 4,
       ])
-      expect(result.special.changes.every((c) => c.targetId === PATCHWERK_ID)).toBe(
+      expect(result.effects?.[0]?.changes.every((c) => c.targetId === PATCHWERK_ID)).toBe(
         true,
       )
-      expect(result.special.changes.every((c) => c.amount === 1000)).toBe(true)
-      expect(result.special.changes.every((c) => c.operator === 'add')).toBe(true)
+      expect(result.effects?.[0]?.changes.every((c) => c.amount === 1000)).toBe(true)
+      expect(result.effects?.[0]?.changes.every((c) => c.operator === 'add')).toBe(true)
     }
   })
 
@@ -100,9 +100,9 @@ describe('Hateful Strike', () => {
 
     const result = hatefulStrike(ctx)
 
-    if (result.special?.type === 'customThreat') {
-      expect(result.special.changes).toHaveLength(2)
-      expect(result.special.changes.map((c) => c.sourceId)).toEqual([1, 2])
+    if (result.effects?.[0]?.type === 'customThreat') {
+      expect(result.effects?.[0]?.changes).toHaveLength(2)
+      expect(result.effects?.[0]?.changes.map((c) => c.sourceId)).toEqual([1, 2])
     }
   })
 
@@ -130,10 +130,10 @@ describe('Hateful Strike', () => {
 
     const result = hatefulStrike(ctx)
 
-    if (result.special?.type === 'customThreat') {
-      expect(result.special.changes).toHaveLength(4)
+    if (result.effects?.[0]?.type === 'customThreat') {
+      expect(result.effects?.[0]?.changes).toHaveLength(4)
       // Should be actors 1, 3, 5, 6 (in melee range, sorted by threat)
-      expect(result.special.changes.map((c) => c.sourceId)).toEqual([
+      expect(result.effects?.[0]?.changes.map((c) => c.sourceId)).toEqual([
         1, 3, 5, 6,
       ])
     }
@@ -157,10 +157,10 @@ describe('Hateful Strike', () => {
 
     const result = hatefulStrike(ctx)
 
-    if (result.special?.type === 'customThreat') {
+    if (result.effects?.[0]?.type === 'customThreat') {
       // Should only include actors 1 and 3 (with valid distances)
-      expect(result.special.changes).toHaveLength(2)
-      expect(result.special.changes.map((c) => c.sourceId)).toEqual([1, 3])
+      expect(result.effects?.[0]?.changes).toHaveLength(2)
+      expect(result.effects?.[0]?.changes.map((c) => c.sourceId)).toEqual([1, 3])
     }
   })
 
@@ -180,8 +180,8 @@ describe('Hateful Strike', () => {
 
     const result = hatefulStrike(ctx)
 
-    if (result.special?.type === 'customThreat') {
-      expect(result.special.changes).toHaveLength(0)
+    if (result.effects?.[0]?.type === 'customThreat') {
+      expect(result.effects?.[0]?.changes).toHaveLength(0)
     }
   })
 
@@ -229,7 +229,7 @@ describe('Boss Threat Wipe on Cast', () => {
 
     expect(result.formula).toBe('threatWipe')
     expect(result.value).toBe(0)
-    expect(result.special).toEqual({
+    expect(result.effects?.[0]).toEqual({
       type: 'modifyThreat',
       multiplier: 0,
       target: 'all',
@@ -246,12 +246,12 @@ describe('Boss Threat Wipe on Cast', () => {
     const blinkResult = blink!(createThreatWipeContext(29210))
     const blinkAltResult = blinkAlt!(createThreatWipeContext(29211))
 
-    expect(blinkResult.special).toEqual({
+    expect(blinkResult.effects?.[0]).toEqual({
       type: 'modifyThreat',
       multiplier: 0,
       target: 'all',
     })
-    expect(blinkAltResult.special).toEqual({
+    expect(blinkAltResult.effects?.[0]).toEqual({
       type: 'modifyThreat',
       multiplier: 0,
       target: 'all',

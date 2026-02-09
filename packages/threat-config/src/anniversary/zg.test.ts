@@ -79,7 +79,7 @@ describe('zg encounter hooks', () => {
       abilityGameID: 24191,
     }))
 
-    expect(longGapCast?.special).toEqual({
+    expect(longGapCast?.effects?.[0]).toEqual({
       type: 'modifyThreat',
       multiplier: 0,
       target: 'all',
@@ -136,7 +136,7 @@ describe('zg encounter hooks', () => {
       abilityGameID: 3,
     }))
 
-    expect(postGapArlokkCast?.special).toEqual({
+    expect(postGapArlokkCast?.effects?.[0]).toEqual({
       type: 'modifyThreat',
       multiplier: 0,
       target: 'all',
