@@ -172,15 +172,42 @@ eventsRoutes.get('/', async (c) => {
     ...enemyActorEntries,
   ])
 
-  // Build fight-scoped enemy list
-  const enemies: Enemy[] = [
-    ...(fight.enemyNPCs ?? []),
-    ...(fight.enemyPets ?? []),
-  ].map((npc) => ({
-    id: npc.id,
-    name: allActors.get(npc.id)?.name ?? 'Unknown',
-    instance: 0,
-  }))
+  // Build fight-scoped enemy list keyed by enemy id + instance.
+  // We seed each enemy with instance 0, then add observed instances from event payloads.
+  const enemyIds = new Set(
+    [...(fight.enemyNPCs ?? []), ...(fight.enemyPets ?? [])].map((enemy) => enemy.id),
+  )
+  const enemyInstanceKeys = new Set<string>(
+    [...enemyIds].map((enemyId) => `${enemyId}:0`),
+  )
+
+  for (const event of rawEvents) {
+    if (enemyIds.has(event.sourceID)) {
+      enemyInstanceKeys.add(`${event.sourceID}:${event.sourceInstance ?? 0}`)
+    }
+    if (enemyIds.has(event.targetID)) {
+      enemyInstanceKeys.add(`${event.targetID}:${event.targetInstance ?? 0}`)
+    }
+  }
+
+  const enemies: Enemy[] = [...enemyInstanceKeys]
+    .map((key) => {
+      const [idRaw, instanceRaw] = key.split(':')
+      const id = Number(idRaw)
+      const instance = Number(instanceRaw)
+
+      return {
+        id,
+        name: allActors.get(id)?.name ?? 'Unknown',
+        instance,
+      }
+    })
+    .sort((a, b) => {
+      if (a.id === b.id) {
+        return a.instance - b.instance
+      }
+      return a.id - b.id
+    })
 
   const abilitySchoolMap = buildAbilitySchoolMap(report.masterData.abilities)
 

@@ -150,9 +150,15 @@ export function tauntTarget(options: TauntOptions = {}): FormulaFn {
     const sourceId = ctx.sourceActor.id
     const targetId = ctx.targetActor.id
     const targetInstance = ctx.event.targetInstance ?? 0
-    const currentThreat = ctx.actors.getThreat(sourceId, targetId)
+    const currentThreat = ctx.actors.getThreat(sourceId, {
+      id: targetId,
+      instanceId: targetInstance,
+    })
     const topThreat = ctx.actors.getTopActorsByThreat(
-      targetId,
+      {
+        id: targetId,
+        instanceId: targetInstance,
+      },
       1,
     )[0]?.threat ?? 0
     const nextThreat = Math.max(currentThreat, topThreat + bonusThreat)

@@ -65,29 +65,39 @@ export type ModifierSource =
  * Provides access to position and threat tracking during threat calculations
  */
 export interface ActorContext {
-  /** Get position of an actor (null if not available) */
-  getPosition: (actorId: number) => { x: number; y: number } | null
+  /** Actor reference that may include a specific instance */
+  // Using object refs prevents accidental argument order swaps.
+  // Example: { id: 25, instanceId: 2 }
+  //
+  // instanceId defaults to 0 when omitted.
+  getPosition: (actor: ActorRef) => { x: number; y: number } | null
   /** Calculate distance between two actors (null if positions unavailable) */
-  getDistance: (actorId1: number, actorId2: number) => number | null
+  getDistance: (actor1: ActorRef, actor2: ActorRef) => number | null
   /** Get actors within range of a position */
-  getActorsInRange: (actorId: number, maxDistance: number) => number[]
+  getActorsInRange: (actor: ActorRef, maxDistance: number) => number[]
   /** Get current threat for an actor against an enemy */
-  getThreat: (actorId: number, enemyId: number) => number
+  getThreat: (actorId: number, enemy: EnemyRef) => number
   /** Get top N actors by threat against an enemy */
   getTopActorsByThreat: (
-    enemyId: number,
+    enemy: EnemyRef,
     count: number,
   ) => Array<{ actorId: number; threat: number }>
   /** Check if an actor is alive (false if dead or not tracked) */
-  isActorAlive: (actorId: number) => boolean
+  isActorAlive: (actor: ActorRef) => boolean
   /** Get the actor's current target (with instance), if known */
-  getCurrentTarget: (
-    actorId: number,
-  ) => { targetId: number; targetInstance: number } | null
+  getCurrentTarget: (actor: ActorRef) => { targetId: number; targetInstance: number } | null
   /** Get the actor's previously tracked target (with instance), if known */
-  getLastTarget: (
-    actorId: number,
-  ) => { targetId: number; targetInstance: number } | null
+  getLastTarget: (actor: ActorRef) => { targetId: number; targetInstance: number } | null
+}
+
+export interface ActorRef {
+  id: number
+  instanceId?: number
+}
+
+export interface EnemyRef {
+  id: number
+  instanceId?: number
 }
 
 export interface ThreatContext {

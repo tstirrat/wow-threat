@@ -20,13 +20,23 @@ const HATEFUL_STRIKE_THREAT = 1000 // TODO: Verify exact amount
  */
 export const hatefulStrike: ThreatFormula = (ctx) => {
   const targetEnemyId = ctx.event.sourceID // Patchwerk is the source
+  const targetEnemyInstance = ctx.event.sourceInstance ?? 0
 
   // Get top actors by threat against Patchwerk
-  const topActors = ctx.actors.getTopActorsByThreat(targetEnemyId, 100)
+  const topActors = ctx.actors.getTopActorsByThreat(
+    {
+      id: targetEnemyId,
+      instanceId: targetEnemyInstance,
+    },
+    100,
+  )
 
   // Filter to only those in melee range of Patchwerk
   const meleeActors = topActors.filter(({ actorId }) => {
-    const distance = ctx.actors.getDistance(actorId, targetEnemyId)
+    const distance = ctx.actors.getDistance(
+      { id: actorId },
+      { id: targetEnemyId, instanceId: targetEnemyInstance },
+    )
     return distance !== null && distance <= MELEE_RANGE
   })
 
@@ -40,7 +50,7 @@ export const hatefulStrike: ThreatFormula = (ctx) => {
     return {
       sourceId: actorId,
       targetId: targetEnemyId,
-      targetInstance: 0,
+      targetInstance: targetEnemyInstance,
       operator: 'add',
       amount: HATEFUL_STRIKE_THREAT,
       total,

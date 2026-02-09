@@ -60,7 +60,7 @@ function createMisdirectionHandler(
     }
 
     // Don't redirect to dead targets, but still consume a charge
-    if (!ctx.actors.isActorAlive(targetId)) {
+    if (!ctx.actors.isActorAlive({ id: targetId })) {
       return { action: 'passthrough' }
     }
 

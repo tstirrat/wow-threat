@@ -364,6 +364,67 @@ describe('processEvents', () => {
         ]),
       )
     })
+
+    it('wipes player threat per enemy instance on death', () => {
+      const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
+      const instanceOneEnemy: Enemy = { id: bossEnemy.id, name: 'Boss', instance: 1 }
+      const instanceTwoEnemy: Enemy = { id: bossEnemy.id, name: 'Boss', instance: 2 }
+
+      const deathEvent: WCLEvent = {
+        timestamp: 3000,
+        type: 'death',
+        sourceID: bossEnemy.id,
+        sourceIsFriendly: false,
+        targetID: warriorActor.id,
+        targetIsFriendly: true,
+      }
+
+      const events: WCLEvent[] = [
+        createDamageEvent({
+          timestamp: 1000,
+          sourceID: warriorActor.id,
+          targetID: bossEnemy.id,
+          targetInstance: 1,
+          amount: 400,
+        }),
+        createDamageEvent({
+          timestamp: 2000,
+          sourceID: warriorActor.id,
+          targetID: bossEnemy.id,
+          targetInstance: 2,
+          amount: 200,
+        }),
+        deathEvent,
+      ]
+
+      const result = processEvents({
+        rawEvents: events,
+        actorMap,
+        enemies: [instanceOneEnemy, instanceTwoEnemy],
+        config: mockConfig,
+      })
+
+      const deathChanges = result.augmentedEvents[2]?.threat.changes ?? []
+      expect(deathChanges).toHaveLength(2)
+      expect(deathChanges).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            sourceId: warriorActor.id,
+            targetId: bossEnemy.id,
+            targetInstance: 1,
+            operator: 'set',
+            total: 0,
+          }),
+          expect.objectContaining({
+            sourceId: warriorActor.id,
+            targetId: bossEnemy.id,
+            targetInstance: 2,
+            operator: 'set',
+            total: 0,
+          }),
+        ]),
+      )
+    })
   })
 })
 
@@ -2650,6 +2711,66 @@ describe('cumulative threat tracking', () => {
     expect(event3?.threat.changes?.[0]?.total).toBe(650)
   })
 
+  it('tracks cumulative threat separately per enemy instance', () => {
+    const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
+
+    const enemyInstanceOne = { id: 10, name: 'Boss', instance: 1 }
+    const enemyInstanceTwo = { id: 10, name: 'Boss', instance: 2 }
+
+    const events: WCLEvent[] = [
+      createDamageEvent({
+        sourceID: warriorActor.id,
+        targetID: 10,
+        targetInstance: 1,
+        amount: 100,
+        timestamp: 1000,
+      }),
+      createDamageEvent({
+        sourceID: warriorActor.id,
+        targetID: 10,
+        targetInstance: 2,
+        amount: 200,
+        timestamp: 2000,
+      }),
+      createDamageEvent({
+        sourceID: warriorActor.id,
+        targetID: 10,
+        targetInstance: 1,
+        amount: 150,
+        timestamp: 3000,
+      }),
+    ]
+
+    const result = processEvents({
+      rawEvents: events,
+      actorMap,
+      enemies: [enemyInstanceOne, enemyInstanceTwo],
+      config: mockConfig,
+    })
+
+    expect(result.augmentedEvents).toHaveLength(3)
+
+    const first = result.augmentedEvents[0]?.threat.changes?.[0]
+    const second = result.augmentedEvents[1]?.threat.changes?.[0]
+    const third = result.augmentedEvents[2]?.threat.changes?.[0]
+
+    expect(first).toMatchObject({
+      targetId: 10,
+      targetInstance: 1,
+      total: 260,
+    })
+    expect(second).toMatchObject({
+      targetId: 10,
+      targetInstance: 2,
+      total: 520,
+    })
+    expect(third).toMatchObject({
+      targetId: 10,
+      targetInstance: 1,
+      total: 650,
+    })
+  })
+
   it('updates cumulative threat after threat modifications', () => {
     const config = createMockThreatConfig({
       abilities: {
@@ -3014,6 +3135,91 @@ describe('ThreatChange Generation', () => {
         }),
       ]),
     )
+  })
+
+  it('supports modifyThreat target=all for a specific source enemy instance', () => {
+    const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
+
+    const bossInstanceOne: Enemy = { id: bossEnemy.id, name: 'Boss', instance: 1 }
+    const bossInstanceTwo: Enemy = { id: bossEnemy.id, name: 'Boss', instance: 2 }
+
+    const specializedConfig = createMockThreatConfig({
+      ...mockConfig,
+      abilities: {
+        [7777]: () => ({
+          formula: 'wipe all',
+          value: 0,
+          splitAmongEnemies: false,
+          special: {
+            type: 'modifyThreat',
+            multiplier: 0,
+            target: 'all',
+          },
+        }),
+      },
+    })
+
+    const events: WCLEvent[] = [
+      createDamageEvent({
+        sourceID: warriorActor.id,
+        targetID: bossEnemy.id,
+        targetInstance: 1,
+        amount: 100,
+        timestamp: 1000,
+      }),
+      createDamageEvent({
+        sourceID: warriorActor.id,
+        targetID: bossEnemy.id,
+        targetInstance: 2,
+        amount: 200,
+        timestamp: 2000,
+      }),
+      {
+        ...createDamageEvent({
+          sourceID: bossEnemy.id,
+          sourceInstance: 1,
+          targetID: warriorActor.id,
+          targetIsFriendly: true,
+          amount: 0,
+          timestamp: 2500,
+        }),
+        type: 'cast',
+        sourceIsFriendly: false,
+        abilityGameID: 7777,
+      },
+      createDamageEvent({
+        sourceID: warriorActor.id,
+        targetID: bossEnemy.id,
+        targetInstance: 2,
+        amount: 100,
+        timestamp: 3000,
+      }),
+    ]
+
+    const result = processEvents({
+      rawEvents: events,
+      actorMap,
+      enemies: [bossInstanceOne, bossInstanceTwo],
+      config: specializedConfig,
+    })
+
+    const wipeEvent = result.augmentedEvents[2]
+    expect(wipeEvent?.threat.changes).toEqual([
+      expect.objectContaining({
+        sourceId: warriorActor.id,
+        targetId: bossEnemy.id,
+        targetInstance: 1,
+        operator: 'set',
+        total: 0,
+      }),
+    ])
+
+    const postWipe = result.augmentedEvents[3]?.threat.changes?.[0]
+    expect(postWipe).toMatchObject({
+      targetId: bossEnemy.id,
+      targetInstance: 2,
+      total: 780,
+    })
   })
 
   it('supports modifyThreat target=all from friendly source by setting actor threat on all enemies', () => {
@@ -3691,8 +3897,8 @@ describe('Effect Handler Integration', () => {
         // Verify we can access fight state
         expect(ctx.actors).toBeDefined()
         // These methods should exist and be callable
-        ctx.actors.getThreat(1, 99)
-        ctx.actors.getPosition(1)
+        ctx.actors.getThreat(1, { id: 99 })
+        ctx.actors.getPosition({ id: 1 })
         ctx.uninstall()
         return { action: 'passthrough' }
       }) as EffectHandler

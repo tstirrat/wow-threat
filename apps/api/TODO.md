@@ -1,6 +1,7 @@
 # Threat Config Era Parity TODO
 
 Legend:
+
 - `Priority`: `P0` critical engine parity, `P1` major parity gaps, `P2` polish/advanced mechanics
 - `Complexity`: `1` low, `2` medium-low, `3` medium, `4` high, `5` very high
 - `Requirement Code`: `REQ-###` unique ID for cross-reference
@@ -33,8 +34,8 @@ Legend:
 - [x] **[REQ-018][P1][C3]** Add class `combatantImplications` hooks (all/class) to infer synthetic auras/talent ranks from combatant info beyond gear-only logic.
 - [x] **[REQ-019][P1][C4]** Add cast-driven aura inference (`auraImplications`) for stance/form inference parity.
 - [x] **[REQ-020][P1][C3]** Add `auraImplications` (cast -> inferred aura) for stance/form inference parity.
-- [ ] **[REQ-021][P1][C4]** Support threat tracking by enemy instance (not only enemy ID) for parity with multi-instance mechanics.
-- [ ] **[REQ-022][P1][C4]** Add target/instance-aware state needed for advanced raid mechanics (e.g., magnetic pull-style behavior).
+- [x] **[REQ-021][P1][C4]** Support threat tracking by enemy instance (not only enemy ID) for parity with multi-instance mechanics.
+- [x] **[REQ-022][P1][C4]** Add target/instance-aware state needed for advanced raid mechanics (e.g., magnetic pull-style behavior).
 
 ## P1 - Encounter and Behavior Parity
 

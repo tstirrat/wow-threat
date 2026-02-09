@@ -687,7 +687,7 @@ describe('FightState', () => {
         },
         testConfig,
       )
-      expect(state.isActorAlive(1)).toBe(false)
+      expect(state.isActorAlive({ id: 1 })).toBe(false)
 
       state.processEvent(
         {
@@ -701,7 +701,7 @@ describe('FightState', () => {
         },
         testConfig,
       )
-      expect(state.isActorAlive(1)).toBe(true)
+      expect(state.isActorAlive({ id: 1 })).toBe(true)
     })
 
     it('marks actors dead on overkill damage events', () => {
@@ -719,7 +719,28 @@ describe('FightState', () => {
         testConfig,
       )
 
-      expect(state.isActorAlive(1)).toBe(false)
+      expect(state.isActorAlive({ id: 1 })).toBe(false)
+    })
+
+    it('tracks alive state per actor instance', () => {
+      const state = new FightState(defaultActorMap, testConfig)
+
+      state.processEvent(
+        {
+          timestamp: 100,
+          type: 'death',
+          sourceID: 25,
+          sourceIsFriendly: false,
+          sourceInstance: 0,
+          targetID: 1,
+          targetIsFriendly: true,
+          targetInstance: 2,
+        },
+        testConfig,
+      )
+
+      expect(state.isActorAlive({ id: 1, instanceId: 2 })).toBe(false)
+      expect(state.isActorAlive({ id: 1, instanceId: 3 })).toBe(true)
     })
   })
 
@@ -741,11 +762,11 @@ describe('FightState', () => {
         testConfig,
       )
 
-      expect(state.getCurrentTarget(1)).toEqual({
+      expect(state.getCurrentTarget({ id: 1 })).toEqual({
         targetId: 99,
         targetInstance: 1,
       })
-      expect(state.getLastTarget(1)).toBeNull()
+      expect(state.getLastTarget({ id: 1 })).toBeNull()
 
       state.processEvent(
         {
@@ -761,11 +782,11 @@ describe('FightState', () => {
         testConfig,
       )
 
-      expect(state.getCurrentTarget(1)).toEqual({
+      expect(state.getCurrentTarget({ id: 1 })).toEqual({
         targetId: 99,
         targetInstance: 2,
       })
-      expect(state.getLastTarget(1)).toEqual({
+      expect(state.getLastTarget({ id: 1 })).toEqual({
         targetId: 99,
         targetInstance: 1,
       })
@@ -787,8 +808,53 @@ describe('FightState', () => {
         testConfig,
       )
 
-      expect(state.getCurrentTarget(1)).toBeNull()
-      expect(state.getLastTarget(1)).toBeNull()
+      expect(state.getCurrentTarget({ id: 1 })).toBeNull()
+      expect(state.getLastTarget({ id: 1 })).toBeNull()
+    })
+
+    it('tracks targets separately per source actor instance', () => {
+      const state = new FightState(defaultActorMap, testConfig)
+
+      state.processEvent(
+        {
+          timestamp: 100,
+          type: 'cast',
+          sourceID: 1,
+          sourceIsFriendly: true,
+          sourceInstance: 1,
+          targetID: 99,
+          targetIsFriendly: false,
+          targetInstance: 1,
+          abilityGameID: 111,
+        },
+        testConfig,
+      )
+
+      state.processEvent(
+        {
+          timestamp: 200,
+          type: 'cast',
+          sourceID: 1,
+          sourceIsFriendly: true,
+          sourceInstance: 2,
+          targetID: 88,
+          targetIsFriendly: false,
+          targetInstance: 4,
+          abilityGameID: 222,
+        },
+        testConfig,
+      )
+
+      expect(state.getCurrentTarget({ id: 1, instanceId: 1 })).toEqual({
+        targetId: 99,
+        targetInstance: 1,
+      })
+      expect(state.getCurrentTarget({ id: 1, instanceId: 2 })).toEqual({
+        targetId: 88,
+        targetInstance: 4,
+      })
+      expect(state.getLastTarget({ id: 1, instanceId: 1 })).toBeNull()
+      expect(state.getLastTarget({ id: 1, instanceId: 2 })).toBeNull()
     })
   })
 

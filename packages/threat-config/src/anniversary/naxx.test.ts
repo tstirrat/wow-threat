@@ -13,13 +13,16 @@ describe('Hateful Strike', () => {
   ): ActorContext {
     return {
       getPosition: () => ({ x: 0, y: 0 }),
-      getDistance: (actorId1, actorId2) => {
-        const key = `${actorId1}-${actorId2}`
+      getDistance: (actor1, actor2) => {
+        const key = `${actor1.id}-${actor2.id}`
         return distances.get(key) ?? null
       },
       getActorsInRange: () => [],
       getThreat: () => 0,
       getTopActorsByThreat: () => topActors,
+      isActorAlive: () => true,
+      getCurrentTarget: () => null,
+      getLastTarget: () => null,
     }
   }
 
@@ -215,6 +218,8 @@ describe('Boss Threat Wipe on Cast', () => {
         getThreat: () => 0,
         getTopActorsByThreat: () => [],
         isActorAlive: () => true,
+        getCurrentTarget: () => null,
+        getLastTarget: () => null,
       },
     }
   }

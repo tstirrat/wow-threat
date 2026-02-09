@@ -3,46 +3,59 @@
  *
  * Tracks cumulative threat for each actor against each enemy throughout a fight.
  * Used for abilities that need to query threat state (e.g., Patchwerk's Hateful Strike).
- *
- * TODO: Track threat per enemy instance, not just per enemy ID.
- * Currently sums threat across all instances of the same enemy.
- * This affects fights with multiple copies of the same NPC.
  */
+import type {
+  ActorId,
+  EnemyInstanceReference,
+  EnemyKey,
+  EnemyReference,
+} from './instance-refs'
+import { buildEnemyKey, parseEnemyKey } from './instance-refs'
+
+export interface EnemyThreatEntry {
+  enemy: EnemyInstanceReference
+  threat: number
+}
 
 export class ThreatTracker {
-  // Map: actorId -> Map: enemyId -> threat
-  private threat = new Map<number, Map<number, number>>()
+  // Map: actorId -> Map: enemyId:enemyInstance -> threat
+  private threat = new Map<ActorId, Map<EnemyKey, number>>()
 
   /**
    * Add threat for an actor against an enemy
    */
-  addThreat(actorId: number, enemyId: number, amount: number): void {
+  addThreat(actorId: ActorId, enemy: EnemyReference, amount: number): void {
+    const enemyKey = buildEnemyKey(enemy)
+
     if (!this.threat.has(actorId)) {
       this.threat.set(actorId, new Map())
     }
     const actorThreat = this.threat.get(actorId)!
-    const current = actorThreat.get(enemyId) ?? 0
-    actorThreat.set(enemyId, Math.max(0, current + amount))
+    const current = actorThreat.get(enemyKey) ?? 0
+    actorThreat.set(enemyKey, Math.max(0, current + amount))
   }
 
   /**
    * Set threat for an actor against an enemy (replaces current value)
    * Clamps to minimum of 0
    */
-  setThreat(actorId: number, enemyId: number, amount: number): void {
+  setThreat(actorId: ActorId, enemy: EnemyReference, amount: number): void {
     const clampedAmount = Math.max(0, amount)
+    const enemyKey = buildEnemyKey(enemy)
+
     if (!this.threat.has(actorId)) {
       this.threat.set(actorId, new Map())
     }
     const actorThreat = this.threat.get(actorId)!
-    actorThreat.set(enemyId, clampedAmount)
+    actorThreat.set(enemyKey, clampedAmount)
   }
 
   /**
    * Get the current threat for an actor against an enemy
    */
-  getThreat(actorId: number, enemyId: number): number {
-    return this.threat.get(actorId)?.get(enemyId) ?? 0
+  getThreat(actorId: ActorId, enemy: EnemyReference): number {
+    const enemyKey = buildEnemyKey(enemy)
+    return this.threat.get(actorId)?.get(enemyKey) ?? 0
   }
 
   /**
@@ -50,13 +63,14 @@ export class ThreatTracker {
    * @returns Array of actors sorted by threat (highest first)
    */
   getTopActorsByThreat(
-    enemyId: number,
+    enemy: EnemyReference,
     count: number,
-  ): Array<{ actorId: number; threat: number }> {
-    const actors: Array<{ actorId: number; threat: number }> = []
+  ): Array<{ actorId: ActorId; threat: number }> {
+    const actors: Array<{ actorId: ActorId; threat: number }> = []
+    const enemyKey = buildEnemyKey(enemy)
 
     for (const [actorId, actorThreat] of this.threat) {
-      const threat = actorThreat.get(enemyId) ?? 0
+      const threat = actorThreat.get(enemyKey) ?? 0
       if (threat > 0) {
         actors.push({ actorId, threat })
       }
@@ -69,10 +83,12 @@ export class ThreatTracker {
   /**
    * Get all actor threat values for a specific enemy
    */
-  getAllActorThreat(enemyId: number): Map<number, number> {
-    const result = new Map<number, number>()
+  getAllActorThreat(enemy: EnemyReference): Map<ActorId, number> {
+    const result = new Map<ActorId, number>()
+    const enemyKey = buildEnemyKey(enemy)
+
     for (const [actorId, actorThreat] of this.threat) {
-      const threat = actorThreat.get(enemyId) ?? 0
+      const threat = actorThreat.get(enemyKey) ?? 0
       if (threat > 0) {
         result.set(actorId, threat)
       }
@@ -81,34 +97,44 @@ export class ThreatTracker {
   }
 
   /**
-   * Get all enemy threat values for a specific actor
+   * Get all positive enemy threat values for a specific actor with instance metadata.
    */
-  getAllEnemyThreat(actorId: number): Map<number, number> {
+  getAllEnemyThreatEntries(actorId: ActorId): EnemyThreatEntry[] {
     const actorThreat = this.threat.get(actorId)
     if (!actorThreat) {
-      return new Map()
+      return []
     }
 
-    return new Map(
-      Array.from(actorThreat.entries()).filter(([, threat]) => threat > 0),
-    )
+    return Array.from(actorThreat.entries())
+      .filter(([, threat]) => threat > 0)
+      .map(([enemyKey, threat]) => {
+        const enemy = parseEnemyKey(enemyKey)
+        return {
+          enemy,
+          threat,
+        }
+      })
   }
 
   /**
    * Clear all threat for an actor against all enemies
    * Used when a player dies (threat wipe)
-   * @returns Map of enemyId -> previousThreat for all cleared entries
+   * @returns Cleared enemy entries with previous threat values
    */
-  clearAllThreatForActor(actorId: number): Map<number, number> {
+  clearAllThreatForActor(actorId: ActorId): EnemyThreatEntry[] {
     const actorThreat = this.threat.get(actorId)
     if (!actorThreat) {
-      return new Map()
+      return []
     }
 
-    const clearedThreat = new Map<number, number>()
-    for (const [enemyId, threat] of actorThreat) {
+    const clearedThreat: EnemyThreatEntry[] = []
+    for (const [enemyKey, threat] of actorThreat) {
       if (threat > 0) {
-        clearedThreat.set(enemyId, threat)
+        const enemy = parseEnemyKey(enemyKey)
+        clearedThreat.push({
+          enemy,
+          threat,
+        })
       }
     }
 

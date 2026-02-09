@@ -29,6 +29,8 @@ function createMockContext(
       getThreat: () => 0,
       getTopActorsByThreat: () => [],
       isActorAlive: () => true,
+      getCurrentTarget: () => null,
+      getLastTarget: () => null,
     },
     ...overrides,
   }
@@ -158,7 +160,9 @@ describe('Hunter Config', () => {
             getActorsInRange: () => [],
             getThreat: () => 0,
             getTopActorsByThreat: () => [],
-            isActorAlive: (actorId: number) => actorId !== targetAllyId,
+            isActorAlive: (actor) => actor.id !== targetAllyId,
+            getCurrentTarget: () => null,
+            getLastTarget: () => null,
           },
         })
 
@@ -200,6 +204,8 @@ describe('Hunter Config', () => {
             getThreat: () => 0,
             getTopActorsByThreat: () => [],
             isActorAlive: () => false,
+            getCurrentTarget: () => null,
+            getLastTarget: () => null,
           },
         })
 

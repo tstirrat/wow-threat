@@ -33,6 +33,8 @@ function createMockContext(
       getThreat: () => 0,
       getTopActorsByThreat: () => [],
       isActorAlive: () => true,
+      getCurrentTarget: () => null,
+      getLastTarget: () => null,
     },
     ...overrides,
   }
@@ -155,6 +157,51 @@ describe('calculateThreat', () => {
 })
 
 describe('tauntTarget', () => {
+  it('uses target instance when reading threat state', () => {
+    const formula = tauntTarget({ bonus: 1 })
+    let observedThreatInstance = -1
+    let observedTopInstance = -1
+    const ctx = createMockContext({
+      event: {
+        type: 'applydebuff',
+        targetInstance: 3,
+      } as ThreatContext['event'],
+      amount: 0,
+      actors: {
+        getPosition: () => null,
+        getDistance: () => null,
+        getActorsInRange: () => [],
+        getThreat: (_actorId, enemy) => {
+          observedThreatInstance = enemy.instanceId ?? -1
+          return 100
+        },
+        getTopActorsByThreat: (enemy) => {
+          observedTopInstance = enemy.instanceId ?? -1
+          return [{ actorId: 99, threat: 500 }]
+        },
+        isActorAlive: () => true,
+      },
+    })
+
+    const result = formula(ctx)
+
+    expect(observedThreatInstance).toBe(3)
+    expect(observedTopInstance).toBe(3)
+    expect(result.special).toEqual({
+      type: 'customThreat',
+      changes: [
+        {
+          sourceId: 1,
+          targetId: 2,
+          targetInstance: 3,
+          operator: 'set',
+          amount: 501,
+          total: 501,
+        },
+      ],
+    })
+  })
+
   it('returns customThreat set to top threat + bonus', () => {
     const formula = tauntTarget({ bonus: 1 })
     const ctx = createMockContext({
