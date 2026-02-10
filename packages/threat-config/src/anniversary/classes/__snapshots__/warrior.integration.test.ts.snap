@@ -1,0 +1,131 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`anniversary warrior integration > snapshots top warrior totals 1`] = `
+[
+  "Markymarkx#3=74522.50",
+  "Primthree#13=57698.55",
+  "Relyz#32=57652.80",
+  "Harddad#46=56651.20",
+  "Benus#113=55063.60",
+  "Wp#43=52546.00",
+  "Chonky#50=52498.80",
+  "Treadwell#19=51828.40",
+  "Tylaron#53=51279.20",
+  "Doal#51=50057.60",
+  "Zare#48=49355.60",
+  "Ratge#34=48851.20",
+  "Hercules#18=48593.20",
+  "Juck#35=47316.80",
+  "Brg#38=47122.00",
+  "Fxrmers#39=46930.40",
+  "Squeak#40=45721.60",
+  "Oinkadova#49=44506.40",
+  "Paxgf#54=43701.60",
+  "Cabo#63=43508.80",
+  "Fortywinks#41=42742.40",
+  "Lvg#45=40008.40",
+  "Foliot#47=38232.00",
+  "Krypts#33=33527.60",
+]
+`;
+
+exports[`anniversary warrior integration > snapshots warrior threat event lines 1`] = `
+"Damage to Patchwerk 203:0
+Source: Treadwell#19
+
+T         | Spell                  | Amount  | Formula             | Threat  | To Target | Total    | Multipliers
+-----------------------------------------------------------------------------------------------------------------
+00:03.122 | Melee (damage)         | 212.00  | amt                 | 275.60  | 275.60    | 275.60   | Defensive Stance (stance) x1.30
+00:03.779 | Bloodthirst (damage)   | 1550.00 | amt                 | 2015.00 | 2015.00   | 2290.60  | Defensive Stance (stance) x1.30
+00:03.804 | Melee (damage)         | 382.00  | amt                 | 496.60  | 496.60    | 2787.20  | Defensive Stance (stance) x1.30
+00:03.804 | Thunderfury (damage)   | 297.00  | amt                 | 386.10  | 386.10    | 3173.30  | Defensive Stance (stance) x1.30
+00:04.295 | Razorhide (damage)     | 14.00   | amt                 | 18.20   | 18.20     | 3191.50  | Defensive Stance (stance) x1.30
+00:04.747 | Melee (damage)         | 267.00  | amt                 | 347.10  | 347.10    | 3538.60  | Defensive Stance (stance) x1.30
+00:05.078 | Heroic Strike (cast)   | 0.00    | amt + 145           | 188.50  | 188.50    | 3727.10  | Defensive Stance (stance) x1.30
+00:05.079 | Heroic Strike (damage) | 998.00  | amt + 145           | 1485.90 | 1485.90   | 5213.00  | Defensive Stance (stance) x1.30
+00:05.207 | Razorhide (damage)     | 14.00   | amt                 | 18.20   | 18.20     | 5231.20  | Defensive Stance (stance) x1.30
+00:06.110 | Razorhide (damage)     | 14.00   | amt                 | 18.20   | 18.20     | 5249.40  | Defensive Stance (stance) x1.30
+00:06.235 | Melee (damage)         | 316.00  | amt                 | 410.80  | 410.80    | 5660.20  | Defensive Stance (stance) x1.30
+00:06.247 | Bloodthirst (heal)     | 20.00   | effectiveHeal * 0.5 | 13.00   | 13.00     | 5673.20  | Defensive Stance (stance) x1.30
+00:06.346 | Melee (damage)         | 392.00  | amt                 | 509.60  | 509.60    | 6182.80  | Defensive Stance (stance) x1.30
+00:07.489 | Holy Strength (heal)   | 105.00  | effectiveHeal * 0.5 | 68.25   | 68.25     | 6251.05  | Defensive Stance (stance) x1.30
+00:07.490 | Melee (damage)         | 416.00  | amt                 | 540.80  | 540.80    | 6791.85  | Defensive Stance (stance) x1.30
+00:07.780 | Melee (damage)         | 343.00  | amt                 | 445.90  | 445.90    | 7237.75  | Defensive Stance (stance) x1.30
+00:09.138 | Heroic Strike (cast)   | 0.00    | amt + 145           | 188.50  | 188.50    | 7426.25  | Defensive Stance (stance) x1.30
+00:09.138 | Heroic Strike (damage) | 645.00  | amt + 145           | 1027.00 | 1027.00   | 8453.25  | Defensive Stance (stance) x1.30
+00:09.687 | Melee (damage)         | 354.00  | amt                 | 460.20  | 460.20    | 8913.45  | Defensive Stance (stance) x1.30
+00:10.850 | Heroic Strike (cast)   | 0.00    | amt + 145           | 188.50  | 188.50    | 9101.95  | Defensive Stance (stance) x1.30
+00:10.873 | Heroic Strike (damage) | 641.00  | amt + 145           | 1021.80 | 1021.80   | 10123.75 | Defensive Stance (stance) x1.30
+00:10.875 | Bloodthirst (damage)   | 1154.00 | amt                 | 1500.20 | 1500.20   | 11623.95 | Defensive Stance (stance) x1.30
+00:12.462 | Heroic Strike (cast)   | 0.00    | amt + 145           | 188.50  | 188.50    | 11812.45 | Defensive Stance (stance) x1.30
+00:12.463 | Heroic Strike (damage) | 1374.00 | amt + 145           | 1974.70 | 1974.70   | 13787.15 | Defensive Stance (stance) x1.30
+00:12.621 | Revenge (cast)         | 0.00    | amt + 355           | 461.50  | 461.50    | 14248.65 | Defensive Stance (stance) x1.30
+00:12.637 | Revenge (damage)       | 0.00    | amt + 355           | 461.50  | 461.50    | 14710.15 | Defensive Stance (stance) x1.30
+00:13.292 | Melee (damage)         | 357.00  | amt                 | 464.10  | 464.10    | 15174.25 | Defensive Stance (stance) x1.30
+00:13.736 | Heroic Strike (cast)   | 0.00    | amt + 145           | 188.50  | 188.50    | 15362.75 | Defensive Stance (stance) x1.30
+00:13.736 | Heroic Strike (damage) | 0.00    | amt + 145           | 188.50  | 188.50    | 15551.25 | Defensive Stance (stance) x1.30
+00:14.758 | Melee (damage)         | 329.00  | amt                 | 427.70  | 427.70    | 15978.95 | Defensive Stance (stance) x1.30
+00:15.087 | Heroic Strike (cast)   | 0.00    | amt + 145           | 188.50  | 188.50    | 16167.45 | Defensive Stance (stance) x1.30
+00:15.087 | Heroic Strike (damage) | 1378.00 | amt + 145           | 1979.90 | 1979.90   | 18147.35 | Defensive Stance (stance) x1.30
+00:16.299 | Melee (damage)         | 794.00  | amt                 | 1032.20 | 1032.20   | 19179.55 | Defensive Stance (stance) x1.30
+00:16.371 | Heroic Strike (cast)   | 0.00    | amt + 145           | 188.50  | 188.50    | 19368.05 | Defensive Stance (stance) x1.30
+00:16.381 | Heroic Strike (damage) | 687.00  | amt + 145           | 1081.60 | 1081.60   | 20449.65 | Defensive Stance (stance) x1.30
+00:16.382 | Thunderfury (damage)   | 446.00  | amt                 | 579.80  | 579.80    | 21029.45 | Defensive Stance (stance) x1.30
+00:16.920 | Bloodthirst (damage)   | 1292.00 | amt                 | 1679.60 | 1679.60   | 22709.05 | Defensive Stance (stance) x1.30
+00:17.643 | Heroic Strike (cast)   | 0.00    | amt + 145           | 188.50  | 188.50    | 22897.55 | Defensive Stance (stance) x1.30
+00:17.643 | Heroic Strike (damage) | 728.00  | amt + 145           | 1134.90 | 1134.90   | 24032.45 | Defensive Stance (stance) x1.30
+00:17.783 | Melee (damage)         | 354.00  | amt                 | 460.20  | 460.20    | 24492.65 | Defensive Stance (stance) x1.30
+00:18.652 | Melee (damage)         | 463.00  | amt                 | 601.90  | 601.90    | 25094.55 | Defensive Stance (stance) x1.30
+00:18.987 | Revenge (cast)         | 0.00    | amt + 355           | 461.50  | 461.50    | 25556.05 | Defensive Stance (stance) x1.30
+00:18.988 | Revenge (damage)       | 398.00  | amt + 355           | 978.90  | 978.90    | 26534.95 | Defensive Stance (stance) x1.30
+00:19.542 | Melee (damage)         | 370.00  | amt                 | 481.00  | 481.00    | 27015.95 | Defensive Stance (stance) x1.30
+00:19.996 | Heroic Strike (cast)   | 0.00    | amt + 145           | 188.50  | 188.50    | 27204.45 | Defensive Stance (stance) x1.30
+00:19.996 | Heroic Strike (damage) | 0.00    | amt + 145           | 188.50  | 188.50    | 27392.95 | Defensive Stance (stance) x1.30
+00:21.019 | Melee (damage)         | 349.00  | amt                 | 453.70  | 453.70    | 27846.65 | Defensive Stance (stance) x1.30
+00:21.349 | Heroic Strike (cast)   | 0.00    | amt + 145           | 188.50  | 188.50    | 28035.15 | Defensive Stance (stance) x1.30
+00:21.350 | Heroic Strike (damage) | 707.00  | amt + 145           | 1107.60 | 1107.60   | 29142.75 | Defensive Stance (stance) x1.30
+00:21.350 | Thunderfury (damage)   | 297.00  | amt                 | 386.10  | 386.10    | 29528.85 | Defensive Stance (stance) x1.30
+00:21.965 | Razorhide (damage)     | 15.00   | amt                 | 19.50   | 19.50     | 29548.35 | Defensive Stance (stance) x1.30
+00:22.933 | Melee (damage)         | 356.00  | amt                 | 462.80  | 462.80    | 30011.15 | Defensive Stance (stance) x1.30
+00:22.999 | Heroic Strike (cast)   | 0.00    | amt + 145           | 188.50  | 188.50    | 30199.65 | Defensive Stance (stance) x1.30
+00:23.000 | Heroic Strike (damage) | 673.00  | amt + 145           | 1063.40 | 1063.40   | 31263.05 | Defensive Stance (stance) x1.30
+00:24.666 | Heroic Strike (cast)   | 0.00    | amt + 145           | 188.50  | 188.50    | 31451.55 | Defensive Stance (stance) x1.30
+00:24.666 | Heroic Strike (damage) | 0.00    | amt + 145           | 188.50  | 188.50    | 31640.05 | Defensive Stance (stance) x1.30
+00:24.841 | Melee (damage)         | 324.00  | amt                 | 421.20  | 421.20    | 32061.25 | Defensive Stance (stance) x1.30
+00:25.517 | Revenge (cast)         | 0.00    | amt + 355           | 461.50  | 461.50    | 32522.75 | Defensive Stance (stance) x1.30
+00:25.518 | Revenge (damage)       | 211.00  | amt + 355           | 735.80  | 735.80    | 33258.55 | Defensive Stance (stance) x1.30
+00:25.621 | Razorhide (damage)     | 14.00   | amt                 | 18.20   | 18.20     | 33276.75 | Defensive Stance (stance) x1.30
+00:26.312 | Heroic Strike (cast)   | 0.00    | amt + 145           | 188.50  | 188.50    | 33465.25 | Defensive Stance (stance) x1.30
+00:26.314 | Heroic Strike (damage) | 1309.00 | amt + 145           | 1890.20 | 1890.20   | 35355.45 | Defensive Stance (stance) x1.30
+00:26.329 | Melee (damage)         | 1035.00 | amt                 | 1345.50 | 1345.50   | 36700.95 | Defensive Stance (stance) x1.30
+00:26.653 | Melee (damage)         | 396.00  | amt                 | 514.80  | 514.80    | 37215.75 | Defensive Stance (stance) x1.30
+00:27.617 | Heroic Strike (cast)   | 0.00    | amt + 145           | 188.50  | 188.50    | 37404.25 | Defensive Stance (stance) x1.30
+00:27.618 | Heroic Strike (damage) | 1122.00 | amt + 145           | 1647.10 | 1647.10   | 39051.35 | Defensive Stance (stance) x1.30
+00:28.138 | Melee (damage)         | 548.00  | amt                 | 712.40  | 712.40    | 39763.75 | Defensive Stance (stance) x1.30
+00:28.878 | Heroic Strike (cast)   | 0.00    | amt + 145           | 188.50  | 188.50    | 39952.25 | Defensive Stance (stance) x1.30
+00:28.879 | Heroic Strike (damage) | 543.00  | amt + 145           | 894.40  | 894.40    | 40846.65 | Defensive Stance (stance) x1.30
+00:29.257 | Razorhide (damage)     | 12.00   | amt                 | 15.60   | 15.60     | 40862.25 | Defensive Stance (stance) x1.30
+00:29.257 | Bloodthirst (damage)   | 1951.00 | amt                 | 2536.30 | 2536.30   | 43398.55 | Defensive Stance (stance) x1.30
+00:29.259 | Bloodthirst (heal)     | 30.00   | effectiveHeal * 0.5 | 19.50   | 19.50     | 43418.05 | Defensive Stance (stance) x1.30
+00:29.614 | Melee (damage)         | 563.00  | amt                 | 731.90  | 731.90    | 44149.95 | Defensive Stance (stance) x1.30
+00:30.155 | Heroic Strike (cast)   | 0.00    | amt + 145           | 188.50  | 188.50    | 44338.45 | Defensive Stance (stance) x1.30
+00:30.157 | Heroic Strike (damage) | 581.00  | amt + 145           | 943.80  | 943.80    | 45282.25 | Defensive Stance (stance) x1.30
+00:31.697 | Heroic Strike (cast)   | 0.00    | amt + 145           | 188.50  | 188.50    | 45470.75 | Defensive Stance (stance) x1.30
+00:31.697 | Heroic Strike (damage) | 0.00    | amt + 145           | 188.50  | 188.50    | 45659.25 | Defensive Stance (stance) x1.30
+00:32.091 | Revenge (cast)         | 0.00    | amt + 355           | 461.50  | 461.50    | 46120.75 | Defensive Stance (stance) x1.30
+00:32.092 | Revenge (damage)       | 170.00  | amt + 355           | 682.50  | 682.50    | 46803.25 | Defensive Stance (stance) x1.30
+00:32.887 | Razorhide (damage)     | 12.00   | amt                 | 15.60   | 15.60     | 46818.85 | Defensive Stance (stance) x1.30
+00:32.974 | Heroic Strike (cast)   | 0.00    | amt + 145           | 188.50  | 188.50    | 47007.35 | Defensive Stance (stance) x1.30
+00:32.975 | Heroic Strike (damage) | 515.00  | amt + 145           | 858.00  | 858.00    | 47865.35 | Defensive Stance (stance) x1.30
+00:32.993 | Bloodthirst (heal)     | 20.00   | effectiveHeal * 0.5 | 13.00   | 13.00     | 47878.35 | Defensive Stance (stance) x1.30
+00:34.197 | Diamond Flask (heal)   | 9.00    | effectiveHeal * 0.5 | 5.85    | 5.85      | 47884.20 | Defensive Stance (stance) x1.30
+00:34.630 | Heroic Strike (cast)   | 0.00    | amt + 145           | 188.50  | 188.50    | 48072.70 | Defensive Stance (stance) x1.30
+00:34.630 | Heroic Strike (damage) | 592.00  | amt + 145           | 958.10  | 958.10    | 49030.80 | Defensive Stance (stance) x1.30
+00:34.631 | Thunderfury (damage)   | 297.00  | amt                 | 386.10  | 386.10    | 49416.90 | Defensive Stance (stance) x1.30
+00:35.245 | Bloodthirst (damage)   | 976.00  | amt                 | 1268.80 | 1268.80   | 50685.70 | Defensive Stance (stance) x1.30
+00:35.313 | Razorhide (damage)     | 12.00   | amt                 | 15.60   | 15.60     | 50701.30 | Defensive Stance (stance) x1.30
+00:36.306 | Melee (damage)         | 857.00  | amt                 | 1114.10 | 1114.10   | 51815.40 | Defensive Stance (stance) x1.30
+00:36.308 | Bloodthirst (heal)     | 20.00   | effectiveHeal * 0.5 | 13.00   | 13.00     | 51828.40 | Defensive Stance (stance) x1.30
+
+Fight Total: 51828.40"
+`;

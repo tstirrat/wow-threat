@@ -1,0 +1,12 @@
+{
+  "host": "fresh",
+  "origin": "https://fresh.warcraftlogs.com",
+  "reportCode": "f9yPamzBxQqhGndZ",
+  "fightId": 26,
+  "fightName": "Patchwerk",
+  "gameVersion": 2,
+  "downloadedAt": "2026-02-10T13:30:17.672Z",
+  "eventCount": 10000,
+  "focusActorId": 19,
+  "maxSnapshotLines": 250
+}

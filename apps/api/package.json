@@ -16,6 +16,7 @@
   "dependencies": {
     "@wcl-threat/shared": "workspace:*",
     "@wcl-threat/threat-config": "workspace:*",
+    "@wcl-threat/threat-engine": "workspace:*",
     "@wcl-threat/wcl-types": "workspace:*",
     "hono": "^4.6.0"
   },

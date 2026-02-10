@@ -6,13 +6,14 @@
  * real config evolution.
  */
 import {
-  threatOnCastRollbackOnMiss,
   SpellSchool,
+  threatOnCastRollbackOnMiss,
 } from '@wcl-threat/threat-config'
 import type {
   Actor,
-  EventInterceptor,
+  EncounterId,
   Enemy,
+  EventInterceptor,
   ThreatConfig,
   ThreatContext,
   ThreatModifier,
@@ -23,7 +24,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   createMockActorContext,
   createMockThreatConfig,
-} from '../../test/helpers/config'
+} from './test/helpers/config'
 import {
   createApplyBuffEvent,
   createApplyBuffStackEvent,
@@ -37,7 +38,7 @@ import {
   createRemoveBuffEvent,
   createRemoveBuffStackEvent,
   createRemoveDebuffEvent,
-} from '../../test/helpers/events'
+} from './test/helpers/events'
 import {
   calculateModifiedThreat,
   calculateThreatModification,
@@ -173,9 +174,7 @@ const mockConfig = createMockThreatConfig({
         return []
       },
       talentImplications: ({ talentPoints }) =>
-        (talentPoints[2] ?? 0) >= 31
-          ? [SPELLS.MOCK_DEFIANCE_RANK_5_AURA]
-          : [],
+        (talentPoints[2] ?? 0) >= 31 ? [SPELLS.MOCK_DEFIANCE_RANK_5_AURA] : [],
 
       fixateBuffs: new Set(),
       aggroLossBuffs: new Set(),
@@ -198,9 +197,7 @@ const mockConfig = createMockThreatConfig({
     druid: {
       exclusiveAuras: [new Set([SPELLS.BEAR_FORM, SPELLS.CAT_FORM])],
       baseThreatFactor: 1.0,
-      auraImplications: new Map([
-        [SPELLS.CAT_FORM, new Set([SPELLS.RAKE])],
-      ]),
+      auraImplications: new Map([[SPELLS.CAT_FORM, new Set([SPELLS.RAKE])]]),
       auraModifiers: {
         [SPELLS.CAT_FORM]: () => ({
           source: 'class',
@@ -267,7 +264,7 @@ describe('processEvents', () => {
   describe('encounter preprocessors', () => {
     it('applies a threat wipe special on first boss cast after long gaps', () => {
       const CAST_GAP_MS = 30000
-      const encounterId = 1234
+      const encounterId = 1234 as EncounterId
 
       const createCastGapWipePreprocessor = () => {
         const lastCastBySource = new Map<number, number>()
@@ -290,11 +287,13 @@ describe('processEvents', () => {
           }
 
           return {
-            effects: [{
-              type: 'modifyThreat' as const,
-              multiplier: 0,
-              target: 'all' as const,
-            }],
+            effects: [
+              {
+                type: 'modifyThreat' as const,
+                multiplier: 0,
+                target: 'all' as const,
+              },
+            ],
           }
         }
       }
@@ -478,8 +477,16 @@ describe('processEvents', () => {
 
     it('wipes player threat per enemy instance on death', () => {
       const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
-      const instanceOneEnemy: Enemy = { id: bossEnemy.id, name: 'Boss', instance: 1 }
-      const instanceTwoEnemy: Enemy = { id: bossEnemy.id, name: 'Boss', instance: 2 }
+      const instanceOneEnemy: Enemy = {
+        id: bossEnemy.id,
+        name: 'Boss',
+        instance: 1,
+      }
+      const instanceTwoEnemy: Enemy = {
+        id: bossEnemy.id,
+        name: 'Boss',
+        instance: 2,
+      }
 
       const deathEvent: WCLEvent = {
         timestamp: 3000,
@@ -585,7 +592,7 @@ describe('calculateModifiedThreat', () => {
         name: 'Boss',
         class: null,
       },
-      encounterId: overrides.encounterId ?? null,
+      encounterId: (overrides.encounterId as EncounterId) ?? null,
       actors: createMockActorContext(),
     }
   }
@@ -595,12 +602,12 @@ describe('calculateModifiedThreat', () => {
       warrior: {
         baseThreatFactor: 1.0,
         auraModifiers: {
-          [SPELLS.DEFENSIVE_STANCE]: (ctx: ThreatContext) => ({
+          [SPELLS.DEFENSIVE_STANCE]: () => ({
             source: 'stance',
             name: 'Defensive Stance',
             value: 1.3,
           }),
-          [SPELLS.DEFIANCE_RANK_5]: (ctx: ThreatContext) => ({
+          [SPELLS.DEFIANCE_RANK_5]: () => ({
             source: 'talent',
             name: 'Defiance (Rank 5)',
             value: 1.15,
@@ -612,7 +619,7 @@ describe('calculateModifiedThreat', () => {
       druid: {
         baseThreatFactor: 1.0,
         auraModifiers: {
-          [SPELLS.BEAR_FORM]: (ctx: ThreatContext) => ({
+          [SPELLS.BEAR_FORM]: () => ({
             source: 'stance',
             name: 'Bear Form',
             value: 1.3,
@@ -623,7 +630,7 @@ describe('calculateModifiedThreat', () => {
       paladin: {
         baseThreatFactor: 1.0,
         auraModifiers: {
-          [SPELLS.RIGHTEOUS_FURY]: (ctx: ThreatContext) => ({
+          [SPELLS.RIGHTEOUS_FURY]: () => ({
             source: 'stance',
             name: 'Righteous Fury',
             value: 1.6,
@@ -644,17 +651,17 @@ describe('calculateModifiedThreat', () => {
       },
     },
     auraModifiers: {
-      [SPELLS.BLESSING_OF_SALVATION]: (ctx: ThreatContext) => ({
+      [SPELLS.BLESSING_OF_SALVATION]: () => ({
         source: 'aura',
         name: 'Blessing of Salvation',
         value: 0.7,
       }),
-      [SPELLS.GREATER_BLESSING_OF_SALVATION]: (ctx: ThreatContext) => ({
+      [SPELLS.GREATER_BLESSING_OF_SALVATION]: () => ({
         source: 'aura',
         name: 'Greater Blessing of Salvation',
         value: 0.7,
       }),
-      [SPELLS.FETISH_OF_THE_SAND_REAVER]: (ctx: ThreatContext) => ({
+      [SPELLS.FETISH_OF_THE_SAND_REAVER]: () => ({
         source: 'aura',
         name: 'Fetish of the Sand Reaver',
         value: 0.3,
@@ -1646,7 +1653,8 @@ describe('aura tracking', () => {
 
     expect(result.augmentedEvents).toHaveLength(2)
 
-    const startSpecial = result.augmentedEvents[0]?.threat.calculation.effects?.[0]
+    const startSpecial =
+      result.augmentedEvents[0]?.threat.calculation.effects?.[0]
     expect(startSpecial).toEqual({
       type: 'state',
       state: {
@@ -1658,7 +1666,8 @@ describe('aura tracking', () => {
       },
     })
 
-    const endSpecial = result.augmentedEvents[1]?.threat.calculation.effects?.[0]
+    const endSpecial =
+      result.augmentedEvents[1]?.threat.calculation.effects?.[0]
     expect(endSpecial).toEqual({
       type: 'state',
       state: {
@@ -1698,7 +1707,8 @@ describe('aura tracking', () => {
 
     expect(result.augmentedEvents).toHaveLength(2)
 
-    const refreshSpecial = result.augmentedEvents[0]?.threat.calculation.effects?.[0]
+    const refreshSpecial =
+      result.augmentedEvents[0]?.threat.calculation.effects?.[0]
     expect(refreshSpecial).toEqual({
       type: 'state',
       state: {
@@ -1738,19 +1748,21 @@ describe('aura tracking', () => {
                     formula: 'taunt set',
                     value: 0,
                     splitAmongEnemies: false,
-                    effects: [{
-                      type: 'customThreat',
-                      changes: [
-                        {
-                          sourceId: warriorActor.id,
-                          targetId: bossEnemy.id,
-                          targetInstance: 0,
-                          operator: 'set',
-                          amount: 501,
-                          total: 501,
-                        },
-                      ],
-                    }],
+                    effects: [
+                      {
+                        type: 'customThreat',
+                        changes: [
+                          {
+                            sourceId: warriorActor.id,
+                            targetId: bossEnemy.id,
+                            targetInstance: 0,
+                            operator: 'set',
+                            amount: 501,
+                            total: 501,
+                          },
+                        ],
+                      },
+                    ],
                   }
                 : {
                     formula: '0',
@@ -2112,7 +2124,9 @@ describe('ability-specific threat calculation', () => {
     expect(castAugmented?.threat.calculation.modifiers).toEqual([])
 
     const missAugmented = result.augmentedEvents[2]
-    expect(missAugmented?.threat.calculation.formula).toBe('-301 (miss rollback)')
+    expect(missAugmented?.threat.calculation.formula).toBe(
+      '-301 (miss rollback)',
+    )
     expect(missAugmented?.threat.calculation.modifiedThreat).toBe(-301)
     expect(missAugmented?.threat.calculation.modifiers).toEqual([])
     expect(missAugmented?.threat.changes?.[0]?.total).toBeCloseTo(0, 8)
@@ -2406,7 +2420,7 @@ describe('augmented event structure', () => {
       config: {
         ...mockConfig,
         abilities: {
-          [101]: (ctx: ThreatContext) => ({
+          [101]: () => ({
             formula: 'zero',
             value: 0,
             splitAmongEnemies: false,
@@ -2677,27 +2691,29 @@ describe('Custom Threat Integration', () => {
           formula: '0 (customThreat)',
           value: 0,
           splitAmongEnemies: false,
-          effects: [{
-            type: 'customThreat',
-            changes: [
-              {
-                sourceId: 2,
-                targetId: bossEnemy.id,
-                targetInstance: 0,
-                operator: 'add',
-                amount: 500,
-                total: 500,
-              },
-              {
-                sourceId: 3,
-                targetId: bossEnemy.id,
-                targetInstance: 0,
-                operator: 'add',
-                amount: 300,
-                total: 300,
-              },
-            ],
-          }],
+          effects: [
+            {
+              type: 'customThreat',
+              changes: [
+                {
+                  sourceId: 2,
+                  targetId: bossEnemy.id,
+                  targetInstance: 0,
+                  operator: 'add',
+                  amount: 500,
+                  total: 500,
+                },
+                {
+                  sourceId: 3,
+                  targetId: bossEnemy.id,
+                  targetInstance: 0,
+                  operator: 'add',
+                  amount: 300,
+                  total: 300,
+                },
+              ],
+            },
+          ],
         }),
       },
     })
@@ -2762,7 +2778,7 @@ describe('Custom Threat Integration', () => {
         }),
         x: 100,
         y: 200,
-      } as any,
+      } as WCLEvent & { x: number; y: number },
     ]
 
     const result = processEvents({
@@ -2807,19 +2823,21 @@ describe('Custom Threat Integration', () => {
           formula: '100 (customThreat)',
           value: 100, // Base threat
           splitAmongEnemies: false,
-          effects: [{
-            type: 'customThreat',
-            changes: [
-              {
-                sourceId: 2,
-                targetId: bossEnemy.id,
-                targetInstance: 0,
-                operator: 'add',
-                amount: 500,
-                total: 500,
-              },
-            ],
-          }],
+          effects: [
+            {
+              type: 'customThreat',
+              changes: [
+                {
+                  sourceId: 2,
+                  targetId: bossEnemy.id,
+                  targetInstance: 0,
+                  operator: 'add',
+                  amount: 500,
+                  total: 500,
+                },
+              ],
+            },
+          ],
         }),
       },
     })
@@ -3025,11 +3043,13 @@ describe('cumulative threat tracking', () => {
           formula: 'threat * 0.5',
           value: 0,
           splitAmongEnemies: false,
-          effects: [{
-            type: 'modifyThreat',
-            multiplier: 0.5,
-            target: 'target',
-          }],
+          effects: [
+            {
+              type: 'modifyThreat',
+              multiplier: 0.5,
+              target: 'target',
+            },
+          ],
         }),
       },
     })
@@ -3252,16 +3272,18 @@ describe('ThreatChange Generation', () => {
     const specializedConfig = createMockThreatConfig({
       ...mockConfig,
       abilities: {
-        [9999]: (ctx: ThreatContext) => ({
+        [9999]: () => ({
           formula: 'modify',
           value: 0,
           splitAmongEnemies: false,
           modifiedThreat: 0,
-          effects: [{
-            type: 'modifyThreat',
-            multiplier: 0.5,
-            target: 'target',
-          }],
+          effects: [
+            {
+              type: 'modifyThreat',
+              multiplier: 0.5,
+              target: 'target',
+            },
+          ],
         }),
       },
     })
@@ -3319,11 +3341,13 @@ describe('ThreatChange Generation', () => {
           formula: 'wipe all',
           value: 0,
           splitAmongEnemies: false,
-          effects: [{
-            type: 'modifyThreat',
-            multiplier: 0,
-            target: 'all',
-          }],
+          effects: [
+            {
+              type: 'modifyThreat',
+              multiplier: 0,
+              target: 'all',
+            },
+          ],
         }),
       },
     })
@@ -3382,8 +3406,16 @@ describe('ThreatChange Generation', () => {
   it('supports modifyThreat target=all for a specific source enemy instance', () => {
     const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
 
-    const bossInstanceOne: Enemy = { id: bossEnemy.id, name: 'Boss', instance: 1 }
-    const bossInstanceTwo: Enemy = { id: bossEnemy.id, name: 'Boss', instance: 2 }
+    const bossInstanceOne: Enemy = {
+      id: bossEnemy.id,
+      name: 'Boss',
+      instance: 1,
+    }
+    const bossInstanceTwo: Enemy = {
+      id: bossEnemy.id,
+      name: 'Boss',
+      instance: 2,
+    }
 
     const specializedConfig = createMockThreatConfig({
       ...mockConfig,
@@ -3392,11 +3424,13 @@ describe('ThreatChange Generation', () => {
           formula: 'wipe all',
           value: 0,
           splitAmongEnemies: false,
-          effects: [{
-            type: 'modifyThreat',
-            multiplier: 0,
-            target: 'all',
-          }],
+          effects: [
+            {
+              type: 'modifyThreat',
+              multiplier: 0,
+              target: 'all',
+            },
+          ],
         }),
       },
     })
@@ -3479,11 +3513,13 @@ describe('ThreatChange Generation', () => {
           formula: 'wipe self all enemies',
           value: 0,
           splitAmongEnemies: false,
-          effects: [{
-            type: 'modifyThreat',
-            multiplier: 0,
-            target: 'all',
-          }],
+          effects: [
+            {
+              type: 'modifyThreat',
+              multiplier: 0,
+              target: 'all',
+            },
+          ],
         }),
       },
     })
@@ -3544,32 +3580,34 @@ describe('ThreatChange Generation', () => {
     const specializedConfig = createMockThreatConfig({
       ...mockConfig,
       abilities: {
-        [customAbilityId]: (ctx: ThreatContext) => ({
+        [customAbilityId]: () => ({
           formula: 'custom',
           value: 0,
           splitAmongEnemies: false,
           modifiedThreat: 0,
-          effects: [{
-            type: 'customThreat',
-            changes: [
-              {
-                sourceId: warriorActor.id,
-                targetId: bossEnemy.id,
-                targetInstance: 0,
-                operator: 'add',
-                amount: 500,
-                total: 500,
-              },
-              {
-                sourceId: priestActor.id,
-                targetId: bossEnemy.id,
-                targetInstance: 0,
-                operator: 'add',
-                amount: 300,
-                total: 300,
-              },
-            ],
-          }],
+          effects: [
+            {
+              type: 'customThreat',
+              changes: [
+                {
+                  sourceId: warriorActor.id,
+                  targetId: bossEnemy.id,
+                  targetInstance: 0,
+                  operator: 'add',
+                  amount: 500,
+                  total: 500,
+                },
+                {
+                  sourceId: priestActor.id,
+                  targetId: bossEnemy.id,
+                  targetInstance: 0,
+                  operator: 'add',
+                  amount: 300,
+                  total: 300,
+                },
+              ],
+            },
+          ],
         }),
       },
     })
@@ -3635,10 +3673,12 @@ describe('Event Interceptor Integration', () => {
             formula: '0',
             value: 0,
             splitAmongEnemies: false,
-            effects: [{
-              type: 'installInterceptor',
-              interceptor: mockHandler,
-            }],
+            effects: [
+              {
+                type: 'installInterceptor',
+                interceptor: mockHandler,
+              },
+            ],
           }),
         },
       })
@@ -3695,10 +3735,12 @@ describe('Event Interceptor Integration', () => {
             formula: '0',
             value: 0,
             splitAmongEnemies: false,
-            effects: [{
-              type: 'installInterceptor',
-              interceptor: mockHandler,
-            }],
+            effects: [
+              {
+                type: 'installInterceptor',
+                interceptor: mockHandler,
+              },
+            ],
           }),
         },
       })
@@ -3898,24 +3940,26 @@ describe('Event Interceptor Integration', () => {
             formula: '0',
             value: 0,
             splitAmongEnemies: false,
-            effects: [{
-              type: 'installInterceptor',
-              interceptor: (event, ctx) => {
-                // Only redirect hunter's damage
-                if (
-                  event.type !== 'damage' ||
-                  event.sourceID !== hunterActor.id
-                ) {
-                  return { action: 'passthrough' }
-                }
+            effects: [
+              {
+                type: 'installInterceptor',
+                interceptor: (event, ctx) => {
+                  // Only redirect hunter's damage
+                  if (
+                    event.type !== 'damage' ||
+                    event.sourceID !== hunterActor.id
+                  ) {
+                    return { action: 'passthrough' }
+                  }
 
-                ctx.uninstall()
-                return {
-                  action: 'augment',
-                  threatRecipientOverride: tankActor.id,
-                }
+                  ctx.uninstall()
+                  return {
+                    action: 'augment',
+                    threatRecipientOverride: tankActor.id,
+                  }
+                },
               },
-            }],
+            ],
           }),
         },
       })
@@ -3981,23 +4025,25 @@ describe('Event Interceptor Integration', () => {
             formula: '0',
             value: 0,
             splitAmongEnemies: false,
-            effects: [{
-              type: 'installInterceptor',
-              interceptor: (event, ctx) => {
-                if (
-                  event.type !== 'heal' ||
-                  event.sourceID !== priestActor.id
-                ) {
-                  return { action: 'passthrough' }
-                }
+            effects: [
+              {
+                type: 'installInterceptor',
+                interceptor: (event, ctx) => {
+                  if (
+                    event.type !== 'heal' ||
+                    event.sourceID !== priestActor.id
+                  ) {
+                    return { action: 'passthrough' }
+                  }
 
-                ctx.uninstall()
-                return {
-                  action: 'augment',
-                  threatRecipientOverride: tankActor.id,
-                }
+                  ctx.uninstall()
+                  return {
+                    action: 'augment',
+                    threatRecipientOverride: tankActor.id,
+                  }
+                },
               },
-            }],
+            ],
           }),
         },
       })
@@ -4053,24 +4099,26 @@ describe('Event Interceptor Integration', () => {
             formula: '0',
             value: 0,
             splitAmongEnemies: false,
-            effects: [{
-              type: 'installInterceptor',
-              interceptor: (event, ctx) => {
-                const elapsed = ctx.timestamp - ctx.installedAt
+            effects: [
+              {
+                type: 'installInterceptor',
+                interceptor: (event, ctx) => {
+                  const elapsed = ctx.timestamp - ctx.installedAt
 
-                // Suppress threat for 5 seconds
-                if (elapsed > 5000) {
-                  ctx.uninstall()
+                  // Suppress threat for 5 seconds
+                  if (elapsed > 5000) {
+                    ctx.uninstall()
+                    return { action: 'passthrough' }
+                  }
+
+                  if (event.sourceID === hunterActor.id) {
+                    return { action: 'skip' }
+                  }
+
                   return { action: 'passthrough' }
-                }
-
-                if (event.sourceID === hunterActor.id) {
-                  return { action: 'skip' }
-                }
-
-                return { action: 'passthrough' }
+                },
               },
-            }],
+            ],
           }),
         },
       })
@@ -4151,10 +4199,12 @@ describe('Event Interceptor Integration', () => {
             formula: '0',
             value: 0,
             splitAmongEnemies: false,
-            effects: [{
-              type: 'installInterceptor',
-              interceptor: mockHandler,
-            }],
+            effects: [
+              {
+                type: 'installInterceptor',
+                interceptor: mockHandler,
+              },
+            ],
           }),
         },
       })
