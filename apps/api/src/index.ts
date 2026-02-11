@@ -35,6 +35,7 @@ app.use(
       'https://wcl-threat.dev',
       'http://localhost:3000',
       'http://localhost:5173',
+      'http://localhost:5174',
     ],
     credentials: true,
   }),

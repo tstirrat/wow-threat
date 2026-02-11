@@ -21,14 +21,14 @@ export function PlayerFilterPanel({
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         <button
-          className="rounded-md border border-border bg-white px-2 py-1 text-xs"
+          className="rounded-md border border-border bg-panel px-2 py-1 text-xs"
           type="button"
           onClick={() => onChange([])}
         >
           Show all
         </button>
         <button
-          className="rounded-md border border-border bg-white px-2 py-1 text-xs"
+          className="rounded-md border border-border bg-panel px-2 py-1 text-xs"
           type="button"
           onClick={() => onChange(players.map((player) => player.id))}
         >
@@ -41,7 +41,7 @@ export function PlayerFilterPanel({
           const isChecked = selectedSet.has(player.id)
 
           return (
-            <li className="rounded-md border border-border bg-white px-2 py-1" key={player.id}>
+            <li className="rounded-md border border-border bg-panel px-2 py-1" key={player.id}>
               <label className="flex items-center gap-2 text-sm">
                 <input
                   checked={isChecked}

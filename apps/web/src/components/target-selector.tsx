@@ -16,7 +16,7 @@ export function TargetSelector({
     <label className="flex flex-col gap-1 text-sm">
       <span className="font-medium">Target</span>
       <select
-        className="rounded-md border border-border bg-white px-3 py-2"
+        className="rounded-md border border-border bg-panel px-3 py-2"
         value={selectedTargetId}
         onChange={(event) => onChange(Number(event.target.value))}
       >

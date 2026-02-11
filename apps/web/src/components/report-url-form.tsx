@@ -19,14 +19,14 @@ export function ReportUrlForm({
       }}
     >
       <input
-        className="w-full rounded-md border border-border bg-white px-3 py-2 text-sm"
+        className="w-full rounded-md border border-border bg-panel px-3 py-2 text-sm"
         placeholder="Paste Warcraft Logs report URL or report ID"
         type="text"
         value={value}
         onChange={(event) => setValue(event.target.value)}
       />
       <button
-        className="rounded-md border border-slate-800 bg-slate-800 px-4 py-2 text-sm font-semibold text-white"
+        className="rounded-md border border-primary bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
         type="submit"
       >
         Load report

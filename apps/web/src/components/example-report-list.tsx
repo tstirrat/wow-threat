@@ -14,7 +14,7 @@ export function ExampleReportList({
     <ul className="space-y-2">
       {examples.map((example) => (
         <li
-          className="rounded-md border border-border bg-white px-3 py-2"
+          className="rounded-md border border-border bg-panel px-3 py-2"
           key={example.reportId}
         >
           <Link

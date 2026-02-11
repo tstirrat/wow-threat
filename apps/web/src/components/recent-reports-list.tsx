@@ -18,7 +18,7 @@ export function RecentReportsList({
     <ul className="space-y-2">
       {reports.map((report) => (
         <li
-          className="rounded-md border border-border bg-white px-3 py-2"
+          className="rounded-md border border-border bg-panel px-3 py-2"
           key={report.reportId}
         >
           <Link

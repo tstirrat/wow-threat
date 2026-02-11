@@ -13,6 +13,13 @@ interface LegendClickState {
   timestamp: number
 }
 
+interface ChartThemeColors {
+  border: string
+  foreground: string
+  muted: string
+  panel: string
+}
+
 const doubleClickThresholdMs = 320
 
 function resolveWindowBounds(series: ThreatSeries[]): { min: number; max: number } {
@@ -50,6 +57,26 @@ function isolateLegendSelection(
   })
 }
 
+function resolveThemeColor(variableName: string, fallback: string): string {
+  if (typeof window === 'undefined') {
+    return fallback
+  }
+
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue(variableName)
+    .trim()
+  return value || fallback
+}
+
+function readChartThemeColors(): ChartThemeColors {
+  return {
+    border: resolveThemeColor('--border', '#d1d5db'),
+    foreground: resolveThemeColor('--foreground', '#0f172a'),
+    muted: resolveThemeColor('--muted-foreground', '#64748b'),
+    panel: resolveThemeColor('--card', '#ffffff'),
+  }
+}
+
 export function ThreatChart({
   series,
   windowStartMs,
@@ -66,8 +93,16 @@ export function ThreatChart({
   const chartRef = useRef<ReactECharts>(null)
   const lastLegendClickRef = useRef<LegendClickState | null>(null)
   const [isolatedActorId, setIsolatedActorId] = useState<number | null>(null)
+  const [themeColors, setThemeColors] = useState<ChartThemeColors>(() => readChartThemeColors())
 
   const bounds = useMemo(() => resolveWindowBounds(series), [series])
+  const visibleIsolatedActorId = useMemo(() => {
+    if (isolatedActorId === null) {
+      return null
+    }
+
+    return series.some((item) => item.actorId === isolatedActorId) ? isolatedActorId : null
+  }, [isolatedActorId, series])
 
   const legendNames = useMemo(() => series.map((item) => item.label), [series])
   const actorIdByLabel = useMemo(
@@ -76,18 +111,23 @@ export function ThreatChart({
   )
 
   useEffect(() => {
-    if (isolatedActorId === null) {
+    if (isolatedActorId === null || visibleIsolatedActorId !== null) {
       return
     }
 
-    const stillPresent = series.some((item) => item.actorId === isolatedActorId)
-    if (stillPresent) {
-      return
-    }
-
-    setIsolatedActorId(null)
     onIsolatedActorChange(null)
-  }, [isolatedActorId, onIsolatedActorChange, series])
+  }, [isolatedActorId, onIsolatedActorChange, visibleIsolatedActorId])
+
+  useEffect(() => {
+    const updateThemeColors = (): void => {
+      setThemeColors(readChartThemeColors())
+    }
+
+    window.addEventListener('themechange', updateThemeColors)
+    return () => {
+      window.removeEventListener('themechange', updateThemeColors)
+    }
+  }, [])
 
   const option = useMemo<EChartsOption>(() => {
     const richStyles = Object.fromEntries(
@@ -125,13 +165,19 @@ export function ThreatChart({
           return `{actor-${actorId}|${name}}`
         },
         textStyle: {
-          color: '#334155',
+          color: themeColors.muted,
           rich: richStyles,
         },
       },
       tooltip: {
         trigger: 'item',
         appendToBody: true,
+        backgroundColor: themeColors.panel,
+        borderColor: themeColors.border,
+        borderWidth: 1,
+        textStyle: {
+          color: themeColors.foreground,
+        },
         formatter: (params) => {
           const payload = (params as { data?: Record<string, unknown> }).data
           if (!payload) {
@@ -163,10 +209,44 @@ export function ThreatChart({
         name: 'Fight Time (ms)',
         min: bounds.min,
         max: bounds.max,
+        nameTextStyle: {
+          color: themeColors.muted,
+        },
+        axisLabel: {
+          color: themeColors.muted,
+        },
+        axisLine: {
+          lineStyle: {
+            color: themeColors.border,
+          },
+        },
+        splitLine: {
+          lineStyle: {
+            color: themeColors.border,
+            opacity: 0.4,
+          },
+        },
       },
       yAxis: {
         type: 'value',
         name: 'Threat',
+        nameTextStyle: {
+          color: themeColors.muted,
+        },
+        axisLabel: {
+          color: themeColors.muted,
+        },
+        axisLine: {
+          lineStyle: {
+            color: themeColors.border,
+          },
+        },
+        splitLine: {
+          lineStyle: {
+            color: themeColors.border,
+            opacity: 0.4,
+          },
+        },
       },
       dataZoom: [
         {
@@ -211,21 +291,32 @@ export function ThreatChart({
         })),
       })),
     }
-  }, [actorIdByLabel, bounds.max, bounds.min, series, windowEndMs, windowStartMs])
+  }, [
+    actorIdByLabel,
+    bounds.max,
+    bounds.min,
+    series,
+    themeColors.border,
+    themeColors.foreground,
+    themeColors.muted,
+    themeColors.panel,
+    windowEndMs,
+    windowStartMs,
+  ])
 
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <button
-          className="rounded-md border border-border bg-white px-2 py-1 text-xs"
+          className="rounded-md border border-border bg-panel px-2 py-1 text-xs"
           type="button"
           onClick={() => onWindowChange(null, null)}
         >
           Reset zoom
         </button>
-        {isolatedActorId !== null ? (
+        {visibleIsolatedActorId !== null ? (
           <button
-            className="rounded-md border border-border bg-white px-2 py-1 text-xs"
+            className="rounded-md border border-border bg-panel px-2 py-1 text-xs"
             type="button"
             onClick={() => {
               const chart = chartRef.current?.getEchartsInstance()
@@ -293,7 +384,7 @@ export function ThreatChart({
               return
             }
 
-            if (isolatedActorId === clickedActorId) {
+            if (visibleIsolatedActorId === clickedActorId) {
               resetLegendSelection(chart, legendNames)
               setIsolatedActorId(null)
               onIsolatedActorChange(null)

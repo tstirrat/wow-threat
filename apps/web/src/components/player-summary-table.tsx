@@ -27,7 +27,7 @@ export function PlayerSummaryTable({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr className="border-b border-border/70" key={row.actorId}>
+            <tr className="border-b border-border" key={row.actorId}>
               <td className="px-2 py-2">
                 <PlayerName color={row.color} label={row.label} />
               </td>

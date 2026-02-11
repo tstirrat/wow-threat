@@ -27,7 +27,7 @@ export function PlayersNavigationList({
         const playerFights = fights.filter((fight) => fight.friendlyPlayers.includes(player.id))
 
         return (
-          <li className="rounded-md border border-border bg-white p-3" key={player.id}>
+          <li className="rounded-md border border-border bg-panel p-3" key={player.id}>
             <p className="font-medium" style={{ color: classColor }}>
               {player.name}
             </p>

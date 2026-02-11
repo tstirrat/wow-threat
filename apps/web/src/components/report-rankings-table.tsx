@@ -36,7 +36,7 @@ export function ReportRankingsTable({
         </thead>
         <tbody>
           {rankings.map((ranking) => (
-            <tr className="border-b border-border/70" key={ranking.actorId}>
+            <tr className="border-b border-border" key={ranking.actorId}>
               <td className="px-2 py-2">
                 <PlayerName color={ranking.color} label={ranking.actorName} />
               </td>

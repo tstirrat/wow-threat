@@ -4,15 +4,19 @@
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
-        surface: '#f8fafc',
-        panel: '#ffffff',
-        border: '#d1d5db',
-        text: '#0f172a',
-        muted: '#64748b',
+        background: 'var(--background)',
+        surface: 'var(--background)',
+        panel: 'var(--card)',
+        border: 'var(--border)',
+        text: 'var(--foreground)',
+        muted: 'var(--muted-foreground)',
+        primary: 'var(--primary)',
+        'primary-foreground': 'var(--primary-foreground)',
       },
     },
   },

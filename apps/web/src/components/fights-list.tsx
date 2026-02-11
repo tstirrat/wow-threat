@@ -16,7 +16,7 @@ export function FightsList({
     <ul className="space-y-2">
       {fights.map((fight) => (
         <li
-          className="rounded-md border border-border bg-white px-3 py-3"
+          className="rounded-md border border-border bg-panel px-3 py-3"
           key={fight.id}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">

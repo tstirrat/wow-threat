@@ -129,4 +129,19 @@ describe('Health endpoint', () => {
     expect(data.status).toBe('ok')
     expect(data.environment).toBe('test')
   })
+
+  it('allows localhost web origin for local development', async () => {
+    const res = await app.request(
+      'http://localhost/health',
+      {
+        headers: {
+          Origin: 'http://localhost:5174',
+        },
+      },
+      createMockBindings(),
+    )
+
+    expect(res.status).toBe(200)
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:5174')
+  })
 })
