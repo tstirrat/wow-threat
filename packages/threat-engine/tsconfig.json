@@ -2,8 +2,7 @@
   "extends": "@wcl-threat/typescript-config/base.json",
   "compilerOptions": {
     "rootDir": "./",
-    "outDir": "./dist",
-    "lib": ["ES2022", "DOM"]
+    "outDir": "./dist"
   },
   "include": ["src/**/*", "eslint.config.ts"]
 }
