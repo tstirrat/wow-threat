@@ -3,6 +3,12 @@
  *
  * Spell IDs and threat values are based on Classic/Anniversary Edition mechanics.
  */
+import type {
+  ClassThreatConfig,
+  SpellId,
+  TalentImplicationContext,
+} from '@wcl-threat/shared'
+
 import {
   calculateThreat,
   noThreat,
@@ -11,7 +17,6 @@ import {
   threatOnDebuff,
 } from '../../shared/formulas'
 import { inferMappedTalentRank } from '../../shared/talents'
-import type { ClassThreatConfig, SpellId, TalentImplicationContext } from '../../types'
 
 // ============================================================================
 // Spell IDs
@@ -142,7 +147,10 @@ function hasBearForm(sourceAuras: Set<number>): boolean {
   )
 }
 
-function feralInstinctMultiplier(rank: number, sourceAuras: Set<number>): number {
+function feralInstinctMultiplier(
+  rank: number,
+  sourceAuras: Set<number>,
+): number {
   if (!hasBearForm(sourceAuras)) {
     return 1
   }

@@ -4,20 +4,15 @@
  * Verifies event dispatching to per-actor trackers, combatant info processing,
  * and talent/gear implication coordination.
  */
-import type {
-  Actor,
-  TalentImplicationsFn,
-  ThreatConfig,
-  ThreatContext,
-} from '@wcl-threat/threat-config'
-import type { GearItem, WCLEvent } from '@wcl-threat/wcl-types'
-import { describe, expect, it } from 'vitest'
-
-import { createMockThreatConfig } from '../../test/helpers/config'
+import {
+  createApplyBuffEvent,
+  createMockThreatConfig,
+  createRemoveBuffEvent,
+} from '@wcl-threat/shared'
 import {
   createApplyBuffStackEvent,
-  createApplyDebuffStackEvent,
   createApplyDebuffEvent,
+  createApplyDebuffStackEvent,
   createCombatantInfoAura,
   createDamageEvent,
   createRefreshBuffEvent,
@@ -25,8 +20,16 @@ import {
   createRemoveBuffStackEvent,
   createRemoveDebuffEvent,
   createRemoveDebuffStackEvent,
-} from '../../test/helpers/events'
-import { createApplyBuffEvent, createRemoveBuffEvent } from '../../test/setup'
+} from '@wcl-threat/shared'
+import type {
+  Actor,
+  TalentImplicationsFn,
+  ThreatConfig,
+  ThreatContext,
+} from '@wcl-threat/shared'
+import type { GearItem, WCLEvent } from '@wcl-threat/wcl-types'
+import { describe, expect, it } from 'vitest'
+
 import { FightState } from './fight-state'
 
 // ============================================================================
@@ -570,9 +573,7 @@ describe('FightState', () => {
             ? [TEST_SPELLS.GLOBAL_COMBATANT_AURA]
             : [],
         classTalentImplications: ({ talentPoints }) =>
-          (talentPoints[2] ?? 0) >= 31
-            ? [TEST_SPELLS.SYNTHETIC_AURA]
-            : [],
+          (talentPoints[2] ?? 0) >= 31 ? [TEST_SPELLS.SYNTHETIC_AURA] : [],
         classGearImplications: (gear) =>
           gear.some((item) => item.setID === 498) ? [123456] : [],
       })

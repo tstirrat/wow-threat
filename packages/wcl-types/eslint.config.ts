@@ -12,7 +12,7 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: {
         projectService: true,
-        tsconfigRootDir: import.meta.dirname,
+        tsconfigRootDir: (import.meta as { dirname: string }).dirname,
       },
     },
   },

@@ -3,8 +3,9 @@
  *
  * Spell IDs and threat values are based on Classic/Anniversary Edition mechanics.
  */
+import { type ClassThreatConfig, SpellSchool } from '@wcl-threat/shared'
+
 import { calculateThreat, threatOnBuff } from '../../shared/formulas'
-import { type ClassThreatConfig, SpellSchool } from '../../types'
 
 // ============================================================================
 // Spell IDs

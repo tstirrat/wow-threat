@@ -3,10 +3,11 @@
  *
  * Exports the getConfig function and all types/utilities for threat calculations.
  */
+import type { ThreatConfig } from '@wcl-threat/shared'
+
 import { anniversaryConfig } from './anniversary'
 import { retailConfig } from './retail'
 import { sodConfig } from './sod'
-import type { ThreatConfig } from './types'
 
 // Map WCL gameVersion integers to configs
 const configs: Record<number, ThreatConfig> = {
@@ -41,7 +42,6 @@ export function getSupportedGameVersions(): number[] {
 }
 
 // Re-export types
-export * from './types'
 export * from './shared/formulas'
 export * from './shared/talents'
 export * from './shared/utils'

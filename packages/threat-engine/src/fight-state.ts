@@ -5,7 +5,7 @@
  * the appropriate actor's trackers and coordinates cross-tracker concerns
  * (e.g. gear implications producing synthetic auras).
  */
-import type { Actor, ThreatConfig, WowClass } from '@wcl-threat/threat-config'
+import type { Actor, ThreatConfig, WowClass } from '@wcl-threat/shared'
 import type { GearItem, WCLEvent } from '@wcl-threat/wcl-types'
 
 import { ActorState } from './actor-state'
@@ -16,9 +16,9 @@ import type {
   EnemyReference,
 } from './instance-refs'
 import { buildActorKey, normalizeInstanceId } from './instance-refs'
-import type { EnemyThreatEntry } from './threat-tracker'
 import { PositionTracker } from './position-tracker'
 import { TargetTracker } from './target-tracker'
+import type { EnemyThreatEntry } from './threat-tracker'
 import { ThreatTracker } from './threat-tracker'
 
 const TALENT_ID_KEYS = [
@@ -60,7 +60,10 @@ function asRecord(value: unknown): UnknownRecord | null {
     : null
 }
 
-function readNumber(record: UnknownRecord, keys: readonly string[]): number | null {
+function readNumber(
+  record: UnknownRecord,
+  keys: readonly string[],
+): number | null {
   for (const key of keys) {
     const value = record[key]
     if (typeof value === 'number' && Number.isFinite(value)) {
@@ -71,12 +74,16 @@ function readNumber(record: UnknownRecord, keys: readonly string[]): number | nu
 }
 
 function isFiniteNumberArray(value: unknown): value is number[] {
-  return Array.isArray(value) &&
+  return (
+    Array.isArray(value) &&
     value.every((item) => typeof item === 'number' && Number.isFinite(item))
+  )
 }
 
 function isValidTalentPointSplit(points: number[]): boolean {
-  return points.length === 3 && points.every((point) => point >= 0 && point <= 61)
+  return (
+    points.length === 3 && points.every((point) => point >= 0 && point <= 61)
+  )
 }
 
 function parseLegacyTalentPointSplit(value: unknown): number[] {
@@ -150,7 +157,11 @@ function parseTalentRanks(
   const talentRanks = new Map<number, number>()
 
   function collectTalentRanks(value: unknown, depth: number): void {
-    if (value === null || value === undefined || depth > MAX_TALENT_PARSE_DEPTH) {
+    if (
+      value === null ||
+      value === undefined ||
+      depth > MAX_TALENT_PARSE_DEPTH
+    ) {
       return
     }
 
@@ -203,7 +214,11 @@ function getSpecId(
 /** Parse WCL combatant talent payloads into normalized tree points and optional rank map. */
 function buildTalentContext(
   event: Extract<WCLEvent, { type: 'combatantinfo' }>,
-): { talentPoints: number[]; talentRanks: Map<number, number>; specId: number | null } {
+): {
+  talentPoints: number[]
+  talentRanks: Map<number, number>
+  specId: number | null
+} {
   return {
     talentPoints: parseTalentPoints(event),
     talentRanks: parseTalentRanks(event),

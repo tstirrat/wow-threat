@@ -3,8 +3,9 @@
  *
  * Custom threat formulas for Onyxia's Lair in Anniversary Edition.
  */
+import type { ThreatFormula } from '@wcl-threat/shared'
+
 import { modifyThreat } from '../shared/formulas'
-import type { ThreatFormula } from '../types'
 
 export const Spells = {
   KnockAway: 19633,

@@ -1,9 +1,10 @@
 /**
  * Tests for Warlock Threat Configuration
  */
+import { createMockActorContext } from '@wcl-threat/shared'
+import type { ThreatContext } from '@wcl-threat/shared/src/types'
 import { describe, expect, it } from 'vitest'
 
-import type { ThreatContext } from '../../types'
 import { Spells, warlockConfig } from './warlock'
 
 function createMockContext(
@@ -21,16 +22,7 @@ function createMockContext(
     sourceActor: { id: 1, name: 'TestWarlock', class: 'warlock' },
     targetActor: { id: 2, name: 'TestEnemy', class: null },
     encounterId: null,
-    actors: {
-      getPosition: () => null,
-      getDistance: () => null,
-      getActorsInRange: () => [],
-      getThreat: () => 0,
-      getTopActorsByThreat: () => [],
-      isActorAlive: () => true,
-      getCurrentTarget: () => null,
-      getLastTarget: () => null,
-    },
+    actors: createMockActorContext(),
     ...overrides,
   }
 }

@@ -3,20 +3,21 @@
  *
  * Spell IDs and threat values are based on Classic/Anniversary Edition mechanics.
  */
+import type {
+  ClassThreatConfig,
+  SpellId,
+  TalentImplicationContext,
+} from '@wcl-threat/shared'
+import type { GearItem } from '@wcl-threat/wcl-types'
+
 import {
-  threatOnCastRollbackOnMiss,
   calculateThreat,
   tauntTarget,
   threatOnBuff,
+  threatOnCastRollbackOnMiss,
   threatOnDebuff,
 } from '../../shared/formulas'
 import { clampRank, inferMappedTalentRank } from '../../shared/talents'
-import type {
-  ClassThreatConfig,
-  TalentImplicationContext,
-  GearItem,
-  SpellId,
-} from '../../types'
 
 // ============================================================================
 // Spell IDs
@@ -99,7 +100,9 @@ function inferDefianceRank(ctx: TalentImplicationContext): number {
     return rankedDefiance
   }
 
-  const protectionPoints = Math.trunc(ctx.talentPoints[PROTECTION_TREE_INDEX] ?? 0)
+  const protectionPoints = Math.trunc(
+    ctx.talentPoints[PROTECTION_TREE_INDEX] ?? 0,
+  )
   if (protectionPoints < HIGH_CONFIDENCE_DEFIANCE_PROT_POINTS) {
     return 0
   }

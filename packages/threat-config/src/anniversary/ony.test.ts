@@ -1,10 +1,19 @@
 /**
  * Onyxia Boss Abilities Tests
  */
+import { createMockActorContext } from '@wcl-threat/shared'
+import type { ThreatContext } from '@wcl-threat/shared/src/types'
 import { describe, expect, it } from 'vitest'
 
-import type { ThreatContext } from '../types'
 import { Spells, knockAway } from './ony'
+
+function assertDefined<T>(value: T | undefined): T {
+  expect(value).toBeDefined()
+  if (value === undefined) {
+    throw new Error('Expected value to be defined')
+  }
+  return value
+}
 
 // Mock ThreatContext factory
 function createMockContext(
@@ -18,13 +27,8 @@ function createMockContext(
     sourceActor: { id: 1, name: 'Onyxia', class: null },
     targetActor: { id: 2, name: 'Tank', class: 'warrior' },
     encounterId: null,
-    actors: {
-      getPosition: () => null,
-      getDistance: () => null,
-      getActorsInRange: () => [],
-      getThreat: () => 0,
-      getTopActorsByThreat: () => [],
-    },
+    spellSchoolMask: 0,
+    actors: createMockActorContext(),
     ...overrides,
   }
 }
@@ -38,7 +42,7 @@ describe('Onyxia Abilities', () => {
 
   describe('Knock Away', () => {
     it('returns modifyThreat special with 0.75 multiplier', () => {
-      const result = knockAway(createMockContext())
+      const result = assertDefined(knockAway(createMockContext()))
 
       expect(result.effects?.[0]?.type).toBe('modifyThreat')
       if (result.effects?.[0]?.type === 'modifyThreat') {
@@ -47,23 +51,23 @@ describe('Onyxia Abilities', () => {
     })
 
     it('has descriptive formula', () => {
-      const result = knockAway(createMockContext())
+      const result = assertDefined(knockAway(createMockContext()))
       expect(result.formula).toBe('threat * 0.75')
     })
 
     it('returns zero base threat value', () => {
-      const result = knockAway(createMockContext())
+      const result = assertDefined(knockAway(createMockContext()))
       expect(result.value).toBe(0)
     })
 
     it('does not split among enemies', () => {
-      const result = knockAway(createMockContext())
+      const result = assertDefined(knockAway(createMockContext()))
       expect(result.splitAmongEnemies).toBe(false)
     })
 
     it('reduces threat by 25% (multiplies by 0.75)', () => {
       // This test verifies the math: if threat is 1000, it becomes 750 (25% reduction)
-      const result = knockAway(createMockContext())
+      const result = assertDefined(knockAway(createMockContext()))
       expect(result.effects?.[0]?.type).toBe('modifyThreat')
       if (result.effects?.[0]?.type === 'modifyThreat') {
         // Example: 1000 threat * 0.75 = 750 threat (reduced by 250, or 25%)

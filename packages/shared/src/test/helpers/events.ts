@@ -9,6 +9,7 @@ import type {
   ApplyBuffStackEvent,
   ApplyDebuffEvent,
   ApplyDebuffStackEvent,
+  CastEvent,
   CombatantInfoAura,
   DamageEvent,
   EnergizeEvent,
@@ -50,6 +51,28 @@ export function createDamageEvent(
     hitType: 'hit',
     tick: false,
     multistrike: false,
+    ...overrides,
+  }
+}
+
+/**
+ * Create a cast event with default values
+ *
+ * Defaults:
+ * - timestamp: 1000
+ * - sourceID: 1 (player)
+ * - targetID: 99 (enemy)
+ * - Basic ability (id: 1)
+ */
+export function createCastEvent(overrides: Partial<CastEvent> = {}): CastEvent {
+  return {
+    timestamp: 1000,
+    type: 'cast',
+    sourceID: 1,
+    sourceIsFriendly: true,
+    targetID: 99,
+    targetIsFriendly: false,
+    abilityGameID: 1,
     ...overrides,
   }
 }

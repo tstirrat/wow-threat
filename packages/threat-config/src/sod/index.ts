@@ -4,7 +4,11 @@
  * Stub config for gameVersion: 2
  * TODO: Implement SoD-specific runes and mechanics
  */
-import type { ThreatConfig, ThreatContext, ThreatFormulaResult } from '../types'
+import type {
+  ThreatConfig,
+  ThreatContext,
+  ThreatFormulaResult,
+} from '@wcl-threat/shared'
 
 // Placeholder base threat (same as Anniversary for now)
 const baseThreat = {

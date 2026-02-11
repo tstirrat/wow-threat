@@ -4,9 +4,8 @@
  * These helper functions create threat formula functions that can be used
  * in class configurations.
  */
+import type { ThreatContext, ThreatFormulaResult } from '@wcl-threat/shared'
 import type { EventType, HitType } from '@wcl-threat/wcl-types'
-
-import type { ThreatContext, ThreatFormulaResult } from '../types'
 
 export type FormulaFn = (ctx: ThreatContext) => ThreatFormulaResult | undefined
 
@@ -151,11 +150,7 @@ export interface ThreatOnCastRollbackOnMissOptions {
  * Example: Taunt ({ bonus: 1 }), Mocking Blow ({ modifier: 1 })
  */
 export function tauntTarget(options: TauntOptions = {}): FormulaFn {
-  const {
-    modifier = 0,
-    bonus = 0,
-    eventTypes = tauntAuraEventTypes,
-  } = options
+  const { modifier = 0, bonus = 0, eventTypes = tauntAuraEventTypes } = options
 
   return (ctx) => {
     if (!isEventTypeAllowed(ctx.event.type, eventTypes)) {
@@ -170,13 +165,14 @@ export function tauntTarget(options: TauntOptions = {}): FormulaFn {
       id: targetId,
       instanceId: targetInstance,
     })
-    const topThreat = ctx.actors.getTopActorsByThreat(
-      {
-        id: targetId,
-        instanceId: targetInstance,
-      },
-      1,
-    )[0]?.threat ?? 0
+    const topThreat =
+      ctx.actors.getTopActorsByThreat(
+        {
+          id: targetId,
+          instanceId: targetInstance,
+        },
+        1,
+      )[0]?.threat ?? 0
     const nextThreat = Math.max(currentThreat, topThreat + bonusThreat)
 
     let formula: string
@@ -277,7 +273,10 @@ export function threatOnDebuff(value: number): FormulaFn {
  */
 export function threatOnDebuffOrDamage(value: number): FormulaFn {
   return (ctx) => {
-    if (ctx.event.type === 'applydebuff' || ctx.event.type === 'refreshdebuff') {
+    if (
+      ctx.event.type === 'applydebuff' ||
+      ctx.event.type === 'refreshdebuff'
+    ) {
       return {
         formula: `${value}`,
         value,

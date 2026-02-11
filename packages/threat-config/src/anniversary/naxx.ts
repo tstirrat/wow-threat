@@ -3,8 +3,9 @@
  *
  * Custom threat formulas for Naxxramas bosses in Anniversary Edition.
  */
+import type { ThreatChange, ThreatFormula } from '@wcl-threat/shared'
+
 import { modifyThreat } from '../shared/formulas'
-import type { ThreatChange, ThreatFormula } from '../types'
 
 const HATEFUL_STRIKE_ID = 28308
 const NOTH_BLINK_ID = 29210

@@ -97,13 +97,16 @@ describe('PositionTracker', () => {
     tracker.updatePosition({ id: 10, instanceId: 1 }, 0, 0)
     tracker.updatePosition({ id: 10, instanceId: 2 }, 30, 40)
 
-    expect(tracker.getPosition({ id: 10, instanceId: 1 })).toEqual({ x: 0, y: 0 })
-    expect(tracker.getPosition({ id: 10, instanceId: 2 })).toEqual({ x: 30, y: 40 })
+    expect(tracker.getPosition({ id: 10, instanceId: 1 })).toEqual({
+      x: 0,
+      y: 0,
+    })
+    expect(tracker.getPosition({ id: 10, instanceId: 2 })).toEqual({
+      x: 30,
+      y: 40,
+    })
     expect(
-      tracker.getDistance(
-        { id: 10, instanceId: 1 },
-        { id: 10, instanceId: 2 },
-      ),
+      tracker.getDistance({ id: 10, instanceId: 1 }, { id: 10, instanceId: 2 }),
     ).toBe(50)
   })
 })

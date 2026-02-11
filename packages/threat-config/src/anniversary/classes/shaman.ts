@@ -3,8 +3,12 @@
  *
  * Earth Shock has 2x threat. Tranquil Air Totem reduces party threat.
  */
+import type {
+  ClassThreatConfig,
+  TalentImplicationContext,
+} from '@wcl-threat/shared'
+
 import { calculateThreat } from '../../shared/formulas'
-import type { ClassThreatConfig, TalentImplicationContext } from '../../types'
 import { inferMappedTalentRank } from '../../shared/talents'
 
 // ============================================================================

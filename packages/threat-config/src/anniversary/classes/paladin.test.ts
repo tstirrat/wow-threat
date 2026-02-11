@@ -1,10 +1,19 @@
 /**
  * Tests for Paladin Threat Configuration
  */
+import { createMockActorContext } from '@wcl-threat/shared'
+import { SpellSchool, type ThreatContext } from '@wcl-threat/shared/src/types'
 import { describe, expect, it } from 'vitest'
 
-import { SpellSchool, type ThreatContext } from '../../types'
 import { Spells, paladinConfig } from './paladin'
+
+function assertDefined<T>(value: T | undefined): T {
+  expect(value).toBeDefined()
+  if (value === undefined) {
+    throw new Error('Expected value to be defined')
+  }
+  return value
+}
 
 // Mock ThreatContext factory
 function createMockContext(
@@ -19,13 +28,7 @@ function createMockContext(
     sourceActor: { id: 1, name: 'TestPaladin', class: 'paladin' },
     targetActor: { id: 2, name: 'TestEnemy', class: null },
     encounterId: null,
-    actors: {
-      getPosition: () => null,
-      getDistance: () => null,
-      getActorsInRange: () => [],
-      getThreat: () => 0,
-      getTopActorsByThreat: () => [],
-    },
+    actors: createMockActorContext(),
     ...overrides,
   }
 }
@@ -64,7 +67,7 @@ describe('Paladin Config', () => {
         expect(formula).toBeDefined()
 
         const ctx = createMockContext()
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
 
         expect(result.formula).toBe('194')
         expect(result.value).toBe(194)
@@ -77,7 +80,7 @@ describe('Paladin Config', () => {
         expect(formula).toBeDefined()
 
         const ctx = createMockContext({ amount: 50 })
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
 
         expect(result.formula).toBe('amt + 35')
         expect(result.value).toBe(85) // 50 + 35
@@ -92,7 +95,7 @@ describe('Paladin Config', () => {
         const ctx = createMockContext({
           event: { type: 'applybuff' } as ThreatContext['event'],
         })
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
 
         expect(result.formula).toBe('60')
         expect(result.value).toBe(60)

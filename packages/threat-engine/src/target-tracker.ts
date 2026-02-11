@@ -5,7 +5,7 @@
  * stored with enemy instance data so multi-instance mechanics can distinguish
  * otherwise identical enemy IDs.
  */
-import type { ActorReference, ActorKey } from './instance-refs'
+import type { ActorKey, ActorReference } from './instance-refs'
 import { buildActorKey } from './instance-refs'
 
 export interface TargetReference {

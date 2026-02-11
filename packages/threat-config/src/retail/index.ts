@@ -4,7 +4,11 @@
  * Stub config for gameVersion: 3
  * TODO: Implement Retail mechanics (very different from Classic)
  */
-import type { ThreatConfig, ThreatContext, ThreatFormulaResult } from '../types'
+import type {
+  ThreatConfig,
+  ThreatContext,
+  ThreatFormulaResult,
+} from '@wcl-threat/shared'
 
 // Retail threat is significantly simpler - tanks generate much more threat
 const baseThreat = {

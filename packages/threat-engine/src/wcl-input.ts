@@ -4,7 +4,7 @@
  * Utilities for converting report/fight payloads into Threat Engine input
  * structures.
  */
-import type { Actor, Enemy, WowClass } from '@wcl-threat/threat-config'
+import type { Actor, Enemy, WowClass } from '@wcl-threat/shared'
 import type {
   ReportAbility,
   ReportActor,
@@ -81,7 +81,9 @@ function buildAbilitySchoolMap(
 ): Map<number, number> {
   return new Map(
     (abilities ?? [])
-      .filter((ability) => ability.gameID !== null && Number.isFinite(ability.gameID))
+      .filter(
+        (ability) => ability.gameID !== null && Number.isFinite(ability.gameID),
+      )
       .map((ability) => {
         const abilityId = Math.trunc(ability.gameID!)
         return [abilityId, parseAbilitySchoolMask(ability.type)]
@@ -124,18 +126,23 @@ function buildEnemies(
 ): Enemy[] {
   const allActors = new Map(actors.map((actor) => [actor.id, actor]))
   const enemyIds = new Set(
-    [...(fight.enemyNPCs ?? []), ...(fight.enemyPets ?? [])].map((enemy) => enemy.id),
+    [...(fight.enemyNPCs ?? []), ...(fight.enemyPets ?? [])].map(
+      (enemy) => enemy.id,
+    ),
   )
 
-  const enemyInstanceKeys = rawEvents.reduce((keys, event) => {
-    if (enemyIds.has(event.sourceID)) {
-      keys.add(`${event.sourceID}:${event.sourceInstance ?? 0}`)
-    }
-    if (enemyIds.has(event.targetID)) {
-      keys.add(`${event.targetID}:${event.targetInstance ?? 0}`)
-    }
-    return keys
-  }, new Set([...enemyIds].map((enemyId) => `${enemyId}:0`)))
+  const enemyInstanceKeys = rawEvents.reduce(
+    (keys, event) => {
+      if (enemyIds.has(event.sourceID)) {
+        keys.add(`${event.sourceID}:${event.sourceInstance ?? 0}`)
+      }
+      if (enemyIds.has(event.targetID)) {
+        keys.add(`${event.targetID}:${event.targetInstance ?? 0}`)
+      }
+      return keys
+    },
+    new Set([...enemyIds].map((enemyId) => `${enemyId}:0`)),
+  )
 
   return [...enemyInstanceKeys]
     .map((key) => {

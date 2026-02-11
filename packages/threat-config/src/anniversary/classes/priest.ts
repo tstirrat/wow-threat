@@ -3,9 +3,13 @@
  *
  * Mind Blast generates extra threat. Silent Resolve and Shadow Affinity talents reduce threat.
  */
+import type {
+  ClassThreatConfig,
+  TalentImplicationContext,
+} from '@wcl-threat/shared'
+import { SpellSchool } from '@wcl-threat/shared'
+
 import { calculateThreat, noThreat } from '../../shared/formulas'
-import type { ClassThreatConfig, TalentImplicationContext } from '../../types'
-import { SpellSchool } from '../../types'
 import { inferMappedTalentRank } from '../../shared/talents'
 
 // ============================================================================

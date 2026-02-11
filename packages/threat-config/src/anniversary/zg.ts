@@ -7,7 +7,7 @@ import type {
   EncounterId,
   EncounterPreprocessorFactory,
   EncounterThreatConfig,
-} from '../types'
+} from '@wcl-threat/shared'
 
 export const ZgEncounterIds = {
   HighPriestessArlokk: 791 as EncounterId,

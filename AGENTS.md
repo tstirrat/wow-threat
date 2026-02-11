@@ -136,6 +136,9 @@ import type { Bindings, Variables } from './types/bindings'
 ```
 
 Use relative paths for local imports (the `@/*` alias exists but is not used in practice).
+Relative imports (`./`, `../`) must stay within the current workspace package only.
+Never use relative paths that cross a package boundary; cross-package imports must use
+workspace package specifiers (e.g. `@wcl-threat/shared`, `@wcl-threat/threat-engine`).
 
 ### Naming Conventions
 

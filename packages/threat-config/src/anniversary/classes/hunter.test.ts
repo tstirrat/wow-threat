@@ -1,15 +1,29 @@
 /**
  * Tests for Hunter Threat Configuration
  */
+import { createMockActorContext } from '@wcl-threat/shared'
+import type {
+  EventInterceptorContext,
+  ThreatContext,
+} from '@wcl-threat/shared/src/types'
 import { describe, expect, it, vi } from 'vitest'
 
-import type { EventInterceptorContext, ThreatContext } from '../../types'
 import { Spells, hunterConfig } from './hunter'
+
+function assertDefined<T>(value: T | undefined): T {
+  expect(value).toBeDefined()
+  if (value === undefined) {
+    throw new Error('Expected value to be defined')
+  }
+  return value
+}
 
 // Mock ThreatContext factory
 function createMockContext(
   overrides: Partial<ThreatContext> = {},
 ): ThreatContext {
+  const { spellSchoolMask, ...restOverrides } = overrides
+
   return {
     event: {
       type: 'damage',
@@ -17,21 +31,28 @@ function createMockContext(
       targetID: 2,
     } as ThreatContext['event'],
     amount: 100,
+    spellSchoolMask: spellSchoolMask ?? 0,
     sourceAuras: new Set(),
     targetAuras: new Set(),
     sourceActor: { id: 1, name: 'TestHunter', class: 'hunter' },
     targetActor: { id: 2, name: 'TestEnemy', class: null },
     encounterId: null,
-    actors: {
-      getPosition: () => null,
-      getDistance: () => null,
-      getActorsInRange: () => [],
-      getThreat: () => 0,
-      getTopActorsByThreat: () => [],
-      isActorAlive: () => true,
-      getCurrentTarget: () => null,
-      getLastTarget: () => null,
-    },
+    actors: createMockActorContext(),
+    ...restOverrides,
+  }
+}
+
+function createMockInterceptorContext(
+  actors: ThreatContext['actors'],
+  overrides: Partial<EventInterceptorContext> = {},
+): EventInterceptorContext {
+  return {
+    timestamp: 2000,
+    installedAt: 1000,
+    actors,
+    uninstall: vi.fn(),
+    setAura: () => {},
+    removeAura: () => {},
     ...overrides,
   }
 }
@@ -44,7 +65,7 @@ describe('Hunter Config', () => {
         expect(formula).toBeDefined()
 
         const ctx = createMockContext()
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
 
         expect(result.effects?.[0]).toEqual({
           type: 'modifyThreat',
@@ -67,7 +88,7 @@ describe('Hunter Config', () => {
           } as ThreatContext['event'],
         })
 
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
 
         expect(result.formula).toBe('0')
         expect(result.value).toBe(0)
@@ -85,18 +106,13 @@ describe('Hunter Config', () => {
           } as ThreatContext['event'],
         })
 
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
         if (result.effects?.[0]?.type !== 'installInterceptor') {
           throw new Error('Expected installInterceptor special type')
         }
 
         const handler = result.effects?.[0]?.interceptor
-        const mockContext: EventInterceptorContext = {
-          timestamp: 2000,
-          installedAt: 1000,
-          actors: ctx.actors,
-          uninstall: vi.fn(),
-        }
+        const mockContext = createMockInterceptorContext(ctx.actors)
 
         // Handler should pass through heal events
         const healEvent = { type: 'heal', sourceID: 1, targetID: 2 }
@@ -119,18 +135,13 @@ describe('Hunter Config', () => {
           } as ThreatContext['event'],
         })
 
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
         if (result.effects?.[0]?.type !== 'installInterceptor') {
           throw new Error('Expected installInterceptor special type')
         }
 
         const handler = result.effects?.[0]?.interceptor
-        const mockContext: EventInterceptorContext = {
-          timestamp: 2000,
-          installedAt: 1000,
-          actors: ctx.actors,
-          uninstall: vi.fn(),
-        }
+        const mockContext = createMockInterceptorContext(ctx.actors)
 
         // Handler should redirect damage from hunter (ID 1) to target ally (ID 10)
         const damageEvent = { type: 'damage', sourceID: 1, targetID: 2 }
@@ -154,30 +165,18 @@ describe('Hunter Config', () => {
             sourceID: 1,
             targetID: targetAllyId,
           } as ThreatContext['event'],
-          actors: {
-            getPosition: () => null,
-            getDistance: () => null,
-            getActorsInRange: () => [],
-            getThreat: () => 0,
-            getTopActorsByThreat: () => [],
+          actors: createMockActorContext({
             isActorAlive: (actor) => actor.id !== targetAllyId,
-            getCurrentTarget: () => null,
-            getLastTarget: () => null,
-          },
+          }),
         })
 
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
         if (result.effects?.[0]?.type !== 'installInterceptor') {
           throw new Error('Expected installInterceptor special type')
         }
 
         const handler = result.effects?.[0]?.interceptor
-        const mockContext: EventInterceptorContext = {
-          timestamp: 2000,
-          installedAt: 1000,
-          actors: ctx.actors,
-          uninstall: vi.fn(),
-        }
+        const mockContext = createMockInterceptorContext(ctx.actors)
 
         const damageEvent = { type: 'damage', sourceID: 1, targetID: 2 }
         const damageResult = handler(
@@ -197,31 +196,21 @@ describe('Hunter Config', () => {
             sourceID: 1,
             targetID: targetAllyId,
           } as ThreatContext['event'],
-          actors: {
-            getPosition: () => null,
-            getDistance: () => null,
-            getActorsInRange: () => [],
-            getThreat: () => 0,
-            getTopActorsByThreat: () => [],
+          actors: createMockActorContext({
             isActorAlive: () => false,
-            getCurrentTarget: () => null,
-            getLastTarget: () => null,
-          },
+          }),
         })
 
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
         if (result.effects?.[0]?.type !== 'installInterceptor') {
           throw new Error('Expected installInterceptor special type')
         }
 
         const handler = result.effects?.[0]?.interceptor
         const uninstallMock = vi.fn()
-        const mockContext: EventInterceptorContext = {
-          timestamp: 2000,
-          installedAt: 1000,
-          actors: ctx.actors,
+        const mockContext = createMockInterceptorContext(ctx.actors, {
           uninstall: uninstallMock,
-        }
+        })
 
         const damageEvent = { type: 'damage', sourceID: 1, targetID: 2 }
 
@@ -247,18 +236,13 @@ describe('Hunter Config', () => {
           } as ThreatContext['event'],
         })
 
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
         if (result.effects?.[0]?.type !== 'installInterceptor') {
           throw new Error('Expected installInterceptor special type')
         }
 
         const handler = result.effects?.[0]?.interceptor
-        const mockContext: EventInterceptorContext = {
-          timestamp: 2000,
-          installedAt: 1000,
-          actors: ctx.actors,
-          uninstall: vi.fn(),
-        }
+        const mockContext = createMockInterceptorContext(ctx.actors)
 
         // Damage from a different source should pass through unchanged
         const otherSourceDamage = {
@@ -287,19 +271,16 @@ describe('Hunter Config', () => {
           } as ThreatContext['event'],
         })
 
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
         if (result.effects?.[0]?.type !== 'installInterceptor') {
           throw new Error('Expected installInterceptor special type')
         }
 
         const handler = result.effects?.[0]?.interceptor
         const uninstallMock = vi.fn()
-        const mockContext: EventInterceptorContext = {
-          timestamp: 2000,
-          installedAt: 1000,
-          actors: ctx.actors,
+        const mockContext = createMockInterceptorContext(ctx.actors, {
           uninstall: uninstallMock,
-        }
+        })
 
         const hunterDamage = {
           type: 'damage',
@@ -347,19 +328,16 @@ describe('Hunter Config', () => {
           } as ThreatContext['event'],
         })
 
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
         if (result.effects?.[0]?.type !== 'installInterceptor') {
           throw new Error('Expected installInterceptor special type')
         }
 
         const handler = result.effects?.[0]?.interceptor
         const uninstallMock = vi.fn()
-        const mockContext: EventInterceptorContext = {
-          timestamp: 2000,
-          installedAt: 1000,
-          actors: ctx.actors,
+        const mockContext = createMockInterceptorContext(ctx.actors, {
           uninstall: uninstallMock,
-        }
+        })
 
         const damageEvent = { type: 'damage', sourceID: 1, targetID: 2 }
 
@@ -386,7 +364,7 @@ describe('Hunter Config', () => {
           } as ThreatContext['event'],
         })
 
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
         if (result.effects?.[0]?.type !== 'installInterceptor') {
           throw new Error('Expected installInterceptor special type')
         }
@@ -395,12 +373,11 @@ describe('Hunter Config', () => {
         const uninstallMock = vi.fn()
 
         // Within 30 seconds
-        const withinWindowContext: EventInterceptorContext = {
+        const withinWindowContext = createMockInterceptorContext(ctx.actors, {
           timestamp: 20000,
           installedAt: 1000,
-          actors: ctx.actors,
           uninstall: uninstallMock,
-        }
+        })
 
         const damageEvent = { type: 'damage', sourceID: 1, targetID: 2 }
         const withinResult = handler(
@@ -414,12 +391,11 @@ describe('Hunter Config', () => {
         expect(uninstallMock).not.toHaveBeenCalled()
 
         // After 30 seconds
-        const afterWindowContext: EventInterceptorContext = {
+        const afterWindowContext = createMockInterceptorContext(ctx.actors, {
           timestamp: 32000,
           installedAt: 1000,
-          actors: ctx.actors,
           uninstall: uninstallMock,
-        }
+        })
 
         const afterResult = handler(
           damageEvent as ThreatContext['event'],
@@ -436,7 +412,7 @@ describe('Hunter Config', () => {
         expect(formula).toBeDefined()
 
         const ctx = createMockContext({ amount: 100 })
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
 
         expect(result.formula).toBe('amt + 110')
         expect(result.value).toBe(210) // 100 * 1 + 110
@@ -449,7 +425,7 @@ describe('Hunter Config', () => {
         expect(formula).toBeDefined()
 
         const ctx = createMockContext()
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
 
         expect(result.formula).toBe('-140')
         expect(result.value).toBe(-140)

@@ -3,13 +3,14 @@
  *
  * Searing Pain has 2x threat. Curses generate threat on application.
  */
+import type { ClassThreatConfig } from '@wcl-threat/shared'
+
 import {
   calculateThreat,
   noThreat,
   threatOnDebuff,
   threatOnDebuffOrDamage,
 } from '../../shared/formulas'
-import type { ClassThreatConfig } from '../../types'
 
 // ============================================================================
 // Spell IDs

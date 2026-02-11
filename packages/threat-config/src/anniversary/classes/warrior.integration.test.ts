@@ -30,21 +30,18 @@ describe('anniversary warrior integration', () => {
       throw new Error(`Fixture ${fixtureName} could not be loaded`)
     }
 
-    const {
-      actorMap,
-      augmentedEvents,
-      abilityNameMap,
-      fightStartTime,
-    } = runConfigFixture(fixture, {
-      config: anniversaryConfig,
-    })
+    const { actorMap, augmentedEvents, abilityNameMap, fightStartTime } =
+      runConfigFixture(fixture, {
+        config: anniversaryConfig,
+      })
     const warriorIds = new Set(
       [...actorMap.entries()]
         .filter(([, actor]) => actor.class === 'warrior')
         .map(([actorId]) => actorId),
     )
     const trackedWarriorIds =
-      fixture.metadata.focusActorId && warriorIds.has(fixture.metadata.focusActorId)
+      fixture.metadata.focusActorId &&
+      warriorIds.has(fixture.metadata.focusActorId)
         ? new Set([fixture.metadata.focusActorId])
         : warriorIds
 
@@ -68,7 +65,7 @@ describe('anniversary warrior integration', () => {
         }
 
         return (event.threat.changes ?? []).some((change) =>
-          trackedWarriorIds.has(change.sourceId)
+          trackedWarriorIds.has(change.sourceId),
         )
       },
     })

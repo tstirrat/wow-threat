@@ -3,8 +3,12 @@
  *
  * Mages have talent-based threat reduction. Ice Block grants invulnerability.
  */
-import type { ClassThreatConfig, TalentImplicationContext } from '../../types'
-import { SpellSchool } from '../../types'
+import type {
+  ClassThreatConfig,
+  TalentImplicationContext,
+} from '@wcl-threat/shared'
+import { SpellSchool } from '@wcl-threat/shared'
+
 import { inferMappedTalentRank } from '../../shared/talents'
 
 // ============================================================================
@@ -152,7 +156,9 @@ export const mageConfig: ClassThreatConfig = {
       FROST_CHANNELING_AURA_BY_RANK.length,
     )
     if (frostChannelingRank > 0) {
-      syntheticAuras.push(FROST_CHANNELING_AURA_BY_RANK[frostChannelingRank - 1]!)
+      syntheticAuras.push(
+        FROST_CHANNELING_AURA_BY_RANK[frostChannelingRank - 1]!,
+      )
     }
 
     return syntheticAuras

@@ -6,26 +6,6 @@
  * real config evolution.
  */
 import {
-  SpellSchool,
-  threatOnCastRollbackOnMiss,
-} from '@wcl-threat/threat-config'
-import type {
-  Actor,
-  EncounterId,
-  Enemy,
-  EventInterceptor,
-  ThreatConfig,
-  ThreatContext,
-  ThreatModifier,
-} from '@wcl-threat/threat-config'
-import type { DamageEvent, GearItem, WCLEvent } from '@wcl-threat/wcl-types'
-import { describe, expect, it, vi } from 'vitest'
-
-import {
-  createMockActorContext,
-  createMockThreatConfig,
-} from './test/helpers/config'
-import {
   createApplyBuffEvent,
   createApplyBuffStackEvent,
   createApplyDebuffEvent,
@@ -34,11 +14,26 @@ import {
   createDamageEvent,
   createEnergizeEvent,
   createHealEvent,
+  createMockActorContext,
   createRefreshBuffEvent,
   createRemoveBuffEvent,
   createRemoveBuffStackEvent,
   createRemoveDebuffEvent,
-} from './test/helpers/events'
+} from '@wcl-threat/shared'
+import {
+  type Actor,
+  type EncounterId,
+  type Enemy,
+  type EventInterceptor,
+  SpellSchool,
+  type ThreatConfig,
+  type ThreatContext,
+  type ThreatModifier,
+} from '@wcl-threat/shared'
+import type { DamageEvent, GearItem, WCLEvent } from '@wcl-threat/wcl-types'
+import { describe, expect, it, vi } from 'vitest'
+
+import { createMockThreatConfig } from './test/helpers/config'
 import {
   calculateModifiedThreat,
   calculateThreatModification,
@@ -158,10 +153,6 @@ const mockConfig = createMockThreatConfig({
           formula: '0.5 * amt',
           value: ctx.amount * 0.5,
           splitAmongEnemies: true,
-        }),
-        [SPELLS.MOCK_CAST_CAN_MISS]: threatOnCastRollbackOnMiss(301),
-        [SPELLS.MOCK_CAST_CAN_MISS_NO_COEFF]: threatOnCastRollbackOnMiss(301, {
-          applyPlayerMultipliers: false,
         }),
       },
 
@@ -1994,142 +1985,6 @@ describe('ability-specific threat calculation', () => {
     const augmented = result.augmentedEvents[0]
     expect(augmented?.threat.calculation.baseThreat).toBe(100)
     expect(augmented?.threat.calculation.formula).toBe('(custom) amt + 100')
-  })
-
-  it('rolls back threatOnCastRollbackOnMiss threat on miss damage events', () => {
-    const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
-
-    const castEvent: WCLEvent = {
-      timestamp: 1000,
-      type: 'cast',
-      sourceID: warriorActor.id,
-      sourceIsFriendly: true,
-      targetID: bossEnemy.id,
-      targetIsFriendly: false,
-      abilityGameID: SPELLS.MOCK_CAST_CAN_MISS,
-    }
-
-    const missEvent = createDamageEvent({
-      timestamp: 1010,
-      sourceID: warriorActor.id,
-      targetID: bossEnemy.id,
-      targetIsFriendly: false,
-      abilityGameID: SPELLS.MOCK_CAST_CAN_MISS,
-      amount: 0,
-      hitType: 'miss',
-    })
-
-    const result = processEvents({
-      rawEvents: [castEvent, missEvent],
-      actorMap,
-      enemies,
-      config: mockConfig,
-    })
-
-    expect(result.augmentedEvents).toHaveLength(2)
-
-    const castAugmented = result.augmentedEvents[0]
-    expect(castAugmented?.threat.calculation.formula).toBe('301 (cast)')
-    expect(castAugmented?.threat.calculation.baseThreat).toBe(301)
-
-    const missAugmented = result.augmentedEvents[1]
-    expect(missAugmented?.threat.calculation.formula).toBe(
-      '-301 (miss rollback)',
-    )
-    expect(missAugmented?.threat.calculation.baseThreat).toBe(-301)
-    expect(missAugmented?.threat.changes?.[0]?.total).toBeCloseTo(0, 8)
-  })
-
-  it('rolls back threatOnCastRollbackOnMiss threat on immune and resist damage events', () => {
-    const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
-    const rollbackHitTypes = ['immune', 'resist'] as const
-
-    rollbackHitTypes.forEach((hitType) => {
-      const castEvent: WCLEvent = {
-        timestamp: 1000,
-        type: 'cast',
-        sourceID: warriorActor.id,
-        sourceIsFriendly: true,
-        targetID: bossEnemy.id,
-        targetIsFriendly: false,
-        abilityGameID: SPELLS.MOCK_CAST_CAN_MISS,
-      }
-
-      const rollbackEvent = createDamageEvent({
-        timestamp: 1010,
-        sourceID: warriorActor.id,
-        targetID: bossEnemy.id,
-        targetIsFriendly: false,
-        abilityGameID: SPELLS.MOCK_CAST_CAN_MISS,
-        amount: 0,
-        hitType,
-      })
-
-      const result = processEvents({
-        rawEvents: [castEvent, rollbackEvent],
-        actorMap,
-        enemies,
-        config: mockConfig,
-      })
-
-      const rollbackAugmented = result.augmentedEvents[1]
-      expect(rollbackAugmented?.threat.calculation.formula).toBe(
-        '-301 (miss rollback)',
-      )
-      expect(rollbackAugmented?.threat.calculation.baseThreat).toBe(-301)
-      expect(rollbackAugmented?.threat.changes?.[0]?.total).toBeCloseTo(0, 8)
-    })
-  })
-
-  it('supports threatOnCastRollbackOnMiss formulas that ignore all player multipliers', () => {
-    const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
-
-    const castEvent: WCLEvent = {
-      timestamp: 1000,
-      type: 'cast',
-      sourceID: warriorActor.id,
-      sourceIsFriendly: true,
-      targetID: bossEnemy.id,
-      targetIsFriendly: false,
-      abilityGameID: SPELLS.MOCK_CAST_CAN_MISS_NO_COEFF,
-    }
-
-    const missEvent = createDamageEvent({
-      timestamp: 1010,
-      sourceID: warriorActor.id,
-      targetID: bossEnemy.id,
-      targetIsFriendly: false,
-      abilityGameID: SPELLS.MOCK_CAST_CAN_MISS_NO_COEFF,
-      amount: 0,
-      hitType: 'miss',
-    })
-
-    const result = processEvents({
-      rawEvents: [
-        createApplyBuffEvent({
-          targetID: warriorActor.id,
-          abilityGameID: SPELLS.DEFENSIVE_STANCE,
-        }),
-        castEvent,
-        missEvent,
-      ],
-      actorMap,
-      enemies,
-      config: mockConfig,
-    })
-
-    const castAugmented = result.augmentedEvents[1]
-    expect(castAugmented?.threat.calculation.formula).toBe('301 (cast)')
-    expect(castAugmented?.threat.calculation.modifiedThreat).toBe(301)
-    expect(castAugmented?.threat.calculation.modifiers).toEqual([])
-
-    const missAugmented = result.augmentedEvents[2]
-    expect(missAugmented?.threat.calculation.formula).toBe(
-      '-301 (miss rollback)',
-    )
-    expect(missAugmented?.threat.calculation.modifiedThreat).toBe(-301)
-    expect(missAugmented?.threat.calculation.modifiers).toEqual([])
-    expect(missAugmented?.threat.changes?.[0]?.total).toBeCloseTo(0, 8)
   })
 
   it('treats undefined ability formula result as no threat and does not fall back', () => {

@@ -56,3 +56,14 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
 export function exists<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined
 }
+
+/**
+ * Asserts that a value is not undefined, throwing an error if it is.
+ * Useful for narrowing types in tests when you expect a value to be defined.
+ */
+export function checkExists<T>(value: T | undefined, message?: string): T {
+  if (value === undefined) {
+    throw new Error(message ?? 'Expected value to be defined')
+  }
+  return value
+}

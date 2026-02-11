@@ -24,4 +24,20 @@ export default defineConfig([
     language: 'markdown/gfm',
     extends: ['markdown/recommended'],
   },
+  {
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/../../../*'],
+              message:
+                'Imports should not traverse more than one parent directory. Use path aliases instead.',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ])

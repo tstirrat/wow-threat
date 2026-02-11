@@ -1,9 +1,13 @@
 /**
  * Tests for Shaman Threat Configuration
  */
+import { createMockActorContext } from '@wcl-threat/shared'
+import type {
+  TalentImplicationContext,
+  ThreatContext,
+} from '@wcl-threat/shared/src/types'
 import { describe, expect, it } from 'vitest'
 
-import type { TalentImplicationContext, ThreatContext } from '../../types'
 import { Spells, shamanConfig } from './shaman'
 
 function createMockContext(
@@ -21,16 +25,7 @@ function createMockContext(
     sourceActor: { id: 1, name: 'TestShaman', class: 'shaman' },
     targetActor: { id: 2, name: 'TestTarget', class: null },
     encounterId: null,
-    actors: {
-      getPosition: () => null,
-      getDistance: () => null,
-      getActorsInRange: () => [],
-      getThreat: () => 0,
-      getTopActorsByThreat: () => [],
-      isActorAlive: () => true,
-      getCurrentTarget: () => null,
-      getLastTarget: () => null,
-    },
+    actors: createMockActorContext(),
     ...overrides,
   }
 }

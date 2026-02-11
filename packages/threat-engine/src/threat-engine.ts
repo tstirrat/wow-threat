@@ -13,25 +13,22 @@ import type {
   EncounterId,
   EncounterThreatConfig,
   Enemy,
-  ThreatEffect,
   ThreatCalculation,
   ThreatChange,
   ThreatConfig,
-  ThreatStateKind,
   ThreatContext,
+  ThreatEffect,
+  ThreatFormulaResult,
   ThreatModifier,
   ThreatResult,
-  ThreatFormulaResult,
+  ThreatStateKind,
   WowClass,
-} from '@wcl-threat/threat-config'
-import {
-  getActiveModifiers,
-  getTotalMultiplier,
-} from '@wcl-threat/threat-config'
+} from '@wcl-threat/shared'
 import type { WCLEvent } from '@wcl-threat/wcl-types'
 
-import { InterceptorTracker } from './interceptor-tracker'
 import { FightState } from './fight-state'
+import { InterceptorTracker } from './interceptor-tracker'
+import { getActiveModifiers, getTotalMultiplier } from './utils'
 
 const ENVIRONMENT_TARGET_ID = -1
 const THREAT_EVENT_TYPES = new Set<WCLEvent['type']>([
@@ -183,8 +180,13 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
       }
 
       const threatContext = buildThreatContext(event, threatOptions)
-      const baseCalculation = calculateModifiedThreat(event, threatOptions, config)
-      const encounterEffects = encounterPreprocessor?.(threatContext)?.effects ?? []
+      const baseCalculation = calculateModifiedThreat(
+        event,
+        threatOptions,
+        config,
+      )
+      const encounterEffects =
+        encounterPreprocessor?.(threatContext)?.effects ?? []
       const stateEffect = buildStateEffectFromAuraEvent(event, stateSpellSets)
       const effects = [
         ...(baseCalculation.effects ?? []),
@@ -253,14 +255,10 @@ function applyThreat(
   for (const effect of calculation.effects ?? []) {
     switch (effect.type) {
       case 'customThreat':
-        changes.push(
-          ...applyCustomThreatEffect(fightState, effect),
-        )
+        changes.push(...applyCustomThreatEffect(fightState, effect))
         break
       case 'modifyThreat':
-        changes.push(
-          ...applyModifyThreatEffect(fightState, effect, event),
-        )
+        changes.push(...applyModifyThreatEffect(fightState, effect, event))
         break
     }
   }
@@ -269,7 +267,7 @@ function applyThreat(
   if (calculation.isSplit && calculation.modifiedThreat !== 0) {
     // Filter to alive enemies only
     const aliveEnemies = enemies.filter((e) =>
-      fightState.isActorAlive({ id: e.id, instanceId: e.instance })
+      fightState.isActorAlive({ id: e.id, instanceId: e.instance }),
     )
     if (aliveEnemies.length > 0) {
       const splitThreat = calculation.modifiedThreat / aliveEnemies.length
@@ -338,23 +336,28 @@ function applyCustomThreatEffect(
 ): ThreatChange[] {
   for (const change of effect.changes) {
     if (change.operator === 'set') {
-      fightState.setThreat(change.sourceId, {
-        id: change.targetId,
-        instanceId: change.targetInstance,
-      }, change.total)
-    } else {
-      const currentThreat = fightState.getThreat(
+      fightState.setThreat(
         change.sourceId,
         {
           id: change.targetId,
           instanceId: change.targetInstance,
         },
+        change.total,
       )
-      const delta = change.total - currentThreat
-      fightState.addThreat(change.sourceId, {
+    } else {
+      const currentThreat = fightState.getThreat(change.sourceId, {
         id: change.targetId,
         instanceId: change.targetInstance,
-      }, delta)
+      })
+      const delta = change.total - currentThreat
+      fightState.addThreat(
+        change.sourceId,
+        {
+          id: change.targetId,
+          instanceId: change.targetInstance,
+        },
+        delta,
+      )
     }
   }
 
@@ -375,10 +378,7 @@ function applyModifyThreatEffect(
       const enemyThreatEntries = fightState.getAllEnemyThreatEntries(actorId)
 
       return enemyThreatEntries.map(({ enemy, threat }) => {
-        const newThreat = calculateThreatModification(
-          threat,
-          effect.multiplier,
-        )
+        const newThreat = calculateThreatModification(threat, effect.multiplier)
         fightState.setThreat(actorId, enemy, newThreat)
 
         return {
@@ -400,7 +400,10 @@ function applyModifyThreatEffect(
     const actorThreat = fightState.getAllActorThreat(enemy)
 
     return Array.from(actorThreat.entries()).map(([actorId, currentThreat]) => {
-      const newThreat = calculateThreatModification(currentThreat, effect.multiplier)
+      const newThreat = calculateThreatModification(
+        currentThreat,
+        effect.multiplier,
+      )
       fightState.setThreat(actorId, enemy, newThreat)
 
       return {
@@ -415,14 +418,14 @@ function applyModifyThreatEffect(
   }
 
   const sourceEnemyInstance = event.sourceInstance ?? 0
-  const currentThreat = fightState.getThreat(
-    event.targetID,
-    {
-      id: event.sourceID,
-      instanceId: sourceEnemyInstance,
-    },
+  const currentThreat = fightState.getThreat(event.targetID, {
+    id: event.sourceID,
+    instanceId: sourceEnemyInstance,
+  })
+  const newThreat = calculateThreatModification(
+    currentThreat,
+    effect.multiplier,
   )
-  const newThreat = calculateThreatModification(currentThreat, effect.multiplier)
   fightState.setThreat(
     event.targetID,
     {
@@ -529,10 +532,7 @@ function buildStateEffectFromAuraEvent(
   event: WCLEvent,
   stateSpellSets: ThreatStateSpellSets,
 ): Extract<ThreatEffect, { type: 'state' }> | undefined {
-  if (
-    !('abilityGameID' in event) ||
-    typeof event.abilityGameID !== 'number'
-  ) {
+  if (!('abilityGameID' in event) || typeof event.abilityGameID !== 'number') {
     return undefined
   }
 

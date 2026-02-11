@@ -3,8 +3,13 @@
  *
  * This is the main entry point for Anniversary Edition (gameVersion: 1) threat config.
  */
+import type {
+  ThreatConfig,
+  ThreatContext,
+  ThreatModifier,
+} from '@wcl-threat/shared'
+
 import { validateAbilities, validateAuraModifiers } from '../shared/utils'
-import type { ThreatConfig, ThreatContext, ThreatModifier } from '../types'
 import { druidConfig } from './classes/druid'
 import { hunterConfig } from './classes/hunter'
 import { mageConfig } from './classes/mage'

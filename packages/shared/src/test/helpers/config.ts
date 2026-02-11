@@ -4,11 +4,7 @@
  * Provides a minimal, self-contained threat configuration for unit tests.
  * Tests can override specific parts without dependencies on real game configs.
  */
-import type {
-  ActorContext,
-  ThreatConfig,
-  ThreatContext,
-} from '@wcl-threat/threat-config'
+import type { ThreatConfig, ThreatContext } from '../../types'
 
 /**
  * Create a minimal mock threat configuration for testing
@@ -91,28 +87,5 @@ export function createMockThreatConfig(
       ...defaultConfig.classes,
       ...overrides?.classes,
     },
-  }
-}
-
-/**
- * Create a mock ActorContext for testing
- *
- * Returns an ActorContext with no-op implementations:
- * - getPosition: always returns null
- * - getDistance: always returns null
- * - getActorsInRange: always returns empty array
- * - getThreat: always returns 0
- * - getTopActorsByThreat: always returns empty array
- */
-export function createMockActorContext(): ActorContext {
-  return {
-    getPosition: () => null,
-    getDistance: () => null,
-    getActorsInRange: () => [],
-    getThreat: () => 0,
-    getTopActorsByThreat: () => [],
-    isActorAlive: () => true,
-    getCurrentTarget: () => null,
-    getLastTarget: () => null,
   }
 }

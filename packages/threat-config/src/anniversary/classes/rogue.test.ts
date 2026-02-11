@@ -1,31 +1,37 @@
 /**
  * Tests for Rogue Threat Configuration
  */
+import { createMockActorContext } from '@wcl-threat/shared'
+import type { ThreatContext } from '@wcl-threat/shared/src/types'
 import { describe, expect, it } from 'vitest'
 
-import type { ThreatContext } from '../../types'
 import { Spells, rogueConfig } from './rogue'
+
+function assertDefined<T>(value: T | undefined): T {
+  expect(value).toBeDefined()
+  if (value === undefined) {
+    throw new Error('Expected value to be defined')
+  }
+  return value
+}
 
 // Mock ThreatContext factory
 function createMockContext(
   overrides: Partial<ThreatContext> = {},
 ): ThreatContext {
+  const { spellSchoolMask, ...restOverrides } = overrides
+
   return {
     event: { type: 'damage' } as ThreatContext['event'],
     amount: 100,
+    spellSchoolMask: spellSchoolMask ?? 0,
     sourceAuras: new Set(),
     targetAuras: new Set(),
     sourceActor: { id: 1, name: 'TestRogue', class: 'rogue' },
     targetActor: { id: 2, name: 'TestEnemy', class: null },
     encounterId: null,
-    actors: {
-      getPosition: () => null,
-      getDistance: () => null,
-      getActorsInRange: () => [],
-      getThreat: () => 0,
-      getTopActorsByThreat: () => [],
-    },
-    ...overrides,
+    actors: createMockActorContext(),
+    ...restOverrides,
   }
 }
 
@@ -43,7 +49,7 @@ describe('Rogue Config', () => {
         expect(formula).toBeDefined()
 
         const ctx = createMockContext()
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
 
         expect(result.formula).toBe('-150')
         expect(result.value).toBe(-150)
@@ -56,7 +62,7 @@ describe('Rogue Config', () => {
         expect(formula).toBeDefined()
 
         const ctx = createMockContext()
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
 
         expect(result.effects?.[0]).toEqual({
           type: 'modifyThreat',

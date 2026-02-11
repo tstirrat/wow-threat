@@ -13,7 +13,7 @@ import type {
   EventInterceptor,
   EventInterceptorContext,
   EventInterceptorResult,
-} from '@wcl-threat/threat-config'
+} from '@wcl-threat/shared'
 import type { WCLEvent } from '@wcl-threat/wcl-types'
 
 interface ActiveInterceptor {

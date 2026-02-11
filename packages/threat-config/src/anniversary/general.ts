@@ -3,12 +3,13 @@
  *
  * Base threat calculations and general mechanics for Anniversary Edition.
  */
-import { calculateThreat } from '../shared/formulas'
 import type {
   BaseThreatConfig,
   ThreatContext,
   ThreatFormulaResult,
-} from '../types'
+} from '@wcl-threat/shared'
+
+import { calculateThreat } from '../shared/formulas'
 
 /**
  * Base threat configurations for Anniversary Edition

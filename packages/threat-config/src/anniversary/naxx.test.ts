@@ -1,29 +1,29 @@
+import {
+  checkExists,
+  createCastEvent,
+  createMockActorContext,
+} from '@wcl-threat/shared'
+import type { ActorContext, ThreatContext } from '@wcl-threat/shared/src/types'
 import type { DamageEvent } from '@wcl-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
-import type { ActorContext, ThreatContext } from '../types'
 import { hatefulStrike, naxxAbilities } from './naxx'
 
 describe('Hateful Strike', () => {
   const PATCHWERK_ID = 16028
 
-  function createMockActorContext(
+  function createNaxxActorContext(
     topActors: Array<{ actorId: number; threat: number }>,
     distances: Map<string, number>,
   ): ActorContext {
-    return {
+    return createMockActorContext({
       getPosition: () => ({ x: 0, y: 0 }),
       getDistance: (actor1, actor2) => {
         const key = `${actor1.id}-${actor2.id}`
         return distances.get(key) ?? null
       },
-      getActorsInRange: () => [],
-      getThreat: () => 0,
       getTopActorsByThreat: () => topActors,
-      isActorAlive: () => true,
-      getCurrentTarget: () => null,
-      getLastTarget: () => null,
-    }
+    })
   }
 
   function createMockContext(actors: ActorContext): ThreatContext {
@@ -39,6 +39,7 @@ describe('Hateful Strike', () => {
       sourceActor: { id: PATCHWERK_ID, name: 'Patchwerk', class: null },
       targetActor: { id: 1, name: 'Tank', class: 'warrior' },
       encounterId: null,
+      spellSchoolMask: 0,
       actors,
     }
   }
@@ -63,10 +64,10 @@ describe('Hateful Strike', () => {
       ['6-16028', 20],
     ])
 
-    const actors = createMockActorContext(topActors, distances)
+    const actors = createNaxxActorContext(topActors, distances)
     const ctx = createMockContext(actors)
 
-    const result = hatefulStrike(ctx)
+    const result = checkExists(hatefulStrike(ctx))
 
     expect(result.value).toBe(0) // Boss ability on player
     expect(result.effects?.[0]?.type).toBe('customThreat')
@@ -76,11 +77,15 @@ describe('Hateful Strike', () => {
       expect(result.effects?.[0]?.changes.map((c) => c.sourceId)).toEqual([
         1, 2, 3, 4,
       ])
-      expect(result.effects?.[0]?.changes.every((c) => c.targetId === PATCHWERK_ID)).toBe(
+      expect(
+        result.effects?.[0]?.changes.every((c) => c.targetId === PATCHWERK_ID),
+      ).toBe(true)
+      expect(result.effects?.[0]?.changes.every((c) => c.amount === 1000)).toBe(
         true,
       )
-      expect(result.effects?.[0]?.changes.every((c) => c.amount === 1000)).toBe(true)
-      expect(result.effects?.[0]?.changes.every((c) => c.operator === 'add')).toBe(true)
+      expect(
+        result.effects?.[0]?.changes.every((c) => c.operator === 'add'),
+      ).toBe(true)
     }
   })
 
@@ -95,14 +100,16 @@ describe('Hateful Strike', () => {
       ['2-16028', 8],
     ])
 
-    const actors = createMockActorContext(topActors, distances)
+    const actors = createNaxxActorContext(topActors, distances)
     const ctx = createMockContext(actors)
 
-    const result = hatefulStrike(ctx)
+    const result = checkExists(hatefulStrike(ctx))
 
     if (result.effects?.[0]?.type === 'customThreat') {
       expect(result.effects?.[0]?.changes).toHaveLength(2)
-      expect(result.effects?.[0]?.changes.map((c) => c.sourceId)).toEqual([1, 2])
+      expect(result.effects?.[0]?.changes.map((c) => c.sourceId)).toEqual([
+        1, 2,
+      ])
     }
   })
 
@@ -125,10 +132,10 @@ describe('Hateful Strike', () => {
       ['6-16028', 9],
     ])
 
-    const actors = createMockActorContext(topActors, distances)
+    const actors = createNaxxActorContext(topActors, distances)
     const ctx = createMockContext(actors)
 
-    const result = hatefulStrike(ctx)
+    const result = checkExists(hatefulStrike(ctx))
 
     if (result.effects?.[0]?.type === 'customThreat') {
       expect(result.effects?.[0]?.changes).toHaveLength(4)
@@ -152,15 +159,17 @@ describe('Hateful Strike', () => {
       ['3-16028', 8],
     ])
 
-    const actors = createMockActorContext(topActors, distances)
+    const actors = createNaxxActorContext(topActors, distances)
     const ctx = createMockContext(actors)
 
-    const result = hatefulStrike(ctx)
+    const result = checkExists(hatefulStrike(ctx))
 
     if (result.effects?.[0]?.type === 'customThreat') {
       // Should only include actors 1 and 3 (with valid distances)
       expect(result.effects?.[0]?.changes).toHaveLength(2)
-      expect(result.effects?.[0]?.changes.map((c) => c.sourceId)).toEqual([1, 3])
+      expect(result.effects?.[0]?.changes.map((c) => c.sourceId)).toEqual([
+        1, 3,
+      ])
     }
   })
 
@@ -175,10 +184,10 @@ describe('Hateful Strike', () => {
       ['2-16028', 20],
     ])
 
-    const actors = createMockActorContext(topActors, distances)
+    const actors = createNaxxActorContext(topActors, distances)
     const ctx = createMockContext(actors)
 
-    const result = hatefulStrike(ctx)
+    const result = checkExists(hatefulStrike(ctx))
 
     if (result.effects?.[0]?.type === 'customThreat') {
       expect(result.effects?.[0]?.changes).toHaveLength(0)
@@ -186,10 +195,10 @@ describe('Hateful Strike', () => {
   })
 
   it('should use correct formula string', () => {
-    const actors = createMockActorContext([], new Map())
+    const actors = createNaxxActorContext([], new Map())
     const ctx = createMockContext(actors)
 
-    const result = hatefulStrike(ctx)
+    const result = checkExists(hatefulStrike(ctx))
 
     expect(result.formula).toBe('0 (customThreat)')
     expect(result.splitAmongEnemies).toBe(false)
@@ -199,33 +208,27 @@ describe('Hateful Strike', () => {
 describe('Boss Threat Wipe on Cast', () => {
   function createThreatWipeContext(abilityGameID: number): ThreatContext {
     return {
-      event: {
+      event: createCastEvent({
         sourceID: 15954,
         targetID: 1,
         type: 'cast',
         abilityGameID,
-      } as DamageEvent,
+      }),
       amount: 0,
+      spellSchoolMask: 0,
       sourceAuras: new Set(),
       targetAuras: new Set(),
       sourceActor: { id: 15954, name: 'Noth the Plaguebringer', class: null },
       targetActor: { id: 1, name: 'Tank', class: 'warrior' },
       encounterId: null,
-      actors: {
-        getPosition: () => null,
-        getDistance: () => null,
-        getActorsInRange: () => [],
-        getThreat: () => 0,
-        getTopActorsByThreat: () => [],
-        isActorAlive: () => true,
-        getCurrentTarget: () => null,
-        getLastTarget: () => null,
-      },
+      actors: createMockActorContext(),
     }
   }
 
   it('returns modifyThreat special that targets all actors on source enemy', () => {
-    const result = naxxAbilities[29210]!(createThreatWipeContext(29210))
+    const result = checkExists(
+      naxxAbilities[29210]!(createThreatWipeContext(29210)),
+    )
 
     expect(result.formula).toBe('threatWipe')
     expect(result.value).toBe(0)
@@ -243,8 +246,10 @@ describe('Boss Threat Wipe on Cast', () => {
     expect(blink).toBeDefined()
     expect(blinkAlt).toBeDefined()
 
-    const blinkResult = blink!(createThreatWipeContext(29210))
-    const blinkAltResult = blinkAlt!(createThreatWipeContext(29211))
+    const blinkResult = checkExists(blink!(createThreatWipeContext(29210)))
+    const blinkAltResult = checkExists(
+      blinkAlt!(createThreatWipeContext(29211)),
+    )
 
     expect(blinkResult.effects?.[0]).toEqual({
       type: 'modifyThreat',

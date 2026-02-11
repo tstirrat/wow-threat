@@ -4,9 +4,10 @@
  * Feign Death drops threat. Distracting Shot generates fixed threat.
  * Misdirection redirects threat to an ally.
  */
+import type { EventInterceptor } from '@wcl-threat/shared'
+import type { ClassThreatConfig } from '@wcl-threat/shared'
+
 import { calculateThreat, modifyThreat } from '../../shared/formulas'
-import type { EventInterceptor } from '../../types'
-import type { ClassThreatConfig } from '../../types'
 
 // ============================================================================
 // Spell IDs

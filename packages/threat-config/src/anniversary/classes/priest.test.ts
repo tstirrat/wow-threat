@@ -1,17 +1,24 @@
 /**
  * Tests for Priest Threat Configuration
  */
+import { createMockActorContext } from '@wcl-threat/shared'
+import type {
+  TalentImplicationContext,
+  ThreatContext,
+} from '@wcl-threat/shared/src/types'
+import { SpellSchool } from '@wcl-threat/shared/src/types'
 import { describe, expect, it } from 'vitest'
 
-import type { TalentImplicationContext, ThreatContext } from '../../types'
-import { SpellSchool } from '../../types'
 import { Spells, priestConfig } from './priest'
 
 function createMockContext(
   overrides: Partial<ThreatContext> = {},
 ): ThreatContext {
   return {
-    event: { type: 'damage', abilityGameID: Spells.MindBlastR1 } as ThreatContext['event'],
+    event: {
+      type: 'damage',
+      abilityGameID: Spells.MindBlastR1,
+    } as ThreatContext['event'],
     amount: 100,
     spellSchoolMask: SpellSchool.Physical,
     sourceAuras: new Set(),
@@ -19,16 +26,7 @@ function createMockContext(
     sourceActor: { id: 1, name: 'TestPriest', class: 'priest' },
     targetActor: { id: 2, name: 'TestEnemy', class: null },
     encounterId: null,
-    actors: {
-      getPosition: () => null,
-      getDistance: () => null,
-      getActorsInRange: () => [],
-      getThreat: () => 0,
-      getTopActorsByThreat: () => [],
-      isActorAlive: () => true,
-      getCurrentTarget: () => null,
-      getLastTarget: () => null,
-    },
+    actors: createMockActorContext(),
     ...overrides,
   }
 }
@@ -92,7 +90,10 @@ describe('Priest Config', () => {
         }),
       )
 
-      expect(result).toEqual([Spells.SilentResolveRank5, Spells.ShadowAffinityRank3])
+      expect(result).toEqual([
+        Spells.SilentResolveRank5,
+        Spells.ShadowAffinityRank3,
+      ])
     })
 
     it('returns no synthetic aura when tracked talents are absent', () => {

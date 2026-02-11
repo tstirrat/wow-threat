@@ -3,7 +3,7 @@
  *
  * Frontend-facing response contracts for the public HTTP API.
  */
-import type { AugmentedEvent } from '@wcl-threat/threat-config'
+import type { AugmentedEvent } from '@wcl-threat/shared'
 import type { PlayerClass, Zone } from '@wcl-threat/wcl-types'
 
 export type ReportActorType = 'Player' | 'NPC' | 'Pet'

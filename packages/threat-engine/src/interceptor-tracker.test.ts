@@ -1,29 +1,19 @@
 /**
  * InterceptorTracker Tests
  */
-import type {
-  ActorContext,
-  EventInterceptor,
-  EventInterceptorContext,
-} from '@wcl-threat/threat-config'
+import { createMockActorContext } from '@wcl-threat/shared'
+import { createDamageEvent, createHealEvent } from '@wcl-threat/shared'
+import {
+  type EventInterceptor,
+  type EventInterceptorContext,
+} from '@wcl-threat/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { createDamageEvent, createHealEvent } from '../../test/helpers/events'
 import { InterceptorTracker } from './interceptor-tracker'
 
 // Mock actor context for tests
-const mockActorContext: ActorContext & {
-  setAura: (actorId: number, spellId: number) => void
-  removeAura: (actorId: number, spellId: number) => void
-} = {
-  getPosition: () => null,
-  getDistance: () => null,
-  getActorsInRange: () => [],
-  getThreat: () => 0,
-  getTopActorsByThreat: () => [],
-  isActorAlive: () => true,
-  getCurrentTarget: () => null,
-  getLastTarget: () => null,
+const mockActorContext = {
+  ...createMockActorContext(),
   setAura: () => {},
   removeAura: () => {},
 }

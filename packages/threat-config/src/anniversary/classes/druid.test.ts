@@ -1,10 +1,22 @@
 /**
  * Tests for Druid Threat Configuration
  */
+import { createMockActorContext } from '@wcl-threat/shared'
+import type {
+  TalentImplicationContext,
+  ThreatContext,
+} from '@wcl-threat/shared/src/types'
 import { describe, expect, it } from 'vitest'
 
-import type { TalentImplicationContext, ThreatContext } from '../../types'
 import { Spells, druidConfig, exclusiveAuras } from './druid'
+
+function assertDefined<T>(value: T | undefined): T {
+  expect(value).toBeDefined()
+  if (value === undefined) {
+    throw new Error('Expected value to be defined')
+  }
+  return value
+}
 
 // Mock ThreatContext factory
 function createMockContext(
@@ -19,16 +31,7 @@ function createMockContext(
     sourceActor: { id: 1, name: 'TestDruid', class: 'druid' },
     targetActor: { id: 2, name: 'TestEnemy', class: null },
     encounterId: null,
-    actors: {
-      getPosition: () => null,
-      getDistance: () => null,
-      getActorsInRange: () => [],
-      getThreat: () => 0,
-      getTopActorsByThreat: () => [],
-      isActorAlive: () => true,
-      getCurrentTarget: () => null,
-      getLastTarget: () => null,
-    },
+    actors: createMockActorContext(),
     ...overrides,
   }
 }
@@ -89,7 +92,7 @@ describe('Druid Config', () => {
         expect(formula).toBeDefined()
 
         const ctx = createMockContext({ amount: 1000 })
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
 
         expect(result.formula).toBe('amt * 1.75')
         expect(result.value).toBe(1750)
@@ -102,7 +105,7 @@ describe('Druid Config', () => {
         expect(formula).toBeDefined()
 
         const ctx = createMockContext({ amount: 100 })
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
 
         expect(result.formula).toBe('amt * 1.75')
         expect(result.value).toBe(175)
@@ -116,16 +119,13 @@ describe('Druid Config', () => {
 
         const ctx = createMockContext({
           event: { type: 'applydebuff' } as ThreatContext['event'],
-          actors: {
-            getPosition: () => null,
-            getDistance: () => null,
-            getActorsInRange: () => [],
+          actors: createMockActorContext({
             getThreat: () => 100,
             getTopActorsByThreat: () => [{ actorId: 99, threat: 500 }],
             isActorAlive: () => true,
-          },
+          }),
         })
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
 
         expect(result.formula).toBe('topThreat + 0')
         expect(result.effects?.[0]).toEqual({
@@ -178,7 +178,7 @@ describe('Druid Config', () => {
         const ctx = createMockContext({
           event: { type: 'applydebuff' } as ThreatContext['event'],
         })
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
 
         expect(result.formula).toBe('108')
         expect(result.value).toBe(108)
@@ -192,7 +192,7 @@ describe('Druid Config', () => {
         expect(formula).toBeDefined()
 
         const ctx = createMockContext()
-        const result = formula!(ctx)
+        const result = assertDefined(formula!(ctx))
 
         expect(result.value).toBe(0)
       })

@@ -3,19 +3,19 @@
  *
  * Loads config-scoped fixtures and runs them through the shared threat engine.
  */
+import { type Actor, type AugmentedEvent } from '@wcl-threat/shared'
+import type { ThreatConfig } from '@wcl-threat/shared/src/types'
+import {
+  buildThreatEngineInput,
+  processEvents,
+} from '@wcl-threat/threat-engine'
+import type { WCLEvent, WCLReportResponse } from '@wcl-threat/wcl-types'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import {
-  buildThreatEngineInput,
-  processEvents,
-} from '@wcl-threat/threat-engine'
-import type { WCLReportResponse, WCLEvent } from '@wcl-threat/wcl-types'
-
-import { getConfig, type Actor, type AugmentedEvent } from '../index'
-import type { ThreatConfig } from '../types'
+import { getConfig } from '..'
 
 export interface ConfigFixtureMetadata {
   host: string
@@ -50,7 +50,10 @@ export interface SnapshotLineOptions {
   fightStartTime?: number
   abilityNameMap?: Map<number, string>
   maxLines?: number
-  includeEvent?: (event: AugmentedEvent, actorMap: Map<number, Actor>) => boolean
+  includeEvent?: (
+    event: AugmentedEvent,
+    actorMap: Map<number, Actor>,
+  ) => boolean
 }
 
 export interface RunFixtureOptions {
@@ -106,7 +109,9 @@ export async function loadConfigFixture(
   }
 
   const [metadata, report, events] = await Promise.all([
-    loadJsonFile<ConfigFixtureMetadata>(fixtureFilePath(fixtureName, 'metadata.json')),
+    loadJsonFile<ConfigFixtureMetadata>(
+      fixtureFilePath(fixtureName, 'metadata.json'),
+    ),
     loadJsonFile<WCLReportResponse['data']['reportData']['report']>(
       fixtureFilePath(fixtureName, 'report.json'),
     ),
@@ -128,14 +133,17 @@ export function runConfigFixture(
   fixture: ConfigFixture,
   options: RunFixtureOptions = {},
 ): RunFixtureResult {
-  const fight = fixture.report.fights.find((candidate) => candidate.id === fixture.metadata.fightId)
+  const fight = fixture.report.fights.find(
+    (candidate) => candidate.id === fixture.metadata.fightId,
+  )
   if (!fight) {
     throw new Error(
       `Fixture ${fixture.fixtureName} does not include fight ${fixture.metadata.fightId}`,
     )
   }
 
-  const config = options.config ?? getConfig(fixture.report.masterData.gameVersion)
+  const config =
+    options.config ?? getConfig(fixture.report.masterData.gameVersion)
   const { actorMap, enemies, abilitySchoolMap } = buildThreatEngineInput({
     fight,
     actors: fixture.report.masterData.actors,
@@ -220,7 +228,10 @@ function formatModifiers(event: AugmentedEvent): string {
 
       return a.value - b.value
     })
-    .map((modifier) => `${modifier.name} (${modifier.source}) x${modifier.value.toFixed(2)}`)
+    .map(
+      (modifier) =>
+        `${modifier.name} (${modifier.source}) x${modifier.value.toFixed(2)}`,
+    )
     .join(', ')
 }
 
@@ -240,7 +251,9 @@ function shouldIncludeWithDefaultFilter(
     return true
   }
 
-  return (event.threat.changes ?? []).some((change) => change.sourceId === focusActorId)
+  return (event.threat.changes ?? []).some(
+    (change) => change.sourceId === focusActorId,
+  )
 }
 
 function resolveSourceActorId(
@@ -276,15 +289,21 @@ function resolveTargetKey(
 
   const totalsByTarget = events
     .flatMap((event) => event.threat.changes ?? [])
-    .filter((change) => sourceActorId === null || change.sourceId === sourceActorId)
+    .filter(
+      (change) => sourceActorId === null || change.sourceId === sourceActorId,
+    )
     .reduce((result, change) => {
       const targetKey = `${change.targetId}:${change.targetInstance}`
-      result.set(targetKey, (result.get(targetKey) ?? 0) + Math.abs(change.amount))
+      result.set(
+        targetKey,
+        (result.get(targetKey) ?? 0) + Math.abs(change.amount),
+      )
       return result
     }, new Map<string, number>())
 
-  const targetKey = [...totalsByTarget.entries()]
-    .sort((a, b) => b[1] - a[1])[0]?.[0]
+  const targetKey = [...totalsByTarget.entries()].sort(
+    (a, b) => b[1] - a[1],
+  )[0]?.[0]
 
   if (!targetKey) {
     return null
@@ -317,7 +336,9 @@ function shouldIncludeDefault(
     return true
   }
 
-  return (event.threat.changes ?? []).some((change) => change.sourceId === focusActorId)
+  return (event.threat.changes ?? []).some(
+    (change) => change.sourceId === focusActorId,
+  )
 }
 
 /**
@@ -332,7 +353,8 @@ export function buildThreatSnapshotLines(
   const maxLines = options.maxLines
   const includeEvent = options.includeEvent
   const abilityNameMap = options.abilityNameMap ?? new Map<number, string>()
-  const fightStartTime = options.fightStartTime ?? augmentedEvents[0]?.timestamp ?? 0
+  const fightStartTime =
+    options.fightStartTime ?? augmentedEvents[0]?.timestamp ?? 0
 
   const filteredEvents = augmentedEvents.filter((event) => {
     if (includeEvent) {
@@ -355,8 +377,9 @@ export function buildThreatSnapshotLines(
 
   const allRows = filteredEvents
     .map((event) => {
-      const matchingSourceChanges = (event.threat.changes ?? [])
-        .filter((change) => sourceActorId === null || change.sourceId === sourceActorId)
+      const matchingSourceChanges = (event.threat.changes ?? []).filter(
+        (change) => sourceActorId === null || change.sourceId === sourceActorId,
+      )
 
       const targetChange = matchingSourceChanges.find(
         (change) =>
@@ -409,12 +432,30 @@ export function buildThreatSnapshotLines(
 
   const widths = {
     t: Math.max(columns.t.length, ...rows.map((row) => row.time.length)),
-    spell: Math.max(columns.spell.length, ...rows.map((row) => row.spell.length)),
-    amount: Math.max(columns.amount.length, ...rows.map((row) => row.amount.length)),
-    formula: Math.max(columns.formula.length, ...rows.map((row) => row.formula.length)),
-    threat: Math.max(columns.threat.length, ...rows.map((row) => row.threat.length)),
-    toTarget: Math.max(columns.toTarget.length, ...rows.map((row) => row.toTarget.length)),
-    total: Math.max(columns.total.length, ...rows.map((row) => row.total.length)),
+    spell: Math.max(
+      columns.spell.length,
+      ...rows.map((row) => row.spell.length),
+    ),
+    amount: Math.max(
+      columns.amount.length,
+      ...rows.map((row) => row.amount.length),
+    ),
+    formula: Math.max(
+      columns.formula.length,
+      ...rows.map((row) => row.formula.length),
+    ),
+    threat: Math.max(
+      columns.threat.length,
+      ...rows.map((row) => row.threat.length),
+    ),
+    toTarget: Math.max(
+      columns.toTarget.length,
+      ...rows.map((row) => row.toTarget.length),
+    ),
+    total: Math.max(
+      columns.total.length,
+      ...rows.map((row) => row.total.length),
+    ),
   }
 
   const headerRow = [
@@ -446,8 +487,7 @@ export function buildThreatSnapshotLines(
     sourceIdForHeader === undefined
       ? 'Source: Unknown'
       : `Source: ${actorName(actorMap, sourceIdForHeader)}#${sourceIdForHeader}`
-  const targetHeader =
-    `${actorName(actorMap, targetKey.targetId)} ${targetKey.targetId}:${targetKey.targetInstance}`
+  const targetHeader = `${actorName(actorMap, targetKey.targetId)} ${targetKey.targetId}:${targetKey.targetInstance}`
   const fightTotal = allRows[allRows.length - 1]?.total ?? '0.00'
 
   return [
@@ -472,7 +512,10 @@ export function buildActorThreatTotals(
   const totals = augmentedEvents
     .flatMap((event) => event.threat.changes ?? [])
     .reduce((result, change) => {
-      result.set(change.sourceId, (result.get(change.sourceId) ?? 0) + change.amount)
+      result.set(
+        change.sourceId,
+        (result.get(change.sourceId) ?? 0) + change.amount,
+      )
       return result
     }, new Map<number, number>())
 
