@@ -22,13 +22,13 @@ export default defineConfig([
   tseslint.configs.recommended,
   {
     files: ['**/*.json'],
-    plugins: { json: json as Plugin },
+    plugins: { json: json as unknown as Plugin },
     language: 'json/json',
     extends: ['json/recommended'],
   },
   {
     files: ['**/*.jsonc'],
-    plugins: { json: json as Plugin },
+    plugins: { json: json as unknown as Plugin },
     language: 'json/jsonc',
     extends: ['json/recommended'],
   },
@@ -37,21 +37,5 @@ export default defineConfig([
     plugins: { markdown },
     language: 'markdown/gfm',
     extends: ['markdown/recommended'],
-  },
-  {
-    rules: {
-      'no-unused-vars': [
-        'error',
-        {
-          vars: 'all',
-          args: 'after-used',
-          caughtErrors: 'all',
-          ignoreRestSiblings: false,
-          ignoreUsingDeclarations: false,
-          reportUsedIgnorePattern: false,
-          enableAutofixRemoval: true,
-        },
-      ],
-    },
   },
 ])

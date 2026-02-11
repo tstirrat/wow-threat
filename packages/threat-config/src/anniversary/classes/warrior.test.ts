@@ -380,7 +380,7 @@ describe('abilities', () => {
     })
   })
 
-describe('Taunt', () => {
+  describe('Taunt', () => {
     it('returns custom threat set behavior', () => {
       const formula = warriorConfig.abilities[Spells.Taunt]
       expect(formula).toBeDefined()

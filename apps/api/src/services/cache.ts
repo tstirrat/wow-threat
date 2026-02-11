@@ -76,14 +76,17 @@ export function createMemoryCache(): CacheService {
 export function createNoOpCache(): CacheService {
   return {
     type: 'noop',
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async get<T>(key: string): Promise<T | null> {
       return null
     },
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async set<T>(key: string, value: T, ttl?: number): Promise<void> {
       // No-op
     },
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async delete(key: string): Promise<void> {
       // No-op
     },

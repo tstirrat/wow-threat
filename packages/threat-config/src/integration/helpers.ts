@@ -158,7 +158,7 @@ export function runConfigFixture(
     abilityNameMap: new Map(
       (fixture.report.masterData.abilities ?? [])
         .filter((ability) => ability.gameID !== null)
-        .map((ability) => [ability.gameID!, ability.name]),
+        .map((ability) => [ability.gameID!, ability.name ?? 'Unknown Spell']),
     ),
     fightStartTime: fight.startTime,
     fightId: fight.id,

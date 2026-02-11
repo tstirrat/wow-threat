@@ -1,7 +1,11 @@
 /**
  * InterceptorTracker Tests
  */
-import type { ActorContext, EventInterceptor } from '@wcl-threat/threat-config'
+import type {
+  ActorContext,
+  EventInterceptor,
+  EventInterceptorContext,
+} from '@wcl-threat/threat-config'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createDamageEvent, createHealEvent } from '../../test/helpers/events'
@@ -77,7 +81,7 @@ describe('InterceptorTracker', () => {
     })
 
     it('provides correct context to interceptors', () => {
-      let receivedContext: any
+      let receivedContext: EventInterceptorContext | undefined
 
       const interceptor: EventInterceptor = (event, ctx) => {
         receivedContext = ctx
@@ -90,12 +94,12 @@ describe('InterceptorTracker', () => {
 
       tracker.runInterceptors(event, 2500, mockActorContext)
 
-      expect(receivedContext.timestamp).toBe(2500)
-      expect(receivedContext.installedAt).toBe(1000)
-      expect(receivedContext.actors).toBe(mockActorContext)
-      expect(typeof receivedContext.uninstall).toBe('function')
-      expect(typeof receivedContext.setAura).toBe('function')
-      expect(typeof receivedContext.removeAura).toBe('function')
+      expect(receivedContext?.timestamp).toBe(2500)
+      expect(receivedContext?.installedAt).toBe(1000)
+      expect(receivedContext?.actors).toBe(mockActorContext)
+      expect(typeof receivedContext?.uninstall).toBe('function')
+      expect(typeof receivedContext?.setAura).toBe('function')
+      expect(typeof receivedContext?.removeAura).toBe('function')
     })
 
     it('exposes safe aura mutation helpers to interceptors', () => {
@@ -254,7 +258,7 @@ describe('InterceptorTracker', () => {
     })
 
     it('supports event filtering by type and source', () => {
-      const interceptor: EventInterceptor = (event, ctx) => {
+      const interceptor: EventInterceptor = (event) => {
         if (event.type !== 'damage' || event.sourceID !== 5) {
           return { action: 'passthrough' }
         }

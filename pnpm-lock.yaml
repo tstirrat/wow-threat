@@ -227,9 +227,6 @@ importers:
       '@types/node':
         specifier: ^22.16.5
         version: 22.19.10
-      '@wcl-threat/threat-engine':
-        specifier: workspace:*
-        version: link:../threat-engine
       '@wcl-threat/typescript-config':
         specifier: workspace:*
         version: link:../../tooling/typescript-config

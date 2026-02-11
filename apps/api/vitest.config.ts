@@ -24,7 +24,6 @@ export default defineWorkersConfig({
       provider: 'istanbul',
       reporter: ['text', 'json', 'html'],
       include: ['src/**/*.ts'],
-      exclude: ['src/**/*.test.ts', 'src/types/**'],
     },
   },
 })

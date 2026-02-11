@@ -8,5 +8,6 @@
     "resolveJsonModule": true
   },
   "include": ["src/**/*", "eslint.config.ts"]
+  // don't exclude tests please. here and in other packages
   // "exclude": ["**/*.test.ts", "test/**/*"]
 }
