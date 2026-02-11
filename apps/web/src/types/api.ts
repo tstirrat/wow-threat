@@ -33,6 +33,7 @@ export interface ReportFightParticipant {
 
 export interface ReportFightSummary {
   id: number
+  encounterID: number | null
   name: string
   startTime: number
   endTime: number

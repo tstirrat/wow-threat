@@ -61,6 +61,7 @@ export function toReportFightParticipant(
 export function toReportFightSummary(fight: ReportFight): ReportFightSummary {
   return {
     id: fight.id,
+    encounterID: fight.encounterID ?? null,
     name: fight.name,
     startTime: fight.startTime,
     endTime: fight.endTime,

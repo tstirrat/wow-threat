@@ -102,7 +102,7 @@ export const ReportPage: FC = () => {
 
       <SectionCard
         title="Player navigation"
-        subtitle="Open player-focused fight views with deep-link query params."
+        subtitle="Players by boss-kill grid. Empty cells mean the player did not participate."
       >
         <PlayersNavigationList fights={data.fights} players={players} reportId={reportId} />
       </SectionCard>

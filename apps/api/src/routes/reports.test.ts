@@ -40,6 +40,7 @@ describe('Reports API', () => {
       expect(data.owner).toBe('TestGuild')
       expect(data.gameVersion).toBe(1)
       expect(data.fights).toHaveLength(3)
+      expect(data.fights[0]?.encounterID).toBeNull()
       expect(data.actors).toHaveLength(7)
       expect(data.abilities).toHaveLength(3)
       expect(data.abilities[0]).toEqual({
