@@ -267,11 +267,20 @@ export const FightPage: FC = () => {
     )
   }
 
+  const threatConfigLabel = reportData.threatConfig
+    ? `${reportData.threatConfig.displayName} (${reportData.threatConfig.version})`
+    : 'No supported config'
+
   return (
     <div className="space-y-5">
       <SectionCard
         title={`${fightData.name} (Fight #${fightData.id})`}
         subtitle={`${reportData.title} · ${fightData.kill ? 'Kill' : 'Wipe'} · ${Math.round(durationMs / 1000)}s`}
+        headerRight={
+          <div className="text-right text-xs text-muted">
+            <p>Threat config: {threatConfigLabel}</p>
+          </div>
+        }
       >
         <div className="flex flex-wrap items-center gap-3 text-sm">
           <Link className="underline" to={`/report/${reportId}`}>

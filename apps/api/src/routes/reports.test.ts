@@ -38,7 +38,11 @@ describe('Reports API', () => {
       expect(data.code).toBe('ABC123xyz')
       expect(data.title).toBe('Naxxramas 25 - Test Raid')
       expect(data.owner).toBe('TestGuild')
-      expect(data.gameVersion).toBe(1)
+      expect(data.gameVersion).toBe(2)
+      expect(data.threatConfig).toEqual({
+        displayName: 'Anniversary Edition',
+        version: '1.3.1',
+      })
       expect(data.fights).toHaveLength(3)
       expect(data.fights[0]?.encounterID).toBeNull()
       expect(data.actors).toHaveLength(7)
@@ -72,6 +76,100 @@ describe('Reports API', () => {
 
       const data: ReportResponse = await res.json()
       expect(data.abilities).toEqual([])
+      expect(data.threatConfig).toEqual({
+        displayName: 'Anniversary Edition',
+        version: '1.3.1',
+      })
+    })
+
+    it('resolves SoD config when report metadata indicates Discovery season', async () => {
+      mockFetch({
+        report: {
+          ...reportData,
+          masterData: {
+            ...reportData.masterData,
+            gameVersion: 2,
+          },
+          fights: reportData.fights.map((fight) => ({
+            ...fight,
+            classicSeasonID: 3,
+          })),
+        },
+      })
+
+      const res = await app.request(
+        'http://localhost/v1/reports/SOD123xyz',
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(200)
+
+      const data: ReportResponse = await res.json()
+      expect(data.gameVersion).toBe(2)
+      expect(data.threatConfig).toEqual({
+        displayName: 'Season of Discovery',
+        version: '0.1.0',
+      })
+    })
+
+    it('returns null threat config for unsupported retail reports', async () => {
+      mockFetch({
+        report: {
+          ...reportData,
+          masterData: {
+            ...reportData.masterData,
+            gameVersion: 1,
+          },
+        },
+      })
+
+      const res = await app.request(
+        'http://localhost/v1/reports/RETAIL123',
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(200)
+
+      const data: ReportResponse = await res.json()
+      expect(data.gameVersion).toBe(1)
+      expect(data.threatConfig).toBeNull()
+    })
+
+    it('resolves era config from era partition metadata', async () => {
+      mockFetch({
+        report: {
+          ...reportData,
+          masterData: {
+            ...reportData.masterData,
+            gameVersion: 2,
+          },
+          fights: reportData.fights.map((fight) => ({
+            ...fight,
+            classicSeasonID: undefined,
+          })),
+          zone: {
+            ...reportData.zone,
+            partitions: [{ id: 1, name: 'S0' }],
+          },
+        },
+      })
+
+      const res = await app.request(
+        'http://localhost/v1/reports/ERA123xyz',
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(200)
+
+      const data: ReportResponse = await res.json()
+      expect(data.gameVersion).toBe(2)
+      expect(data.threatConfig).toEqual({
+        displayName: 'Vanilla (Era)',
+        version: '0.1.0',
+      })
     })
 
     it('returns 400 for invalid report code format', async () => {

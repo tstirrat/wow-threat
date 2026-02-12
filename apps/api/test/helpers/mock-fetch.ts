@@ -18,10 +18,16 @@ export interface MockWCLResponses {
     owner: { name: string }
     startTime: number
     endTime: number
-    zone: { id: number; name: string }
+    zone: {
+      id: number
+      name: string
+      expansion?: { id: number; name: string }
+      partitions?: Array<{ id: number; name: string }>
+    }
     fights: Array<{
       id: number
       encounterID?: number | null
+      classicSeasonID?: number | null
       name: string
       startTime: number
       endTime: number

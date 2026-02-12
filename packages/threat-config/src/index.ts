@@ -1,45 +1,17 @@
 /**
  * Threat Configuration Package
  *
- * Exports the getConfig function and all types/utilities for threat calculations.
+ * Exports config resolvers and shared threat calculation utilities.
  */
-import type { ThreatConfig } from '@wcl-threat/shared'
-
-import { anniversaryConfig } from './anniversary'
-import { retailConfig } from './retail'
-import { sodConfig } from './sod'
-
-// Map WCL gameVersion integers to configs
-const configs: Record<number, ThreatConfig> = {
-  2: anniversaryConfig, // Anniversary Edition / Classic Era
-  5: sodConfig, // Season of Discovery
-  1: retailConfig, // Retail
-}
-
-/**
- * Get the threat config for a specific game version
- */
-export function getConfig(gameVersion: number): ThreatConfig {
-  const config = configs[gameVersion]
-  if (!config) {
-    throw new Error(`No threat config for gameVersion: ${gameVersion}`)
-  }
-  return config
-}
-
-/**
- * Get the config version string for a specific game version
- */
-export function getConfigVersion(gameVersion: number): string {
-  return getConfig(gameVersion).version
-}
-
 /**
  * Get all supported game versions
  */
 export function getSupportedGameVersions(): number[] {
-  return Object.keys(configs).map(Number)
+  // Resolver supports WCL gameVersion 2 (Era/Anniversary/SoD via metadata).
+  return [2]
 }
+
+export { resolveConfig, resolveConfigOrNull } from './config-resolver'
 
 // Re-export types
 export * from './shared/formulas'
@@ -48,5 +20,5 @@ export * from './shared/utils'
 
 // Re-export version configs for testing
 export { anniversaryConfig } from './anniversary'
+export { eraConfig } from './era'
 export { sodConfig } from './sod'
-export { retailConfig } from './retail'

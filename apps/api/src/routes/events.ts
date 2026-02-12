@@ -5,7 +5,10 @@
  */
 import { Hono } from 'hono'
 
-import { getConfig } from '@wcl-threat/threat-config'
+import {
+  getSupportedGameVersions,
+  resolveConfigOrNull,
+} from '@wcl-threat/threat-config'
 import {
   buildThreatEngineInput,
   processEvents,
@@ -14,6 +17,7 @@ import type { WCLEvent } from '@wcl-threat/wcl-types'
 
 import {
   fightNotFound,
+  invalidGameVersion,
   invalidConfigVersion,
   invalidFightId,
   reportNotFound,
@@ -58,7 +62,27 @@ eventsRoutes.get('/', async (c) => {
   }
 
   const gameVersion = report.masterData.gameVersion
-  const config = getConfig(gameVersion)
+  const config = resolveConfigOrNull({
+    gameVersion,
+    zone: report.zone,
+    fights: report.fights,
+  })
+  if (!config) {
+    const classicSeasonIds = Array.from(
+      new Set(
+        report.fights
+          .map((reportFight) => reportFight.classicSeasonID)
+          .filter((seasonId): seasonId is number => seasonId != null),
+      ),
+    )
+
+    throw invalidGameVersion(gameVersion, getSupportedGameVersions(), {
+      classicSeasonIds,
+      partitionNames: (report.zone.partitions ?? []).map(
+        (partition) => partition.name,
+      ),
+    })
+  }
   if (configVersionParam && configVersionParam !== config.version) {
     throw invalidConfigVersion(configVersionParam, config.version)
   }

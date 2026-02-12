@@ -1,5 +1,5 @@
 /**
- * Report-level page with fights, players, and aggregated rankings.
+ * Report-level page with fights and player navigation.
  */
 import { useEffect, type FC } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
@@ -8,12 +8,10 @@ import { ErrorState } from '../components/error-state'
 import { FightsList } from '../components/fights-list'
 import { LoadingState } from '../components/loading-state'
 import { PlayersNavigationList } from '../components/players-navigation-list'
-import { ReportRankingsTable } from '../components/report-rankings-table'
 import { SectionCard } from '../components/section-card'
 import { buildReportUrl } from '../lib/wcl-url'
 import { useReportData } from '../hooks/use-report-data'
 import { useReportHost } from '../hooks/use-report-host'
-import { useReportRankings } from '../hooks/use-report-rankings'
 import { useRecentReports } from '../hooks/use-recent-reports'
 import type { WarcraftLogsHost } from '../types/app'
 
@@ -33,12 +31,6 @@ export const ReportPage: FC = () => {
   const { data, isLoading, error } = useReportData(reportId)
 
   const players = data?.actors.filter((actor) => actor.type === 'Player') ?? []
-
-  const rankings = useReportRankings({
-    reportId,
-    fights: data?.fights ?? [],
-    actors: data?.actors ?? [],
-  })
 
   useEffect(() => {
     if (!data) {
@@ -75,9 +67,21 @@ export const ReportPage: FC = () => {
     )
   }
 
+  const threatConfigLabel = data.threatConfig
+    ? `${data.threatConfig.displayName} (${data.threatConfig.version})`
+    : 'No supported config'
+
   return (
     <div className="space-y-5">
-      <SectionCard title={data.title} subtitle={`Report ${data.code} · ${data.zone.name}`}>
+      <SectionCard
+        title={data.title}
+        subtitle={`Report ${data.code} · ${data.zone.name}`}
+        headerRight={
+          <div className="text-right text-xs text-muted">
+            <p>Threat config: {threatConfigLabel}</p>
+          </div>
+        }
+      >
         <div className="flex flex-wrap items-center gap-3 text-sm">
           <span className="text-muted">Owner: {data.owner}</span>
           <span className="text-muted">Fights: {data.fights.length}</span>
@@ -105,22 +109,6 @@ export const ReportPage: FC = () => {
         subtitle="Players by boss-kill grid. Empty cells mean the player did not participate."
       >
         <PlayersNavigationList fights={data.fights} players={players} reportId={reportId} />
-      </SectionCard>
-
-      <SectionCard
-        title="Report rankings"
-        subtitle="Aggregated threat deltas by player across all fights in this report."
-      >
-        {rankings.isLoading ? (
-          <LoadingState message="Calculating rankings from fight event data..." />
-        ) : rankings.error ? (
-          <ErrorState
-            message={rankings.error.message}
-            title="Unable to load ranking data"
-          />
-        ) : (
-          <ReportRankingsTable fights={data.fights} rankings={rankings.rankings} />
-        )}
       </SectionCard>
     </div>
   )

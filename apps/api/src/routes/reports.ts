@@ -3,12 +3,13 @@
  *
  * GET /reports/:code - Get report metadata
  */
+import { Hono } from 'hono'
+import { resolveConfigOrNull } from '@wcl-threat/threat-config'
 import type {
   ReportAbility as WCLReportAbility,
   ReportActor as WCLReportActor,
   ReportFight as WCLReportFight,
 } from '@wcl-threat/wcl-types'
-import { Hono } from 'hono'
 
 import { invalidReportCode, reportNotFound } from '../middleware/error'
 import { WCLClient } from '../services/wcl'
@@ -52,6 +53,11 @@ reportRoutes.get('/:code', async (c) => {
 
   const report = data.reportData.report
   const masterData = report.masterData
+  const threatConfig = resolveConfigOrNull({
+    gameVersion: masterData.gameVersion,
+    zone: report.zone,
+    fights: report.fights,
+  })
 
   const cacheControl =
     c.env.ENVIRONMENT === 'development'
@@ -66,6 +72,12 @@ reportRoutes.get('/:code', async (c) => {
       startTime: report.startTime,
       endTime: report.endTime,
       gameVersion: masterData.gameVersion,
+      threatConfig: threatConfig
+        ? {
+            displayName: threatConfig.displayName,
+            version: threatConfig.version,
+          }
+        : null,
       zone: report.zone,
       fights: report.fights.map((fight: WCLReportFight) =>
         toReportFightSummary(fight),

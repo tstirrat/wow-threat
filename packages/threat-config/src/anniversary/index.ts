@@ -1,10 +1,12 @@
 /**
  * Anniversary Edition Threat Configuration
  *
- * This is the main entry point for Anniversary Edition (gameVersion: 1) threat config.
+ * Anniversary config for WCL gameVersion 2 reports that resolve to
+ * Anniversary-specific metadata (season/partition).
  */
 import type {
   ThreatConfig,
+  ThreatConfigResolutionInput,
   ThreatContext,
   ThreatModifier,
 } from '@wcl-threat/shared'
@@ -63,9 +65,40 @@ const globalAuraModifiers: Record<
   }),
 }
 
+const ANNIVERSARY_CLASSIC_SEASON_ID = 5
+
+function getClassicSeasonIds(input: ThreatConfigResolutionInput): number[] {
+  return Array.from(
+    new Set(
+      input.fights
+        .map((fight) => fight.classicSeasonID)
+        .filter((seasonId): seasonId is number => seasonId != null),
+    ),
+  )
+}
+
+function hasAnniversaryPartition(input: ThreatConfigResolutionInput): boolean {
+  return (input.zone.partitions ?? []).some((partition) => {
+    const name = partition.name.toLowerCase()
+    return name.includes('phase') || name.includes('pre-patch')
+  })
+}
+
 export const anniversaryConfig: ThreatConfig = {
   version: '1.3.1',
-  gameVersion: 2,
+  displayName: 'Anniversary Edition',
+  resolve: (input: ThreatConfigResolutionInput): boolean => {
+    if (input.gameVersion !== 2) {
+      return false
+    }
+
+    const seasonIds = getClassicSeasonIds(input)
+    if (seasonIds.length > 0) {
+      return seasonIds.includes(ANNIVERSARY_CLASSIC_SEASON_ID)
+    }
+
+    return hasAnniversaryPartition(input)
+  },
 
   baseThreat,
 

@@ -97,7 +97,7 @@ describe('Events API', () => {
       expect(data.reportCode).toBe('ABC123xyz')
       expect(data.fightId).toBe(1)
       expect(data.fightName).toBe('Patchwerk')
-      expect(data.gameVersion).toBe(1)
+      expect(data.gameVersion).toBe(2)
       expect(data.events).toBeDefined()
       expect(data.summary).toBeDefined()
     })
@@ -156,7 +156,7 @@ describe('Events API', () => {
       )
 
       expect(res.headers.get('Cache-Control')).toContain('immutable')
-      expect(res.headers.get('X-Game-Version')).toBe('1')
+      expect(res.headers.get('X-Game-Version')).toBe('2')
     })
 
     it('returns 404 for non-existent fight', async () => {
@@ -183,6 +183,161 @@ describe('Events API', () => {
 
       const data: ApiError = await res.json()
       expect(data.error.code).toBe('INVALID_CONFIG_VERSION')
+    })
+
+    it('returns 400 for unsupported game version', async () => {
+      const unsupportedGameVersionReport = {
+        ...reportData,
+        masterData: {
+          ...reportData.masterData,
+          gameVersion: 999,
+        },
+      }
+      mockFetch({
+        report: unsupportedGameVersionReport,
+        events: mockEvents,
+      })
+
+      const res = await app.request(
+        'http://localhost/v1/reports/unsupported-game-version-999/fights/1/events',
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(400)
+
+      const data: ApiError = await res.json()
+      expect(data.error.code).toBe('INVALID_GAME_VERSION')
+      expect(data.error.details).toMatchObject({
+        gameVersion: 999,
+      })
+    })
+
+    it('returns 400 for unsupported retail game version', async () => {
+      const retailReport = {
+        ...reportData,
+        masterData: {
+          ...reportData.masterData,
+          gameVersion: 1,
+        },
+      }
+      mockFetch({
+        report: retailReport,
+        events: mockEvents,
+      })
+
+      const res = await app.request(
+        'http://localhost/v1/reports/retail-not-supported/fights/1/events',
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(400)
+
+      const data: ApiError = await res.json()
+      expect(data.error.code).toBe('INVALID_GAME_VERSION')
+      expect(data.error.details).toMatchObject({
+        gameVersion: 1,
+      })
+    })
+
+    it('resolves SoD config from classic season metadata', async () => {
+      mockFetch({
+        report: {
+          ...reportData,
+          masterData: {
+            ...reportData.masterData,
+            gameVersion: 2,
+          },
+          fights: reportData.fights.map((fight) => ({
+            ...fight,
+            classicSeasonID: 3,
+          })),
+        },
+        events: mockEvents,
+      })
+
+      const res = await app.request(
+        'http://localhost/v1/reports/SOD123xyz/fights/1/events?configVersion=1.3.1',
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(400)
+
+      const data: ApiError = await res.json()
+      expect(data.error.code).toBe('INVALID_CONFIG_VERSION')
+      expect(data.error.details).toMatchObject({
+        requestedVersion: '1.3.1',
+        supportedVersion: '0.1.0',
+      })
+    })
+
+    it('returns 400 when classic season metadata is unsupported', async () => {
+      mockFetch({
+        report: {
+          ...reportData,
+          masterData: {
+            ...reportData.masterData,
+            gameVersion: 2,
+          },
+          fights: reportData.fights.map((fight) => ({
+            ...fight,
+            classicSeasonID: 42,
+          })),
+        },
+        events: mockEvents,
+      })
+
+      const res = await app.request(
+        'http://localhost/v1/reports/UNKNOWNSEASON/fights/1/events',
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(400)
+
+      const data: ApiError = await res.json()
+      expect(data.error.code).toBe('INVALID_GAME_VERSION')
+      expect(data.error.details).toMatchObject({
+        gameVersion: 2,
+      })
+    })
+
+    it('resolves era config from era partition metadata', async () => {
+      mockFetch({
+        report: {
+          ...reportData,
+          masterData: {
+            ...reportData.masterData,
+            gameVersion: 2,
+          },
+          fights: reportData.fights.map((fight) => ({
+            ...fight,
+            classicSeasonID: undefined,
+          })),
+          zone: {
+            ...reportData.zone,
+            partitions: [{ id: 1, name: 'S0' }],
+          },
+        },
+        events: mockEvents,
+      })
+
+      const res = await app.request(
+        'http://localhost/v1/reports/ERA123xyz/fights/1/events?configVersion=1.3.1',
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(400)
+
+      const data: ApiError = await res.json()
+      expect(data.error.code).toBe('INVALID_CONFIG_VERSION')
+      expect(data.error.details).toMatchObject({
+        requestedVersion: '1.3.1',
+        supportedVersion: '0.1.0',
+      })
     })
 
     it('only splits heal threat among enemies in the current fight', async () => {

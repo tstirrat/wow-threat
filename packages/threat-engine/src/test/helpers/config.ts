@@ -40,7 +40,8 @@ export function createMockThreatConfig(
 ): ThreatConfig {
   const defaultConfig: ThreatConfig = {
     version: 'test-1.0.0',
-    gameVersion: 1,
+    displayName: 'Test Config',
+    resolve: () => false,
 
     baseThreat: {
       damage: (ctx: ThreatContext) => ({

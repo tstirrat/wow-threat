@@ -11,11 +11,18 @@
         "endTime": 1704078000000,
         "zone": {
           "id": 1015,
-          "name": "Naxxramas"
+          "name": "Naxxramas",
+          "partitions": [
+            {
+              "id": 1,
+              "name": "Phase 5"
+            }
+          ]
         },
         "fights": [
           {
             "id": 1,
+            "classicSeasonID": 5,
             "name": "Patchwerk",
             "startTime": 0,
             "endTime": 180000,
@@ -46,6 +53,7 @@
           },
           {
             "id": 2,
+            "classicSeasonID": 5,
             "name": "Grobbulus",
             "startTime": 200000,
             "endTime": 380000,
@@ -76,6 +84,7 @@
           },
           {
             "id": 3,
+            "classicSeasonID": 5,
             "name": "Gluth",
             "startTime": 400000,
             "endTime": 650000,
@@ -106,7 +115,7 @@
           }
         ],
         "masterData": {
-          "gameVersion": 1,
+          "gameVersion": 2,
           "actors": [
             {
               "id": 1,

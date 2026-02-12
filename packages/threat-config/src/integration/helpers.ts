@@ -15,7 +15,7 @@ import { readFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { getConfig } from '..'
+import { resolveConfig } from '..'
 
 export interface ConfigFixtureMetadata {
   host: string
@@ -127,7 +127,7 @@ export async function loadConfigFixture(
 }
 
 /**
- * Run the threat engine with the config implied by fixture gameVersion.
+ * Run the threat engine with the config resolved from fixture report metadata.
  */
 export function runConfigFixture(
   fixture: ConfigFixture,
@@ -143,7 +143,12 @@ export function runConfigFixture(
   }
 
   const config =
-    options.config ?? getConfig(fixture.report.masterData.gameVersion)
+    options.config ??
+    resolveConfig({
+      gameVersion: fixture.report.masterData.gameVersion,
+      zone: fixture.report.zone,
+      fights: fixture.report.fights,
+    })
   const { actorMap, enemies, abilitySchoolMap } = buildThreatEngineInput({
     fight,
     actors: fixture.report.masterData.actors,

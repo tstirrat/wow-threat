@@ -59,6 +59,23 @@ export function invalidFightId(id: string): AppError {
   )
 }
 
+export function invalidGameVersion(
+  gameVersion: number,
+  supportedVersions: number[],
+  details?: Record<string, unknown>,
+): AppError {
+  return new AppError(
+    ErrorCodes.INVALID_GAME_VERSION,
+    `Unsupported game version: ${gameVersion}. Supported versions: ${supportedVersions.join(', ')}`,
+    400,
+    {
+      gameVersion,
+      supportedVersions,
+      ...details,
+    },
+  )
+}
+
 export function invalidConfigVersion(
   requestedVersion: string,
   supportedVersion: string,

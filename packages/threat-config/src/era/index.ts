@@ -1,8 +1,8 @@
 /**
- * Season of Discovery Threat Configuration
+ * Vanilla Era Threat Configuration
  *
- * Stub config for reports that resolve to Season of Discovery metadata.
- * TODO: Implement SoD-specific runes and mechanics
+ * Stub config for Classic Era.
+ * TODO: Implement Era-specific mechanics and class configs.
  */
 import type {
   ThreatConfig,
@@ -11,7 +11,6 @@ import type {
   ThreatFormulaResult,
 } from '@wcl-threat/shared'
 
-// Placeholder base threat (same as Anniversary for now)
 const baseThreat = {
   damage: (ctx: ThreatContext): ThreatFormulaResult => ({
     formula: 'amt',
@@ -32,8 +31,6 @@ const baseThreat = {
   }),
 }
 
-const SOD_CLASSIC_SEASON_ID = 3
-
 function getClassicSeasonIds(input: ThreatConfigResolutionInput): number[] {
   return Array.from(
     new Set(
@@ -44,32 +41,32 @@ function getClassicSeasonIds(input: ThreatConfigResolutionInput): number[] {
   )
 }
 
-function hasDiscoveryPartition(input: ThreatConfigResolutionInput): boolean {
-  return (input.zone.partitions ?? []).some((partition) =>
-    partition.name.toLowerCase().includes('discovery'),
-  )
+function hasEraPartition(input: ThreatConfigResolutionInput): boolean {
+  return (input.zone.partitions ?? []).some((partition) => {
+    const name = partition.name.toLowerCase()
+    return name.includes('s0') || name.includes('hardcore') || name.includes('som')
+  })
 }
 
-export const sodConfig: ThreatConfig = {
+export const eraConfig: ThreatConfig = {
   version: '0.1.0',
-  displayName: 'Season of Discovery',
+  displayName: 'Vanilla (Era)',
   resolve: (input: ThreatConfigResolutionInput): boolean => {
     if (input.gameVersion !== 2) {
       return false
     }
 
-    const seasonIds = getClassicSeasonIds(input)
-    if (seasonIds.length > 0) {
-      return seasonIds.includes(SOD_CLASSIC_SEASON_ID)
+    if (getClassicSeasonIds(input).length > 0) {
+      return false
     }
 
-    return hasDiscoveryPartition(input)
+    return hasEraPartition(input)
   },
 
   baseThreat,
 
   classes: {
-    // TODO: Implement SoD class configs with runes
+    // TODO: Implement Era class configs
   },
 
   auraModifiers: {},

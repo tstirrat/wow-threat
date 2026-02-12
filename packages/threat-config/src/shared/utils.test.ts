@@ -34,7 +34,8 @@ describe('validateAuraModifiers', () => {
 
     return {
       version: '1.0.0',
-      gameVersion: 1,
+      displayName: 'Test Config',
+      resolve: () => false,
       baseThreat: {} as ThreatConfig['baseThreat'],
       classes,
       auraModifiers: globalMods,
@@ -213,7 +214,8 @@ describe('validateAbilities', () => {
 
     return {
       version: '1.0.0',
-      gameVersion: 1,
+      displayName: 'Test Config',
+      resolve: () => false,
       baseThreat: {} as ThreatConfig['baseThreat'],
       classes,
       abilities: globalAbilities,
@@ -393,7 +395,8 @@ describe('validateAbilities', () => {
   it('handles config with no global abilities', () => {
     const config: ThreatConfig = {
       version: '1.0.0',
-      gameVersion: 1,
+      displayName: 'Test Config',
+      resolve: () => false,
       baseThreat: {} as ThreatConfig['baseThreat'],
       classes: {
         warrior: {

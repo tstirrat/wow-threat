@@ -21,8 +21,25 @@ export async function requestJson<T>(url: string): Promise<T> {
 
   if (!response.ok) {
     const body = await response.text()
+    let message = body || `Request failed with status ${response.status}`
+
+    if (body) {
+      try {
+        const parsed = JSON.parse(body) as {
+          error?: {
+            message?: unknown
+          }
+        }
+        if (typeof parsed.error?.message === 'string') {
+          message = parsed.error.message
+        }
+      } catch {
+        // Keep raw body when the response is not valid JSON.
+      }
+    }
+
     throw new ApiClientError(
-      body || `Request failed with status ${response.status}`,
+      message,
       response.status,
     )
   }

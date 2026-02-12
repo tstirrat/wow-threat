@@ -304,11 +304,26 @@ export interface EncounterThreatConfig {
   preprocessor?: EncounterPreprocessorFactory
 }
 
+export interface ThreatConfigResolutionInput {
+  gameVersion: number
+  zone: {
+    partitions?: Array<{
+      id: number
+      name: string
+    }>
+  }
+  fights: Array<{
+    classicSeasonID?: number | null
+  }>
+}
+
 export interface ThreatConfig {
   /** Semantic version of this config */
   version: string
-  /** WCL gameVersion integer */
-  gameVersion: number
+  /** Human-readable config label, e.g. "Season of Discovery" */
+  displayName: string
+  /** Report metadata matcher used to select this config */
+  resolve: (input: ThreatConfigResolutionInput) => boolean
   /** Base threat calculations by event type */
   baseThreat: BaseThreatConfig
   /** Class-specific configurations */

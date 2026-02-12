@@ -49,6 +49,11 @@ export interface ReportFightSummary {
   friendlyPets: ReportFightParticipant[]
 }
 
+export interface ThreatConfigSummary {
+  displayName: string
+  version: string
+}
+
 export interface ReportResponse {
   code: string
   title: string
@@ -56,6 +61,7 @@ export interface ReportResponse {
   startTime: number
   endTime: number
   gameVersion: number
+  threatConfig: ThreatConfigSummary | null
   zone: Zone
   fights: ReportFightSummary[]
   actors: ReportActorSummary[]

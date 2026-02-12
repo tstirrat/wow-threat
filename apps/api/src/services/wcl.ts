@@ -134,10 +134,16 @@ export class WCLClient {
             owner { name }
             startTime
             endTime
-            zone { id name }
+            zone {
+              id
+              name
+              expansion { id name }
+              partitions { id name }
+            }
             fights {
               id
               encounterID
+              classicSeasonID
               name
               startTime
               endTime

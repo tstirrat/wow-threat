@@ -6,6 +6,14 @@ import type { WCLEvent } from './events'
 export interface Zone {
   id: number
   name: string
+  expansion?: {
+    id: number
+    name: string
+  }
+  partitions?: Array<{
+    id: number
+    name: string
+  }>
 }
 
 export interface ReportFightNPC {
@@ -39,6 +47,7 @@ export interface Report {
 export interface ReportFight {
   id: number
   encounterID?: number | null
+  classicSeasonID?: number | null
   name: string
   startTime: number
   endTime: number
