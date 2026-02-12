@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 
 import { getClassColor } from './class-colors'
 import {
+  buildThreatSeries,
   buildFocusedPlayerSummary,
   buildFocusedPlayerThreatRows,
   filterSeriesByPlayers,
@@ -75,6 +76,9 @@ describe('threat-aggregation', () => {
         totalThreat: 0,
         totalDamage: 0,
         totalHealing: 0,
+        stateVisualSegments: [],
+        fixateWindows: [],
+        invulnerabilityWindows: [],
       },
       {
         actorId: 5,
@@ -89,11 +93,321 @@ describe('threat-aggregation', () => {
         totalThreat: 0,
         totalDamage: 0,
         totalHealing: 0,
+        stateVisualSegments: [],
+        fixateWindows: [],
+        invulnerabilityWindows: [],
       },
     ]
 
     const filtered = filterSeriesByPlayers(series, [2])
     expect(filtered.map((entry) => entry.actorId)).toEqual([5])
+  })
+
+  it('builds state visual segments and fixate windows for the selected target', () => {
+    const actors: ReportActorSummary[] = [
+      {
+        id: 1,
+        name: 'Warrior',
+        type: 'Player',
+        subType: 'Warrior',
+      },
+    ]
+    const abilities: ReportAbilitySummary[] = [
+      {
+        gameID: 100,
+        icon: null,
+        name: 'Sunder Armor',
+        type: 'ability',
+      },
+    ]
+    const buildCalculation = (effects?: unknown[]) => ({
+      formula: '0',
+      amount: 0,
+      baseThreat: 0,
+      modifiedThreat: 0,
+      isSplit: false,
+      modifiers: [],
+      effects,
+    })
+    const events = [
+      {
+        timestamp: 1000,
+        type: 'damage',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 10,
+        targetIsFriendly: false,
+        abilityGameID: 100,
+        amount: 200,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 100,
+              total: 100,
+            },
+          ],
+          calculation: {
+            formula: 'damage',
+            amount: 200,
+            baseThreat: 200,
+            modifiedThreat: 100,
+            isSplit: false,
+            modifiers: [],
+          },
+        },
+      },
+      {
+        timestamp: 1080,
+        type: 'removebuff',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 1,
+        targetIsFriendly: true,
+        threat: {
+          changes: [],
+          calculation: buildCalculation([
+            {
+              type: 'state',
+              state: {
+                kind: 'fixate',
+                phase: 'end',
+                spellId: 355,
+                actorId: 1,
+                targetId: 10,
+              },
+            },
+          ]),
+        },
+      },
+      {
+        timestamp: 1100,
+        type: 'applybuff',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 1,
+        targetIsFriendly: true,
+        threat: {
+          changes: [],
+          calculation: buildCalculation([
+            {
+              type: 'state',
+              state: {
+                kind: 'fixate',
+                phase: 'start',
+                spellId: 355,
+                actorId: 1,
+                targetId: 10,
+              },
+            },
+          ]),
+        },
+      },
+      {
+        timestamp: 1150,
+        type: 'applybuff',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 1,
+        targetIsFriendly: true,
+        threat: {
+          changes: [],
+          calculation: buildCalculation([
+            {
+              type: 'state',
+              state: {
+                kind: 'invulnerable',
+                phase: 'start',
+                spellId: 642,
+                actorId: 1,
+              },
+            },
+          ]),
+        },
+      },
+      {
+        timestamp: 1175,
+        type: 'applybuff',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 1,
+        targetIsFriendly: true,
+        threat: {
+          changes: [],
+          calculation: buildCalculation([
+            {
+              type: 'state',
+              state: {
+                kind: 'aggroLoss',
+                phase: 'start',
+                spellId: 118,
+                actorId: 1,
+              },
+            },
+          ]),
+        },
+      },
+      {
+        timestamp: 1200,
+        type: 'removebuff',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 1,
+        targetIsFriendly: true,
+        threat: {
+          changes: [],
+          calculation: buildCalculation([
+            {
+              type: 'state',
+              state: {
+                kind: 'invulnerable',
+                phase: 'end',
+                spellId: 642,
+                actorId: 1,
+              },
+            },
+          ]),
+        },
+      },
+      {
+        timestamp: 1225,
+        type: 'removebuff',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 1,
+        targetIsFriendly: true,
+        threat: {
+          changes: [],
+          calculation: buildCalculation([
+            {
+              type: 'state',
+              state: {
+                kind: 'aggroLoss',
+                phase: 'end',
+                spellId: 118,
+                actorId: 1,
+              },
+            },
+          ]),
+        },
+      },
+      {
+        timestamp: 1250,
+        type: 'removebuff',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 1,
+        targetIsFriendly: true,
+        threat: {
+          changes: [],
+          calculation: buildCalculation([
+            {
+              type: 'state',
+              state: {
+                kind: 'fixate',
+                phase: 'end',
+                spellId: 355,
+                actorId: 1,
+                targetId: 10,
+              },
+            },
+          ]),
+        },
+      },
+      {
+        timestamp: 1300,
+        type: 'applybuff',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 1,
+        targetIsFriendly: true,
+        threat: {
+          changes: [],
+          calculation: buildCalculation([
+            {
+              type: 'state',
+              state: {
+                kind: 'aggroLoss',
+                phase: 'start',
+                spellId: 10346,
+                actorId: 1,
+              },
+            },
+          ]),
+        },
+      },
+      {
+        timestamp: 1325,
+        type: 'applybuff',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 1,
+        targetIsFriendly: true,
+        threat: {
+          changes: [],
+          calculation: buildCalculation([
+            {
+              type: 'state',
+              state: {
+                kind: 'fixate',
+                phase: 'start',
+                spellId: 355,
+                actorId: 1,
+                targetId: 20,
+              },
+            },
+          ]),
+        },
+      },
+      {
+        timestamp: 1350,
+        type: 'removebuff',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 1,
+        targetIsFriendly: true,
+        threat: {
+          changes: [],
+          calculation: buildCalculation([
+            {
+              type: 'state',
+              state: {
+                kind: 'fixate',
+                phase: 'end',
+                spellId: 355,
+                actorId: 1,
+                targetId: 20,
+              },
+            },
+          ]),
+        },
+      },
+    ]
+
+    const series = buildThreatSeries({
+      events: events as never,
+      actors,
+      abilities,
+      fightStartTime: 1000,
+      fightEndTime: 1500,
+      targetId: 10,
+    })
+
+    expect(series).toHaveLength(1)
+    expect(series[0]?.stateVisualSegments).toEqual([
+      { kind: 'fixate', startMs: 100, endMs: 150 },
+      { kind: 'invulnerable', startMs: 150, endMs: 175 },
+      { kind: 'aggroLoss', startMs: 175, endMs: 225 },
+      { kind: 'fixate', startMs: 225, endMs: 250 },
+      { kind: 'aggroLoss', startMs: 300, endMs: 500 },
+    ])
+    expect(series[0]?.fixateWindows).toEqual([{ startMs: 100, endMs: 250 }])
+    expect(series[0]?.invulnerabilityWindows).toEqual([
+      { startMs: 150, endMs: 200 },
+    ])
   })
 
   it('builds focused player summary for the selected window', () => {

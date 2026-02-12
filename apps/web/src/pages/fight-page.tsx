@@ -113,6 +113,7 @@ export const FightPage: FC = () => {
       actors: fightData.actors,
       abilities: reportData.abilities,
       fightStartTime: fightData.startTime,
+      fightEndTime: fightData.endTime,
       targetId: selectedTargetId,
     })
   }, [

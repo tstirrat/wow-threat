@@ -43,6 +43,17 @@ export interface ThreatPoint {
   modifiers: string
 }
 
+export type ThreatStateVisualKind = 'fixate' | 'aggroLoss' | 'invulnerable'
+
+export interface ThreatStateWindow {
+  startMs: number
+  endMs: number
+}
+
+export interface ThreatStateVisualSegment extends ThreatStateWindow {
+  kind: ThreatStateVisualKind
+}
+
 export interface ThreatSeries {
   actorId: number
   actorName: string
@@ -56,6 +67,9 @@ export interface ThreatSeries {
   totalThreat: number
   totalDamage: number
   totalHealing: number
+  stateVisualSegments: ThreatStateVisualSegment[]
+  fixateWindows: ThreatStateWindow[]
+  invulnerabilityWindows: ThreatStateWindow[]
 }
 
 export interface PlayerSummaryRow {

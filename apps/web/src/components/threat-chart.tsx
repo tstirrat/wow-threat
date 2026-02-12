@@ -6,6 +6,11 @@ import ReactECharts from 'echarts-for-react'
 import { type FC, useEffect, useMemo, useRef, useState } from 'react'
 
 import { formatNumber, formatTimelineTime } from '../lib/format'
+import {
+  buildAuraMarkArea,
+  buildThreatStateVisualMaps,
+  resolveThreatStateStatus,
+} from '../lib/threat-chart-visuals'
 import { resolveSeriesWindowBounds } from '../lib/threat-aggregation'
 import type { ThreatSeries } from '../types/app'
 
@@ -22,6 +27,7 @@ interface ChartThemeColors {
 }
 
 interface TooltipPointPayload {
+  actorId: number
   actorColor: string
   abilityName: string
   amount: number
@@ -36,7 +42,6 @@ interface TooltipPointPayload {
 }
 
 interface SeriesChartPoint extends TooltipPointPayload {
-  actorId: number
   playerId: number | null
   value: [number, number]
 }
@@ -179,6 +184,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   const endValue = windowEndMs ?? bounds.max
   const legendWidthPx = 128
   const legendRightOffsetPx = 8
+  const threatStateVisualMaps = buildThreatStateVisualMaps(series)
   const chartSeries = useMemo(
     () =>
       series.map((item) => {
@@ -460,6 +466,18 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         const amount = Number(payload.amount ?? 0)
         const baseThreat = Number(payload.baseThreat ?? 0)
         const eventType = escapeHtml(payload.eventType ?? 'unknown')
+        const actorId = Number(payload.actorId ?? 0)
+        const sourceSeries =
+          series.find((item) => item.actorId === actorId) ?? null
+        const auraStatus = sourceSeries
+          ? resolveThreatStateStatus(sourceSeries, timeMs)
+          : { color: null, label: 'normal' }
+        const statusLabel = escapeHtml(auraStatus.label)
+        const statusColor = escapeHtml(auraStatus.color ?? themeColors.muted)
+        const auraLine =
+          auraStatus.color && auraStatus.label
+            ? `Aura: <strong style="color:${statusColor};">${statusLabel}</strong>`
+            : null
         const multipliersLines =
           modifiers.length === 0
             ? ['Multipliers: none']
@@ -480,6 +498,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
           `Threat Applied To Target: ${formatSignedThreat(threatDelta)}`,
           `Cumulative Threat: ${formatNumber(totalThreat)}`,
           ...multipliersLines,
+          ...(auraLine ? [auraLine] : []),
         ].join('<br/>')
       },
     },
@@ -544,6 +563,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         labelFormatter: (value: number) => formatTimelineTime(value),
       },
     ],
+    visualMap: threatStateVisualMaps.length > 0 ? threatStateVisualMaps : undefined,
     series: chartSeries.map((item, seriesIndex) => {
       const pinnedPoint =
         pinnedTooltip?.seriesIndex === seriesIndex
@@ -573,10 +593,13 @@ export const ThreatChart: FC<ThreatChartProps> = ({
           },
         },
         lineStyle: {
-          color: item.color,
           type: item.actorType === 'Pet' ? 'dashed' : 'solid',
           width: 2,
         },
+        markArea: buildAuraMarkArea({
+          fixateWindows: series[seriesIndex]?.fixateWindows ?? [],
+          invulnerabilityWindows: [],
+        }),
         markPoint: pinnedPoint
           ? {
               symbol: 'circle',
