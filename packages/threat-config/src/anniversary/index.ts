@@ -86,7 +86,7 @@ function hasAnniversaryPartition(input: ThreatConfigResolutionInput): boolean {
 
 export const anniversaryConfig: ThreatConfig = {
   version: '1.3.1',
-  displayName: 'Anniversary Edition',
+  displayName: 'Anniversary (TBC)',
   resolve: (input: ThreatConfigResolutionInput): boolean => {
     if (input.gameVersion !== 2) {
       return false

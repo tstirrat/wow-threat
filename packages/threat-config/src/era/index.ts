@@ -1,33 +1,67 @@
 /**
  * Vanilla Era Threat Configuration
  *
- * Stub config for Classic Era.
- * TODO: Implement Era-specific mechanics and class configs.
+ * Era config currently mirrors Anniversary behavior, but uses Era-specific
+ * resolver logic.
  */
 import type {
   ThreatConfig,
   ThreatConfigResolutionInput,
   ThreatContext,
-  ThreatFormulaResult,
+  ThreatModifier,
 } from '@wcl-threat/shared'
 
-const baseThreat = {
-  damage: (ctx: ThreatContext): ThreatFormulaResult => ({
-    formula: 'amt',
-    value: ctx.amount,
-    splitAmongEnemies: false,
-  }),
+import { validateAbilities, validateAuraModifiers } from '../shared/utils'
+import { druidConfig } from './classes/druid'
+import { hunterConfig } from './classes/hunter'
+import { mageConfig } from './classes/mage'
+import { paladinConfig } from './classes/paladin'
+import { priestConfig } from './classes/priest'
+import { rogueConfig } from './classes/rogue'
+import { shamanConfig } from './classes/shaman'
+import { warlockConfig } from './classes/warlock'
+import { warriorConfig } from './classes/warrior'
+import { baseThreat } from './general'
+import { naxxAbilities } from './naxx'
+import { onyxiaAbilities } from './ony'
+import { zgEncounters } from './zg'
 
-  heal: (ctx: ThreatContext): ThreatFormulaResult => ({
-    formula: 'effectiveHeal * 0.5',
-    value: ctx.amount * 0.5,
-    splitAmongEnemies: true,
-  }),
+// Fixate buffs (taunt effects)
+// Class-specific fixates are in class configs
+const fixateBuffs = new Set<number>([])
 
-  energize: (ctx: ThreatContext): ThreatFormulaResult => ({
-    formula: 'resource * 0.5',
-    value: ctx.amount * 0.5,
-    splitAmongEnemies: true,
+// Aggro loss buffs (fear, polymorph, etc.)
+// Class-specific aggro loss buffs are in class configs
+const aggroLossBuffs = new Set<number>([
+  23023, // Razorgore Conflagrate
+  23310,
+  23311,
+  23312, // Chromaggus Time Lapse
+  22289, // Brood Power: Green
+  20604, // Lucifron Dominate Mind
+  24327, // Hakkar's Cause Insanity
+  23603, // Nefarian: Wild Polymorph
+  26580, // Princess Yauj: Fear
+])
+
+// Invulnerability buffs
+// Class-specific invulnerabilities are in class configs
+const invulnerabilityBuffs = new Set<number>([
+  // Items
+  3169, // Limited Invulnerability Potion
+  6724, // Light of Elune
+])
+
+// Global aura modifiers (items, consumables, cross-class buffs)
+const globalAuraModifiers: Record<
+  number,
+  (ctx: ThreatContext) => ThreatModifier
+> = {
+  // Fetish of the Sand Reaver - 0.3x threat
+  26400: () => ({
+    source: 'gear',
+    name: 'Fetish of the Sand Reaver',
+    value: 0.3,
   }),
 }
 
@@ -49,7 +83,7 @@ function hasEraPartition(input: ThreatConfigResolutionInput): boolean {
 }
 
 export const eraConfig: ThreatConfig = {
-  version: '0.1.0',
+  version: '1.3.1',
   displayName: 'Vanilla (Era)',
   resolve: (input: ThreatConfigResolutionInput): boolean => {
     if (input.gameVersion !== 2) {
@@ -66,8 +100,31 @@ export const eraConfig: ThreatConfig = {
   baseThreat,
 
   classes: {
-    // TODO: Implement Era class configs
+    warrior: warriorConfig,
+    paladin: paladinConfig,
+    druid: druidConfig,
+    priest: priestConfig,
+    rogue: rogueConfig,
+    hunter: hunterConfig,
+    mage: mageConfig,
+    warlock: warlockConfig,
+    shaman: shamanConfig,
   },
 
-  auraModifiers: {},
+  abilities: {
+    ...naxxAbilities,
+    ...onyxiaAbilities,
+  },
+
+  auraModifiers: globalAuraModifiers,
+  fixateBuffs,
+  aggroLossBuffs,
+  invulnerabilityBuffs,
+  encounters: {
+    ...zgEncounters,
+  },
 }
+
+// Validate for duplicate spell IDs (dev-time warning)
+validateAuraModifiers(eraConfig)
+validateAbilities(eraConfig)
