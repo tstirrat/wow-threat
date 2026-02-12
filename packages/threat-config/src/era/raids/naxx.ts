@@ -5,7 +5,7 @@
  */
 import type { ThreatChange, ThreatFormula } from '@wcl-threat/shared'
 
-import { modifyThreat } from '../shared/formulas'
+import { modifyThreat } from '../../shared/formulas'
 
 const HATEFUL_STRIKE_ID = 28308
 const NOTH_BLINK_ID = 29210

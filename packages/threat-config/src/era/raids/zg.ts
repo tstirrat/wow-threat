@@ -1,13 +1,21 @@
 /**
  * Zul'Gurub Encounter Hooks
  *
- * Encounter-level preprocessors for Anniversary Edition.
+ * Encounter-level preprocessors and raid-specific spell sets for Vanilla Era.
  */
 import type {
   EncounterId,
   EncounterPreprocessorFactory,
   EncounterThreatConfig,
+  SpellId,
 } from '@wcl-threat/shared'
+
+/**
+ * Aggro-loss buffs from Zul'Gurub bosses.
+ */
+export const zgAggroLossBuffs: ReadonlySet<SpellId> = new Set([
+  24327, // Hakkar's Cause Insanity
+])
 
 export const ZgEncounterIds = {
   HighPriestessArlokk: 791 as EncounterId,

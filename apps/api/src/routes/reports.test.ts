@@ -40,7 +40,7 @@ describe('Reports API', () => {
       expect(data.owner).toBe('TestGuild')
       expect(data.gameVersion).toBe(2)
       expect(data.threatConfig).toEqual({
-        displayName: 'Anniversary Edition',
+        displayName: 'Anniversary (TBC)',
         version: '1.3.1',
       })
       expect(data.fights).toHaveLength(3)
@@ -77,7 +77,7 @@ describe('Reports API', () => {
       const data: ReportResponse = await res.json()
       expect(data.abilities).toEqual([])
       expect(data.threatConfig).toEqual({
-        displayName: 'Anniversary Edition',
+        displayName: 'Anniversary (TBC)',
         version: '1.3.1',
       })
     })
@@ -168,7 +168,7 @@ describe('Reports API', () => {
       expect(data.gameVersion).toBe(2)
       expect(data.threatConfig).toEqual({
         displayName: 'Vanilla (Era)',
-        version: '0.1.0',
+        version: '1.3.1',
       })
     })
 

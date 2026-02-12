@@ -330,14 +330,11 @@ describe('Events API', () => {
         createMockBindings(),
       )
 
-      expect(res.status).toBe(400)
+      expect(res.status).toBe(200)
 
-      const data: ApiError = await res.json()
-      expect(data.error.code).toBe('INVALID_CONFIG_VERSION')
-      expect(data.error.details).toMatchObject({
-        requestedVersion: '1.3.1',
-        supportedVersion: '0.1.0',
-      })
+      const data: AugmentedEventsResponse = await res.json()
+      expect(data.gameVersion).toBe(2)
+      expect(data.events.length).toBeGreaterThan(0)
     })
 
     it('only splits heal threat among enemies in the current fight', async () => {

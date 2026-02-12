@@ -11,8 +11,8 @@ import {
   hasConfigFixture,
   loadConfigFixture,
   runConfigFixture,
-} from '../integration/helpers'
-import { anniversaryConfig } from './index'
+} from '../../integration/helpers'
+import { anniversaryConfig } from '../index'
 
 const fixtureName = 'anniversary/naxx/patchwerk-fight-26'
 
@@ -30,14 +30,10 @@ describe('anniversary naxx integration', () => {
       throw new Error(`Fixture ${fixtureName} could not be loaded`)
     }
 
-    const {
-      actorMap,
-      augmentedEvents,
-      abilityNameMap,
-      fightStartTime,
-    } = runConfigFixture(fixture, {
-      config: anniversaryConfig,
-    })
+    const { actorMap, augmentedEvents, abilityNameMap, fightStartTime } =
+      runConfigFixture(fixture, {
+        config: anniversaryConfig,
+      })
     const snapshot = buildThreatSnapshotLines(augmentedEvents, actorMap, {
       focusActorId: fixture.metadata.focusActorId,
       focusTargetId: 203,

@@ -5,7 +5,7 @@
  */
 import type { ThreatFormula } from '@wcl-threat/shared'
 
-import { modifyThreat } from '../shared/formulas'
+import { modifyThreat } from '../../shared/formulas'
 
 export const Spells = {
   KnockAway: 19633,
