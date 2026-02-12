@@ -14,7 +14,7 @@ export const ExampleReportList: FC<ExampleReportListProps> = ({
   examples,
 }) => {
   return (
-    <ul className="space-y-2">
+    <ul aria-label="Example reports" className="space-y-2">
       {examples.map((example) => (
         <li
           className="rounded-md border border-border bg-panel px-3 py-2"

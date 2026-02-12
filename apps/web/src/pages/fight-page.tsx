@@ -37,6 +37,10 @@ export const FightPage: FC = () => {
 
   const reportId = params.reportId ?? ''
   const fightId = Number.parseInt(params.fightId ?? '', 10)
+  const chartRenderer =
+    new URLSearchParams(location.search).get('renderer') === 'svg'
+      ? 'svg'
+      : 'canvas'
 
   const { recentReports, addRecentReport } = useRecentReports()
   const reportHost = useReportHost(reportId, recentReports)
@@ -333,6 +337,7 @@ export const FightPage: FC = () => {
           <p className="text-sm text-muted">No threat points are available for this target.</p>
         ) : (
           <ThreatChart
+            renderer={chartRenderer}
             series={visibleSeries}
             windowEndMs={queryState.state.endMs}
             windowStartMs={queryState.state.startMs}

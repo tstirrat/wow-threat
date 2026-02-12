@@ -9,7 +9,11 @@ export type LoadingStateProps = {
 
 export const LoadingState: FC<LoadingStateProps> = ({ message }) => {
   return (
-    <section className="rounded-xl border border-border bg-panel p-6 shadow-sm">
+    <section
+      aria-live="polite"
+      className="rounded-xl border border-border bg-panel p-6 shadow-sm"
+      role="status"
+    >
       <p className="text-sm text-muted">{message}</p>
     </section>
   )

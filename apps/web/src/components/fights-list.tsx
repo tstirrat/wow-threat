@@ -64,9 +64,9 @@ export const FightsList: FC<FightsListProps> = ({
   return (
     <div className="space-y-3">
       <div className="space-y-2">
-        <p className="text-xs uppercase tracking-wide text-muted">Boss kills</p>
+        <h3 className="text-xs uppercase tracking-wide text-muted">Boss kills</h3>
         {grouped.bossEncounters.length > 0 ? (
-          <ul className="space-y-2">
+          <ul aria-label="Boss kill fights" className="space-y-2">
             {grouped.bossEncounters.map((encounter) => (
               <li
                 className="rounded-md border border-border bg-panel px-3 py-3"
@@ -125,9 +125,12 @@ export const FightsList: FC<FightsListProps> = ({
 
       {grouped.trashFights.length > 0 ? (
         <div className="space-y-2">
-          <p className="text-xs uppercase tracking-wide text-muted">Trash fights</p>
+          <h3 className="text-xs uppercase tracking-wide text-muted">Trash fights</h3>
           <details className="rounded-md border border-dashed border-border bg-panel px-3 py-2 opacity-80">
-            <summary className="cursor-pointer text-sm text-muted">
+            <summary
+              aria-label={`Show trash fights (${grouped.trashFights.length})`}
+              className="cursor-pointer text-sm text-muted"
+            >
               Show trash fights ({grouped.trashFights.length})
             </summary>
             <p className="mt-2 flex flex-wrap gap-x-1 gap-y-1 text-sm text-muted">

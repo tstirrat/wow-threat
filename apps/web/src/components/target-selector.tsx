@@ -1,7 +1,7 @@
 /**
  * Explicit target selector control for fight charts.
  */
-import type { FC } from 'react'
+import { useId, type FC } from 'react'
 
 import type { ReportActorSummary } from '../types/api'
 
@@ -16,11 +16,14 @@ export const TargetSelector: FC<TargetSelectorProps> = ({
   selectedTargetId,
   onChange,
 }) => {
+  const selectId = useId()
+
   return (
-    <label className="flex items-center gap-2 text-sm">
+    <label className="flex items-center gap-2 text-sm" htmlFor={selectId}>
       <span className="font-medium">Target</span>
       <select
         className="rounded-md border border-border bg-panel px-3 py-2"
+        id={selectId}
         value={selectedTargetId}
         onChange={(event) => onChange(Number(event.target.value))}
       >

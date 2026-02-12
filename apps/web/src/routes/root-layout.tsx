@@ -9,9 +9,9 @@ export const RootLayout: FC = () => {
     <div className="min-h-screen text-text">
       <header className="border-b border-border bg-panel">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3">
-          <Link className="text-lg font-semibold" to="/">
-            WCL Threat
-          </Link>
+          <h1 className="text-lg font-semibold">
+            <Link to="/">WCL Threat</Link>
+          </h1>
           <span className="text-sm text-muted">Development mode</span>
         </div>
       </header>

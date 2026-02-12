@@ -1,7 +1,7 @@
 /**
  * Shared section wrapper for neutral card-like layout blocks.
  */
-import type { FC, PropsWithChildren, ReactNode } from 'react'
+import { useId, type FC, type PropsWithChildren, type ReactNode } from 'react'
 
 export type SectionCardProps = PropsWithChildren<{
   title: string
@@ -15,11 +15,18 @@ export const SectionCard: FC<SectionCardProps> = ({
   headerRight,
   children,
 }) => {
+  const sectionTitleId = useId()
+
   return (
-    <section className="rounded-xl border border-border bg-panel p-4 shadow-sm">
+    <section
+      aria-labelledby={sectionTitleId}
+      className="rounded-xl border border-border bg-panel p-4 shadow-sm"
+    >
       <header className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-lg font-semibold">{title}</h2>
+          <h2 className="text-lg font-semibold" id={sectionTitleId}>
+            {title}
+          </h2>
           {subtitle ? <p className="mt-1 text-sm text-muted">{subtitle}</p> : null}
         </div>
         {headerRight ? (

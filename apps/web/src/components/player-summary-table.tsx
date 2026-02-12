@@ -24,7 +24,11 @@ export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
   rows,
 }) => {
   if (!summary) {
-    return <p className="text-sm text-muted">Click a chart line to focus a player.</p>
+    return (
+      <p aria-live="polite" className="text-sm text-muted">
+        Click a chart line to focus a player.
+      </p>
+    )
   }
 
   return (
@@ -62,7 +66,10 @@ export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse text-sm">
+            <table
+              aria-label="Focused player threat breakdown"
+              className="min-w-full border-collapse text-sm"
+            >
               <thead>
                 <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted">
                   <th className="px-2 py-2">Ability / Debuff</th>

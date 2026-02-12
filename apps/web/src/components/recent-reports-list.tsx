@@ -18,7 +18,7 @@ export const RecentReportsList: FC<RecentReportsListProps> = ({
   }
 
   return (
-    <ul className="space-y-2">
+    <ul aria-label="Recent reports" className="space-y-2">
       {reports.map((report) => (
         <li
           className="rounded-md border border-border bg-panel px-3 py-2"

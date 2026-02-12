@@ -43,3 +43,6 @@ coverage/
 
 # TypeScript
 *.tsbuildinfo
+
+# Playwright
+apps/web/test-results/

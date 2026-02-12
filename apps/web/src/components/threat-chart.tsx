@@ -2,7 +2,19 @@
  * ECharts threat timeline with deep-linkable zoom and legend isolation behavior.
  */
 import type { EChartsOption } from 'echarts'
-import ReactECharts from 'echarts-for-react'
+import ReactEChartsCore from 'echarts-for-react/lib/core'
+import { LineChart } from 'echarts/charts'
+import {
+  DataZoomComponent,
+  GridComponent,
+  LegendComponent,
+  MarkAreaComponent,
+  MarkPointComponent,
+  TooltipComponent,
+  VisualMapComponent,
+} from 'echarts/components'
+import * as echarts from 'echarts/core'
+import { CanvasRenderer, SVGRenderer } from 'echarts/renderers'
 import { type FC, useEffect, useMemo, useRef, useState } from 'react'
 
 import { formatNumber, formatTimelineTime } from '../lib/format'
@@ -13,6 +25,19 @@ import {
 } from '../lib/threat-chart-visuals'
 import { resolveSeriesWindowBounds } from '../lib/threat-aggregation'
 import type { ThreatSeries } from '../types/app'
+
+echarts.use([
+  LineChart,
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+  DataZoomComponent,
+  VisualMapComponent,
+  MarkAreaComponent,
+  MarkPointComponent,
+  CanvasRenderer,
+  SVGRenderer,
+])
 
 interface LegendClickState {
   name: string
@@ -50,7 +75,7 @@ const doubleClickThresholdMs = 320
 const tooltipSnapDistancePx = 10
 
 function resetLegendSelection(
-  chart: ReturnType<ReactECharts['getEchartsInstance']>,
+  chart: ReturnType<ReactEChartsCore['getEchartsInstance']>,
   names: string[],
 ): void {
   names.forEach((name) => {
@@ -59,7 +84,7 @@ function resetLegendSelection(
 }
 
 function isolateLegendSelection(
-  chart: ReturnType<ReactECharts['getEchartsInstance']>,
+  chart: ReturnType<ReactEChartsCore['getEchartsInstance']>,
   isolateName: string,
   names: string[],
 ): void {
@@ -119,6 +144,7 @@ function formatTooltipModifiers(modifiers: string): string[] {
 
 export type ThreatChartProps = {
   series: ThreatSeries[]
+  renderer?: 'canvas' | 'svg'
   windowStartMs: number | null
   windowEndMs: number | null
   onWindowChange: (startMs: number | null, endMs: number | null) => void
@@ -127,12 +153,13 @@ export type ThreatChartProps = {
 
 export const ThreatChart: FC<ThreatChartProps> = ({
   series,
+  renderer = 'canvas',
   windowStartMs,
   windowEndMs,
   onWindowChange,
   onSeriesClick,
 }) => {
-  const chartRef = useRef<ReactECharts>(null)
+  const chartRef = useRef<ReactEChartsCore>(null)
   const lastLegendClickRef = useRef<LegendClickState | null>(null)
   const lastShownTooltipRef = useRef<{
     dataIndex: number
@@ -654,9 +681,11 @@ export const ThreatChart: FC<ThreatChartProps> = ({
           </button>
         ) : null}
       </div>
-      <ReactECharts
+      <ReactEChartsCore
+        echarts={echarts}
         ref={chartRef}
         notMerge
+        opts={{ renderer }}
         option={option}
         style={{ height: 560, width: '100%' }}
         onEvents={{

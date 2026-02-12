@@ -13,7 +13,11 @@ export const ErrorState: FC<ErrorStateProps> = ({
   message,
 }) => {
   return (
-    <section className="rounded-xl border border-red-300 bg-red-50 p-6 text-red-900 shadow-sm">
+    <section
+      aria-live="assertive"
+      className="rounded-xl border border-red-300 bg-red-50 p-6 text-red-900 shadow-sm"
+      role="alert"
+    >
       <h2 className="text-lg font-semibold">{title}</h2>
       <p className="mt-2 text-sm">{message}</p>
     </section>

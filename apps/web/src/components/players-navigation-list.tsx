@@ -82,7 +82,8 @@ export const PlayersNavigationList: FC<PlayersNavigationListProps> = ({
 
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full border-collapse text-sm">
+      <table aria-label="Player navigation by boss kill" className="min-w-full border-collapse text-sm">
+        <caption className="sr-only">Player navigation by boss kill</caption>
         <thead>
           <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted">
             <th className="px-2 py-2">Player</th>
