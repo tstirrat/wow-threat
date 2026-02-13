@@ -144,7 +144,8 @@ function resolveSchoolColor(school: string | null): string | null {
   }
 
   const bySchool: Record<string, string> = {
-    holy: '#f59e0b',
+    // Core spell schools (overrides)
+    holy: '#f2e699',
     fire: '#ef4444',
     nature: '#22c55e',
     frost: '#38bdf8',
@@ -155,7 +156,10 @@ function resolveSchoolColor(school: string | null): string | null {
   return bySchool[school] ?? null
 }
 
-function resolveSplitCount(modifiedThreat: number, threatDelta: number): number {
+function resolveSplitCount(
+  modifiedThreat: number,
+  threatDelta: number,
+): number {
   if (modifiedThreat === 0 || threatDelta === 0) {
     return 1
   }
@@ -540,7 +544,9 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         const amount = Number(payload.amount ?? 0)
         const modifiedThreat = Number(payload.modifiedThreat ?? 0)
         const spellSchool = payload.spellSchool?.toLowerCase() ?? null
-        const rawEventType = String(payload.eventType ?? 'unknown').toLowerCase()
+        const rawEventType = String(
+          payload.eventType ?? 'unknown',
+        ).toLowerCase()
         const eventType = escapeHtml(rawEventType)
         const abilityEventSuffix =
           rawEventType === 'damage' || rawEventType === 'heal'
@@ -561,7 +567,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         const splitCount = resolveSplitCount(modifiedThreat, threatDelta)
         const visibleModifiers = modifiers.filter(
           (modifier) =>
-            Number.isFinite(modifier.value) && Math.abs(modifier.value - 1) > 0.0005,
+            Number.isFinite(modifier.value) &&
+            Math.abs(modifier.value - 1) > 0.0005,
         )
         const modifiersTotal = visibleModifiers.reduce((total, modifier) => {
           if (!Number.isFinite(modifier.value)) {
@@ -572,27 +579,23 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         }, 1)
         const amountSchool =
           spellSchool && spellSchool !== 'physical'
-          ? ` (${escapeHtml(spellSchool)})`
-          : ''
+            ? ` (${escapeHtml(spellSchool)})`
+            : ''
         const amountColor =
-          rawEventType === 'heal'
-            ? '#22c55e'
-            : resolveSchoolColor(spellSchool)
+          rawEventType === 'heal' ? '#22c55e' : resolveSchoolColor(spellSchool)
         const modifierLines = visibleModifiers.map((modifier) => {
           const schoolsLabel = modifier.schools
             .filter((school) => school !== 'physical')
             .join('/')
           const rowSchool =
             modifier.schools.length === 1
-              ? modifier.schools[0] ?? null
+              ? (modifier.schools[0] ?? null)
               : modifier.schools.length === 0
                 ? spellSchool
                 : null
           const color = resolveSchoolColor(rowSchool)
           const schoolSuffix =
-            schoolsLabel.length > 0
-              ? ` (${escapeHtml(schoolsLabel)})`
-              : ''
+            schoolsLabel.length > 0 ? ` (${escapeHtml(schoolsLabel)})` : ''
           const value = Number.isFinite(modifier.value)
             ? formatTooltipNumber(modifier.value)
             : '-'
@@ -782,94 +785,94 @@ export const ThreatChart: FC<ThreatChartProps> = ({
           option={option}
           style={{ height: 560, width: '100%' }}
           onEvents={{
-          datazoom: (params: {
-            batch?: Array<{ startValue?: number; endValue?: number }>
-            startValue?: number
-            endValue?: number
-          }) => {
-            const batch = params.batch?.[0]
-            const nextStart = Math.round(
-              batch?.startValue ?? params.startValue ?? bounds.min,
-            )
-            const nextEnd = Math.round(
-              batch?.endValue ?? params.endValue ?? bounds.max,
-            )
+            datazoom: (params: {
+              batch?: Array<{ startValue?: number; endValue?: number }>
+              startValue?: number
+              endValue?: number
+            }) => {
+              const batch = params.batch?.[0]
+              const nextStart = Math.round(
+                batch?.startValue ?? params.startValue ?? bounds.min,
+              )
+              const nextEnd = Math.round(
+                batch?.endValue ?? params.endValue ?? bounds.max,
+              )
 
-            if (nextStart <= bounds.min && nextEnd >= bounds.max) {
-              onWindowChange(null, null)
-              return
-            }
+              if (nextStart <= bounds.min && nextEnd >= bounds.max) {
+                onWindowChange(null, null)
+                return
+              }
 
-            onWindowChange(nextStart, nextEnd)
-          },
-          legendselectchanged: (params: {
-            name: string
-            selected: Record<string, boolean>
-          }) => {
-            const chart = chartRef.current?.getEchartsInstance()
-            if (!chart) {
-              return
-            }
+              onWindowChange(nextStart, nextEnd)
+            },
+            legendselectchanged: (params: {
+              name: string
+              selected: Record<string, boolean>
+            }) => {
+              const chart = chartRef.current?.getEchartsInstance()
+              if (!chart) {
+                return
+              }
 
-            const clickedActorId = actorIdByLabel.get(params.name)
-            if (!clickedActorId) {
-              return
-            }
+              const clickedActorId = actorIdByLabel.get(params.name)
+              if (!clickedActorId) {
+                return
+              }
 
-            const now = Date.now()
-            const previousClick = lastLegendClickRef.current
-            const isDoubleClick =
-              previousClick?.name === params.name &&
-              now - previousClick.timestamp <= doubleClickThresholdMs
+              const now = Date.now()
+              const previousClick = lastLegendClickRef.current
+              const isDoubleClick =
+                previousClick?.name === params.name &&
+                now - previousClick.timestamp <= doubleClickThresholdMs
 
-            lastLegendClickRef.current = {
-              name: params.name,
-              timestamp: now,
-            }
+              lastLegendClickRef.current = {
+                name: params.name,
+                timestamp: now,
+              }
 
-            if (!isDoubleClick) {
-              return
-            }
+              if (!isDoubleClick) {
+                return
+              }
 
-            if (visibleIsolatedActorId === clickedActorId) {
-              resetLegendSelection(chart, legendNames)
-              setIsolatedActorId(null)
-              return
-            }
+              if (visibleIsolatedActorId === clickedActorId) {
+                resetLegendSelection(chart, legendNames)
+                setIsolatedActorId(null)
+                return
+              }
 
-            isolateLegendSelection(chart, params.name, legendNames)
-            setIsolatedActorId(clickedActorId)
-          },
-          click: (params: {
-            componentType?: string
-            seriesName?: string
-            data?: Record<string, unknown>
-            seriesType?: string
-          }) => {
-            if (
-              params.componentType !== 'series' ||
-              params.seriesType !== 'line'
-            ) {
-              return
-            }
+              isolateLegendSelection(chart, params.name, legendNames)
+              setIsolatedActorId(clickedActorId)
+            },
+            click: (params: {
+              componentType?: string
+              seriesName?: string
+              data?: Record<string, unknown>
+              seriesType?: string
+            }) => {
+              if (
+                params.componentType !== 'series' ||
+                params.seriesType !== 'line'
+              ) {
+                return
+              }
 
-            const payloadPlayerId = Number(params.data?.playerId)
-            if (Number.isFinite(payloadPlayerId) && payloadPlayerId > 0) {
-              onSeriesClick(payloadPlayerId)
-              return
-            }
+              const payloadPlayerId = Number(params.data?.playerId)
+              if (Number.isFinite(payloadPlayerId) && payloadPlayerId > 0) {
+                onSeriesClick(payloadPlayerId)
+                return
+              }
 
-            if (!params.seriesName) {
-              return
-            }
+              if (!params.seriesName) {
+                return
+              }
 
-            const clickedPlayerId = playerIdByLabel.get(params.seriesName)
-            if (!clickedPlayerId) {
-              return
-            }
+              const clickedPlayerId = playerIdByLabel.get(params.seriesName)
+              if (!clickedPlayerId) {
+                return
+              }
 
-            onSeriesClick(clickedPlayerId)
-          },
+              onSeriesClick(clickedPlayerId)
+            },
           }}
         />
       </div>
