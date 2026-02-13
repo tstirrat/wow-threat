@@ -84,4 +84,28 @@ describe('sod paladin config', () => {
     expect(tauntResult.effects?.[0]?.type).toBe('customThreat')
     expect(paladinConfig.fixateBuffs?.has(Spells.HandOfReckoning)).toBe(true)
   })
+
+  it('applies Improved Righteous Fury with SoD Righteous Fury aura ID', () => {
+    const improvedRighteousFuryModifier =
+      paladinConfig.auraModifiers[Spells.ImprovedRighteousFuryR3]
+    const withRighteousFury = checkExists(
+      improvedRighteousFuryModifier?.(
+        createDamageContext(
+          {
+            timestamp: 1000,
+            sourceID: 1,
+            sourceIsFriendly: true,
+            sourceInstance: 0,
+            targetID: 99,
+            targetIsFriendly: false,
+            targetInstance: 0,
+            abilityGameID: 1,
+          },
+          new Set([Spells.RighteousFury]),
+        ),
+      ),
+    )
+
+    expect(withRighteousFury.value).toBeCloseTo(1.1875, 6)
+  })
 })

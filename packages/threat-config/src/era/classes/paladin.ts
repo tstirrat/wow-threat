@@ -73,6 +73,7 @@ const IMPROVED_RIGHTEOUS_FURY_AURA_BY_RANK = [
   Spells.ImprovedRighteousFuryR2,
   Spells.ImprovedRighteousFuryR3,
 ] as const
+const DEFAULT_RIGHTEOUS_FURY_AURA_IDS = [Spells.RighteousFury] as const
 
 const VENGEANCE_AURA_BY_RANK = [
   Spells.VengeanceR1,
@@ -92,6 +93,13 @@ const IMPROVED_RIGHTEOUS_FURY_RANK_BY_TALENT_ID = new Map<number, number>(
 const VENGEANCE_RANK_BY_TALENT_ID = new Map<number, number>(
   VENGEANCE_AURA_BY_RANK.map((spellId, idx) => [spellId, idx + 1]),
 )
+
+export function hasRighteousFuryAura(
+  activeAuras: Set<number>,
+  righteousFuryAuraIds: readonly number[] = DEFAULT_RIGHTEOUS_FURY_AURA_IDS,
+): boolean {
+  return righteousFuryAuraIds.some((auraId) => activeAuras.has(auraId))
+}
 
 const PROTECTION_TREE_INDEX = 1
 const IMPROVED_RIGHTEOUS_FURY_PROTECTION_POINTS_THRESHOLD = 13
@@ -180,7 +188,7 @@ export const paladinConfig: ClassThreatConfig = {
     [Spells.ImprovedRighteousFuryR1]: (ctx) => ({
       source: 'talent',
       name: 'Improved Righteous Fury (Rank 1)',
-      value: ctx.sourceAuras.has(Spells.RighteousFury)
+      value: hasRighteousFuryAura(ctx.sourceAuras)
         ? Mods.ImprovedRighteousFuryR1 / Mods.RighteousFury
         : 1,
       schools: new Set([SpellSchool.Holy]),
@@ -189,7 +197,7 @@ export const paladinConfig: ClassThreatConfig = {
     [Spells.ImprovedRighteousFuryR2]: (ctx) => ({
       source: 'talent',
       name: 'Improved Righteous Fury (Rank 2)',
-      value: ctx.sourceAuras.has(Spells.RighteousFury)
+      value: hasRighteousFuryAura(ctx.sourceAuras)
         ? Mods.ImprovedRighteousFuryR2 / Mods.RighteousFury
         : 1,
       schools: new Set([SpellSchool.Holy]),
@@ -198,7 +206,7 @@ export const paladinConfig: ClassThreatConfig = {
     [Spells.ImprovedRighteousFuryR3]: (ctx) => ({
       source: 'talent',
       name: 'Improved Righteous Fury (Rank 3)',
-      value: ctx.sourceAuras.has(Spells.RighteousFury)
+      value: hasRighteousFuryAura(ctx.sourceAuras)
         ? Mods.ImprovedRighteousFuryR3 / Mods.RighteousFury
         : 1,
       schools: new Set([SpellSchool.Holy]),

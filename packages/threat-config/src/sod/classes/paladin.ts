@@ -1,12 +1,17 @@
 /**
  * Paladin Threat Configuration - Season of Discovery
  */
-import type { ClassThreatConfig } from '@wcl-threat/shared'
+import {
+  type ClassThreatConfig,
+  SpellSchool,
+  type ThreatContext,
+} from '@wcl-threat/shared'
 import type { GearItem } from '@wcl-threat/wcl-types'
 
 import {
   Spells as EraSpells,
   paladinConfig as eraPaladinConfig,
+  hasRighteousFuryAura,
 } from '../../era/classes/paladin'
 import { tauntTarget } from '../../shared/formulas'
 
@@ -33,6 +38,22 @@ const Mods = {
   HandOfReckoning: 1.5,
 } as const
 
+const RIGHTEOUS_FURY_AURA_IDS = [
+  EraSpells.RighteousFury,
+  Spells.RighteousFury,
+] as const
+
+function buildImprovedRighteousFuryModifier(multiplier: number, name: string) {
+  return (ctx: ThreatContext) => ({
+    source: 'talent',
+    name,
+    value: hasRighteousFuryAura(ctx.sourceAuras, RIGHTEOUS_FURY_AURA_IDS)
+      ? multiplier
+      : 1,
+    schools: new Set([SpellSchool.Holy]),
+  })
+}
+
 function inferGearAuras(gear: GearItem[]): number[] {
   const inheritedAuras = eraPaladinConfig.gearImplications?.(gear) ?? []
   const inferredAuras = new Set<number>(inheritedAuras)
@@ -54,6 +75,18 @@ export const paladinConfig: ClassThreatConfig = {
       name: 'Righteous Fury',
       value: Mods.RighteousFury,
     }),
+    [Spells.ImprovedRighteousFuryR1]: buildImprovedRighteousFuryModifier(
+      1.696 / 1.6,
+      'Improved Righteous Fury (Rank 1)',
+    ),
+    [Spells.ImprovedRighteousFuryR2]: buildImprovedRighteousFuryModifier(
+      1.798 / 1.6,
+      'Improved Righteous Fury (Rank 2)',
+    ),
+    [Spells.ImprovedRighteousFuryR3]: buildImprovedRighteousFuryModifier(
+      1.9 / 1.6,
+      'Improved Righteous Fury (Rank 3)',
+    ),
     [Spells.EngraveHandOfReckoning]: (ctx) => ({
       source: 'gear',
       name: 'Engrave Gloves - Hand of Reckoning',
