@@ -187,6 +187,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   onSeriesClick,
 }) => {
   const chartRef = useRef<ReactEChartsCore>(null)
+  const chartContainerRef = useRef<HTMLDivElement>(null)
   const lastLegendClickRef = useRef<LegendClickState | null>(null)
   const lastShownTooltipRef = useRef<{
     dataIndex: number
@@ -231,6 +232,26 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     window.addEventListener('themechange', updateThemeColors)
     return () => {
       window.removeEventListener('themechange', updateThemeColors)
+    }
+  }, [])
+
+  useEffect(() => {
+    const container = chartContainerRef.current
+    if (!container) {
+      return
+    }
+
+    const handleWheelCapture = (event: WheelEvent): void => {
+      if (event.shiftKey) {
+        return
+      }
+
+      event.stopPropagation()
+    }
+
+    container.addEventListener('wheel', handleWheelCapture, true)
+    return () => {
+      container.removeEventListener('wheel', handleWheelCapture, true)
     }
   }, [])
 
@@ -643,6 +664,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         type: 'inside',
         xAxisIndex: 0,
         filterMode: 'none',
+        zoomOnMouseWheel: 'shift',
+        moveOnMouseWheel: false,
         startValue,
         endValue,
         labelFormatter: (value: number) => formatTimelineTime(value),
@@ -750,14 +773,15 @@ export const ThreatChart: FC<ThreatChartProps> = ({
           </button>
         ) : null}
       </div>
-      <ReactEChartsCore
-        echarts={echarts}
-        ref={chartRef}
-        notMerge
-        opts={{ renderer }}
-        option={option}
-        style={{ height: 560, width: '100%' }}
-        onEvents={{
+      <div ref={chartContainerRef}>
+        <ReactEChartsCore
+          echarts={echarts}
+          ref={chartRef}
+          notMerge
+          opts={{ renderer }}
+          option={option}
+          style={{ height: 560, width: '100%' }}
+          onEvents={{
           datazoom: (params: {
             batch?: Array<{ startValue?: number; endValue?: number }>
             startValue?: number
@@ -846,8 +870,9 @@ export const ThreatChart: FC<ThreatChartProps> = ({
 
             onSeriesClick(clickedPlayerId)
           },
-        }}
-      />
+          }}
+        />
+      </div>
     </div>
   )
 }
