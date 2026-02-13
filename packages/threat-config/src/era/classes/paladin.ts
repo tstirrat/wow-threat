@@ -35,6 +35,16 @@ export const Spells = {
 
   // Defensive
   Sanct4pc: 23302, // Placeholder for set bonus
+
+  // Talents
+  ImprovedRighteousFuryR1: 20468,
+  ImprovedRighteousFuryR2: 20469,
+} as const
+
+const Mods = {
+  RighteousFury: 1.6,
+  ImprovedRighteousFuryR1: 1.7,
+  ImprovedRighteousFuryR2: 1.9,
 } as const
 
 // ============================================================================
@@ -44,16 +54,8 @@ export const Spells = {
 /** Exclusive aura sets - only one blessing can be active at a time */
 export const exclusiveAuras: Set<number>[] = [
   // All blessings (normal and greater) are mutually exclusive
-  new Set([
-    Spells.BlessingOfKings,
-    Spells.BlessingOfSalvation,
-    Spells.BlessingOfMight,
-    Spells.BlessingOfWisdom,
-    Spells.BlessingOfSanctuary,
-    Spells.BlessingOfLight,
-    Spells.GreaterBlessingOfKings,
-    Spells.GreaterBlessingOfSalvation,
-  ]),
+  new Set([Spells.BlessingOfKings, Spells.GreaterBlessingOfKings]),
+  new Set([Spells.BlessingOfSalvation, Spells.GreaterBlessingOfSalvation]),
 ]
 
 export const paladinConfig: ClassThreatConfig = {
@@ -61,10 +63,28 @@ export const paladinConfig: ClassThreatConfig = {
   auraModifiers: {
     // Righteous Fury: 1.6x (base 60% bonus) or 1.9x with Improved RF talent
     [Spells.RighteousFury]: () => ({
-      source: 'stance',
+      source: 'buff',
       name: 'Righteous Fury',
 
-      value: 1.6, // Base value, improved by talent
+      value: Mods.RighteousFury,
+      schools: new Set([SpellSchool.Holy]),
+    }),
+
+    [Spells.ImprovedRighteousFuryR1]: () => ({
+      source: 'buff',
+      name: 'Improved Righteous Fury (Rank 1)',
+      value:
+        (Mods.ImprovedRighteousFuryR1 + Mods.RighteousFury) /
+        Mods.RighteousFury,
+      schools: new Set([SpellSchool.Holy]),
+    }),
+
+    [Spells.ImprovedRighteousFuryR2]: () => ({
+      source: 'buff',
+      name: 'Improved Righteous Fury (Rank 2)',
+      value:
+        (Mods.ImprovedRighteousFuryR2 + Mods.RighteousFury) /
+        Mods.RighteousFury,
       schools: new Set([SpellSchool.Holy]),
     }),
 

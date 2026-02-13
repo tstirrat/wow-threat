@@ -5,11 +5,13 @@
  * for different game versions.
  */
 import type {
+  CombatantInfoAura,
   CombatantInfoEvent,
   EventType,
   GearItem,
   HitType,
   ResourceType,
+  TalentPoints,
   WCLEvent,
 } from '@wcl-threat/wcl-types'
 
@@ -414,6 +416,8 @@ export interface AugmentedEvent {
   waste?: number
   stacks?: number
   killerID?: number
+  auras?: CombatantInfoAura[]
+  talents?: TalentPoints
 
   /** Augmented threat data */
   threat: ThreatResult

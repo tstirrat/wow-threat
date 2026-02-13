@@ -121,6 +121,20 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
     // Count event types
     eventCounts[event.type] = (eventCounts[event.type] ?? 0) + 1
 
+    // Include combatantinfo events as zero-threat events (needed for frontend aura data)
+    if (event.type === 'combatantinfo') {
+      const zeroCalculation: ThreatCalculation = {
+        formula: 'none',
+        amount: 0,
+        baseThreat: 0,
+        modifiedThreat: 0,
+        isSplit: false,
+        modifiers: [],
+      }
+      augmentedEvents.push(buildAugmentedEvent(event, zeroCalculation, []))
+      continue
+    }
+
     // Calculate threat for relevant event types
     if (shouldCalculateThreat(event)) {
       // Run event interceptors first
@@ -700,6 +714,12 @@ function buildAugmentedEvent(
   }
   if ('killerID' in event) {
     base.killerID = event.killerID
+  }
+  if ('auras' in event) {
+    base.auras = event.auras
+  }
+  if ('talents' in event) {
+    base.talents = event.talents
   }
 
   return base

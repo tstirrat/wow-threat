@@ -1,9 +1,9 @@
 /**
  * Threat data transformation helpers for report rankings and fight chart series.
  */
-import type { PlayerClass } from '@wcl-threat/wcl-types'
+import type { AugmentedEvent, SpellId } from '@wcl-threat/shared'
+import type { CombatantInfoAura, PlayerClass } from '@wcl-threat/wcl-types'
 
-import { getActorColor, getClassColor } from './class-colors'
 import type {
   AugmentedEventsResponse,
   ReportAbilitySummary,
@@ -15,11 +15,12 @@ import type {
   FocusedPlayerSummary,
   FocusedPlayerThreatRow,
   PlayerSummaryRow,
+  ThreatSeries,
   ThreatStateVisualKind,
   ThreatStateVisualSegment,
   ThreatStateWindow,
-  ThreatSeries,
 } from '../types/app'
+import { getActorColor, getClassColor } from './class-colors'
 
 const trackableActorTypes = new Set(['Player', 'Pet'])
 
@@ -164,7 +165,9 @@ function resolveRelativeTimeMs(
   return Math.max(0, timestamp - firstTimestamp)
 }
 
-function isThreatStateVisualKind(value: string): value is ThreatStateVisualKind {
+function isThreatStateVisualKind(
+  value: string,
+): value is ThreatStateVisualKind {
   return value === 'fixate' || value === 'aggroLoss' || value === 'invulnerable'
 }
 
@@ -267,7 +270,6 @@ function collectStateTransitionsByActor({
       resolveRelativeTimeMs(event.timestamp, fightStartTime, firstTimestamp),
       fightEndMs,
     )
-
     ;(event.threat.calculation.effects ?? []).forEach((effect) => {
       if (effect.type !== 'state') {
         return
@@ -283,7 +285,8 @@ function collectStateTransitionsByActor({
       if (
         effect.state.kind === 'fixate' &&
         (effect.state.targetId !== target.id ||
-          (effect.state.targetInstance ?? defaultTargetInstance) !== target.instance)
+          (effect.state.targetInstance ?? defaultTargetInstance) !==
+            target.instance)
       ) {
         return
       }
@@ -602,7 +605,8 @@ export function buildThreatSeries({
   const abilityById = createAbilityMap(abilities)
   const sortedEvents = [...events].sort((a, b) => a.timestamp - b.timestamp)
   const firstTimestamp = sortedEvents[0]?.timestamp ?? fightStartTime
-  const lastTimestamp = sortedEvents[sortedEvents.length - 1]?.timestamp ?? fightEndTime
+  const lastTimestamp =
+    sortedEvents[sortedEvents.length - 1]?.timestamp ?? fightEndTime
   const fightEndMs = Math.max(
     resolveRelativeTimeMs(fightEndTime, fightStartTime, firstTimestamp),
     resolveRelativeTimeMs(lastTimestamp, fightStartTime, firstTimestamp),
@@ -625,7 +629,7 @@ export function buildThreatSeries({
         actorName: actor.name,
         actorClass: resolveActorClass(actor, actorsById),
         actorType: actor.type as 'Player' | 'Pet',
-        ownerId: actor.type === 'Pet' ? actor.petOwner ?? null : null,
+        ownerId: actor.type === 'Pet' ? (actor.petOwner ?? null) : null,
         label: buildActorLabel(actor, actorsById),
         color: getActorColor(actor, actorsById),
         points: [],
@@ -650,9 +654,15 @@ export function buildThreatSeries({
     const amount = event.threat.calculation.amount
     const baseThreat = event.threat.calculation.baseThreat
     const modifiedThreat = event.threat.calculation.modifiedThreat
-    const timeMs = resolveRelativeTimeMs(event.timestamp, fightStartTime, firstTimestamp)
-    const damageDone = event.type === 'damage' ? Math.max(0, event.amount ?? 0) : 0
-    const healingDone = event.type === 'heal' ? Math.max(0, event.amount ?? 0) : 0
+    const timeMs = resolveRelativeTimeMs(
+      event.timestamp,
+      fightStartTime,
+      firstTimestamp,
+    )
+    const damageDone =
+      event.type === 'damage' ? Math.max(0, event.amount ?? 0) : 0
+    const healingDone =
+      event.type === 'heal' ? Math.max(0, event.amount ?? 0) : 0
 
     event.threat.changes?.forEach((change) => {
       if (
@@ -713,7 +723,8 @@ export function buildThreatSeries({
     const actorStateVisuals = buildActorStateVisuals(transitions, fightEndMs)
     accumulator.stateVisualSegments = actorStateVisuals.stateVisualSegments
     accumulator.fixateWindows = actorStateVisuals.fixateWindows
-    accumulator.invulnerabilityWindows = actorStateVisuals.invulnerabilityWindows
+    accumulator.invulnerabilityWindows =
+      actorStateVisuals.invulnerabilityWindows
   })
 
   return [...accumulators.values()]
@@ -765,9 +776,10 @@ export function buildPlayerSummaryRows(
 }
 
 /** Resolve chart window bounds from all visible series points. */
-export function resolveSeriesWindowBounds(
-  series: ThreatSeries[],
-): { min: number; max: number } {
+export function resolveSeriesWindowBounds(series: ThreatSeries[]): {
+  min: number
+  max: number
+} {
   const allPoints = series.flatMap((item) => item.points)
   if (allPoints.length === 0) {
     return { min: 0, max: 0 }
@@ -845,7 +857,11 @@ export function buildFocusedPlayerSummary({
 
   const totals = sortedEvents.reduce(
     (acc, event) => {
-      const timeMs = resolveRelativeTimeMs(event.timestamp, fightStartTime, firstTimestamp)
+      const timeMs = resolveRelativeTimeMs(
+        event.timestamp,
+        fightStartTime,
+        firstTimestamp,
+      )
       if (timeMs < windowStartMs || timeMs > windowEndMs) {
         return acc
       }
@@ -853,7 +869,8 @@ export function buildFocusedPlayerSummary({
       const hasMatchingChange = (event.threat.changes ?? []).some(
         (change) =>
           change.targetId === target.id &&
-          (change.targetInstance ?? defaultTargetInstance) === target.instance &&
+          (change.targetInstance ?? defaultTargetInstance) ===
+            target.instance &&
           sourceIds.has(change.sourceId),
       )
       if (!hasMatchingChange) {
@@ -864,7 +881,8 @@ export function buildFocusedPlayerSummary({
         .filter(
           (change) =>
             change.targetId === target.id &&
-            (change.targetInstance ?? defaultTargetInstance) === target.instance &&
+            (change.targetInstance ?? defaultTargetInstance) ===
+              target.instance &&
             sourceIds.has(change.sourceId),
         )
         .reduce((sum, change) => sum + change.amount, 0)
@@ -872,9 +890,11 @@ export function buildFocusedPlayerSummary({
       return {
         totalThreat: acc.totalThreat + threatDelta,
         totalDamage:
-          acc.totalDamage + (event.type === 'damage' ? Math.max(0, event.amount ?? 0) : 0),
+          acc.totalDamage +
+          (event.type === 'damage' ? Math.max(0, event.amount ?? 0) : 0),
         totalHealing:
-          acc.totalHealing + (event.type === 'heal' ? Math.max(0, event.amount ?? 0) : 0),
+          acc.totalHealing +
+          (event.type === 'heal' ? Math.max(0, event.amount ?? 0) : 0),
       }
     },
     {
@@ -884,16 +904,44 @@ export function buildFocusedPlayerSummary({
     },
   )
 
+  // Extract talent points from combatant info
+  const talentPoints = extractTalentPoints(events, focusedPlayerId)
+
   return {
     actorId: focusedPlayerId,
     label: focusedPlayer.name,
     actorClass: (focusedPlayer.subType as PlayerClass | undefined) ?? null,
+    talentPoints,
     totalThreat: totals.totalThreat,
     totalTps: totals.totalThreat / windowDurationSeconds,
     totalDamage: totals.totalDamage,
     totalHealing: totals.totalHealing,
     color: getActorColor(focusedPlayer, actorsById),
   }
+}
+
+/** Extract talent points array from combatant info event */
+function extractTalentPoints(
+  events: AugmentedEvent[],
+  actorId: number,
+): [number, number, number] | undefined {
+  const combatantInfoEvent = events.find(
+    (event) => event.type === 'combatantinfo' && event.sourceID === actorId,
+  )
+
+  if (!combatantInfoEvent) {
+    return
+  }
+
+  // WCL API returns talents as an array of {id: number, icon: string}
+  // where id is the number of talent points in each tree
+  const talents = combatantInfoEvent.talents
+
+  if (!talents || talents.length !== 3) {
+    return
+  }
+
+  return [talents[0].id, talents[1].id, talents[2].id]
 }
 
 /** Build per-ability threat breakdown rows for a focused player in the selected chart window. */
@@ -938,7 +986,11 @@ export function buildFocusedPlayerThreatRows({
   const rowsByAbility = new Map<string, FocusedPlayerThreatRow>()
 
   sortedEvents.forEach((event) => {
-    const timeMs = resolveRelativeTimeMs(event.timestamp, fightStartTime, firstTimestamp)
+    const timeMs = resolveRelativeTimeMs(
+      event.timestamp,
+      fightStartTime,
+      firstTimestamp,
+    )
     if (timeMs < windowStartMs || timeMs > windowEndMs) {
       return
     }
@@ -947,7 +999,8 @@ export function buildFocusedPlayerThreatRows({
       .filter(
         (change) =>
           change.targetId === target.id &&
-          (change.targetInstance ?? defaultTargetInstance) === target.instance &&
+          (change.targetInstance ?? defaultTargetInstance) ===
+            target.instance &&
           sourceIds.has(change.sourceId),
       )
       .reduce((sum, change) => sum + change.amount, 0)
@@ -957,7 +1010,8 @@ export function buildFocusedPlayerThreatRows({
 
     const abilityId = event.abilityGameID ?? null
     const abilityName = resolveAbilityName(abilityId, abilityById)
-    const key = abilityId === null ? `unknown:${abilityName}` : String(abilityId)
+    const key =
+      abilityId === null ? `unknown:${abilityName}` : String(abilityId)
     const damageHealingAmount =
       event.type === 'damage' || event.type === 'heal'
         ? Math.max(0, event.amount ?? 0)
@@ -1075,4 +1129,86 @@ export function buildReportRankings({
   })
 
   return [...ranking.values()].sort((a, b) => b.totalThreat - a.totalThreat)
+}
+
+/** Extract all notable aura spell IDs from threat config (global and class-specific). */
+export function getNotableAuraIds(config: {
+  auraModifiers?: Record<SpellId, unknown>
+  classes?: Record<
+    string,
+    {
+      auraModifiers?: Record<SpellId, unknown>
+    }
+  >
+}): Set<SpellId> {
+  const auraIds = new Set<SpellId>()
+
+  // Add global aura modifiers
+  if (config.auraModifiers) {
+    Object.keys(config.auraModifiers).forEach((id) => {
+      auraIds.add(Number(id))
+    })
+  }
+
+  // Add class-specific aura modifiers
+  if (config.classes) {
+    Object.values(config.classes).forEach((classConfig) => {
+      if (classConfig.auraModifiers) {
+        Object.keys(classConfig.auraModifiers).forEach((id) => {
+          auraIds.add(Number(id))
+        })
+      }
+    })
+  }
+
+  return auraIds
+}
+
+/** Find combatant info event for given actor and return its auras. */
+export function getInitialAuras(
+  events: AugmentedEventsResponse['events'],
+  actorId: number,
+): CombatantInfoAura[] {
+  const combatantInfoEvent = events.find(
+    (event) => event.type === 'combatantinfo' && event.sourceID === actorId,
+  )
+
+  if (!combatantInfoEvent || combatantInfoEvent.type !== 'combatantinfo') {
+    return []
+  }
+
+  const auras =
+    (
+      combatantInfoEvent as {
+        auras?: CombatantInfoAura[]
+      }
+    ).auras ?? []
+
+  return auras.filter((aura) => aura.abilityGameID !== 0)
+}
+
+/** Get filtered notable initial auras for display. */
+export function buildInitialAurasDisplay(
+  events: AugmentedEvent[],
+  focusedPlayerId: number | null,
+  threatConfig: {
+    auraModifiers?: Record<SpellId, unknown>
+    classes?: Record<
+      string,
+      {
+        auraModifiers?: Record<SpellId, unknown>
+      }
+    >
+  } | null,
+): CombatantInfoAura[] {
+  if (focusedPlayerId === null || !threatConfig) {
+    return []
+  }
+
+  const notableAuraIds = getNotableAuraIds(threatConfig)
+  const initialAuras = getInitialAuras(events, focusedPlayerId)
+
+  return initialAuras.filter((aura) =>
+    notableAuraIds.has(aura.abilityGameID ?? aura.ability ?? 0),
+  )
 }

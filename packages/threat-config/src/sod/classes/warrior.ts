@@ -139,14 +139,14 @@ export const warriorConfig: ClassThreatConfig = {
     }),
     [Spells.T1_Tank_6pc]: (ctx) => ({
       source: 'gear',
-      name: 'S03 T1 Warrior Tank 6pc',
+      name: 'S03 - T1 - Warrior - Tank 6pc',
       value: ctx.sourceAuras.has(EraSpells.DefensiveStance)
         ? Mods.T1_Tank_6pc
         : 1,
     }),
     [Spells.TAQ_Tank_4pc]: () => ({
       source: 'gear',
-      name: 'S03 TAQ Warrior Tank 4pc',
+      name: 'S03 - TAQ - Warrior - Tank 4pc',
       spellIds: SHIELD_SLAM_SPELL_IDS,
       value: Mods.TAQ_Tank_4pcShieldSlam,
     }),

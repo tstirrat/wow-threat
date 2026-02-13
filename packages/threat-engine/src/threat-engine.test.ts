@@ -1355,7 +1355,7 @@ describe('combatantinfo processing', () => {
     })
 
     // Should have one augmented damage event
-    expect(result.augmentedEvents.length).toBe(1)
+    expect(result.augmentedEvents.length).toBe(2)
     expect(result.eventCounts.combatantinfo).toBe(1)
 
     // The damage event should have the aura modifier from combatantinfo
@@ -1401,7 +1401,7 @@ describe('combatantinfo processing', () => {
     })
 
     // Damage event should be present with the synthetic aura modifier
-    expect(result.augmentedEvents.length).toBe(1)
+    expect(result.augmentedEvents.length).toBe(2)
     const damageEvent = result.augmentedEvents.find((e) => e.type === 'damage')
     const setBonusModifier = damageEvent?.threat.calculation.modifiers.find(
       (m: ThreatModifier) => m.source === 'gear',
@@ -1420,7 +1420,11 @@ describe('combatantinfo processing', () => {
       sourceIsFriendly: true,
       targetID: warriorActor.id,
       targetIsFriendly: true,
-      talents: [14, 5, 31],
+      talents: [
+        { id: 14, icon: '' },
+        { id: 5, icon: '' },
+        { id: 31, icon: '' },
+      ],
     }
 
     const events: WCLEvent[] = [

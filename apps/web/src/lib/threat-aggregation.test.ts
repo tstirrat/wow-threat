@@ -3,17 +3,20 @@
  */
 import { describe, expect, it } from 'vitest'
 
+import type { ReportAbilitySummary, ReportActorSummary } from '../types/api'
+import type { ThreatSeries } from '../types/app'
 import { getClassColor } from './class-colors'
 import {
   buildFightTargetOptions,
-  buildThreatSeries,
   buildFocusedPlayerSummary,
   buildFocusedPlayerThreatRows,
+  buildInitialAurasDisplay,
+  buildThreatSeries,
   filterSeriesByPlayers,
+  getInitialAuras,
+  getNotableAuraIds,
   selectDefaultTarget,
 } from './threat-aggregation'
-import type { ReportAbilitySummary, ReportActorSummary } from '../types/api'
-import type { ThreatSeries } from '../types/app'
 
 describe('threat-aggregation', () => {
   it('selects target instance with highest accumulated threat', () => {
@@ -59,7 +62,9 @@ describe('threat-aggregation', () => {
       }
     }>
 
-    expect(selectDefaultTarget(events as never, new Set(['10:1', '10:2']))).toEqual({
+    expect(
+      selectDefaultTarget(events as never, new Set(['10:1', '10:2'])),
+    ).toEqual({
       id: 10,
       instance: 2,
     })
@@ -755,5 +760,169 @@ describe('threat-aggregation', () => {
         tps: 50,
       },
     ])
+  })
+
+  describe('initial auras', () => {
+    it('extracts notable aura IDs from threat config', () => {
+      const config = {
+        auraModifiers: {
+          100: () => ({
+            source: 'stance',
+            name: 'Defensive Stance',
+            value: 1.3,
+          }),
+          200: () => ({ source: 'buff', name: 'Battle Shout', value: 1.1 }),
+        },
+        classes: {
+          warrior: {
+            auraModifiers: {
+              300: () => ({ source: 'talent', name: 'Defiance', value: 1.15 }),
+            },
+          },
+          paladin: {
+            auraModifiers: {
+              400: () => ({
+                source: 'buff',
+                name: 'Righteous Fury',
+                value: 1.6,
+              }),
+            },
+          },
+        },
+      }
+
+      const result = getNotableAuraIds(config)
+      expect(result).toEqual(new Set([100, 200, 300, 400]))
+    })
+
+    it('gets initial auras from combatant info event', () => {
+      const events = [
+        {
+          timestamp: 1000,
+          type: 'combatantinfo',
+          sourceID: 1,
+          sourceIsFriendly: true,
+          targetID: 0,
+          targetIsFriendly: false,
+          auras: [
+            { abilityGameID: 71, name: 'Defensive Stance', stacks: 1 },
+            { abilityGameID: 12303, name: 'Defiance', stacks: 5 },
+            { abilityGameID: 25289, name: 'Battle Shout', stacks: 1 },
+          ],
+          threat: {
+            changes: [],
+            calculation: {
+              formula: 'none',
+              amount: 0,
+              baseThreat: 0,
+              modifiedThreat: 0,
+              isSplit: false,
+              modifiers: [],
+            },
+          },
+        },
+        {
+          timestamp: 1100,
+          type: 'damage',
+          sourceID: 1,
+          sourceIsFriendly: true,
+          targetID: 10,
+          targetIsFriendly: false,
+          threat: {
+            changes: [],
+            calculation: {
+              formula: 'damage',
+              amount: 100,
+              baseThreat: 100,
+              modifiedThreat: 100,
+              isSplit: false,
+              modifiers: [],
+            },
+          },
+        },
+      ] as never
+
+      const result = getInitialAuras(events, 1)
+      expect(result).toEqual([
+        { abilityGameID: 71, name: 'Defensive Stance', stacks: 1 },
+        { abilityGameID: 12303, name: 'Defiance', stacks: 5 },
+        { abilityGameID: 25289, name: 'Battle Shout', stacks: 1 },
+      ])
+    })
+
+    it('filters initial auras to only show notable ones', () => {
+      const events = [
+        {
+          timestamp: 1000,
+          type: 'combatantinfo',
+          sourceID: 1,
+          sourceIsFriendly: true,
+          targetID: 0,
+          targetIsFriendly: false,
+          auras: [
+            { abilityGameID: 71, name: 'Defensive Stance', stacks: 1 },
+            { abilityGameID: 12303, name: 'Defiance', stacks: 5 },
+            { abilityGameID: 25289, name: 'Battle Shout', stacks: 1 },
+            { abilityGameID: 9999, name: 'Non-Notable Buff', stacks: 1 },
+          ],
+          threat: {
+            changes: [],
+            calculation: {
+              formula: 'none',
+              amount: 0,
+              baseThreat: 0,
+              modifiedThreat: 0,
+              isSplit: false,
+              modifiers: [],
+            },
+          },
+        },
+      ] as never
+
+      const config = {
+        auraModifiers: {},
+        classes: {
+          warrior: {
+            auraModifiers: {
+              71: () => ({
+                source: 'stance',
+                name: 'Defensive Stance',
+                value: 1.3,
+              }),
+              12303: () => ({
+                source: 'talent',
+                name: 'Defiance',
+                value: 1.15,
+              }),
+            },
+          },
+        },
+      }
+
+      const result = buildInitialAurasDisplay(events, 1, config)
+      expect(result).toEqual([
+        { abilityGameID: 71, name: 'Defensive Stance', stacks: 1 },
+        { abilityGameID: 12303, name: 'Defiance', stacks: 5 },
+      ])
+    })
+
+    it('returns empty array when no combatant info event exists', () => {
+      const events = [] as never
+      const result = getInitialAuras(events, 1)
+      expect(result).toEqual([])
+    })
+
+    it('returns empty array when focusedPlayerId is null', () => {
+      const events = [] as never
+      const config = { auraModifiers: {} }
+      const result = buildInitialAurasDisplay(events, null, config)
+      expect(result).toEqual([])
+    })
+
+    it('returns empty array when threat config is null', () => {
+      const events = [] as never
+      const result = buildInitialAurasDisplay(events, 1, null)
+      expect(result).toEqual([])
+    })
   })
 })

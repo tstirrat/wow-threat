@@ -90,7 +90,7 @@ export function calculateThreat(
     modifier = 1,
     bonus = 0,
     split = false,
-    eventTypes,
+    eventTypes = ['damage', 'heal'], // no double dip on cast+damage
     applyPlayerMultipliers,
   } = options
 

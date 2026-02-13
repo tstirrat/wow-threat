@@ -14,14 +14,23 @@ export const Spells = {
   ...EraSpells,
   HandOfReckoning: 407631,
   EngraveHandOfReckoning: 410001,
+  RighteousFury: 407627, // SoD override
 } as const
 
 const Runes = {
   HandOfReckoning: 6844,
 } as const
 
+/**
+ * From the Light Club disc:
+ * - Hand of Reckoning rune applies a 1.5 baseline tank threat multiplier to all threat
+ * - Holy threat without imp. RF with HoR is 2.23 (1.6 * 1.5 is 2.4 so it's not applied consitently)
+ * - Holy threat with imp. RF and HoR is 2.85 (= 1.9 * 1.5)
+ */
 const Mods = {
-  HandOfReckoningWithRighteousFury: 1.5,
+  RighteousFury: 1.6,
+  /** While RF is up, increases the base from 1.6 to 1.8 */
+  HandOfReckoning: 1.5,
 } as const
 
 function inferGearAuras(gear: GearItem[]): number[] {
@@ -40,11 +49,16 @@ export const paladinConfig: ClassThreatConfig = {
 
   auraModifiers: {
     ...eraPaladinConfig.auraModifiers,
+    [Spells.RighteousFury]: () => ({
+      source: 'buff',
+      name: 'Righteous Fury',
+      value: Mods.RighteousFury,
+    }),
     [Spells.EngraveHandOfReckoning]: (ctx) => ({
       source: 'gear',
       name: 'Engrave Gloves - Hand of Reckoning',
-      value: ctx.sourceAuras.has(EraSpells.RighteousFury)
-        ? Mods.HandOfReckoningWithRighteousFury
+      value: ctx.sourceAuras.has(Spells.RighteousFury)
+        ? Mods.HandOfReckoning
         : 1,
     }),
     // TODO: Vengeance

@@ -128,21 +128,34 @@ function parseCombatantInfoAuraId(aura: unknown): number | null {
   return readNumber(record, COMBATANT_AURA_ID_KEYS)
 }
 
+/**
+ * Parse talent points from various formats in combatantinfo event
+ */
 function parseTalentPoints(
   event: Extract<WCLEvent, { type: 'combatantinfo' }>,
 ): number[] {
-  if (isFiniteNumberArray(event.talentPoints)) {
-    return event.talentPoints
-  }
-
   if (isFiniteNumberArray(event.talentRows)) {
     return event.talentRows
   }
 
-  if (isFiniteNumberArray(event.talents)) {
-    return event.talents
+  // WCL API returns talents as array of {id: number, icon: string}
+  // where id is the talent points in each tree
+  if (
+    event.talents &&
+    Array.isArray(event.talents) &&
+    event.talents.length > 0
+  ) {
+    // Check if it's the new WCL API format with objects containing id field
+    if (
+      typeof event.talents[0] === 'object' &&
+      event.talents[0] !== null &&
+      'id' in event.talents[0]
+    ) {
+      return event.talents.map((t) => t.id)
+    }
   }
 
+  // Try legacy talent point split format (object or number arrays)
   const legacyTalentPointSplit = parseLegacyTalentPointSplit(event.talents)
   if (legacyTalentPointSplit.length > 0) {
     return legacyTalentPointSplit

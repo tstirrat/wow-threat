@@ -215,12 +215,18 @@ export interface CombatantInfoAura {
   name?: string | null
 }
 
+export interface TalentPoint {
+  id: number
+  icon: string
+}
+
+export type TalentPoints = [TalentPoint, TalentPoint, TalentPoint]
+
 export interface CombatantInfoEvent extends BaseWCLEvent {
   type: 'combatantinfo'
   gear?: GearItem[]
   auras?: CombatantInfoAura[]
-  talents?: unknown[] | number[]
-  talentPoints?: number[]
+  talents?: TalentPoints
   talentRows?: number[]
   talentTree?: unknown[]
   specID?: number

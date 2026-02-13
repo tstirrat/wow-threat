@@ -588,7 +588,11 @@ describe('FightState', () => {
           targetID: 1,
           targetIsFriendly: true,
           gear: [{ id: 19019, setID: 498 }],
-          talents: [14, 5, 31],
+          talents: [
+            { id: 14, icon: '' },
+            { id: 5, icon: '' },
+            { id: 31, icon: '' },
+          ],
         } as WCLEvent,
         config,
       )
@@ -615,7 +619,11 @@ describe('FightState', () => {
           sourceIsFriendly: true,
           targetID: 1,
           targetIsFriendly: true,
-          talents: [14, 5, 31],
+          talents: [
+            { id: 14, icon: '' },
+            { id: 5, icon: '' },
+            { id: 31, icon: '' },
+          ],
         } as WCLEvent,
         config,
       )

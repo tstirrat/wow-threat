@@ -18,12 +18,12 @@ import { CanvasRenderer, SVGRenderer } from 'echarts/renderers'
 import { type FC, useEffect, useMemo, useRef, useState } from 'react'
 
 import { formatNumber, formatTimelineTime } from '../lib/format'
+import { resolveSeriesWindowBounds } from '../lib/threat-aggregation'
 import {
   buildAuraMarkArea,
   buildThreatStateVisualMaps,
   resolveThreatStateStatus,
 } from '../lib/threat-chart-visuals'
-import { resolveSeriesWindowBounds } from '../lib/threat-aggregation'
 import type { ThreatSeries } from '../types/app'
 
 echarts.use([
@@ -590,7 +590,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         labelFormatter: (value: number) => formatTimelineTime(value),
       },
     ],
-    visualMap: threatStateVisualMaps.length > 0 ? threatStateVisualMaps : undefined,
+    visualMap:
+      threatStateVisualMaps.length > 0 ? threatStateVisualMaps : undefined,
     series: chartSeries.map((item, seriesIndex) => {
       const pinnedPoint =
         pinnedTooltip?.seriesIndex === seriesIndex

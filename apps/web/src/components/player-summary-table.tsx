@@ -5,11 +5,14 @@ import type { FC } from 'react'
 
 import { formatNumber } from '../lib/format'
 import type { FocusedPlayerSummary, FocusedPlayerThreatRow } from '../types/app'
+import type { InitialAura } from './initial-auras'
+import { InitialAuras } from './initial-auras'
 import { PlayerName } from './player-name'
 
 export type PlayerSummaryTableProps = {
   summary: FocusedPlayerSummary | null
   rows: FocusedPlayerThreatRow[]
+  initialAuras: InitialAura[]
 }
 
 function formatTps(value: number): string {
@@ -22,6 +25,7 @@ function formatTps(value: number): string {
 export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
   summary,
   rows,
+  initialAuras,
 }) => {
   if (!summary) {
     return (
@@ -36,35 +40,51 @@ export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
   return (
     <div className="grid gap-4 md:grid-cols-[280px_minmax(0,1fr)]">
       <div className="space-y-2 rounded-md border border-border bg-panel p-3">
-        <div className="text-xs uppercase tracking-wide text-muted">Focused player</div>
+        <div className="text-xs uppercase tracking-wide text-muted">
+          Focused player
+        </div>
         <div className="text-base">
           <PlayerName color={summary.color} label={summary.label} />
         </div>
-        <div className="text-sm text-muted">Class: {summary.actorClass ?? 'Unknown'}</div>
+        <div className="text-sm text-muted">
+          Class: {summary.actorClass ?? 'Unknown'}
+          {summary.talentPoints &&
+            ` (${summary.talentPoints[0]}/${summary.talentPoints[1]}/${summary.talentPoints[2]})`}
+        </div>
         <div className="space-y-2 text-sm">
           <div>
-            <div className="text-xs uppercase tracking-wide text-muted">Total threat</div>
+            <div className="text-xs uppercase tracking-wide text-muted">
+              Total threat
+            </div>
             <div>{formatNumber(summary.totalThreat)}</div>
           </div>
           <div>
-            <div className="text-xs uppercase tracking-wide text-muted">Total TPS</div>
+            <div className="text-xs uppercase tracking-wide text-muted">
+              Total TPS
+            </div>
             <div>{formatTps(summary.totalTps)}</div>
           </div>
           <div>
-            <div className="text-xs uppercase tracking-wide text-muted">Total damage</div>
+            <div className="text-xs uppercase tracking-wide text-muted">
+              Total damage
+            </div>
             <div>{formatNumber(summary.totalDamage)}</div>
           </div>
           <div>
-            <div className="text-xs uppercase tracking-wide text-muted">Total healing</div>
+            <div className="text-xs uppercase tracking-wide text-muted">
+              Total healing
+            </div>
             <div>{formatNumber(summary.totalHealing)}</div>
           </div>
         </div>
+        <InitialAuras auras={initialAuras} />
       </div>
 
       <div className="rounded-md border border-border bg-panel p-3">
         {rows.length === 0 ? (
           <p className="text-sm text-muted">
-            No threat-generating abilities for this player in the current chart window.
+            No threat-generating abilities for this player in the current chart
+            window.
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -84,7 +104,9 @@ export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
                 <tr className="border-b border-border bg-black/5 font-medium">
                   <td className="px-2 py-2">Total</td>
                   <td className="px-2 py-2">{formatNumber(totalAmount)}</td>
-                  <td className="px-2 py-2">{formatNumber(summary.totalThreat)}</td>
+                  <td className="px-2 py-2">
+                    {formatNumber(summary.totalThreat)}
+                  </td>
                   <td className="px-2 py-2">{formatTps(summary.totalTps)}</td>
                 </tr>
                 {rows.map((row) => (
