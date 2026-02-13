@@ -6,10 +6,14 @@ import {
   createDamageEvent,
   createMockActorContext,
 } from '@wcl-threat/shared'
-import { SpellSchool, type ThreatContext } from '@wcl-threat/shared/src/types'
+import type {
+  TalentImplicationContext,
+  ThreatContext,
+} from '@wcl-threat/shared/src/types'
+import { SpellSchool } from '@wcl-threat/shared/src/types'
 import { describe, expect, it } from 'vitest'
 
-import { Spells, paladinConfig } from './paladin'
+import { Spells, exclusiveAuras, paladinConfig } from './paladin'
 
 function assertDefined<T>(value: T | undefined): T {
   expect(value).toBeDefined()
@@ -38,6 +42,73 @@ function createMockContext(
 }
 
 describe('Paladin Config', () => {
+  describe('exclusiveAuras', () => {
+    it('defines one exclusive set per blessing family', () => {
+      expect(exclusiveAuras).toHaveLength(6)
+      expect(exclusiveAuras.every((set) => set.size === 2)).toBe(true)
+    })
+
+    it('pairs Blessing of Kings with Greater Blessing of Kings', () => {
+      expect(
+        exclusiveAuras.some(
+          (set) =>
+            set.has(Spells.BlessingOfKings) &&
+            set.has(Spells.GreaterBlessingOfKings),
+        ),
+      ).toBe(true)
+    })
+
+    it('pairs Blessing of Salvation with Greater Blessing of Salvation', () => {
+      expect(
+        exclusiveAuras.some(
+          (set) =>
+            set.has(Spells.BlessingOfSalvation) &&
+            set.has(Spells.GreaterBlessingOfSalvation),
+        ),
+      ).toBe(true)
+    })
+
+    it('pairs Blessing of Might with Greater Blessing of Might', () => {
+      expect(
+        exclusiveAuras.some(
+          (set) =>
+            set.has(Spells.BlessingOfMight) &&
+            set.has(Spells.GreaterBlessingOfMight),
+        ),
+      ).toBe(true)
+    })
+
+    it('pairs Blessing of Wisdom with Greater Blessing of Wisdom', () => {
+      expect(
+        exclusiveAuras.some(
+          (set) =>
+            set.has(Spells.BlessingOfWisdom) &&
+            set.has(Spells.GreaterBlessingOfWisdom),
+        ),
+      ).toBe(true)
+    })
+
+    it('pairs Blessing of Sanctuary with Greater Blessing of Sanctuary', () => {
+      expect(
+        exclusiveAuras.some(
+          (set) =>
+            set.has(Spells.BlessingOfSanctuary) &&
+            set.has(Spells.GreaterBlessingOfSanctuary),
+        ),
+      ).toBe(true)
+    })
+
+    it('keeps Blessing of Light isolated from Blessing of Salvation family', () => {
+      expect(
+        exclusiveAuras.some(
+          (set) =>
+            set.has(Spells.BlessingOfLight) &&
+            set.has(Spells.GreaterBlessingOfSalvation),
+        ),
+      ).toBe(false)
+    })
+  })
+
   describe('auraModifiers', () => {
     it('returns Righteous Fury modifier limited to Holy school', () => {
       const modifierFn = paladinConfig.auraModifiers[Spells.RighteousFury]
@@ -61,6 +132,111 @@ describe('Paladin Config', () => {
       expect(modifier.name).toBe('Blessing of Salvation')
       expect(modifier.value).toBe(0.7)
       expect(modifier.source).toBe('buff')
+    })
+
+    it('applies Improved Righteous Fury only when Righteous Fury is active', () => {
+      const modifierFn =
+        paladinConfig.auraModifiers[Spells.ImprovedRighteousFuryR3]
+      expect(modifierFn).toBeDefined()
+
+      const withoutRighteousFury = modifierFn!(createMockContext())
+      const withRighteousFury = modifierFn!(
+        createMockContext({
+          sourceAuras: new Set([
+            Spells.RighteousFury,
+            Spells.ImprovedRighteousFuryR3,
+          ]),
+        }),
+      )
+
+      expect(withoutRighteousFury.value).toBe(1)
+      expect(withRighteousFury.value).toBeCloseTo(1.1875, 6)
+      expect(withRighteousFury.schools?.has(SpellSchool.Holy)).toBe(true)
+    })
+
+    it('returns Vengeance rank 5 threat reduction', () => {
+      const modifierFn = paladinConfig.auraModifiers[Spells.VengeanceR5]
+      expect(modifierFn).toBeDefined()
+
+      const modifier = modifierFn!(createMockContext())
+
+      expect(modifier.name).toBe('Vengeance (Rank 5)')
+      expect(modifier.value).toBe(0.7)
+      expect(modifier.source).toBe('talent')
+    })
+  })
+
+  describe('talentImplications', () => {
+    function createTalentContext(
+      overrides: Partial<TalentImplicationContext> = {},
+    ): TalentImplicationContext {
+      return {
+        event: {
+          timestamp: 0,
+          type: 'combatantinfo',
+          sourceID: 1,
+          sourceIsFriendly: true,
+          targetID: 1,
+          targetIsFriendly: true,
+        },
+        sourceActor: { id: 1, name: 'TestPaladin', class: 'paladin' },
+        talentPoints: [0, 0, 0],
+        talentRanks: new Map(),
+        specId: null,
+        ...overrides,
+      }
+    }
+
+    it('infers Improved Righteous Fury from ranked talent payload', () => {
+      const result = paladinConfig.talentImplications!(
+        createTalentContext({
+          talentRanks: new Map([[Spells.ImprovedRighteousFuryR2, 1]]),
+        }),
+      )
+
+      expect(result).toEqual([Spells.ImprovedRighteousFuryR2])
+    })
+
+    it('infers Improved Righteous Fury rank 3 from protection tree split threshold', () => {
+      const result = paladinConfig.talentImplications!(
+        createTalentContext({
+          talentPoints: [20, 13, 18],
+        }),
+      )
+
+      expect(result).toContain(Spells.ImprovedRighteousFuryR3)
+    })
+
+    it('infers Vengeance rank 5 from retribution tree split threshold', () => {
+      const result = paladinConfig.talentImplications!(
+        createTalentContext({
+          talentPoints: [0, 13, 30],
+        }),
+      )
+
+      expect(result).toContain(Spells.VengeanceR5)
+    })
+
+    it('does not infer Improved Righteous Fury below protection threshold', () => {
+      const result = paladinConfig.talentImplications!(
+        createTalentContext({
+          talentPoints: [0, 12, 30],
+        }),
+      )
+
+      expect(result).not.toContain(Spells.ImprovedRighteousFuryR3)
+      expect(result).toContain(Spells.VengeanceR5)
+    })
+
+    it('returns no synthetic aura when configured talent signals are absent', () => {
+      const result = paladinConfig.talentImplications!(
+        createTalentContext({
+          talentRanks: new Map([[999999, 3]]),
+          talentPoints: [12, 12, 29],
+        }),
+      )
+
+      expect(result).toEqual([])
     })
   })
 
