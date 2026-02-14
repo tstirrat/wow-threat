@@ -4,14 +4,32 @@
 import type { ThreatFormula } from '@wcl-threat/shared'
 
 import {
-  calculateThreat,
   modifyThreat,
   noThreat as noThreatFormula,
   threatOnDebuff,
   threatOnDebuffOrDamage,
-} from '../../shared/formulas'
+} from '../shared/formulas'
 
 const noThreat = noThreatFormula()
+const diamondFlaskThreat: ThreatFormula = (ctx) => {
+  if (ctx.event.type === 'applybuff') {
+    return {
+      formula: '60',
+      value: 60,
+      splitAmongEnemies: true,
+    }
+  }
+
+  if (ctx.event.type === 'heal') {
+    return {
+      formula: 'effectiveHeal * 0.50',
+      value: ctx.amount * 0.5,
+      splitAmongEnemies: true,
+    }
+  }
+
+  return undefined
+}
 
 export const miscAbilities: Record<number, ThreatFormula> = {
   // Consumables / item effects
@@ -19,10 +37,7 @@ export const miscAbilities: Record<number, ThreatFormula> = {
   11374: threatOnDebuff(90), // Gift of Arthas
   21992: threatOnDebuffOrDamage(90), // Thunderfury
   27648: threatOnDebuff(145), // Thunderfury nature proc
-  467271: calculateThreat({ modifier: 2.25, eventTypes: ['damage'] }), // Dragonbreath
-
-  1213816: calculateThreat({ modifier: 2, eventTypes: ['damage'] }), // Razorbramble
-  1213813: calculateThreat({ modifier: 2, eventTypes: ['damage'] }), // Razorspike
+  24427: diamondFlaskThreat, // Diamond Flask activation and periodic heal
 
   // Zero-threat spells
   20007: noThreat, // Crusader proc
@@ -46,4 +61,5 @@ export const miscAbilities: Record<number, ThreatFormula> = {
   6613: noThreat, // Great Rage Potion
   17528: noThreat, // Mighty Rage Potion
   13494: noThreat, // Manual Crowd Pummeler
+  23602: noThreat, // Shield Specialization
 }

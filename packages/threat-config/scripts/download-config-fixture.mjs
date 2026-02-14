@@ -21,6 +21,7 @@ const HOSTS = {
   vanilla: 'https://vanilla.warcraftlogs.com',
   sod: 'https://sod.warcraftlogs.com',
 }
+const EVENTS_PAGE_LIMIT = 10000
 
 const REPORT_QUERY = `
   query GetReport($code: String!) {
@@ -87,14 +88,14 @@ const REPORT_QUERY = `
 `
 
 const EVENTS_QUERY = `
-  query GetEvents($code: String!, $fightId: Int!, $startTime: Float, $endTime: Float) {
+  query GetEvents($code: String!, $fightId: Int!, $startTime: Float, $endTime: Float, $limit: Int!) {
     reportData {
       report(code: $code) {
         events(
           fightIDs: [$fightId]
           startTime: $startTime
           endTime: $endTime
-          limit: 10000
+          limit: $limit
         ) {
           data
           nextPageTimestamp
@@ -154,7 +155,9 @@ function resolveHost(hostInput) {
 }
 
 async function getOAuthToken({ origin, clientId, clientSecret }) {
-  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
+  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString(
+    'base64',
+  )
   const response = await fetch(`${origin}/oauth/token`, {
     method: 'POST',
     headers: {
@@ -207,21 +210,23 @@ async function graphql({ origin, token, query, variables }) {
 }
 
 function printUsage() {
-  console.log([
-    'Usage:',
-    '  pnpm --filter @wcl-threat/threat-config fixtures:download -- \\',
-    '    --host fresh|vanilla|classic|sod|retail|<domain> \\',
-    '    --report <REPORT_CODE> \\',
-    '    --fight <FIGHT_ID> \\',
-    '    [--name <fixture/path>] \\',
-    '    [--output <absolute/or/relative/path>] \\',
-    '    [--focus-actor-id <ACTOR_ID>] \\',
-    '    [--max-snapshot-lines <N>]',
-    '',
-    'Auth:',
-    '  Set WCL_CLIENT_ID and WCL_CLIENT_SECRET env vars, or pass',
-    '  --client-id / --client-secret.',
-  ].join('\n'))
+  console.log(
+    [
+      'Usage:',
+      '  pnpm --filter @wcl-threat/threat-config fixtures:download -- \\',
+      '    --host fresh|vanilla|classic|sod|retail|<domain> \\',
+      '    --report <REPORT_CODE> \\',
+      '    --fight <FIGHT_ID> \\',
+      '    [--name <fixture/path>] \\',
+      '    [--output <absolute/or/relative/path>] \\',
+      '    [--focus-actor-id <ACTOR_ID>] \\',
+      '    [--max-snapshot-lines <N>]',
+      '',
+      'Auth:',
+      '  Set WCL_CLIENT_ID and WCL_CLIENT_SECRET env vars, or pass',
+      '  --client-id / --client-secret.',
+    ].join('\n'),
+  )
 }
 
 async function main() {
@@ -246,7 +251,13 @@ async function main() {
   const clientId = args['client-id'] ?? process.env.WCL_CLIENT_ID
   const clientSecret = args['client-secret'] ?? process.env.WCL_CLIENT_SECRET
 
-  if (!host || !reportCode || !Number.isFinite(fightId) || !clientId || !clientSecret) {
+  if (
+    !host ||
+    !reportCode ||
+    !Number.isFinite(fightId) ||
+    !clientId ||
+    !clientSecret
+  ) {
     printUsage()
     process.exitCode = 1
     return
@@ -293,9 +304,17 @@ async function main() {
   }
 
   const events = []
-  let nextPageTimestamp = null
+  const seenStartTimes = new Set()
+  let startTime = fight.startTime
 
-  do {
+  while (startTime !== null) {
+    if (seenStartTimes.has(startTime)) {
+      throw new Error(
+        `Events pagination stalled at startTime=${startTime} for report ${reportCode} fight ${fightId}`,
+      )
+    }
+    seenStartTimes.add(startTime)
+
     const eventsData = await graphql({
       origin: host.origin,
       token,
@@ -303,7 +322,9 @@ async function main() {
       variables: {
         code: reportCode,
         fightId,
-        startTime: nextPageTimestamp,
+        startTime,
+        endTime: fight.endTime,
+        limit: EVENTS_PAGE_LIMIT,
       },
     })
 
@@ -312,9 +333,36 @@ async function main() {
       throw new Error('Events payload did not include report.events')
     }
 
+    if (!Array.isArray(page.data) || page.data.length === 0) {
+      break
+    }
+
     events.push(...page.data)
-    nextPageTimestamp = page.nextPageTimestamp
-  } while (nextPageTimestamp !== null)
+
+    if (typeof page.nextPageTimestamp === 'number') {
+      startTime = page.nextPageTimestamp
+      continue
+    }
+
+    const pageMaxTimestamp = page.data.reduce(
+      (latestTimestamp, event) =>
+        Math.max(latestTimestamp, Number(event.timestamp ?? 0)),
+      0,
+    )
+    const appearsTruncated =
+      page.data.length >= EVENTS_PAGE_LIMIT && pageMaxTimestamp < fight.endTime
+
+    if (!appearsTruncated) {
+      startTime = null
+      break
+    }
+
+    const fallbackStartTime = Math.max(startTime + 1, pageMaxTimestamp + 1)
+    console.warn(
+      `Events page reached ${EVENTS_PAGE_LIMIT} rows without nextPageTimestamp; continuing from ${fallbackStartTime}.`,
+    )
+    startTime = fallbackStartTime
+  }
 
   const metadata = {
     host: host.key,

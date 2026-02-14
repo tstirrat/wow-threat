@@ -49,6 +49,7 @@ describe('Spell constants', () => {
     expect(Spells.ShieldSlam).toBe(23922)
     expect(Spells.Revenge).toBe(25288)
     expect(Spells.SunderArmor).toBe(25225)
+    expect(Spells.SunderArmorRank5).toBe(11597)
     expect(Spells.Taunt).toBe(355)
   })
 
@@ -164,6 +165,7 @@ describe('auraModifiers', () => {
     expect(modifier.source).toBe('gear')
     expect(modifier.spellIds).toBeDefined()
     expect(modifier.spellIds!.has(Spells.SunderArmor)).toBe(true)
+    expect(modifier.spellIds!.has(Spells.SunderArmorRank5)).toBe(true)
   })
 })
 
@@ -343,31 +345,82 @@ describe('abilities', () => {
       expect(missResult.formula).toBe('-301 (miss rollback)')
       expect(missResult.value).toBe(-301)
     })
+
+    it('supports legacy rank 5 threat values', () => {
+      const formula = warriorConfig.abilities[Spells.SunderArmorRank5]
+      expect(formula).toBeDefined()
+
+      const castResult = assertDefined(
+        formula!(
+          createMockContext({
+            event: createCastEvent(),
+            amount: 0,
+          }),
+        ),
+      )
+      const missResult = assertDefined(
+        formula!(
+          createMockContext({
+            event: createDamageEvent({ hitType: 'miss' }),
+            amount: 0,
+          }),
+        ),
+      )
+
+      expect(castResult.formula).toBe('261 (cast)')
+      expect(castResult.value).toBe(261)
+      expect(missResult.formula).toBe('-261 (miss rollback)')
+      expect(missResult.value).toBe(-261)
+    })
   })
 
   describe('Revenge', () => {
-    it('calculates amt + 355 threat', () => {
+    it('calculates (amt * 2.25) + 270 threat on successful hits', () => {
       const formula = warriorConfig.abilities[Spells.Revenge]
       expect(formula).toBeDefined()
 
       const ctx = createMockContext({ amount: 500 })
       const result = assertDefined(formula!(ctx))
 
-      expect(result.formula).toBe('amt + 355')
-      expect(result.value).toBe(855)
+      expect(result.formula).toBe('(amt * 2.25) + 270')
+      expect(result.value).toBe(1395)
+    })
+
+    it('does not apply threat when revenge misses', () => {
+      const formula = warriorConfig.abilities[Spells.Revenge]
+      expect(formula).toBeDefined()
+
+      const ctx = createMockContext({
+        event: createDamageEvent({ hitType: 'miss' }),
+        amount: 0,
+      })
+
+      expect(formula!(ctx)).toBeUndefined()
     })
   })
 
   describe('Heroic Strike', () => {
-    it('calculates amt + 145 threat', () => {
+    it('calculates amt + 175 threat on successful hits', () => {
       const formula = warriorConfig.abilities[Spells.HeroicStrike]
       expect(formula).toBeDefined()
 
       const ctx = createMockContext({ amount: 1000 })
       const result = assertDefined(formula!(ctx))
 
-      expect(result.formula).toBe('amt + 145')
-      expect(result.value).toBe(1145)
+      expect(result.formula).toBe('amt + 175')
+      expect(result.value).toBe(1175)
+    })
+
+    it('does not apply threat when heroic strike misses', () => {
+      const formula = warriorConfig.abilities[Spells.HeroicStrike]
+      expect(formula).toBeDefined()
+
+      const ctx = createMockContext({
+        event: createDamageEvent({ hitType: 'miss' }),
+        amount: 0,
+      })
+
+      expect(formula!(ctx)).toBeUndefined()
     })
   })
 

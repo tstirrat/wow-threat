@@ -11,6 +11,7 @@ import type {
 import type { GearItem } from '@wcl-threat/wcl-types'
 
 import {
+  type CalculateThreatOptions,
   calculateThreat,
   tauntTarget,
   threatOnBuff,
@@ -28,6 +29,7 @@ export const Spells = {
   ShieldSlam: 23922,
   Revenge: 25288,
   SunderArmor: 25225,
+  SunderArmorRank5: 11597,
   HeroicStrike: 25286,
   Cleave: 25231,
   Execute: 25236,
@@ -115,6 +117,20 @@ function inferDefianceRank(ctx: TalentImplicationContext): number {
 function inferGearAuras(gear: GearItem[]): number[] {
   const t1Pieces = gear.filter((g) => g.setID === SetIds.T1).length
   return t1Pieces >= 8 ? [Spells.T1_8pc] : []
+}
+
+function calculateThreatOnSuccessfulHit(
+  options: CalculateThreatOptions,
+): ReturnType<typeof calculateThreat> {
+  const baseFormula = calculateThreat(options)
+
+  return (ctx) => {
+    if (ctx.event.type === 'damage' && ctx.amount <= 0) {
+      return undefined
+    }
+
+    return baseFormula(ctx)
+  }
 }
 
 const BATTLE_STANCE_IMPLIED_ABILITIES: ReadonlySet<SpellId> = new Set([
@@ -245,7 +261,7 @@ export const warriorConfig: ClassThreatConfig = {
     [Spells.T1_8pc]: () => ({
       source: 'gear',
       name: 'Might 8pc',
-      spellIds: new Set([Spells.SunderArmor]),
+      spellIds: new Set([Spells.SunderArmor, Spells.SunderArmorRank5]),
       value: 1.15,
     }),
     [Spells.T25_4pc]: () => ({
@@ -257,17 +273,24 @@ export const warriorConfig: ClassThreatConfig = {
   },
 
   abilities: {
+    // Sunder Armor: threat on cast, rollback on miss/immune/resist
+    [Spells.SunderArmor]: threatOnCastRollbackOnMiss(301),
+    [Spells.SunderArmorRank5]: threatOnCastRollbackOnMiss(261),
+
     // Shield Slam: 2x damage + 150 flat threat
     [Spells.ShieldSlam]: calculateThreat({ modifier: 2, bonus: 150 }),
 
-    // Sunder Armor: threat on cast, rollback on miss/immune/resist
-    [Spells.SunderArmor]: threatOnCastRollbackOnMiss(301),
+    // Revenge: (damage * 2.25) + 270 flat threat on successful hits
+    [Spells.Revenge]: calculateThreatOnSuccessfulHit({
+      modifier: 2.25,
+      bonus: 270,
+    }),
 
-    // Revenge: damage + 355 flat threat
-    [Spells.Revenge]: calculateThreat({ modifier: 1, bonus: 355 }),
-
-    // Heroic Strike: damage + 145 flat threat
-    [Spells.HeroicStrike]: calculateThreat({ modifier: 1, bonus: 145 }),
+    // Heroic Strike: damage + 175 flat threat on successful hits
+    [Spells.HeroicStrike]: calculateThreatOnSuccessfulHit({
+      modifier: 1,
+      bonus: 175,
+    }),
 
     // Cleave: damage + 100 flat threat per target
     [Spells.Cleave]: calculateThreat({ modifier: 1, bonus: 100 }),

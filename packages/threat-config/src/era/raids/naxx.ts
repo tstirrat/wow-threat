@@ -16,7 +16,7 @@ const HATEFUL_STRIKE_THREAT = 500
 /**
  * Patchwerk - Hateful Strike
  *
- * Adds fixed threat to the top 4 melee-range targets.
+ * Adds fixed threat to melee-range targets.
  * This is a boss ability cast on a player, so base threat (value) is 0.
  */
 export const hatefulStrike =
@@ -36,15 +36,39 @@ export const hatefulStrike =
       },
       100,
     )
-
-    // Filter to only those in melee range of Patchwerk
-    const meleeActors = topActors.filter(({ actorId }) => {
-      const distance = ctx.actors.getDistance(
-        { id: actorId },
-        { id: targetEnemyId, instanceId: targetEnemyInstance },
-      )
-      return distance !== null && distance <= MELEE_RANGE
+    const targetActorId = ctx.event.targetID
+    const topActorIds = new Set(topActors.map(({ actorId }) => actorId))
+    const targetThreat = ctx.actors.getThreat(targetActorId, {
+      id: targetEnemyId,
+      instanceId: targetEnemyInstance,
     })
+    const topActorsWithTarget =
+      topActorIds.has(targetActorId) || targetActorId <= 0
+        ? topActors
+        : [...topActors, { actorId: targetActorId, threat: targetThreat }]
+
+    const topActorsWithDistance = topActorsWithTarget.map(
+      ({ actorId, threat }) => ({
+        actorId,
+        threat,
+        distance: ctx.actors.getDistance(
+          { id: actorId },
+          { id: targetEnemyId, instanceId: targetEnemyInstance },
+        ),
+      }),
+    )
+
+    // Some logs do not provide position payloads. If no distance data exists,
+    // fall back to the top-threat ordering so Hateful Strike still applies.
+    const hasDistanceData = topActorsWithDistance.some(
+      ({ distance }) => distance !== null,
+    )
+
+    const meleeActors = hasDistanceData
+      ? topActorsWithDistance.filter(
+          ({ distance }) => distance !== null && distance <= MELEE_RANGE,
+        )
+      : topActorsWithDistance
 
     // Take top N in melee range
     const targets = meleeActors.slice(0, playerCount)
@@ -65,7 +89,7 @@ export const hatefulStrike =
 
     return {
       formula: `hatefulStrike(${hatefulAmount})`,
-      value: 0, // Boss ability on player - no base threat
+      value: hatefulAmount,
       splitAmongEnemies: false,
       effects: [{ type: 'customThreat', changes }],
     }
@@ -75,7 +99,7 @@ export const hatefulStrike =
  * Naxxramas boss abilities
  */
 export const naxxAbilities = {
-  [HATEFUL_STRIKE_ID]: hatefulStrike(HATEFUL_STRIKE_THREAT, { playerCount: 4 }),
+  [HATEFUL_STRIKE_ID]: hatefulStrike(HATEFUL_STRIKE_THREAT, {}),
   [NOTH_BLINK_ID]: modifyThreat({ modifier: 0, target: 'all' }),
   [NOTH_BLINK_ALT_ID]: modifyThreat({ modifier: 0, target: 'all' }),
 }

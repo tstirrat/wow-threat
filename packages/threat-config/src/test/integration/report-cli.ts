@@ -219,6 +219,7 @@ async function main(): Promise<void> {
     maxLines: args.maxLines ?? fixture.metadata.maxSnapshotLines,
   })
   const output = [
+    `newthreat`,
     `Report URL: ${args.reportUrl}`,
     `Report Code: ${args.reportCode}`,
     '',

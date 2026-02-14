@@ -12,6 +12,8 @@ import { hatefulStrike, naxxAbilities } from './naxx'
 
 describe('Hateful Strike', () => {
   const PATCHWERK_ID = 16028
+  const HATEFUL_AMOUNT = 500
+  const formula = hatefulStrike(HATEFUL_AMOUNT, { playerCount: 4 })
 
   function createNaxxActorContext(
     topActors: Array<{ actorId: number; threat: number }>,
@@ -69,9 +71,9 @@ describe('Hateful Strike', () => {
     const actors = createNaxxActorContext(topActors, distances)
     const ctx = createMockContext(actors)
 
-    const result = checkExists(hatefulStrike(ctx))
+    const result = checkExists(formula(ctx))
 
-    expect(result.value).toBe(0) // Boss ability on player
+    expect(result.value).toBe(500)
     expect(result.effects?.[0]?.type).toBe('customThreat')
 
     if (result.effects?.[0]?.type === 'customThreat') {
@@ -82,7 +84,7 @@ describe('Hateful Strike', () => {
       expect(
         result.effects?.[0]?.changes.every((c) => c.targetId === PATCHWERK_ID),
       ).toBe(true)
-      expect(result.effects?.[0]?.changes.every((c) => c.amount === 1000)).toBe(
+      expect(result.effects?.[0]?.changes.every((c) => c.amount === 500)).toBe(
         true,
       )
       expect(
@@ -105,7 +107,7 @@ describe('Hateful Strike', () => {
     const actors = createNaxxActorContext(topActors, distances)
     const ctx = createMockContext(actors)
 
-    const result = checkExists(hatefulStrike(ctx))
+    const result = checkExists(formula(ctx))
 
     if (result.effects?.[0]?.type === 'customThreat') {
       expect(result.effects?.[0]?.changes).toHaveLength(2)
@@ -137,7 +139,7 @@ describe('Hateful Strike', () => {
     const actors = createNaxxActorContext(topActors, distances)
     const ctx = createMockContext(actors)
 
-    const result = checkExists(hatefulStrike(ctx))
+    const result = checkExists(formula(ctx))
 
     if (result.effects?.[0]?.type === 'customThreat') {
       expect(result.effects?.[0]?.changes).toHaveLength(4)
@@ -148,7 +150,29 @@ describe('Hateful Strike', () => {
     }
   })
 
-  it('should handle actors with null distance', () => {
+  it('should use top threat ordering when no distance data exists', () => {
+    const topActors = [
+      { actorId: 1, threat: 1000 },
+      { actorId: 2, threat: 900 },
+      { actorId: 3, threat: 800 },
+      { actorId: 4, threat: 700 },
+      { actorId: 5, threat: 600 },
+    ]
+
+    const actors = createNaxxActorContext(topActors, new Map())
+    const ctx = createMockContext(actors)
+
+    const result = checkExists(formula(ctx))
+
+    if (result.effects?.[0]?.type === 'customThreat') {
+      expect(result.effects?.[0]?.changes).toHaveLength(4)
+      expect(result.effects?.[0]?.changes.map((c) => c.sourceId)).toEqual([
+        1, 2, 3, 4,
+      ])
+    }
+  })
+
+  it('should ignore null distance actors when at least one distance exists', () => {
     const topActors = [
       { actorId: 1, threat: 1000 },
       { actorId: 2, threat: 900 },
@@ -164,7 +188,7 @@ describe('Hateful Strike', () => {
     const actors = createNaxxActorContext(topActors, distances)
     const ctx = createMockContext(actors)
 
-    const result = checkExists(hatefulStrike(ctx))
+    const result = checkExists(formula(ctx))
 
     if (result.effects?.[0]?.type === 'customThreat') {
       // Should only include actors 1 and 3 (with valid distances)
@@ -189,7 +213,7 @@ describe('Hateful Strike', () => {
     const actors = createNaxxActorContext(topActors, distances)
     const ctx = createMockContext(actors)
 
-    const result = checkExists(hatefulStrike(ctx))
+    const result = checkExists(formula(ctx))
 
     if (result.effects?.[0]?.type === 'customThreat') {
       expect(result.effects?.[0]?.changes).toHaveLength(0)
@@ -200,9 +224,9 @@ describe('Hateful Strike', () => {
     const actors = createNaxxActorContext([], new Map())
     const ctx = createMockContext(actors)
 
-    const result = checkExists(hatefulStrike(ctx))
+    const result = checkExists(formula(ctx))
 
-    expect(result.formula).toBe('0 (customThreat)')
+    expect(result.formula).toBe('hatefulStrike(500)')
     expect(result.splitAmongEnemies).toBe(false)
   })
 })

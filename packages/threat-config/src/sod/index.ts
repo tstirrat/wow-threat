@@ -20,6 +20,7 @@ import {
   validateAuraModifiers,
 } from '../shared/utils'
 import { sodClasses } from './classes'
+import { miscAbilities } from './misc'
 import {
   aq40Abilities,
   aq40AggroLossBuffs,
@@ -27,7 +28,6 @@ import {
 } from './raids/aq40'
 import { bwlAbilities } from './raids/bwl'
 import { mcAbilities } from './raids/mc'
-import { miscAbilities } from './raids/misc'
 import { naxxAbilities } from './raids/naxx'
 import { onyxiaAbilities } from './raids/onyxia'
 import { zgAbilities, zgEncounters } from './raids/zg'

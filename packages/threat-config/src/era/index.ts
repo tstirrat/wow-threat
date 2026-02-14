@@ -26,6 +26,7 @@ import { shamanConfig } from './classes/shaman'
 import { warlockConfig } from './classes/warlock'
 import { warriorConfig } from './classes/warrior'
 import { baseThreat } from './general'
+import { miscAbilities } from './misc'
 import { aq40AggroLossBuffs, aq40AuraModifiers } from './raids/aq40'
 import { bwlAbilities } from './raids/bwl'
 import { bwlAggroLossBuffs } from './raids/bwl'
@@ -90,6 +91,7 @@ export const eraConfig: ThreatConfig = {
   },
 
   abilities: {
+    ...miscAbilities,
     ...bwlAbilities,
     ...naxxAbilities,
     ...onyxiaAbilities,
