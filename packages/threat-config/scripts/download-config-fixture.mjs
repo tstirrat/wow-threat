@@ -4,13 +4,11 @@
  *
  * Usage:
  *   pnpm --filter @wcl-threat/threat-config fixtures:download -- \
- *     --host fresh \
- *     --report f9yPamzBxQqhGndZ \
- *     --fight 26 \
+ *     --report-url "https://fresh.warcraftlogs.com/reports/f9yPamzBxQqhGndZ?fight=26&type=damage-done&source=19" \
  *     --name anniversary/naxx/patchwerk-fight-26 \
  *     --focus-actor-id 12
  */
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -142,15 +140,109 @@ function resolveHost(hostInput) {
 
   if (hostInput.startsWith('http://') || hostInput.startsWith('https://')) {
     const url = new URL(hostInput)
+    const hostAlias =
+      Object.entries(HOSTS).find(
+        ([, origin]) => new URL(origin).hostname === url.hostname,
+      )?.[0] ?? url.hostname
+
     return {
-      key: url.hostname,
+      key: hostAlias,
       origin: `${url.protocol}//${url.host}`,
     }
   }
 
+  const hostAlias =
+    Object.entries(HOSTS).find(
+      ([, origin]) => new URL(origin).hostname === hostInput,
+    )?.[0] ?? hostInput
+
   return {
-    key: hostInput,
+    key: hostAlias,
     origin: `https://${hostInput}`,
+  }
+}
+
+function parseReportUrl(reportUrl) {
+  let parsedUrl
+  try {
+    parsedUrl = new URL(reportUrl)
+  } catch {
+    throw new Error(`Invalid --report-url: ${reportUrl}`)
+  }
+
+  const reportMatch = parsedUrl.pathname.match(/\/reports\/([A-Za-z0-9]+)/)
+  if (!reportMatch?.[1]) {
+    throw new Error(
+      'Report URL must include /reports/<REPORT_CODE> in the path',
+    )
+  }
+
+  const fightId = Number.parseInt(parsedUrl.searchParams.get('fight') ?? '', 10)
+  if (!Number.isFinite(fightId)) {
+    throw new Error('Report URL must include a valid ?fight=<FIGHT_ID> query')
+  }
+
+  return {
+    host: parsedUrl.host,
+    reportCode: reportMatch[1],
+    fightId,
+  }
+}
+
+function parseDevVars(raw) {
+  const vars = {}
+
+  for (const rawLine of raw.split(/\r?\n/u)) {
+    const trimmedLine = rawLine.trim()
+    if (!trimmedLine || trimmedLine.startsWith('#')) {
+      continue
+    }
+
+    const line = trimmedLine.startsWith('export ')
+      ? trimmedLine.slice('export '.length).trim()
+      : trimmedLine
+
+    const separatorIndex = line.indexOf('=')
+    if (separatorIndex <= 0) {
+      continue
+    }
+
+    const key = line.slice(0, separatorIndex).trim()
+    let value = line.slice(separatorIndex + 1).trim()
+
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1)
+    }
+
+    if (key.length > 0) {
+      vars[key] = value
+    }
+  }
+
+  return vars
+}
+
+async function loadApiDevVars(packageRoot) {
+  const workspaceRoot = resolve(packageRoot, '../..')
+  const apiDevVarsPath = resolve(workspaceRoot, 'apps/api/.dev.vars')
+
+  try {
+    const raw = await readFile(apiDevVarsPath, 'utf8')
+    return parseDevVars(raw)
+  } catch (error) {
+    if (
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      (error.code === 'ENOENT' || error.code === 'ENOTDIR')
+    ) {
+      return {}
+    }
+
+    throw error
   }
 }
 
@@ -214,6 +306,14 @@ function printUsage() {
     [
       'Usage:',
       '  pnpm --filter @wcl-threat/threat-config fixtures:download -- \\',
+      '    --report-url <WCL_REPORT_URL> \\',
+      '    [--name <fixture/path>] \\',
+      '    [--output <absolute/or/relative/path>] \\',
+      '    [--focus-actor-id <ACTOR_ID>] \\',
+      '    [--max-snapshot-lines <N>]',
+      '',
+      'Alternative (legacy args):',
+      '  pnpm --filter @wcl-threat/threat-config fixtures:download -- \\',
       '    --host fresh|vanilla|classic|sod|retail|<domain> \\',
       '    --report <REPORT_CODE> \\',
       '    --fight <FIGHT_ID> \\',
@@ -222,9 +322,14 @@ function printUsage() {
       '    [--focus-actor-id <ACTOR_ID>] \\',
       '    [--max-snapshot-lines <N>]',
       '',
+      'Notes:',
+      '  - When --report-url is used, only host/report/fight are parsed from the URL.',
+      '  - Source query params in the URL are ignored (all fight events are downloaded).',
+      '',
       'Auth:',
       '  Set WCL_CLIENT_ID and WCL_CLIENT_SECRET env vars, or pass',
       '  --client-id / --client-secret.',
+      '  If missing, falls back to apps/api/.dev.vars.',
     ].join('\n'),
   )
 }
@@ -236,9 +341,18 @@ async function main() {
     return
   }
 
-  const host = resolveHost(args.host)
-  const reportCode = args.report
-  const fightId = Number.parseInt(args.fight ?? '', 10)
+  const reportUrl =
+    args['report-url'] ??
+    (typeof args.report === 'string' &&
+    (args.report.startsWith('http://') || args.report.startsWith('https://'))
+      ? args.report
+      : undefined)
+
+  const parsedReportUrl = reportUrl ? parseReportUrl(reportUrl) : null
+  const host = resolveHost(parsedReportUrl?.host ?? args.host)
+  const reportCode = parsedReportUrl?.reportCode ?? args.report
+  const fightId =
+    parsedReportUrl?.fightId ?? Number.parseInt(args.fight ?? '', 10)
   const focusActorIdRaw = args['focus-actor-id']
   const focusActorId = focusActorIdRaw
     ? Number.parseInt(focusActorIdRaw, 10)
@@ -248,8 +362,14 @@ async function main() {
     ? Number.parseInt(maxSnapshotLinesRaw, 10)
     : undefined
 
-  const clientId = args['client-id'] ?? process.env.WCL_CLIENT_ID
-  const clientSecret = args['client-secret'] ?? process.env.WCL_CLIENT_SECRET
+  const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  const apiDevVars = await loadApiDevVars(packageRoot)
+  const clientId =
+    args['client-id'] ?? process.env.WCL_CLIENT_ID ?? apiDevVars.WCL_CLIENT_ID
+  const clientSecret =
+    args['client-secret'] ??
+    process.env.WCL_CLIENT_SECRET ??
+    apiDevVars.WCL_CLIENT_SECRET
 
   if (
     !host ||
@@ -271,7 +391,6 @@ async function main() {
     throw new Error(`Invalid --max-snapshot-lines: ${maxSnapshotLinesRaw}`)
   }
 
-  const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
   const fixtureName = args.name ?? `${host.key}/${reportCode}/fight-${fightId}`
   const outputDir = args.output
     ? resolve(process.cwd(), args.output)

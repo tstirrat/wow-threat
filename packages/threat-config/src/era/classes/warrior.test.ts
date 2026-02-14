@@ -7,6 +7,7 @@ import {
   createCastEvent,
   createDamageEvent,
   createMockActorContext,
+  createResourceChangeEvent,
 } from '@wcl-threat/shared'
 import type {
   TalentImplicationContext,
@@ -44,12 +45,23 @@ function createMockContext(
   }
 }
 
+const legacyWarriorSpellFunctionIds = [
+  71, 2457, 2458, 78, 284, 285, 1608, 11564, 11565, 11566, 11567, 25286, 23922,
+  23923, 23924, 23925, 72, 1671, 1672, 11601, 25288, 12798, 845, 7369, 11608,
+  11609, 20569, 1680, 6343, 8198, 8204, 8205, 11580, 11581, 1715, 7372, 7373,
+  20252, 20253, 20616, 20614, 20617, 20615, 20647, 7386, 11597, 6673, 5242,
+  6192, 11549, 11550, 11551, 25289, 11556, 20560, 11585, 11574, 355, 1161, 2687,
+  29131, 29478, 23602, 12964, 11578, 7922, 18499, 12966, 12967, 12968, 12969,
+  12970, 12328, 871, 1719, 12323, 14204, 12975, 12976, 2565, 12721, 6552, 6554,
+  23881, 23892, 23893, 23894, 23888, 23885, 23891,
+] as const
+
 describe('Spell constants', () => {
   it('has correct spell IDs for core abilities', () => {
-    expect(Spells.ShieldSlam).toBe(23922)
-    expect(Spells.Revenge).toBe(25288)
-    expect(Spells.SunderArmor).toBe(25225)
-    expect(Spells.SunderArmorRank5).toBe(11597)
+    expect(Spells.ShieldSlamR1).toBe(23922)
+    expect(Spells.RevengeR6).toBe(25288)
+    expect(Spells.SunderArmorR4).toBe(11596)
+    expect(Spells.SunderArmorR5).toBe(11597)
     expect(Spells.Taunt).toBe(355)
   })
 
@@ -164,8 +176,8 @@ describe('auraModifiers', () => {
     expect(modifier.value).toBe(1.15)
     expect(modifier.source).toBe('gear')
     expect(modifier.spellIds).toBeDefined()
-    expect(modifier.spellIds!.has(Spells.SunderArmor)).toBe(true)
-    expect(modifier.spellIds!.has(Spells.SunderArmorRank5)).toBe(true)
+    expect(modifier.spellIds!.has(Spells.SunderArmorR1)).toBe(true)
+    expect(modifier.spellIds!.has(Spells.SunderArmorR5)).toBe(true)
   })
 })
 
@@ -304,23 +316,41 @@ describe('talentImplications', () => {
 })
 
 describe('abilities', () => {
+  it('contains all legacy warrior spell function IDs', () => {
+    legacyWarriorSpellFunctionIds.forEach((spellId) => {
+      expect(warriorConfig.abilities[spellId]).toBeDefined()
+    })
+  })
+
   describe('Shield Slam', () => {
-    it('calculates (amt * 2) + 150 threat', () => {
-      const formula = warriorConfig.abilities[Spells.ShieldSlam]
+    it('calculates amt + 178 threat for rank 1', () => {
+      const formula = warriorConfig.abilities[Spells.ShieldSlamR1]
       expect(formula).toBeDefined()
 
       const ctx = createMockContext({ amount: 2500 })
       const result = assertDefined(formula!(ctx))
 
-      expect(result.formula).toBe('(amt * 2) + 150')
-      expect(result.value).toBe(5150) // (2500 * 2) + 150
+      expect(result.formula).toBe('amt + 178')
+      expect(result.value).toBe(2678)
+      expect(result.splitAmongEnemies).toBe(false)
+    })
+
+    it('supports rank 4 shield slam bonus threat', () => {
+      const formula = warriorConfig.abilities[Spells.ShieldSlamR4]
+      expect(formula).toBeDefined()
+
+      const ctx = createMockContext({ amount: 1000 })
+      const result = assertDefined(formula!(ctx))
+
+      expect(result.formula).toBe('amt + 254')
+      expect(result.value).toBe(1254)
       expect(result.splitAmongEnemies).toBe(false)
     })
   })
 
   describe('Sunder Armor', () => {
-    it('applies 301 threat on cast and rolls back on miss', () => {
-      const formula = warriorConfig.abilities[Spells.SunderArmor]
+    it('applies 261 threat on cast and rolls back on miss', () => {
+      const formula = warriorConfig.abilities[Spells.SunderArmorR5]
       expect(formula).toBeDefined()
 
       const castResult = assertDefined(
@@ -340,14 +370,14 @@ describe('abilities', () => {
         ),
       )
 
-      expect(castResult.formula).toBe('301 (cast)')
-      expect(castResult.value).toBe(301)
-      expect(missResult.formula).toBe('-301 (miss rollback)')
-      expect(missResult.value).toBe(-301)
+      expect(castResult.formula).toBe('261 (cast)')
+      expect(castResult.value).toBe(261)
+      expect(missResult.formula).toBe('-261 (miss rollback)')
+      expect(missResult.value).toBe(-261)
     })
 
     it('supports legacy rank 5 threat values', () => {
-      const formula = warriorConfig.abilities[Spells.SunderArmorRank5]
+      const formula = warriorConfig.abilities[Spells.SunderArmorR5]
       expect(formula).toBeDefined()
 
       const castResult = assertDefined(
@@ -376,7 +406,7 @@ describe('abilities', () => {
 
   describe('Revenge', () => {
     it('calculates (amt * 2.25) + 270 threat on successful hits', () => {
-      const formula = warriorConfig.abilities[Spells.Revenge]
+      const formula = warriorConfig.abilities[Spells.RevengeR6]
       expect(formula).toBeDefined()
 
       const ctx = createMockContext({ amount: 500 })
@@ -387,7 +417,7 @@ describe('abilities', () => {
     })
 
     it('does not apply threat when revenge misses', () => {
-      const formula = warriorConfig.abilities[Spells.Revenge]
+      const formula = warriorConfig.abilities[Spells.RevengeR6]
       expect(formula).toBeDefined()
 
       const ctx = createMockContext({
@@ -401,7 +431,7 @@ describe('abilities', () => {
 
   describe('Heroic Strike', () => {
     it('calculates amt + 175 threat on successful hits', () => {
-      const formula = warriorConfig.abilities[Spells.HeroicStrike]
+      const formula = warriorConfig.abilities[Spells.HeroicStrikeR9]
       expect(formula).toBeDefined()
 
       const ctx = createMockContext({ amount: 1000 })
@@ -412,7 +442,7 @@ describe('abilities', () => {
     })
 
     it('does not apply threat when heroic strike misses', () => {
-      const formula = warriorConfig.abilities[Spells.HeroicStrike]
+      const formula = warriorConfig.abilities[Spells.HeroicStrikeR9]
       expect(formula).toBeDefined()
 
       const ctx = createMockContext({
@@ -425,8 +455,8 @@ describe('abilities', () => {
   })
 
   describe('Battle Shout', () => {
-    it('returns flat 70 threat split among enemies', () => {
-      const formula = warriorConfig.abilities[Spells.BattleShout]
+    it('returns flat 60 threat split among enemies for rank 7', () => {
+      const formula = warriorConfig.abilities[Spells.BattleShoutR7]
       expect(formula).toBeDefined()
 
       const ctx = createMockContext({
@@ -434,15 +464,15 @@ describe('abilities', () => {
       })
       const result = assertDefined(formula!(ctx))
 
-      expect(result.formula).toBe('70')
-      expect(result.value).toBe(70)
+      expect(result.formula).toBe('60')
+      expect(result.value).toBe(60)
       expect(result.splitAmongEnemies).toBe(true)
     })
   })
 
   describe('Demoralizing Shout', () => {
-    it('returns flat 56 threat per target', () => {
-      const formula = warriorConfig.abilities[Spells.DemoShout]
+    it('returns flat 43 threat per target', () => {
+      const formula = warriorConfig.abilities[Spells.DemoShoutR7]
       expect(formula).toBeDefined()
 
       const ctx = createMockContext({
@@ -450,9 +480,25 @@ describe('abilities', () => {
       })
       const result = assertDefined(formula!(ctx))
 
-      expect(result.formula).toBe('56')
-      expect(result.value).toBe(56)
+      expect(result.formula).toBe('43')
+      expect(result.value).toBe(43)
       expect(result.splitAmongEnemies).toBe(false)
+    })
+
+    it('keeps anniversary rank mapped to the same legacy threat value', () => {
+      const formula = warriorConfig.abilities[Spells.DemoShoutR7]
+      expect(formula).toBeDefined()
+
+      const result = assertDefined(
+        formula!(
+          createMockContext({
+            event: createApplyDebuffEvent(),
+          }),
+        ),
+      )
+
+      expect(result.formula).toBe('43')
+      expect(result.value).toBe(43)
     })
   })
 
@@ -471,7 +517,7 @@ describe('abilities', () => {
       })
       const result = assertDefined(formula!(ctx))
 
-      expect(result.formula).toBe('topThreat + 1')
+      expect(result.formula).toBe('topThreat + 0')
       expect(result.effects?.[0]).toEqual({
         type: 'customThreat',
         changes: [
@@ -480,45 +526,126 @@ describe('abilities', () => {
             targetId: 2,
             targetInstance: 0,
             operator: 'set',
-            amount: 501,
-            total: 501,
+            amount: 500,
+            total: 500,
           },
         ],
       })
     })
   })
 
+  describe('Pummel', () => {
+    it('applies bonus threat for rank 1 on successful hit', () => {
+      const formula = warriorConfig.abilities[Spells.PummelR1]
+      expect(formula).toBeDefined()
+
+      const result = assertDefined(
+        formula!(
+          createMockContext({
+            amount: 250,
+          }),
+        ),
+      )
+
+      expect(result.formula).toBe('amt + 76')
+      expect(result.value).toBe(326)
+    })
+
+    it('applies bonus threat for rank 2 on successful hit', () => {
+      const formula = warriorConfig.abilities[Spells.PummelR2]
+      expect(formula).toBeDefined()
+
+      const result = assertDefined(
+        formula!(
+          createMockContext({
+            amount: 250,
+          }),
+        ),
+      )
+
+      expect(result.formula).toBe('amt + 116')
+      expect(result.value).toBe(366)
+    })
+
+    it('does not apply threat when pummel misses', () => {
+      const formula = warriorConfig.abilities[Spells.PummelR2]
+      expect(formula).toBeDefined()
+
+      const result = formula!(
+        createMockContext({
+          event: createDamageEvent({ hitType: 'miss' }),
+          amount: 0,
+        }),
+      )
+
+      expect(result).toBeUndefined()
+    })
+  })
+
+  describe('Resource Gain Abilities', () => {
+    it('applies coefficients for Bloodrage cast resource gain', () => {
+      const formula = warriorConfig.abilities[Spells.BloodrageCast]
+      expect(formula).toBeDefined()
+
+      const result = assertDefined(
+        formula!(
+          createMockContext({
+            event: createResourceChangeEvent({
+              abilityGameID: 2687,
+              resourceChange: 10,
+              waste: 0,
+              resourceChangeType: 'rage',
+            }),
+            amount: 10,
+          }),
+        ),
+      )
+
+      expect(result.formula).toBe('amt * 5')
+      expect(result.value).toBe(50)
+      expect(result.splitAmongEnemies).toBe(true)
+      expect(result.applyPlayerMultipliers).toBe(true)
+    })
+
+    it('skips coefficients for Bloodrage periodic rage gain', () => {
+      const formula = warriorConfig.abilities[Spells.BloodrageRageGain]
+      expect(formula).toBeDefined()
+
+      const result = assertDefined(
+        formula!(
+          createMockContext({
+            event: createResourceChangeEvent({
+              abilityGameID: 29131,
+              resourceChange: 1,
+              waste: 0,
+              resourceChangeType: 'rage',
+            }),
+            amount: 1,
+          }),
+        ),
+      )
+
+      expect(result.formula).toBe('amt * 5')
+      expect(result.value).toBe(5)
+      expect(result.splitAmongEnemies).toBe(true)
+      expect(result.applyPlayerMultipliers).toBe(false)
+    })
+  })
+
   describe('Mocking Blow', () => {
-    it('returns custom threat set behavior with damage bonus', () => {
-      const formula = warriorConfig.abilities[Spells.MockingBlow]
+    it('uses direct damage threat for the rank 5 strike event', () => {
+      const formula = warriorConfig.abilities[Spells.MockingBlowR5]
       expect(formula).toBeDefined()
 
       const ctx = createMockContext({
-        event: createApplyDebuffEvent(),
+        event: createDamageEvent(),
         amount: 500,
-        actors: createMockActorContext({
-          getThreat: () => 100,
-          getTopActorsByThreat: () => [{ actorId: 99, threat: 400 }],
-          isActorAlive: () => true,
-        }),
       })
       const result = assertDefined(formula!(ctx))
 
-      expect(result.formula).toBe('topThreat + amt')
-      expect(result.value).toBe(0)
-      expect(result.effects?.[0]).toEqual({
-        type: 'customThreat',
-        changes: [
-          {
-            sourceId: 1,
-            targetId: 2,
-            targetInstance: 0,
-            operator: 'set',
-            amount: 900,
-            total: 900,
-          },
-        ],
-      })
+      expect(result.formula).toBe('amt')
+      expect(result.value).toBe(500)
+      expect(result.effects).toBeUndefined()
     })
   })
 })

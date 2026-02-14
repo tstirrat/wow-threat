@@ -17,6 +17,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   calculateThreat,
+  calculateThreatOnSuccessfulHit,
   modifyThreat,
   modifyThreatOnHit,
   noThreat,
@@ -177,6 +178,47 @@ describe('calculateThreat', () => {
     const result = assertDefined(formula(createMockContext()))
 
     expect(result.applyPlayerMultipliers).toBe(false)
+  })
+})
+
+describe('calculateThreatOnSuccessfulHit', () => {
+  it('applies threat on successful damage hits', () => {
+    const formula = calculateThreatOnSuccessfulHit({ bonus: 175 })
+    const result = assertDefined(
+      formula(
+        createMockContext({
+          event: createDamageEvent({ hitType: 'hit' }),
+          amount: 1000,
+        }),
+      ),
+    )
+
+    expect(result.formula).toBe('amt + 175')
+    expect(result.value).toBe(1175)
+  })
+
+  it('returns undefined on misses', () => {
+    const formula = calculateThreatOnSuccessfulHit({ bonus: 175 })
+    const result = formula(
+      createMockContext({
+        event: createDamageEvent({ hitType: 'miss' }),
+        amount: 0,
+      }),
+    )
+
+    expect(result).toBeUndefined()
+  })
+
+  it('returns undefined for non-damage event types', () => {
+    const formula = calculateThreatOnSuccessfulHit({ bonus: 175 })
+    const result = formula(
+      createMockContext({
+        event: createCastEvent(),
+        amount: 0,
+      }),
+    )
+
+    expect(result).toBeUndefined()
   })
 })
 

@@ -61,6 +61,13 @@ const modifyThreatOnHitHitTypes = new Set<HitType>([
   'immune',
   'resist',
 ])
+const successfulDamageHitTypes = new Set<HitType>([
+  'hit',
+  'crit',
+  'block',
+  'glancing',
+  'crushing',
+])
 
 function isEventTypeAllowed(
   eventType: EventType,
@@ -129,6 +136,47 @@ export function calculateThreat(
       splitAmongEnemies: split,
       applyPlayerMultipliers,
     }
+  }
+}
+
+/**
+ * Consolidated hit-gated threat formula.
+ * Applies (amount × modifier) + bonus only on successful damage hits.
+ */
+export function calculateThreatOnSuccessfulHit(
+  options: CalculateThreatOptions = {},
+): FormulaFn {
+  const baseFormula = calculateThreat({
+    ...options,
+    eventTypes: ['damage'],
+  })
+
+  return (ctx) => {
+    if (ctx.event.type !== 'damage') {
+      return undefined
+    }
+
+    const hitType = ctx.event.hitType
+
+    if (typeof hitType === 'number') {
+      if (hitType <= 0 || hitType > 6) {
+        return undefined
+      }
+      return baseFormula(ctx)
+    }
+
+    if (typeof hitType === 'string') {
+      if (!successfulDamageHitTypes.has(hitType)) {
+        return undefined
+      }
+      return baseFormula(ctx)
+    }
+
+    if (ctx.amount <= 0) {
+      return undefined
+    }
+
+    return baseFormula(ctx)
   }
 }
 
