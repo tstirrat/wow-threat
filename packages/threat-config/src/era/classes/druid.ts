@@ -141,44 +141,13 @@ const SUBTLETY_RANK_BY_TALENT_ID = new Map<number, number>(
 
 const HEALING_SPELLS = new Set([
   // Healing Touch
-  5185,
-  5186,
-  5187,
-  5188,
-  5189,
-  6778,
-  8903,
-  9758,
-  9888,
-  9889,
-  25297,
+  5185, 5186, 5187, 5188, 5189, 6778, 8903, 9758, 9888, 9889, 25297,
   // Regrowth
-  8936,
-  8938,
-  8939,
-  8940,
-  8941,
-  9750,
-  9856,
-  9857,
-  9858,
+  8936, 8938, 8939, 8940, 8941, 9750, 9856, 9857, 9858,
   // Rejuvenation
-  774,
-  1058,
-  1430,
-  2090,
-  2091,
-  3627,
-  8910,
-  9839,
-  9840,
-  9841,
-  25299,
+  774, 1058, 1430, 2090, 2091, 3627, 8910, 9839, 9840, 9841, 25299,
   // Tranquility
-  740,
-  8918,
-  9862,
-  9863,
+  740, 8918, 9862, 9863,
 ])
 
 function hasCombatantInfoBearFormAura(ctx: TalentImplicationContext): boolean {
@@ -187,7 +156,7 @@ function hasCombatantInfoBearFormAura(ctx: TalentImplicationContext): boolean {
   }
 
   return ctx.event.auras.some((aura) => {
-    const auraId = aura.abilityGameID ?? aura.ability ?? null
+    const auraId = aura.ability ?? aura.ability ?? null
     return auraId === Spells.BearForm || auraId === Spells.DireBearForm
   })
 }

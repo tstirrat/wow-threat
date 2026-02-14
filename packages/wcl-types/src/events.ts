@@ -208,7 +208,7 @@ export interface GearItem {
 /** Aura snapshot from combatant info at fight start */
 export interface CombatantInfoAura {
   source: number
-  abilityGameID?: number
+  ability?: number // Verified at the API level that this is ability and not abilityGameID
   stacks: number
   icon: string
   name?: string | null

@@ -357,7 +357,7 @@ export function createCombatantInfoAura(
 ): CombatantInfoAura {
   return {
     source: sourceId,
-    abilityGameID: abilityId,
+    ability: abilityId,
     stacks: 1,
     icon: `spell_${name.toLowerCase().replace(/\s/g, '_')}.jpg`,
     name,
