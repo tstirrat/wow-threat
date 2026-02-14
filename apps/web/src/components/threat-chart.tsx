@@ -15,7 +15,14 @@ import {
 } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer, SVGRenderer } from 'echarts/renderers'
-import { type FC, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  type FC,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 
 import { formatTimelineTime } from '../lib/format'
 import { resolveSeriesWindowBounds } from '../lib/threat-aggregation'
@@ -86,7 +93,6 @@ function resolvePointColor(
   seriesColor: string,
 ): string {
   if (point?.markerKind === 'bossMelee') {
-    console.log('[resolvePointColor] Boss melee marker detected!', point)
     return bossMeleeMarkerColor
   }
 
@@ -315,6 +321,20 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     [series],
   )
 
+  const resetZoom = useCallback((): void => {
+    const chart = chartRef.current?.getEchartsInstance()
+    if (!chart) {
+      return
+    }
+
+    chart.dispatchAction({
+      type: 'dataZoom',
+      startValue: bounds.min,
+      endValue: bounds.max,
+    })
+    onWindowChange(null, null)
+  }, [bounds.max, bounds.min, onWindowChange])
+
   useEffect(() => {
     const chart = chartRef.current?.getEchartsInstance()
     if (!chart) {
@@ -506,7 +526,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
       zr.off('click', handleClick)
       zr.off('globalout', handleGlobalOut)
     }
-  }, [chartSeries])
+  }, [chartSeries, resetZoom])
 
   const option: EChartsOption = {
     animation: false,
@@ -787,7 +807,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         <button
           className="rounded-md border border-border bg-panel px-2 py-1 text-xs"
           type="button"
-          onClick={() => onWindowChange(null, null)}
+          onClick={resetZoom}
         >
           Reset zoom
         </button>
