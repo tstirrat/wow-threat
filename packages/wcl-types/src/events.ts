@@ -228,7 +228,7 @@ export interface TalentPoint {
   icon: string
 }
 
-export type TalentPoints = [TalentPoint, TalentPoint, TalentPoint]
+export type TalentPoints = readonly [TalentPoint, TalentPoint, TalentPoint]
 
 export interface CombatantInfoEvent extends BaseWCLEvent {
   type: 'combatantinfo'

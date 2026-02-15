@@ -5,11 +5,12 @@
  */
 import type {
   ClassThreatConfig,
+  SpellId,
   TalentImplicationContext,
 } from '@wcl-threat/shared'
 import { SpellSchool } from '@wcl-threat/shared'
 
-import { inferMappedTalentRank } from '../../shared/talents'
+import { inferTalent } from '../../shared/talents'
 
 // ============================================================================
 // Spell IDs
@@ -46,51 +47,22 @@ const Mods = {
   ArcaneSubtlety: 0.2, // 20% per rank (up to 40%)
 }
 
-const ARCANE_SUBTLETY_AURA_BY_RANK = [
+const ARCANE_SUBTLETY_RANKS = [
   Spells.ArcaneSubtletyRank1,
   Spells.ArcaneSubtletyRank2,
 ] as const
-const BURNING_SOUL_AURA_BY_RANK = [
+const BURNING_SOUL_RANKS = [
   Spells.BurningSoulRank1,
   Spells.BurningSoulRank2,
 ] as const
-const FROST_CHANNELING_AURA_BY_RANK = [
+const FROST_CHANNELING_RANKS = [
   Spells.FrostChannelingRank1,
   Spells.FrostChannelingRank2,
   Spells.FrostChannelingRank3,
 ] as const
 
-const ARCANE_SUBTLETY_RANK_BY_TALENT_ID = new Map<number, number>(
-  ARCANE_SUBTLETY_AURA_BY_RANK.map((spellId, idx) => [spellId, idx + 1]),
-)
-const BURNING_SOUL_RANK_BY_TALENT_ID = new Map<number, number>(
-  BURNING_SOUL_AURA_BY_RANK.map((spellId, idx) => [spellId, idx + 1]),
-)
-const FROST_CHANNELING_RANK_BY_TALENT_ID = new Map<number, number>(
-  FROST_CHANNELING_AURA_BY_RANK.map((spellId, idx) => [spellId, idx + 1]),
-)
-const FIRE_TREE_INDEX = 1
-const BURNING_SOUL_FIRE_POINTS_THRESHOLD = 12
-
-function inferBurningSoulRank(ctx: TalentImplicationContext): number {
-  const fromRankMap = inferMappedTalentRank(
-    ctx.talentRanks,
-    BURNING_SOUL_RANK_BY_TALENT_ID,
-    BURNING_SOUL_AURA_BY_RANK.length,
-  )
-  if (fromRankMap > 0) {
-    return fromRankMap
-  }
-
-  const firePoints = Math.trunc(ctx.talentPoints[FIRE_TREE_INDEX] ?? 0)
-  if (firePoints < BURNING_SOUL_FIRE_POINTS_THRESHOLD) {
-    return 0
-  }
-
-  // Legacy payloads can omit per-talent ranks and only include tree splits.
-  // At 12+ fire points, infer max Burning Soul rank as a fire-mage heuristic.
-  return BURNING_SOUL_AURA_BY_RANK.length
-}
+const FIRE = 1
+const BURNING_SOUL_THRESHOLD = 12
 
 // ============================================================================
 // Configuration
@@ -152,31 +124,23 @@ export const mageConfig: ClassThreatConfig = {
   },
 
   talentImplications: (ctx: TalentImplicationContext) => {
-    const syntheticAuras: number[] = []
+    const syntheticAuras: SpellId[] = []
 
-    const arcaneSubtletyRank = inferMappedTalentRank(
-      ctx.talentRanks,
-      ARCANE_SUBTLETY_RANK_BY_TALENT_ID,
-      ARCANE_SUBTLETY_AURA_BY_RANK.length,
-    )
-    if (arcaneSubtletyRank > 0) {
-      syntheticAuras.push(ARCANE_SUBTLETY_AURA_BY_RANK[arcaneSubtletyRank - 1]!)
+    const arcaneSubtletySpellId = inferTalent(ctx, ARCANE_SUBTLETY_RANKS)
+    if (arcaneSubtletySpellId) {
+      syntheticAuras.push(arcaneSubtletySpellId)
     }
 
-    const burningSoulRank = inferBurningSoulRank(ctx)
-    if (burningSoulRank > 0) {
-      syntheticAuras.push(BURNING_SOUL_AURA_BY_RANK[burningSoulRank - 1]!)
+    const burningSoulSpellId = inferTalent(ctx, BURNING_SOUL_RANKS, (points) =>
+      points[FIRE] >= BURNING_SOUL_THRESHOLD ? 2 : 0,
+    )
+    if (burningSoulSpellId) {
+      syntheticAuras.push(burningSoulSpellId)
     }
 
-    const frostChannelingRank = inferMappedTalentRank(
-      ctx.talentRanks,
-      FROST_CHANNELING_RANK_BY_TALENT_ID,
-      FROST_CHANNELING_AURA_BY_RANK.length,
-    )
-    if (frostChannelingRank > 0) {
-      syntheticAuras.push(
-        FROST_CHANNELING_AURA_BY_RANK[frostChannelingRank - 1]!,
-      )
+    const frostChannelingSpellId = inferTalent(ctx, FROST_CHANNELING_RANKS)
+    if (frostChannelingSpellId) {
+      syntheticAuras.push(frostChannelingSpellId)
     }
 
     return syntheticAuras

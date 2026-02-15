@@ -11,7 +11,7 @@ import type {
 import { SpellSchool } from '@wcl-threat/shared'
 
 import { calculateThreat, threatOnBuff } from '../../shared/formulas'
-import { clampRank, inferMappedTalentRank } from '../../shared/talents'
+import { inferTalent } from '../../shared/talents'
 
 // ============================================================================
 // Spell IDs
@@ -69,31 +69,20 @@ const Mods = {
   VengeanceR5: -0.3,
 } as const
 
-const IMPROVED_RIGHTEOUS_FURY_AURA_BY_RANK = [
+const IMP_RF_RANKS = [
   Spells.ImprovedRighteousFuryR1,
   Spells.ImprovedRighteousFuryR2,
   Spells.ImprovedRighteousFuryR3,
 ] as const
 const DEFAULT_RIGHTEOUS_FURY_AURA_IDS = [Spells.RighteousFury] as const
 
-const VENGEANCE_AURA_BY_RANK = [
+const VENGEANCE_RANKS = [
   Spells.VengeanceR1,
   Spells.VengeanceR2,
   Spells.VengeanceR3,
   Spells.VengeanceR4,
   Spells.VengeanceR5,
 ] as const
-
-const IMPROVED_RIGHTEOUS_FURY_RANK_BY_TALENT_ID = new Map<SpellId, number>(
-  IMPROVED_RIGHTEOUS_FURY_AURA_BY_RANK.map((spellId, idx) => [
-    spellId,
-    idx + 1,
-  ]),
-)
-
-const VENGEANCE_RANK_BY_TALENT_ID = new Map<SpellId, number>(
-  VENGEANCE_AURA_BY_RANK.map((spellId, idx) => [spellId, idx + 1]),
-)
 
 export function hasRighteousFuryAura(
   activeAuras: ReadonlySet<SpellId>,
@@ -102,61 +91,10 @@ export function hasRighteousFuryAura(
   return righteousFuryAuraIds.some((auraId) => activeAuras.has(auraId))
 }
 
-const PROTECTION_TREE_INDEX = 1
-const IMPROVED_RIGHTEOUS_FURY_PROTECTION_POINTS_THRESHOLD = 13
-const RETRIBUTION_TREE_INDEX = 2
-const VENGEANCE_RETRIBUTION_POINTS_THRESHOLD = 30
-
-function inferImprovedRighteousFuryRank(ctx: TalentImplicationContext): number {
-  const fromRankSpellIds = inferMappedTalentRank(
-    ctx.talentRanks,
-    IMPROVED_RIGHTEOUS_FURY_RANK_BY_TALENT_ID,
-    IMPROVED_RIGHTEOUS_FURY_AURA_BY_RANK.length,
-  )
-  const rankedImprovedRighteousFury = clampRank(
-    Math.max(
-      fromRankSpellIds,
-      ctx.talentRanks.get(Spells.ImprovedRighteousFuryR1) ?? 0,
-    ),
-    IMPROVED_RIGHTEOUS_FURY_AURA_BY_RANK.length,
-  )
-  if (rankedImprovedRighteousFury > 0) {
-    return rankedImprovedRighteousFury
-  }
-
-  const protectionPoints = Math.trunc(
-    ctx.talentPoints[PROTECTION_TREE_INDEX] ?? 0,
-  )
-  if (protectionPoints < IMPROVED_RIGHTEOUS_FURY_PROTECTION_POINTS_THRESHOLD) {
-    return 0
-  }
-
-  // Legacy payloads can omit per-talent ranks and only include tree splits.
-  // At 13+ protection points, infer max Improved Righteous Fury rank.
-  return IMPROVED_RIGHTEOUS_FURY_AURA_BY_RANK.length
-}
-
-function inferVengeanceRank(ctx: TalentImplicationContext): number {
-  const vengeanceRank = inferMappedTalentRank(
-    ctx.talentRanks,
-    VENGEANCE_RANK_BY_TALENT_ID,
-    VENGEANCE_AURA_BY_RANK.length,
-  )
-  if (vengeanceRank > 0) {
-    return vengeanceRank
-  }
-
-  const retributionPoints = Math.trunc(
-    ctx.talentPoints[RETRIBUTION_TREE_INDEX] ?? 0,
-  )
-  if (retributionPoints < VENGEANCE_RETRIBUTION_POINTS_THRESHOLD) {
-    return 0
-  }
-
-  // Legacy payloads can omit per-talent ranks and only include tree splits.
-  // At 30+ retribution points, infer max Vengeance rank.
-  return VENGEANCE_AURA_BY_RANK.length
-}
+const PROT = 1
+const IMP_RF_PROT_THRESHOLD = 13
+const RET = 2
+const VENGEANCE_RET_THRESHOLD = 30
 
 // ============================================================================
 // Configuration
@@ -289,16 +227,18 @@ export const paladinConfig: ClassThreatConfig = {
   talentImplications: (ctx: TalentImplicationContext) => {
     const syntheticAuras: SpellId[] = []
 
-    const improvedRighteousFuryRank = inferImprovedRighteousFuryRank(ctx)
-    if (improvedRighteousFuryRank > 0) {
-      syntheticAuras.push(
-        IMPROVED_RIGHTEOUS_FURY_AURA_BY_RANK[improvedRighteousFuryRank - 1]!,
-      )
+    const impRighteousFurySpellId = inferTalent(ctx, IMP_RF_RANKS, (points) =>
+      points[PROT] >= IMP_RF_PROT_THRESHOLD ? 3 : 0,
+    )
+    if (impRighteousFurySpellId) {
+      syntheticAuras.push(impRighteousFurySpellId)
     }
 
-    const vengeanceRank = inferVengeanceRank(ctx)
-    if (vengeanceRank > 0) {
-      syntheticAuras.push(VENGEANCE_AURA_BY_RANK[vengeanceRank - 1]!)
+    const vengeanceSpellId = inferTalent(ctx, VENGEANCE_RANKS, (points) =>
+      points[RET] >= VENGEANCE_RET_THRESHOLD ? VENGEANCE_RANKS.length : 0,
+    )
+    if (vengeanceSpellId) {
+      syntheticAuras.push(vengeanceSpellId)
     }
 
     return syntheticAuras

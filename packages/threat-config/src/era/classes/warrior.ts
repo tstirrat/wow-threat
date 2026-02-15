@@ -19,7 +19,7 @@ import {
   threatOnCastRollbackOnMiss,
   threatOnDebuff,
 } from '../../shared/formulas'
-import { clampRank, inferMappedTalentRank } from '../../shared/talents'
+import { inferTalent } from '../../shared/talents'
 
 // ============================================================================
 // Spell IDs
@@ -212,7 +212,7 @@ export const SetIds = {
   T1: 209, // Battlegear of Might (Warrior Tier 1)
 } as const
 
-const DEFIANCE_AURA_BY_RANK = [
+const DEFIANCE_RANKS = [
   Spells.DefianceRank1,
   Spells.DefianceRank2,
   Spells.DefianceRank3,
@@ -220,39 +220,8 @@ const DEFIANCE_AURA_BY_RANK = [
   Spells.DefianceRank5,
 ] as const
 
-const DEFIANCE_RANK_BY_TALENT_ID = new Map<number, number>(
-  DEFIANCE_AURA_BY_RANK.map((spellId, idx) => [spellId, idx + 1]),
-)
-
-const PROTECTION_TREE_INDEX = 2
-const DEFIANCE_PROTECTION_POINTS_THRESHOLD = 14
-
-function inferDefianceRank(ctx: TalentImplicationContext): number {
-  const fromRankSpellIds = inferMappedTalentRank(
-    ctx.talentRanks,
-    DEFIANCE_RANK_BY_TALENT_ID,
-    DEFIANCE_AURA_BY_RANK.length,
-  )
-  const fromDefianceAlias = clampRank(
-    ctx.talentRanks.get(Spells.Defiance) ?? 0,
-    DEFIANCE_AURA_BY_RANK.length,
-  )
-  const rankedDefiance = Math.max(fromRankSpellIds, fromDefianceAlias)
-  if (rankedDefiance > 0) {
-    return rankedDefiance
-  }
-
-  const protectionPoints = Math.trunc(
-    ctx.talentPoints[PROTECTION_TREE_INDEX] ?? 0,
-  )
-  if (protectionPoints < DEFIANCE_PROTECTION_POINTS_THRESHOLD) {
-    return 0
-  }
-
-  // Legacy payloads can lack per-talent ranks and only expose tree splits.
-  // With at least 14 points in Protection, infer Defiance as a tanking build heuristic.
-  return DEFIANCE_AURA_BY_RANK.length
-}
+const PROT = 2
+const DEFIANCE_PROT_THRESHOLD = 14
 
 function inferGearAuras(gear: GearItem[]): number[] {
   const t1Pieces = gear.filter((item) => item.setID === SetIds.T1).length
@@ -578,12 +547,14 @@ export const warriorConfig: ClassThreatConfig = {
   ]),
 
   talentImplications: (ctx: TalentImplicationContext) => {
-    const defianceRank = inferDefianceRank(ctx)
-    if (defianceRank === 0) {
+    const defianceSpellId = inferTalent(ctx, DEFIANCE_RANKS, (points) =>
+      points[PROT] >= DEFIANCE_PROT_THRESHOLD ? DEFIANCE_RANKS.length : 0,
+    )
+    if (!defianceSpellId) {
       return []
     }
 
-    return [DEFIANCE_AURA_BY_RANK[defianceRank - 1]!]
+    return [defianceSpellId]
   },
 
   gearImplications: inferGearAuras,
