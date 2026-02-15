@@ -1,6 +1,239 @@
 /**
- * Anniversary class wrapper for paladin.
+ * Anniversary paladin deltas over Era.
  *
- * Defaults to Era behavior until Anniversary-specific overrides are needed.
+ * Adds TBC ranks/abilities and TBC-specific talent behavior.
  */
-export * from '../../era/classes/paladin'
+import type {
+  ClassThreatConfig,
+  SpellId,
+  TalentImplicationContext,
+  ThreatFormula,
+} from '@wcl-threat/shared'
+
+import {
+  Spells as EraSpells,
+  paladinConfig as eraPaladinConfig,
+  hasRighteousFuryAura,
+} from '../../era/classes/paladin'
+import {
+  calculateThreat,
+  noThreat,
+  tauntTarget,
+  threatOnBuff,
+} from '../../shared/formulas'
+import { inferTalent } from '../../shared/talents'
+
+export const Spells = {
+  ...EraSpells,
+  GreaterBlessingOfMightR2: 25782,
+  BlessingOfMightR8: 27140,
+  GreaterBlessingOfMightR3: 27141,
+  BlessingOfWisdomR7: 27142,
+  GreaterBlessingOfWisdomR3: 27143,
+  BlessingOfLightR4: 27144,
+  GreaterBlessingOfLightR2: 27145,
+  GreaterBlessingOfSanctuaryR2: 27169,
+
+  SealOfRighteousnessR9: 27155,
+  HolyShieldR1: 20925,
+  HolyShieldR2: 20927,
+  HolyShieldR3: 20928,
+  HolyShieldR4: 27179,
+  AvengersShieldR1: 31935,
+  AvengersShieldR2: 32699,
+  AvengersShieldR3: 32700,
+  RighteousDefense: 31789,
+  SpiritualAttunement: 31786,
+
+  JudgementOfWisdomManaR1: 20268,
+  JudgementOfWisdomManaR2: 20352,
+  JudgementOfWisdomManaR3: 20353,
+  JudgementOfWisdomManaR4: 27165,
+
+  HolyLightR10: 27135,
+  HolyLightR11: 27136,
+  FlashOfLightR7: 27137,
+} as const
+
+const IMPROVED_RF_RANKS = [
+  Spells.ImprovedRighteousFuryR1,
+  Spells.ImprovedRighteousFuryR2,
+  Spells.ImprovedRighteousFuryR3,
+] as const
+
+const FANATICISM_RANKS = [
+  Spells.VengeanceR1,
+  Spells.VengeanceR2,
+  Spells.VengeanceR3,
+  Spells.VengeanceR4,
+  Spells.VengeanceR5,
+] as const
+
+const PROT = 1
+const RET = 2
+const IMP_RF_THRESHOLD = 13
+const FANATICISM_THRESHOLD = 40
+
+function buildAuraImplications(): Map<SpellId, ReadonlySet<SpellId>> {
+  const merged = new Map<SpellId, ReadonlySet<SpellId>>(
+    eraPaladinConfig.auraImplications ?? [],
+  )
+  const rfImplied = new Set(merged.get(Spells.RighteousFury) ?? [])
+  rfImplied.add(Spells.HolyShieldR4)
+  merged.set(Spells.RighteousFury, rfImplied)
+  return merged
+}
+
+const noThreatFormula = noThreat()
+
+const resourceChangeThreat: ThreatFormula = (ctx) => {
+  if (ctx.event.type !== 'resourcechange' && ctx.event.type !== 'energize') {
+    return undefined
+  }
+
+  if (ctx.event.resourceChangeType === 'energy') {
+    return {
+      formula: '0',
+      value: 0,
+      splitAmongEnemies: false,
+      applyPlayerMultipliers: false,
+    }
+  }
+
+  const multiplier = ctx.event.resourceChangeType === 'rage' ? 5 : 0.5
+  return {
+    formula: `${ctx.event.resourceChangeType} * ${multiplier}`,
+    value: ctx.amount * multiplier,
+    splitAmongEnemies: true,
+    applyPlayerMultipliers: false,
+  }
+}
+
+const sealOfRighteousnessRank9 = (
+  ctx: Parameters<ClassThreatConfig['abilities'][number]>[0],
+) => {
+  if (
+    ctx.event.type === 'applybuff' ||
+    ctx.event.type === 'refreshbuff' ||
+    ctx.event.type === 'applybuffstack'
+  ) {
+    return {
+      formula: '58',
+      value: 58,
+      splitAmongEnemies: true,
+    }
+  }
+
+  if (ctx.event.type === 'damage') {
+    return {
+      formula: 'amt',
+      value: ctx.amount,
+      splitAmongEnemies: false,
+    }
+  }
+
+  return undefined
+}
+
+export const paladinConfig: ClassThreatConfig = {
+  ...eraPaladinConfig,
+  auraImplications: buildAuraImplications(),
+
+  auraModifiers: {
+    ...eraPaladinConfig.auraModifiers,
+
+    [Spells.VengeanceR1]: (ctx) => ({
+      source: 'talent',
+      name: 'Fanaticism (Rank 1)',
+      value: hasRighteousFuryAura(ctx.sourceAuras) ? 1 : 0.94,
+    }),
+    [Spells.VengeanceR2]: (ctx) => ({
+      source: 'talent',
+      name: 'Fanaticism (Rank 2)',
+      value: hasRighteousFuryAura(ctx.sourceAuras) ? 1 : 0.88,
+    }),
+    [Spells.VengeanceR3]: (ctx) => ({
+      source: 'talent',
+      name: 'Fanaticism (Rank 3)',
+      value: hasRighteousFuryAura(ctx.sourceAuras) ? 1 : 0.82,
+    }),
+    [Spells.VengeanceR4]: (ctx) => ({
+      source: 'talent',
+      name: 'Fanaticism (Rank 4)',
+      value: hasRighteousFuryAura(ctx.sourceAuras) ? 1 : 0.76,
+    }),
+    [Spells.VengeanceR5]: (ctx) => ({
+      source: 'talent',
+      name: 'Fanaticism (Rank 5)',
+      value: hasRighteousFuryAura(ctx.sourceAuras) ? 1 : 0.7,
+    }),
+  },
+
+  abilities: {
+    ...eraPaladinConfig.abilities,
+
+    [Spells.GreaterBlessingOfMightR2]: threatOnBuff(60),
+    [Spells.BlessingOfMightR8]: threatOnBuff(70),
+    [Spells.GreaterBlessingOfMightR3]: threatOnBuff(70),
+    [Spells.BlessingOfWisdomR7]: threatOnBuff(70),
+    [Spells.GreaterBlessingOfWisdomR3]: threatOnBuff(70),
+    [Spells.BlessingOfLightR4]: threatOnBuff(69),
+    [Spells.GreaterBlessingOfLightR2]: threatOnBuff(69),
+    [Spells.GreaterBlessingOfSanctuaryR2]: threatOnBuff(70),
+
+    [Spells.SealOfRighteousnessR9]: sealOfRighteousnessRank9,
+
+    [Spells.HolyShieldR1]: calculateThreat({ modifier: 1.35 }),
+    [Spells.HolyShieldR2]: calculateThreat({ modifier: 1.35 }),
+    [Spells.HolyShieldR3]: calculateThreat({ modifier: 1.35 }),
+    [Spells.HolyShieldR4]: calculateThreat({ modifier: 1.35 }),
+
+    [Spells.AvengersShieldR1]: calculateThreat({ modifier: 1.3 }),
+    [Spells.AvengersShieldR2]: calculateThreat({ modifier: 1.3 }),
+    [Spells.AvengersShieldR3]: calculateThreat({ modifier: 1.3 }),
+
+    [Spells.RighteousDefense]: tauntTarget({ bonus: 0, eventTypes: ['cast'] }),
+    [Spells.SpiritualAttunement]: resourceChangeThreat,
+
+    [Spells.JudgementOfWisdomManaR1]: noThreatFormula,
+    [Spells.JudgementOfWisdomManaR2]: noThreatFormula,
+    [Spells.JudgementOfWisdomManaR3]: noThreatFormula,
+    [Spells.JudgementOfWisdomManaR4]: noThreatFormula,
+
+    [Spells.HolyLightR10]: calculateThreat({
+      modifier: 0.5,
+      split: true,
+      eventTypes: ['heal'],
+    }),
+    [Spells.HolyLightR11]: calculateThreat({
+      modifier: 0.5,
+      split: true,
+      eventTypes: ['heal'],
+    }),
+    [Spells.FlashOfLightR7]: calculateThreat({
+      modifier: 0.5,
+      split: true,
+      eventTypes: ['heal'],
+    }),
+  },
+
+  talentImplications: (ctx: TalentImplicationContext): SpellId[] => {
+    const inferredAuras: SpellId[] = []
+
+    const impRf = inferTalent(ctx, IMPROVED_RF_RANKS, (points) =>
+      points[PROT] >= IMP_RF_THRESHOLD ? IMPROVED_RF_RANKS.length : 0,
+    )
+    if (impRf) {
+      inferredAuras.push(impRf as SpellId)
+    }
+
+    const fanaticism = inferTalent(ctx, FANATICISM_RANKS, (points) =>
+      points[RET] >= FANATICISM_THRESHOLD ? FANATICISM_RANKS.length : 0,
+    )
+    if (fanaticism) {
+      inferredAuras.push(fanaticism as SpellId)
+    }
+
+    return inferredAuras
+  },
+}

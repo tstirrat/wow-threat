@@ -8,7 +8,10 @@ import type {
   SpellId,
   ThreatConfig,
   ThreatConfigResolutionInput,
+  ThreatContext,
+  ThreatModifier,
 } from '@wcl-threat/shared'
+import type { GearItem } from '@wcl-threat/wcl-types'
 
 import { eraConfig } from '../era'
 import { baseThreat } from '../era/general'
@@ -32,17 +35,34 @@ import { warlockConfig } from './classes/warlock'
 import { warriorConfig } from './classes/warrior'
 import { miscAbilities } from './misc'
 import { aq40AggroLossBuffs, aq40AuraModifiers } from './raids/aq40'
+import {
+  blackTempleAbilities,
+  blackTempleAuraModifiers,
+  blackTempleFixateBuffs,
+} from './raids/black-temple'
 import { bwlAbilities, bwlAggroLossBuffs } from './raids/bwl'
+import { commonRaidAbilities } from './raids/common'
+import { gruulsLairAbilities } from './raids/gruuls-lair'
+import { karazhanAbilities } from './raids/karazhan'
 import { mcAggroLossBuffs } from './raids/mc'
 import { naxxAbilities } from './raids/naxx'
 import { onyxiaAbilities } from './raids/ony'
+import { serpentshrineCavernAbilities } from './raids/serpentshrine-cavern'
+import { tempestKeepAbilities } from './raids/tempest-keep'
 import { zgAggroLossBuffs, zgEncounters } from './raids/zg'
 
 const ANNIVERSARY_CLASSIC_SEASON_ID = 5
+const Enchants = {
+  GlovesThreat: 2613,
+  CloakSubtlety: 2621,
+} as const
 
 // Fixate buffs (taunt effects)
 // Class-specific fixates are in class configs
-const fixateBuffs = new Set<SpellId>([...(eraConfig.fixateBuffs ?? []), ...[]])
+const fixateBuffs = new Set<SpellId>([
+  ...(eraConfig.fixateBuffs ?? []),
+  ...blackTempleFixateBuffs,
+])
 
 // Aggro loss buffs (fear, polymorph, etc.)
 // Class-specific aggro loss buffs are in class configs
@@ -61,8 +81,36 @@ const invulnerabilityBuffs = new Set<SpellId>([
 ])
 
 // Global aura modifiers (items, consumables, cross-class buffs)
-const globalAuraModifiers = {
+const globalAuraModifiers: Record<
+  number,
+  (ctx: ThreatContext) => ThreatModifier
+> = {
+  ...(eraConfig.auraModifiers ?? {}),
   ...aq40AuraModifiers,
+  ...blackTempleAuraModifiers,
+  [Enchants.GlovesThreat]: () => ({
+    source: 'gear',
+    name: 'Enchant Gloves - Threat',
+    value: 1.02,
+  }),
+  [Enchants.CloakSubtlety]: () => ({
+    source: 'gear',
+    name: 'Enchant Cloak - Subtlety',
+    value: 0.98,
+  }),
+}
+
+function inferGlobalGearAuras(gear: GearItem[]): number[] {
+  const inferredAuras: number[] = []
+
+  if (gear.some((item) => item.permanentEnchant === Enchants.GlovesThreat)) {
+    inferredAuras.push(Enchants.GlovesThreat)
+  }
+  if (gear.some((item) => item.permanentEnchant === Enchants.CloakSubtlety)) {
+    inferredAuras.push(Enchants.CloakSubtlety)
+  }
+
+  return inferredAuras
 }
 
 export const anniversaryConfig: ThreatConfig = {
@@ -102,10 +150,17 @@ export const anniversaryConfig: ThreatConfig = {
     ...mcAbilities,
     ...zgAbilities,
     ...aq40Abilities,
+    ...commonRaidAbilities,
+    ...karazhanAbilities,
+    ...serpentshrineCavernAbilities,
+    ...tempestKeepAbilities,
+    ...gruulsLairAbilities,
+    ...blackTempleAbilities,
     ...miscAbilities,
   },
 
   auraModifiers: globalAuraModifiers,
+  gearImplications: inferGlobalGearAuras,
   fixateBuffs,
   aggroLossBuffs,
   invulnerabilityBuffs,

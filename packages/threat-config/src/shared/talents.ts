@@ -81,7 +81,12 @@ export function inferTalent(
     return undefined
   }
 
-  const inferredRank = treePredicate(ctx.talentPoints)
+  const treePoints: readonly [number, number, number] = [
+    ctx.talentPoints[0] ?? 0,
+    ctx.talentPoints[1] ?? 0,
+    ctx.talentPoints[2] ?? 0,
+  ]
+  const inferredRank = treePredicate(treePoints)
   if (inferredRank <= 0) {
     return undefined
   }
