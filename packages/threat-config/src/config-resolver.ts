@@ -6,9 +6,9 @@
 import type { ThreatConfig } from '@wcl-threat/shared'
 import type { ThreatConfigResolutionInput } from '@wcl-threat/shared'
 
-import { anniversaryConfig } from './anniversary'
 import { eraConfig } from './era'
 import { sodConfig } from './sod'
+import { anniversaryConfig } from './tbc'
 
 const configs: ThreatConfig[] = [sodConfig, anniversaryConfig, eraConfig]
 
@@ -33,7 +33,9 @@ export function resolveConfigOrNull(
 /**
  * Resolve threat config for report metadata.
  */
-export function resolveConfig(input: ThreatConfigResolutionInput): ThreatConfig {
+export function resolveConfig(
+  input: ThreatConfigResolutionInput,
+): ThreatConfig {
   const config = resolveConfigOrNull(input)
   if (!config) {
     throw new Error(

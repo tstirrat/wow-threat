@@ -3,10 +3,10 @@
  */
 import { describe, expect, it } from 'vitest'
 
-import { anniversaryConfig } from './anniversary'
 import { resolveConfigOrNull } from './config-resolver'
 import { eraConfig } from './era'
 import { sodConfig } from './sod'
+import { anniversaryConfig } from './tbc'
 
 describe('resolveConfigOrNull', () => {
   it('returns null for retail gameVersion 1', () => {

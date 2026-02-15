@@ -67,7 +67,7 @@ const globalAuraModifiers = {
 
 export const anniversaryConfig: ThreatConfig = {
   version: '1.3.1',
-  displayName: 'Anniversary (TBC)',
+  displayName: 'TBC (Anniversary)',
   resolve: (input: ThreatConfigResolutionInput): boolean => {
     if (input.gameVersion !== 2) {
       return false

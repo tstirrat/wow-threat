@@ -19,6 +19,6 @@ export * from './shared/talents'
 export * from './shared/utils'
 
 // Re-export version configs for testing
-export { anniversaryConfig } from './anniversary'
+export { anniversaryConfig } from './tbc'
 export { eraConfig } from './era'
 export { sodConfig } from './sod'

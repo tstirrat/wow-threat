@@ -3,6 +3,7 @@
  */
 import { describe, expect, it } from 'vitest'
 
+import { anniversaryConfig } from '.'
 import { druidConfig as eraDruidConfig } from '../era/classes/druid'
 import { hunterConfig as eraHunterConfig } from '../era/classes/hunter'
 import { mageConfig as eraMageConfig } from '../era/classes/mage'
@@ -31,7 +32,6 @@ import {
   zgAggroLossBuffs as eraZgAggroLossBuffs,
   zgEncounters as eraZgEncounters,
 } from '../era/raids/zg'
-import { anniversaryConfig } from './'
 import { druidConfig as anniversaryDruidConfig } from './classes/druid'
 import { hunterConfig as anniversaryHunterConfig } from './classes/hunter'
 import { mageConfig as anniversaryMageConfig } from './classes/mage'
