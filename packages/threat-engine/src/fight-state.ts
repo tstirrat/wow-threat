@@ -13,7 +13,7 @@ import type {
 } from '@wcl-threat/shared'
 import type { GearItem, WCLEvent } from '@wcl-threat/wcl-types'
 
-import { ActorState } from './actor-state'
+import { ActorState, positionUpdateActorByEventType } from './actor-state'
 import type {
   ActorId,
   ActorKey,
@@ -348,14 +348,11 @@ export class FightState {
     const targetState =
       event.targetID === -1 ? undefined : this.getOrCreateActorState(targetRef)
 
-    // Update positions if available
-    if (
-      'x' in event &&
-      'y' in event &&
-      typeof event.x === 'number' &&
-      typeof event.y === 'number'
-    ) {
-      sourceState.updatePosition(event.x, event.y)
+    const positionRole = positionUpdateActorByEventType.get(event.type)
+    if (positionRole === 'source') {
+      sourceState.updatePosition(event)
+    } else if (positionRole === 'target') {
+      targetState?.updatePosition(event)
     }
 
     switch (event.type) {

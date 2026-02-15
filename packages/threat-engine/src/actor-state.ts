@@ -6,7 +6,7 @@
  * position, and enemy-owned threat tables.
  */
 import type { Actor, RuntimeActorView } from '@wcl-threat/shared'
-import type { GearItem } from '@wcl-threat/wcl-types'
+import type { GearItem, WCLEvent } from '@wcl-threat/wcl-types'
 
 import { AuraTracker } from './aura-tracker'
 import { GearTracker } from './gear-tracker'
@@ -31,6 +31,39 @@ interface ActorStateOptions {
   profile: Actor
   instanceId: number
   exclusiveAuras?: Set<number>[]
+}
+
+export const positionUpdateActorByEventType: Map<
+  WCLEvent['type'],
+  'source' | 'target'
+> = new Map<WCLEvent['type'], 'source' | 'target'>([
+  ['damage', 'target'],
+  ['heal', 'target'],
+  ['applybuff', 'target'],
+  ['refreshbuff', 'target'],
+  ['applybuffstack', 'target'],
+  ['removebuff', 'target'],
+  ['removebuffstack', 'target'],
+  ['applydebuff', 'target'],
+  ['refreshdebuff', 'target'],
+  ['applydebuffstack', 'target'],
+  ['removedebuff', 'target'],
+  ['removedebuffstack', 'target'],
+  ['energize', 'source'],
+  ['resourcechange', 'source'],
+  ['cast', 'source'],
+  ['begincast', 'source'],
+  ['interrupt', 'target'],
+  ['death', 'target'],
+  ['resurrect', 'target'],
+  ['summon', 'source'],
+  ['combatantinfo', 'source'],
+])
+
+function hasPosition(
+  event: WCLEvent,
+): event is WCLEvent & { x: number; y: number } {
+  return typeof event.x === 'number' && typeof event.y === 'number'
 }
 
 /** Composite state for a single actor during a fight */
@@ -86,9 +119,18 @@ export class ActorState {
     return this.lastTarget ? { ...this.lastTarget } : null
   }
 
-  /** Update actor position. */
-  updatePosition(x: number, y: number): void {
-    this.position = { x, y }
+  /** Update actor position directly from event x/y when present. */
+  updatePosition(event: WCLEvent): boolean {
+    if (!hasPosition(event)) {
+      return false
+    }
+
+    this.position = {
+      x: event.x,
+      y: event.y,
+    }
+
+    return true
   }
 
   /** Mark actor dead. */

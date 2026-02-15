@@ -783,6 +783,75 @@ describe('FightState', () => {
       expect(runtimeActor?.position).toBeNull()
       expect(state.getAuras(1).has(123456)).toBe(false)
     })
+
+    it('does not overwrite source position from damage coordinates', () => {
+      const state = new FightState(defaultActorMap, testConfig)
+
+      state.processEvent(
+        {
+          timestamp: 100,
+          type: 'cast',
+          sourceID: 1,
+          sourceIsFriendly: true,
+          targetID: 99,
+          targetIsFriendly: false,
+          abilityGameID: 111,
+          x: 45,
+          y: 91,
+        } as WCLEvent,
+        testConfig,
+      )
+
+      state.processEvent(
+        createDamageEvent({
+          timestamp: 200,
+          sourceID: 1,
+          sourceIsFriendly: true,
+          targetID: 99,
+          targetIsFriendly: false,
+          x: 999,
+          y: 999,
+        }),
+        testConfig,
+      )
+
+      expect(state.getActor({ id: 1, instanceId: 0 })?.position).toEqual({
+        x: 45,
+        y: 91,
+      })
+    })
+
+    it('updates target position from target-side damage coordinates', () => {
+      const state = new FightState(defaultActorMap, testConfig)
+
+      state.processEvent(
+        {
+          timestamp: 100,
+          type: 'damage',
+          sourceID: 25,
+          sourceIsFriendly: false,
+          targetID: 1,
+          targetIsFriendly: false,
+          abilityGameID: 1,
+          amount: 100,
+          absorbed: 0,
+          blocked: 0,
+          mitigated: 0,
+          overkill: 0,
+          hitType: 'hit',
+          tick: false,
+          multistrike: false,
+          x: 55,
+          y: 66,
+        } as WCLEvent,
+        testConfig,
+      )
+
+      expect(state.getActor({ id: 1, instanceId: 0 })?.position).toEqual({
+        x: 55,
+        y: 66,
+      })
+    })
   })
 
   describe('engine lifecycle state', () => {
