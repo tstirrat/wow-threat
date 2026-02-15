@@ -3,22 +3,22 @@
  *
  * GET /reports/:code - Get report metadata
  */
-import { Hono } from 'hono'
 import { resolveConfigOrNull } from '@wcl-threat/threat-config'
 import type {
   ReportAbility as WCLReportAbility,
   ReportActor as WCLReportActor,
   ReportFight as WCLReportFight,
 } from '@wcl-threat/wcl-types'
+import { Hono } from 'hono'
 
 import { invalidReportCode, reportNotFound } from '../middleware/error'
 import { WCLClient } from '../services/wcl'
+import type { ReportResponse } from '../types/api'
 import {
   toReportAbilitySummary,
   toReportActorSummary,
   toReportFightSummary,
 } from '../types/api-transformers'
-import type { ReportResponse } from '../types/api'
 import type { Bindings, Variables } from '../types/bindings'
 import { fightsRoutes } from './fights'
 

@@ -11,7 +11,9 @@ import { requestJson } from './client'
 
 /** Fetch report metadata for a report code. */
 export function getReport(reportId: string): Promise<ReportResponse> {
-  return requestJson<ReportResponse>(`${defaultApiBaseUrl}/v1/reports/${reportId}`)
+  return requestJson<ReportResponse>(
+    `${defaultApiBaseUrl}/v1/reports/${reportId}`,
+  )
 }
 
 /** Fetch fight metadata for a report and fight ID. */
@@ -34,10 +36,9 @@ export function getFightEvents(
   )
 }
 
-export const reportQueryKey = (reportId: string): readonly ['report', string] => [
-  'report',
-  reportId,
-]
+export const reportQueryKey = (
+  reportId: string,
+): readonly ['report', string] => ['report', reportId]
 
 export const fightQueryKey = (
   reportId: string,
@@ -47,4 +48,8 @@ export const fightQueryKey = (
 export const fightEventsQueryKey = (
   reportId: string,
   fightId: number,
-): readonly ['fight-events', string, number] => ['fight-events', reportId, fightId]
+): readonly ['fight-events', string, number] => [
+  'fight-events',
+  reportId,
+  fightId,
+]

@@ -24,7 +24,9 @@ export const classColors: Record<PlayerClass, string> = {
 const fallbackColor = '#94a3b8'
 
 /** Resolve a class color from a class name, with fallback for unknown classes. */
-export function getClassColor(playerClass: PlayerClass | null | undefined): string {
+export function getClassColor(
+  playerClass: PlayerClass | null | undefined,
+): string {
   if (!playerClass) {
     return fallbackColor
   }

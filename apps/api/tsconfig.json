@@ -7,7 +7,7 @@
     },
     "resolveJsonModule": true
   },
-  "include": ["src/**/*", "eslint.config.ts"]
+  "include": ["src/**/*", "*.config.ts"]
   // don't exclude tests please. here and in other packages
   // "exclude": ["**/*.test.ts", "test/**/*"]
 }

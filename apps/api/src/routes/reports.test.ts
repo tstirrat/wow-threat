@@ -40,7 +40,7 @@ describe('Reports API', () => {
       expect(data.owner).toBe('TestGuild')
       expect(data.gameVersion).toBe(2)
       expect(data.threatConfig).toEqual({
-        displayName: 'Anniversary (TBC)',
+        displayName: 'TBC (Anniversary)',
         version: expect.any(String),
       })
       expect(data.fights).toHaveLength(3)
@@ -77,7 +77,7 @@ describe('Reports API', () => {
       const data: ReportResponse = await res.json()
       expect(data.abilities).toEqual([])
       expect(data.threatConfig).toEqual({
-        displayName: 'Anniversary (TBC)',
+        displayName: 'TBC (Anniversary)',
         version: expect.any(String),
       })
     })

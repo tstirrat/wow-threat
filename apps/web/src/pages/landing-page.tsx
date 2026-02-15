@@ -1,16 +1,16 @@
 /**
  * Landing page for report loading via URL, history, and examples.
  */
-import { useState, type FC } from 'react'
+import { type FC, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { ExampleReportList } from '../components/example-report-list'
 import { RecentReportsList } from '../components/recent-reports-list'
 import { ReportUrlForm } from '../components/report-url-form'
 import { SectionCard } from '../components/section-card'
+import { useRecentReports } from '../hooks/use-recent-reports'
 import { defaultHost, exampleReports } from '../lib/constants'
 import { parseReportInput } from '../lib/wcl-url'
-import { useRecentReports } from '../hooks/use-recent-reports'
 
 export const LandingPage: FC = () => {
   const navigate = useNavigate()
@@ -49,7 +49,11 @@ export const LandingPage: FC = () => {
           }}
         />
         {errorMessage ? (
-          <p aria-live="polite" className="mt-3 text-sm text-red-700" role="alert">
+          <p
+            aria-live="polite"
+            className="mt-3 text-sm text-red-700"
+            role="alert"
+          >
             {errorMessage}
           </p>
         ) : null}

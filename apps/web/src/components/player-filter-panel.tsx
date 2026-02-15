@@ -1,9 +1,8 @@
 /**
  * Player filter controls for deep-linkable visibility states.
  */
-import type { FC } from 'react'
-
 import type { PlayerClass } from '@wcl-threat/wcl-types'
+import type { FC } from 'react'
 
 import { getClassColor } from '../lib/class-colors'
 import type { ReportActorSummary } from '../types/api'
@@ -41,11 +40,16 @@ export const PlayerFilterPanel: FC<PlayerFilterPanelProps> = ({
       </div>
       <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {players.map((player) => {
-          const classColor = getClassColor(player.subType as PlayerClass | undefined)
+          const classColor = getClassColor(
+            player.subType as PlayerClass | undefined,
+          )
           const isChecked = selectedSet.has(player.id)
 
           return (
-            <li className="rounded-md border border-border bg-panel px-2 py-1" key={player.id}>
+            <li
+              className="rounded-md border border-border bg-panel px-2 py-1"
+              key={player.id}
+            >
               <label className="flex items-center gap-2 text-sm">
                 <input
                   checked={isChecked}

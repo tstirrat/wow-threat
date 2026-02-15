@@ -1,8 +1,8 @@
 /**
  * Local storage utilities for recently viewed reports.
  */
-import { recentReportsStorageKey } from './constants'
 import type { RecentReportEntry } from '../types/app'
+import { recentReportsStorageKey } from './constants'
 
 const maxRecentReports = 5
 
@@ -41,8 +41,12 @@ export function saveRecentReports(entries: RecentReportEntry[]): void {
 }
 
 /** Upsert a report entry while preserving recency ordering and max length. */
-export function upsertRecentReport(entry: RecentReportEntry): RecentReportEntry[] {
-  const deduped = loadRecentReports().filter((item) => item.reportId !== entry.reportId)
+export function upsertRecentReport(
+  entry: RecentReportEntry,
+): RecentReportEntry[] {
+  const deduped = loadRecentReports().filter(
+    (item) => item.reportId !== entry.reportId,
+  )
   const next = [entry, ...deduped].slice(0, maxRecentReports)
   saveRecentReports(next)
   return next

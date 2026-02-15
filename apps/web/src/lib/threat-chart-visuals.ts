@@ -84,15 +84,17 @@ export function buildFixateMarkArea(
 export function buildAuraMarkArea(
   item: Pick<ThreatSeries, 'fixateWindows' | 'invulnerabilityWindows'>,
 ): Exclude<EChartsOption['series'], undefined>[number]['markArea'] | undefined {
-  const fixateData = buildFixateMarkAreaData(item.fixateWindows).map((window) => [
-    {
-      ...window[0],
-      itemStyle: {
-        color: fixateMarkAreaColor,
+  const fixateData = buildFixateMarkAreaData(item.fixateWindows).map(
+    (window) => [
+      {
+        ...window[0],
+        itemStyle: {
+          color: fixateMarkAreaColor,
+        },
       },
-    },
-    window[1],
-  ])
+      window[1],
+    ],
+  )
   const invulnerabilityData = buildFixateMarkAreaData(
     item.invulnerabilityWindows,
   ).map((window) => [

@@ -1,15 +1,13 @@
 /**
  * Input form for loading a report from URL or report code.
  */
-import { useId, useState, type FC } from 'react'
+import { type FC, useId, useState } from 'react'
 
 export type ReportUrlFormProps = {
   onSubmit: (input: string) => void
 }
 
-export const ReportUrlForm: FC<ReportUrlFormProps> = ({
-  onSubmit,
-}) => {
+export const ReportUrlForm: FC<ReportUrlFormProps> = ({ onSubmit }) => {
   const [value, setValue] = useState('')
   const inputId = useId()
 

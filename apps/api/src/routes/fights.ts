@@ -13,8 +13,8 @@ import {
   reportNotFound,
 } from '../middleware/error'
 import { WCLClient } from '../services/wcl'
-import { toReportActorSummary } from '../types/api-transformers'
 import type { FightsResponse } from '../types/api'
+import { toReportActorSummary } from '../types/api-transformers'
 import type { Bindings, Variables } from '../types/bindings'
 import { eventsRoutes } from './events'
 

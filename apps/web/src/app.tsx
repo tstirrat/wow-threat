@@ -1,8 +1,8 @@
 /**
  * Root application component with providers.
  */
-import type { FC } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
+import type { FC } from 'react'
 import { RouterProvider } from 'react-router-dom'
 
 import { createQueryClient } from './lib/query-client'

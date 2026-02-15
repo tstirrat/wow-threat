@@ -3,15 +3,15 @@
  */
 import { describe, expect, it } from 'vitest'
 
+import type { ThreatSeries } from '../types/app'
 import {
   buildAuraMarkArea,
   buildFixateMarkArea,
-  resolveThreatStateStatus,
   buildThreatStateVisualMaps,
   fixateMarkAreaColor,
   invulnerabilityMarkAreaColor,
+  resolveThreatStateStatus,
 } from './threat-chart-visuals'
-import type { ThreatSeries } from '../types/app'
 
 const baseSeries: ThreatSeries = {
   actorId: 1,

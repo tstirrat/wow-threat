@@ -144,12 +144,10 @@ export class ActorState {
 
   /** Get all positive threat-table entries. */
   getThreatTableEntries(): ThreatTableEntry[] {
-    return Array.from(this.threatTable.entries()).map(
-      ([entryKey, threat]) => ({
-        actorKey: entryKey,
-        threat,
-      }),
-    )
+    return Array.from(this.threatTable.entries()).map(([entryKey, threat]) => ({
+      actorKey: entryKey,
+      threat,
+    }))
   }
 
   /** Build a read-only runtime snapshot for formula/interceptor contexts. */

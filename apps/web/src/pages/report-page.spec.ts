@@ -3,7 +3,10 @@
  */
 import { expect, test } from '@playwright/test'
 
-import { e2eReportId, setupThreatApiMocks } from '../test/helpers/e2e-threat-mocks'
+import {
+  e2eReportId,
+  setupThreatApiMocks,
+} from '../test/helpers/e2e-threat-mocks'
 
 test.beforeEach(async ({ page }) => {
   await setupThreatApiMocks(page)
@@ -25,7 +28,9 @@ test('shows only boss kills in report order', async ({ page }) => {
   await expect(fightNavigation.getByText('wipe 1')).toHaveCount(0)
 })
 
-test('choosing a fight navigates to the threat chart page', async ({ page }) => {
+test('choosing a fight navigates to the threat chart page', async ({
+  page,
+}) => {
   await page.goto(`/report/${e2eReportId}`)
 
   await page.getByRole('link', { name: 'Kill (2:00)' }).click()

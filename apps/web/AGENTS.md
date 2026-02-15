@@ -77,7 +77,9 @@ export type ExampleReportListProps = {
   examples: ExampleReportLink[]
 }
 
-export const ExampleReportList: React.FC<ExampleReportListProps> = ({ examples }) => {
+export const ExampleReportList: React.FC<ExampleReportListProps> = ({
+  examples,
+}) => {
   // ...
 }
 ```

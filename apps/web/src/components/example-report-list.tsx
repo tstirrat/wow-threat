@@ -10,9 +10,7 @@ export type ExampleReportListProps = {
   examples: ExampleReportLink[]
 }
 
-export const ExampleReportList: FC<ExampleReportListProps> = ({
-  examples,
-}) => {
+export const ExampleReportList: FC<ExampleReportListProps> = ({ examples }) => {
   return (
     <ul aria-label="Example reports" className="space-y-2">
       {examples.map((example) => (

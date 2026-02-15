@@ -1,7 +1,7 @@
 /**
  * Explicit target selector control for fight charts.
  */
-import { useId, type FC } from 'react'
+import { type FC, useId } from 'react'
 
 import type { FightTarget, FightTargetOption } from '../types/app'
 

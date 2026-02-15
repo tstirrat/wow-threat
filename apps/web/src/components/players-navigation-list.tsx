@@ -1,8 +1,8 @@
 /**
  * Player-focused navigation grid from report view to boss-kill fight pages.
  */
-import type { FC } from 'react'
 import type { PlayerClass } from '@wcl-threat/wcl-types'
+import type { FC } from 'react'
 import { Link } from 'react-router-dom'
 
 import { getClassColor } from '../lib/class-colors'
@@ -26,7 +26,9 @@ export const PlayersNavigationList: FC<PlayersNavigationListProps> = ({
   const playerRows = players.filter((actor) => actor.type === 'Player')
 
   if (playerRows.length === 0) {
-    return <p className="text-sm text-muted">No players detected in this report.</p>
+    return (
+      <p className="text-sm text-muted">No players detected in this report.</p>
+    )
   }
 
   const knownBossNames = new Set(
@@ -43,12 +45,18 @@ export const PlayersNavigationList: FC<PlayersNavigationListProps> = ({
   )
 
   if (bossKillColumns.length === 0) {
-    return <p className="text-sm text-muted">No boss kills found for player navigation.</p>
+    return (
+      <p className="text-sm text-muted">
+        No boss kills found for player navigation.
+      </p>
+    )
   }
 
   const sortedPlayers = playerRows
     .filter((player) =>
-      bossKillColumns.some((fight) => fight.friendlyPlayers.includes(player.id)),
+      bossKillColumns.some((fight) =>
+        fight.friendlyPlayers.includes(player.id),
+      ),
     )
     .sort((left, right) => {
       const byName = left.name.localeCompare(right.name, undefined, {
@@ -63,7 +71,9 @@ export const PlayersNavigationList: FC<PlayersNavigationListProps> = ({
     })
 
   if (sortedPlayers.length === 0) {
-    return <p className="text-sm text-muted">No players found with boss kills.</p>
+    return (
+      <p className="text-sm text-muted">No players found with boss kills.</p>
+    )
   }
 
   const resolvePlayerRole = (
@@ -78,11 +88,16 @@ export const PlayersNavigationList: FC<PlayersNavigationListProps> = ({
     return null
   }
 
-  const hasRoleColumn = sortedPlayers.some((player) => resolvePlayerRole(player) !== null)
+  const hasRoleColumn = sortedPlayers.some(
+    (player) => resolvePlayerRole(player) !== null,
+  )
 
   return (
     <div className="overflow-x-auto">
-      <table aria-label="Player navigation by boss kill" className="min-w-full border-collapse text-sm">
+      <table
+        aria-label="Player navigation by boss kill"
+        className="min-w-full border-collapse text-sm"
+      >
         <caption className="sr-only">Player navigation by boss kill</caption>
         <thead>
           <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted">
@@ -97,7 +112,9 @@ export const PlayersNavigationList: FC<PlayersNavigationListProps> = ({
         </thead>
         <tbody>
           {sortedPlayers.map((player) => {
-            const classColor = getClassColor(player.subType as PlayerClass | undefined)
+            const classColor = getClassColor(
+              player.subType as PlayerClass | undefined,
+            )
             const role = resolvePlayerRole(player)
 
             return (
@@ -117,7 +134,9 @@ export const PlayersNavigationList: FC<PlayersNavigationListProps> = ({
                   const petIds = fight.friendlyPets
                     .filter((pet) => pet.petOwner === player.id)
                     .map((pet) => pet.id)
-                  const linkPlayerIds = Array.from(new Set([player.id, ...petIds])).join(',')
+                  const linkPlayerIds = Array.from(
+                    new Set([player.id, ...petIds]),
+                  ).join(',')
 
                   return (
                     <td className="px-2 py-2 align-middle" key={fight.id}>

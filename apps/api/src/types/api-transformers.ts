@@ -3,7 +3,11 @@
  *
  * Normalizes WCL response models into frontend-facing API contract types.
  */
-import type { ReportAbility, ReportActor, ReportFight } from '@wcl-threat/wcl-types'
+import type {
+  ReportAbility,
+  ReportActor,
+  ReportFight,
+} from '@wcl-threat/wcl-types'
 
 import type {
   ReportAbilitySummary,

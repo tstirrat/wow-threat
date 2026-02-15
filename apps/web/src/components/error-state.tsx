@@ -8,10 +8,7 @@ export type ErrorStateProps = {
   message: string
 }
 
-export const ErrorState: FC<ErrorStateProps> = ({
-  title,
-  message,
-}) => {
+export const ErrorState: FC<ErrorStateProps> = ({ title, message }) => {
   return (
     <section
       aria-live="assertive"

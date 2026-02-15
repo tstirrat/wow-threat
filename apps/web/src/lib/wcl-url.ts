@@ -15,7 +15,9 @@ const supportedHosts = new Set<WarcraftLogsHost>([
 ])
 
 /** Parse a report URL into host + report ID when possible. */
-export function parseWarcraftLogsReportUrl(input: string): ParsedReportInput | null {
+export function parseWarcraftLogsReportUrl(
+  input: string,
+): ParsedReportInput | null {
   const trimmed = input.trim()
 
   try {
@@ -60,7 +62,10 @@ export function parseReportInput(
 }
 
 /** Build a WCL report URL from host + report ID. */
-export function buildReportUrl(host: WarcraftLogsHost, reportId: string): string {
+export function buildReportUrl(
+  host: WarcraftLogsHost,
+  reportId: string,
+): string {
   return `https://${host}/reports/${reportId}`
 }
 

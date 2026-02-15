@@ -29,10 +29,7 @@ export const isBossFightForNavigation = (
   fight.fightPercentage !== null
 
 export const normalizeEncounterNameForNavigation = (name: string): string =>
-  name
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
+  name.trim().toLowerCase().replace(/\s+/g, ' ')
 
 const resolveEncounterId = (fight: ReportFightSummary): number | null =>
   typeof fight.encounterID === 'number' && fight.encounterID > 0
@@ -67,14 +64,17 @@ export function buildBossKillNavigationFights(
       .map((fight) => normalizeEncounterNameForNavigation(fight.name)),
   )
 
-  const isBossFightFromKnownEncounterName = (fight: ReportFightSummary): boolean =>
+  const isBossFightFromKnownEncounterName = (
+    fight: ReportFightSummary,
+  ): boolean =>
     knownBossNames.has(normalizeEncounterNameForNavigation(fight.name))
 
   return fights
     .filter(
       (fight) =>
         fight.kill &&
-        (isBossFightForNavigation(fight) || isBossFightFromKnownEncounterName(fight)),
+        (isBossFightForNavigation(fight) ||
+          isBossFightFromKnownEncounterName(fight)),
     )
     .sort((left, right) => compareByFightOrder(left, right, fightOrder))
 }
@@ -91,15 +91,21 @@ export function buildFightNavigationGroups(
       .map((fight) => normalizeEncounterNameForNavigation(fight.name)),
   )
 
-  const isBossFightFromKnownEncounterName = (fight: ReportFightSummary): boolean =>
+  const isBossFightFromKnownEncounterName = (
+    fight: ReportFightSummary,
+  ): boolean =>
     knownBossNames.has(normalizeEncounterNameForNavigation(fight.name))
 
   const bossFights = fights.filter(
-    (fight) => isBossFightForNavigation(fight) || isBossFightFromKnownEncounterName(fight),
+    (fight) =>
+      isBossFightForNavigation(fight) ||
+      isBossFightFromKnownEncounterName(fight),
   )
   const trashFights = fights
     .filter(
-      (fight) => !isBossFightForNavigation(fight) && !isBossFightFromKnownEncounterName(fight),
+      (fight) =>
+        !isBossFightForNavigation(fight) &&
+        !isBossFightFromKnownEncounterName(fight),
     )
     .sort((left, right) => {
       if (left.startTime !== right.startTime) {
@@ -132,15 +138,22 @@ export function buildFightNavigationGroups(
           }
 
           if (encounterIdLookupKey) {
-            accumulator.encounterKeyById.set(encounterIdLookupKey, existingEncounterKey)
+            accumulator.encounterKeyById.set(
+              encounterIdLookupKey,
+              existingEncounterKey,
+            )
           }
-          accumulator.encounterKeyByName.set(normalizedName, existingEncounterKey)
+          accumulator.encounterKeyByName.set(
+            normalizedName,
+            existingEncounterKey,
+          )
         }
 
         return accumulator
       }
 
-      const encounterKey = encounterIdLookupKey ?? `encounter-name:${normalizedName}`
+      const encounterKey =
+        encounterIdLookupKey ?? `encounter-name:${normalizedName}`
 
       accumulator.groups.set(encounterKey, {
         encounterKey,
@@ -171,22 +184,24 @@ export function buildFightNavigationGroups(
     },
   ).groups
 
-  const encounterRows = Array.from(fightsByEncounter.values()).map((encounter) => {
-    const kills = encounter.fights
-      .filter((fight) => fight.kill)
-      .sort((left, right) => compareByFightOrder(left, right, fightOrder))
-    const wipes = encounter.fights
-      .filter((fight) => !fight.kill)
-      .sort((left, right) => compareByFightOrder(left, right, fightOrder))
+  const encounterRows = Array.from(fightsByEncounter.values()).map(
+    (encounter) => {
+      const kills = encounter.fights
+        .filter((fight) => fight.kill)
+        .sort((left, right) => compareByFightOrder(left, right, fightOrder))
+      const wipes = encounter.fights
+        .filter((fight) => !fight.kill)
+        .sort((left, right) => compareByFightOrder(left, right, fightOrder))
 
-    return {
-      encounterID: encounter.encounterID,
-      encounterKey: encounter.encounterKey,
-      name: encounter.name,
-      kills,
-      wipes,
-    }
-  })
+      return {
+        encounterID: encounter.encounterID,
+        encounterKey: encounter.encounterKey,
+        name: encounter.name,
+        kills,
+        wipes,
+      }
+    },
+  )
 
   const bossEncounters = encounterRows
     .filter((encounter) => encounter.kills.length > 0)
@@ -206,7 +221,10 @@ export function buildFightNavigationGroups(
         wipes: encounter.wipes,
       }
     })
-    .filter((encounter): encounter is BossEncounterNavigationRow => encounter !== null)
+    .filter(
+      (encounter): encounter is BossEncounterNavigationRow =>
+        encounter !== null,
+    )
     .sort((left, right) =>
       compareByFightOrder(left.primaryKill, right.primaryKill, fightOrder),
     )

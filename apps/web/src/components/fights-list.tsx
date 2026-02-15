@@ -21,10 +21,7 @@ const formatFightDuration = (fight: ReportFightSummary): string => {
   return `${minutes}:${String(seconds).padStart(2, '0')}`
 }
 
-export const FightsList: FC<FightsListProps> = ({
-  reportId,
-  fights,
-}) => {
+export const FightsList: FC<FightsListProps> = ({ reportId, fights }) => {
   if (fights.length === 0) {
     return <p className="text-sm text-muted">No fights found in this report.</p>
   }
@@ -36,7 +33,10 @@ export const FightsList: FC<FightsListProps> = ({
       {bossKillFights.length > 0 ? (
         <ul aria-label="Boss kill fights" className="space-y-2">
           {bossKillFights.map((fight) => (
-            <li className="rounded-md border border-border bg-panel px-3 py-3" key={fight.id}>
+            <li
+              className="rounded-md border border-border bg-panel px-3 py-3"
+              key={fight.id}
+            >
               <div className="flex flex-wrap items-center gap-1 text-sm">
                 <span className="font-medium">{fight.name}</span>
                 <span>:</span>
@@ -51,7 +51,9 @@ export const FightsList: FC<FightsListProps> = ({
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-muted">No boss kills found in this report.</p>
+        <p className="text-sm text-muted">
+          No boss kills found in this report.
+        </p>
       )}
     </div>
   )

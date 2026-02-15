@@ -34,7 +34,11 @@ function createContext(event: ThreatContext['event']): ThreatContext {
     sourceAuras: new Set(),
     targetAuras: new Set(),
     sourceActor: { id: normalizedEvent.sourceID, name: 'Source', class: null },
-    targetActor: { id: normalizedEvent.targetID, name: 'Target', class: 'warrior' },
+    targetActor: {
+      id: normalizedEvent.targetID,
+      name: 'Target',
+      class: 'warrior',
+    },
     encounterId: null,
     spellSchoolMask: 0,
     actors: createMockActorContext(),

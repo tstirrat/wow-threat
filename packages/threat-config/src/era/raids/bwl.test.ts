@@ -170,7 +170,7 @@ describe('bwlAbilities', () => {
     const formula = checkExists(bwlAbilities[Spells.NefarianWarriorClassCall])
     const result = checkExists(
       formula(
-          createContext(
+        createContext(
           createClassCallApplyDebuffEvent(23397, 2),
           new Set([WarriorSpells.BerserkerStance]),
         ),

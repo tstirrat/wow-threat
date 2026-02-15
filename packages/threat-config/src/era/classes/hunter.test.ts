@@ -109,10 +109,7 @@ describe('Hunter Config', () => {
 
         // Handler should pass through heal events
         const healEvent = createHealEvent({ sourceID: 1, targetID: 2 })
-        const healResult = handler(
-          healEvent,
-          mockContext,
-        )
+        const healResult = handler(healEvent, mockContext)
         expect(healResult).toEqual({ action: 'passthrough' })
       })
 
@@ -134,10 +131,7 @@ describe('Hunter Config', () => {
 
         // Handler should redirect damage from hunter (ID 1) to target ally (ID 10)
         const damageEvent = createDamageEvent({ sourceID: 1, targetID: 2 })
-        const damageResult = handler(
-          damageEvent,
-          mockContext,
-        )
+        const damageResult = handler(damageEvent, mockContext)
         expect(damageResult).toEqual({
           action: 'augment',
           threatRecipientOverride: targetAllyId,
@@ -164,10 +158,7 @@ describe('Hunter Config', () => {
         const mockContext = createMockInterceptorContext(ctx.actors)
 
         const damageEvent = createDamageEvent({ sourceID: 1, targetID: 2 })
-        const damageResult = handler(
-          damageEvent,
-          mockContext,
-        )
+        const damageResult = handler(damageEvent, mockContext)
         expect(damageResult).toEqual({ action: 'passthrough' })
       })
 
@@ -229,10 +220,7 @@ describe('Hunter Config', () => {
           sourceID: otherSourceId,
           targetID: 2,
         })
-        const result2 = handler(
-          otherSourceDamage,
-          mockContext,
-        )
+        const result2 = handler(otherSourceDamage, mockContext)
         expect(result2).toEqual({ action: 'passthrough' })
         expect(mockContext.uninstall).not.toHaveBeenCalled()
       })
@@ -345,10 +333,7 @@ describe('Hunter Config', () => {
         })
 
         const damageEvent = createDamageEvent({ sourceID: 1, targetID: 2 })
-        const withinResult = handler(
-          damageEvent,
-          withinWindowContext,
-        )
+        const withinResult = handler(damageEvent, withinWindowContext)
         expect(withinResult).toEqual({
           action: 'augment',
           threatRecipientOverride: 10,
@@ -362,10 +347,7 @@ describe('Hunter Config', () => {
           uninstall: uninstallMock,
         })
 
-        const afterResult = handler(
-          damageEvent,
-          afterWindowContext,
-        )
+        const afterResult = handler(damageEvent, afterWindowContext)
         expect(afterResult).toEqual({ action: 'passthrough' })
         expect(uninstallMock).toHaveBeenCalled()
       })

@@ -1,9 +1,12 @@
 /**
  * Playwright coverage for fight page chart and interaction flows.
  */
-import { expect, test, type Page } from '@playwright/test'
+import { type Page, expect, test } from '@playwright/test'
 
-import { e2eReportId, setupThreatApiMocks } from '../test/helpers/e2e-threat-mocks'
+import {
+  e2eReportId,
+  setupThreatApiMocks,
+} from '../test/helpers/e2e-threat-mocks'
 
 const svgFightUrl = `/report/${e2eReportId}/fight/26?renderer=svg`
 
@@ -16,11 +19,7 @@ async function clickSeriesLineByStroke({
   strokeColor: string
 }): Promise<void> {
   const clickPoint = await page.evaluate(
-    ({
-      lineStrokeColor,
-    }: {
-      lineStrokeColor: string
-    }) => {
+    ({ lineStrokeColor }: { lineStrokeColor: string }) => {
       const svg = document.querySelector('main svg')
       if (!svg) {
         return null
@@ -44,7 +43,9 @@ async function clickSeriesLineByStroke({
         return null
       }
 
-      const point = targetPath.getPointAtLength(targetPath.getTotalLength() * 0.7)
+      const point = targetPath.getPointAtLength(
+        targetPath.getTotalLength() * 0.7,
+      )
       const rect = svg.getBoundingClientRect()
       return {
         x: rect.left + point.x,
@@ -70,12 +71,20 @@ test('defaults to the main boss and shows expected players in the legend', async
   await page.goto(svgFightUrl)
   await expect(page).toHaveURL(/renderer=svg/)
 
-  const fightHeader = page.getByRole('region', { name: 'Patchwerk (Fight #26)' })
+  const fightHeader = page.getByRole('region', {
+    name: 'Patchwerk (Fight #26)',
+  })
   await expect(fightHeader.getByText('Warcraft Logs:')).toBeVisible()
-  await expect(fightHeader.getByRole('link', { name: 'Report', exact: true })).toBeVisible()
-  await expect(fightHeader.getByRole('link', { name: 'Fight', exact: true })).toBeVisible()
+  await expect(
+    fightHeader.getByRole('link', { name: 'Report', exact: true }),
+  ).toBeVisible()
+  await expect(
+    fightHeader.getByRole('link', { name: 'Fight', exact: true }),
+  ).toBeVisible()
 
-  const fightQuickSwitch = page.getByRole('navigation', { name: 'Fight quick switch' })
+  const fightQuickSwitch = page.getByRole('navigation', {
+    name: 'Fight quick switch',
+  })
   await expect(fightQuickSwitch.getByText('Patchwerk')).toBeVisible()
   await expect(
     fightQuickSwitch.getByRole('link', { name: 'Grobbulus' }),
@@ -181,7 +190,9 @@ test('clicking a chart point focuses a player and shows total threat values', as
     strokeColor: 'rgb(199, 156, 110)',
   })
 
-  const summaryRegion = page.getByRole('region', { name: 'Focused player summary' })
+  const summaryRegion = page.getByRole('region', {
+    name: 'Focused player summary',
+  })
   await expect(summaryRegion.getByText('Aegistank')).toBeVisible()
   await expect(summaryRegion.getByText('Total threat')).toBeVisible()
 

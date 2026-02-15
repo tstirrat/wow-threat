@@ -46,10 +46,14 @@ test('pasting an invalid link shows a parse error', async ({ page }) => {
   )
 })
 
-test('empty state shows sample links and opens a report when clicked', async ({ page }) => {
+test('empty state shows sample links and opens a report when clicked', async ({
+  page,
+}) => {
   await page.goto('/')
 
-  await expect(page.getByRole('heading', { name: 'Example reports' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'Example reports' }),
+  ).toBeVisible()
   await page.getByRole('link', { name: 'Fresh Example' }).click()
 
   await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}`))
@@ -58,7 +62,9 @@ test('empty state shows sample links and opens a report when clicked', async ({ 
   ).toBeVisible()
 })
 
-test('report history can be revisited from recent reports', async ({ page }) => {
+test('report history can be revisited from recent reports', async ({
+  page,
+}) => {
   await page.goto('/')
   await page.getByLabel('Report URL or ID').fill(e2eValidFreshReportUrl)
   await page.getByRole('button', { name: 'Load report' }).click()

@@ -10,9 +10,7 @@ export type RecentReportsListProps = {
   reports: RecentReportEntry[]
 }
 
-export const RecentReportsList: FC<RecentReportsListProps> = ({
-  reports,
-}) => {
+export const RecentReportsList: FC<RecentReportsListProps> = ({ reports }) => {
   if (reports.length === 0) {
     return <p className="text-sm text-muted">No recent reports yet.</p>
   }
@@ -32,7 +30,8 @@ export const RecentReportsList: FC<RecentReportsListProps> = ({
             {report.title || report.reportId}
           </Link>
           <p className="mt-1 text-xs text-muted">
-            {report.sourceHost} · {new Date(report.lastOpenedAt).toLocaleString()}
+            {report.sourceHost} ·{' '}
+            {new Date(report.lastOpenedAt).toLocaleString()}
           </p>
         </li>
       ))}

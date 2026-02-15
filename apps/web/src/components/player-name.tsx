@@ -8,10 +8,7 @@ export type PlayerNameProps = {
   color: string
 }
 
-export const PlayerName: FC<PlayerNameProps> = ({
-  label,
-  color,
-}) => {
+export const PlayerName: FC<PlayerNameProps> = ({ label, color }) => {
   return (
     <span className="font-medium" style={{ color }}>
       {label}

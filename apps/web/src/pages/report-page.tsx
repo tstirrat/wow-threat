@@ -1,7 +1,7 @@
 /**
  * Report-level page with fights and player navigation.
  */
-import { useEffect, type FC } from 'react'
+import { type FC, useEffect } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
 
 import { ErrorState } from '../components/error-state'
@@ -9,10 +9,10 @@ import { FightsList } from '../components/fights-list'
 import { LoadingState } from '../components/loading-state'
 import { PlayersNavigationList } from '../components/players-navigation-list'
 import { SectionCard } from '../components/section-card'
-import { buildReportUrl } from '../lib/wcl-url'
+import { useRecentReports } from '../hooks/use-recent-reports'
 import { useReportData } from '../hooks/use-report-data'
 import { useReportHost } from '../hooks/use-report-host'
-import { useRecentReports } from '../hooks/use-recent-reports'
+import { buildReportUrl } from '../lib/wcl-url'
 import type { WarcraftLogsHost } from '../types/app'
 
 interface LocationState {
@@ -108,7 +108,11 @@ export const ReportPage: FC = () => {
         title="Player navigation"
         subtitle="Players by boss-kill grid. Empty cells mean the player did not participate."
       >
-        <PlayersNavigationList fights={data.fights} players={players} reportId={reportId} />
+        <PlayersNavigationList
+          fights={data.fights}
+          players={players}
+          reportId={reportId}
+        />
       </SectionCard>
     </div>
   )

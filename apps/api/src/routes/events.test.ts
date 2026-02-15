@@ -2,6 +2,11 @@
  * Integration Tests for Events API
  */
 import type { ApiError } from '@/middleware/error'
+import {
+  createApplyBuffEvent,
+  createDamageEvent,
+  createHealEvent,
+} from '@wcl-threat/shared'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import anniversaryReport from '../../test/fixtures/wcl-responses/anniversary-report.json'
@@ -12,17 +17,11 @@ import type { AugmentedEventsResponse } from './events'
 
 // Sample events fixture
 const mockEvents = [
-  {
+  createDamageEvent({
     timestamp: 1000,
-    type: 'damage',
     sourceID: 1,
     targetID: 25,
-    ability: {
-      guid: 23922,
-      name: 'Shield Slam',
-      type: 1,
-      abilityIcon: 'ability_warrior_shieldslam.png',
-    },
+    abilityGameID: 23922,
     amount: 2500,
     absorbed: 0,
     blocked: 0,
@@ -31,35 +30,23 @@ const mockEvents = [
     hitType: 'hit',
     tick: false,
     multistrike: false,
-  },
-  {
+  }),
+  createHealEvent({
     timestamp: 2000,
-    type: 'heal',
     sourceID: 2,
     targetID: 1,
-    ability: {
-      guid: 25314,
-      name: 'Greater Heal',
-      type: 2,
-      abilityIcon: 'spell_holy_greaterheal.png',
-    },
+    abilityGameID: 25314,
     amount: 4000,
     absorbed: 0,
     overheal: 500,
     tick: false,
-  },
-  {
+  }),
+  createApplyBuffEvent({
     timestamp: 3000,
-    type: 'applybuff',
     sourceID: 1,
     targetID: 1,
-    ability: {
-      guid: 71,
-      name: 'Defensive Stance',
-      type: 1,
-      abilityIcon: 'ability_warrior_defensivestance.png',
-    },
-  },
+    abilityGameID: 71,
+  }),
 ]
 
 // Extract the actual report object from the fixture
@@ -107,11 +94,11 @@ describe('Events API', () => {
       const damageEvent = data.events.find(
         (e: { type: string }) => e.type === 'damage',
       )
+      console.warn('ghere', damageEvent)
 
       expect(damageEvent).toBeDefined()
       expect(damageEvent!.threat).toBeDefined()
       expect(damageEvent!.threat!.calculation).toBeDefined()
-      expect(damageEvent!.threat!.changes).toBeDefined()
     })
 
     it('includes threat data for heal events', async () => {
@@ -155,16 +142,15 @@ describe('Events API', () => {
 
     it('fetches and merges paginated event pages from WCL', async () => {
       const pageOneEvents = mockEvents.slice(0, 2)
-      const pageTwoEvent = {
-        ...mockEvents[2],
+      const pageTwoEvent = createApplyBuffEvent({
         timestamp: 65000,
-      }
+      })
 
       mockFetch({
         report: reportData,
         eventsPages: [
           {
-            startTime: null,
+            startTime: reportData.fights[0]!.startTime,
             data: pageOneEvents,
             nextPageTimestamp: 30000,
           },

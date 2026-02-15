@@ -38,10 +38,7 @@ export async function requestJson<T>(url: string): Promise<T> {
       }
     }
 
-    throw new ApiClientError(
-      message,
-      response.status,
-    )
+    throw new ApiClientError(message, response.status)
   }
 
   return (await response.json()) as T
