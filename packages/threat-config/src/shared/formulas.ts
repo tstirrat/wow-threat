@@ -358,7 +358,8 @@ export function threatOnDebuffOrDamage(value: number): FormulaFn {
   return (ctx) => {
     if (
       ctx.event.type === 'applydebuff' ||
-      ctx.event.type === 'refreshdebuff'
+      ctx.event.type === 'refreshdebuff' ||
+      ctx.event.type === 'applydebuffstack'
     ) {
       return {
         formula: `${value}`,
@@ -400,6 +401,36 @@ export function threatOnBuff(
       splitAmongEnemies: options?.split ?? true,
       applyPlayerMultipliers: options?.applyPlayerMultipliers,
     }
+  }
+}
+
+/**
+ * Threat on buff apply/refresh and normal threat on damage ticks.
+ * Used by aura spells that both apply a debuff and periodically deal damage.
+ */
+export function threatOnBuffOrDamage(value: number): FormulaFn {
+  return (ctx) => {
+    if (
+      ctx.event.type === 'applybuff' ||
+      ctx.event.type === 'refreshbuff' ||
+      ctx.event.type === 'applybuffstack'
+    ) {
+      return {
+        formula: `${value}`,
+        value,
+        splitAmongEnemies: true,
+      }
+    }
+
+    if (ctx.event.type === 'damage') {
+      return {
+        formula: 'amt',
+        value: ctx.amount,
+        splitAmongEnemies: false,
+      }
+    }
+
+    return undefined
   }
 }
 

@@ -22,6 +22,7 @@ import {
   tauntTarget,
   threat,
   threatOnBuff,
+  threatOnBuffOrDamage,
   threatOnCastRollbackOnMiss,
   threatOnDebuff,
   threatOnDebuffOrDamage,
@@ -589,6 +590,69 @@ describe('threatOnBuff', () => {
     const formula = threatOnBuff(70)
     const ctx = createMockContext({
       event: createDamageEvent(),
+    })
+
+    const result = formula(ctx)
+
+    expect(result).toBeUndefined()
+  })
+})
+
+describe('threatOnBuffOrDamage', () => {
+  it('applies flat threat on applybuff', () => {
+    const formula = threatOnBuffOrDamage(58)
+    const ctx = createMockContext({
+      event: createApplyBuffEvent(),
+      amount: 999,
+    })
+
+    const result = assertDefined(formula(ctx))
+
+    expect(result.formula).toBe('58')
+    expect(result.value).toBe(58)
+    expect(result.splitAmongEnemies).toBe(true)
+  })
+
+  it('applies flat threat on refresh and stack buff phases', () => {
+    const formula = threatOnBuffOrDamage(58)
+
+    const refreshResult = assertDefined(
+      formula(
+        createMockContext({
+          event: createRefreshBuffEvent(),
+        }),
+      ),
+    )
+    const stackResult = assertDefined(
+      formula(
+        createMockContext({
+          event: createApplyBuffStackEvent(),
+        }),
+      ),
+    )
+
+    expect(refreshResult.value).toBe(58)
+    expect(stackResult.value).toBe(58)
+  })
+
+  it('applies amount-based threat on damage', () => {
+    const formula = threatOnBuffOrDamage(58)
+    const ctx = createMockContext({
+      event: createDamageEvent(),
+      amount: 321,
+    })
+
+    const result = assertDefined(formula(ctx))
+
+    expect(result.formula).toBe('amt')
+    expect(result.value).toBe(321)
+    expect(result.splitAmongEnemies).toBe(false)
+  })
+
+  it('returns undefined for non-buff/non-damage events', () => {
+    const formula = threatOnBuffOrDamage(58)
+    const ctx = createMockContext({
+      event: createCastEvent(),
     })
 
     const result = formula(ctx)

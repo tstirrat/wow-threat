@@ -181,7 +181,6 @@ export const paladinConfig: ClassThreatConfig = {
     [Spells.BlessingOfSalvation]: () => ({
       source: 'buff',
       name: 'Blessing of Salvation',
-
       value: 0.7,
     }),
 
@@ -189,7 +188,6 @@ export const paladinConfig: ClassThreatConfig = {
     [Spells.GreaterBlessingOfSalvation]: () => ({
       source: 'buff',
       name: 'Greater Blessing of Salvation',
-
       value: 0.7,
     }),
   },

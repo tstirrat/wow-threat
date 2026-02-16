@@ -7,7 +7,6 @@ import type {
   ClassThreatConfig,
   SpellId,
   TalentImplicationContext,
-  ThreatFormula,
 } from '@wcl-threat/shared'
 
 import {
@@ -20,6 +19,7 @@ import {
   tauntTarget,
   threat,
   threatOnBuff,
+  threatOnBuffOrDamage,
 } from '../../shared/formulas'
 import { inferTalent } from '../../shared/talents'
 
@@ -86,55 +86,6 @@ function buildAuraImplications(): Map<SpellId, ReadonlySet<SpellId>> {
 
 const noThreatFormula = noThreat()
 
-const resourceChangeThreat: ThreatFormula = (ctx) => {
-  if (ctx.event.type !== 'resourcechange' && ctx.event.type !== 'energize') {
-    return undefined
-  }
-
-  if (ctx.event.resourceChangeType === 'energy') {
-    return {
-      formula: '0',
-      value: 0,
-      splitAmongEnemies: false,
-      applyPlayerMultipliers: false,
-    }
-  }
-
-  const multiplier = ctx.event.resourceChangeType === 'rage' ? 5 : 0.5
-  return {
-    formula: `${ctx.event.resourceChangeType} * ${multiplier}`,
-    value: ctx.amount * multiplier,
-    splitAmongEnemies: true,
-    applyPlayerMultipliers: false,
-  }
-}
-
-const sealOfRighteousnessRank9 = (
-  ctx: Parameters<ClassThreatConfig['abilities'][number]>[0],
-) => {
-  if (
-    ctx.event.type === 'applybuff' ||
-    ctx.event.type === 'refreshbuff' ||
-    ctx.event.type === 'applybuffstack'
-  ) {
-    return {
-      formula: '58',
-      value: 58,
-      splitAmongEnemies: true,
-    }
-  }
-
-  if (ctx.event.type === 'damage') {
-    return {
-      formula: 'amt',
-      value: ctx.amount,
-      splitAmongEnemies: false,
-    }
-  }
-
-  return undefined
-}
-
 export const paladinConfig: ClassThreatConfig = {
   ...eraPaladinConfig,
   auraImplications: buildAuraImplications(),
@@ -181,7 +132,7 @@ export const paladinConfig: ClassThreatConfig = {
     [Spells.GreaterBlessingOfLightR2]: threatOnBuff(69),
     [Spells.GreaterBlessingOfSanctuaryR2]: threatOnBuff(70),
 
-    [Spells.SealOfRighteousnessR9]: sealOfRighteousnessRank9,
+    [Spells.SealOfRighteousnessR9]: threatOnBuffOrDamage(58),
 
     [Spells.HolyShieldR1]: threat({ modifier: 1.35 }),
     [Spells.HolyShieldR2]: threat({ modifier: 1.35 }),
@@ -193,7 +144,6 @@ export const paladinConfig: ClassThreatConfig = {
     [Spells.AvengersShieldR3]: threat({ modifier: 1.3 }),
 
     [Spells.RighteousDefense]: tauntTarget({ bonus: 0, eventTypes: ['cast'] }),
-    [Spells.SpiritualAttunement]: resourceChangeThreat,
 
     [Spells.JudgementOfWisdomManaR1]: noThreatFormula,
     [Spells.JudgementOfWisdomManaR2]: noThreatFormula,
