@@ -41,6 +41,12 @@ const reportActors: ReportActorSummary[] = [
     petOwner: 3,
   },
   {
+    id: 5,
+    name: 'Searing Totem',
+    type: 'Pet',
+    petOwner: 3,
+  },
+  {
     id: 100,
     name: 'Patchwerk',
     type: 'NPC',
@@ -111,6 +117,15 @@ const wolfPet: ReportFightParticipant = {
   petOwner: 3,
 }
 
+const searingTotemPet: ReportFightParticipant = {
+  id: 5,
+  gameID: 3599,
+  groupCount: 1,
+  instanceCount: 1,
+  name: 'Searing Totem',
+  petOwner: 3,
+}
+
 export const e2eReportResponse: ReportResponse = {
   abilities: [
     {
@@ -162,7 +177,7 @@ export const e2eReportResponse: ReportResponse = {
       enemyNPCs: [patchwerkNpc],
       enemyPets: [],
       fightPercentage: null,
-      friendlyPets: [wolfPet],
+      friendlyPets: [wolfPet, searingTotemPet],
       friendlyPlayers: [1, 2, 3],
       id: 25,
       kill: false,
@@ -177,7 +192,7 @@ export const e2eReportResponse: ReportResponse = {
       enemyNPCs: [patchwerkNpc, hatefulStrikeNpc],
       enemyPets: [],
       fightPercentage: null,
-      friendlyPets: [wolfPet],
+      friendlyPets: [wolfPet, searingTotemPet],
       friendlyPlayers: [1, 2, 3],
       id: 26,
       kill: true,
@@ -192,7 +207,7 @@ export const e2eReportResponse: ReportResponse = {
       enemyNPCs: [grobbulusNpc],
       enemyPets: [],
       fightPercentage: null,
-      friendlyPets: [wolfPet],
+      friendlyPets: [wolfPet, searingTotemPet],
       friendlyPlayers: [1, 2, 3],
       id: 30,
       kill: true,
@@ -535,6 +550,32 @@ const patchwerkEvents: AugmentedEventsResponse = {
       timestamp: 1108000,
       type: 'damage',
     },
+    {
+      abilityGameID: 3599,
+      amount: 120,
+      sourceID: 5,
+      targetID: 100,
+      threat: {
+        calculation: calculationFor({
+          amount: 120,
+          baseThreat: 120,
+          formula: 'damage * 0.35',
+          modifiedThreat: 42,
+        }),
+        changes: [
+          {
+            amount: 42,
+            operator: 'add',
+            sourceId: 5,
+            targetId: 100,
+            targetInstance: 0,
+            total: 42,
+          },
+        ],
+      },
+      timestamp: 1108500,
+      type: 'damage',
+    },
   ],
   fightId: 26,
   fightName: 'Patchwerk',
@@ -543,10 +584,10 @@ const patchwerkEvents: AugmentedEventsResponse = {
   summary: {
     duration: 120000,
     eventCounts: {
-      damage: 8,
+      damage: 9,
       heal: 1,
     },
-    totalEvents: 9,
+    totalEvents: 10,
   },
 }
 

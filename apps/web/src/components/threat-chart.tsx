@@ -1,5 +1,5 @@
 /**
- * ECharts threat timeline with deep-linkable zoom and legend isolation behavior.
+ * ECharts threat timeline with deep-linkable zoom and a custom legend panel.
  */
 import type { EChartsOption } from 'echarts'
 import ReactEChartsCore from 'echarts-for-react/lib/core'
@@ -7,7 +7,6 @@ import { LineChart } from 'echarts/charts'
 import {
   DataZoomComponent,
   GridComponent,
-  LegendComponent,
   MarkAreaComponent,
   MarkPointComponent,
   TooltipComponent,
@@ -15,15 +14,15 @@ import {
 } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer, SVGRenderer } from 'echarts/renderers'
-import {
-  type FC,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { type FC, useCallback, useEffect, useMemo, useRef } from 'react'
 
+import { useThreatChartLegendState } from '../hooks/use-threat-chart-legend-state'
+import {
+  type SeriesChartPoint,
+  type TooltipPointPayload,
+  useThreatChartPinnedTooltip,
+} from '../hooks/use-threat-chart-pinned-tooltip'
+import { useThreatChartThemeColors } from '../hooks/use-threat-chart-theme-colors'
 import { formatTimelineTime } from '../lib/format'
 import { resolveSeriesWindowBounds } from '../lib/threat-aggregation'
 import {
@@ -36,17 +35,14 @@ import {
   isFullWindowRange,
   resolveDataZoomWindowRange,
 } from '../lib/threat-chart-window'
-import type {
-  ThreatPointMarkerKind,
-  ThreatPointModifier,
-  ThreatSeries,
-} from '../types/app'
+import type { ThreatSeries } from '../types/app'
+import { ThreatChartControls } from './threat-chart-controls'
+import { ThreatChartLegend } from './threat-chart-legend'
 
 echarts.use([
   LineChart,
   GridComponent,
   TooltipComponent,
-  LegendComponent,
   DataZoomComponent,
   VisualMapComponent,
   MarkAreaComponent,
@@ -55,42 +51,6 @@ echarts.use([
   SVGRenderer,
 ])
 
-interface LegendClickState {
-  name: string
-  timestamp: number
-}
-
-interface ChartThemeColors {
-  border: string
-  foreground: string
-  muted: string
-  panel: string
-}
-
-interface TooltipPointPayload {
-  actorId: number
-  actorColor: string
-  abilityName: string
-  amount: number
-  baseThreat: number
-  eventType: string
-  formula: string
-  modifiedThreat: number
-  spellSchool: string | null
-  modifiers: ThreatPointModifier[]
-  threatDelta: number
-  timeMs: number
-  totalThreat: number
-  markerKind?: ThreatPointMarkerKind
-}
-
-interface SeriesChartPoint extends TooltipPointPayload {
-  playerId: number | null
-  value: [number, number]
-}
-
-const doubleClickThresholdMs = 320
-const tooltipSnapDistancePx = 10
 const bossMeleeMarkerColor = '#ef4444'
 const deathMarkerColor = '#dc2626'
 const invulnerabilityMarkerColor = '#22c55e'
@@ -124,48 +84,6 @@ function resolvePointSize(point: SeriesChartPoint | undefined): number {
   }
 
   return 6
-}
-
-function resetLegendSelection(
-  chart: ReturnType<ReactEChartsCore['getEchartsInstance']>,
-  names: string[],
-): void {
-  names.forEach((name) => {
-    chart.dispatchAction({ type: 'legendSelect', name })
-  })
-}
-
-function isolateLegendSelection(
-  chart: ReturnType<ReactEChartsCore['getEchartsInstance']>,
-  isolateName: string,
-  names: string[],
-): void {
-  names.forEach((name) => {
-    chart.dispatchAction({
-      type: name === isolateName ? 'legendSelect' : 'legendUnSelect',
-      name,
-    })
-  })
-}
-
-function resolveThemeColor(variableName: string, fallback: string): string {
-  if (typeof window === 'undefined') {
-    return fallback
-  }
-
-  const value = getComputedStyle(document.documentElement)
-    .getPropertyValue(variableName)
-    .trim()
-  return value || fallback
-}
-
-function readChartThemeColors(): ChartThemeColors {
-  return {
-    border: resolveThemeColor('--border', '#d1d5db'),
-    foreground: resolveThemeColor('--foreground', '#0f172a'),
-    muted: resolveThemeColor('--muted-foreground', '#64748b'),
-    panel: resolveThemeColor('--card', '#ffffff'),
-  }
 }
 
 function escapeHtml(value: string): string {
@@ -243,52 +161,23 @@ export const ThreatChart: FC<ThreatChartProps> = ({
 }) => {
   const chartRef = useRef<ReactEChartsCore>(null)
   const chartContainerRef = useRef<HTMLDivElement>(null)
-  const lastLegendClickRef = useRef<LegendClickState | null>(null)
-  const lastShownTooltipRef = useRef<{
-    dataIndex: number
-    seriesIndex: number
-  } | null>(null)
-  const pinnedTooltipRef = useRef<{
-    dataIndex: number
-    seriesIndex: number
-  } | null>(null)
-  const [pinnedTooltip, setPinnedTooltip] = useState<{
-    dataIndex: number
-    seriesIndex: number
-  } | null>(null)
-  const [isolatedActorId, setIsolatedActorId] = useState<number | null>(null)
-  const [themeColors, setThemeColors] = useState<ChartThemeColors>(() =>
-    readChartThemeColors(),
-  )
+  const themeColors = useThreatChartThemeColors()
+  const {
+    visibleSeries,
+    visibleIsolatedActorId,
+    isActorVisible,
+    clearIsolate,
+    handleLegendItemClick,
+  } = useThreatChartLegendState(series)
 
   const bounds = resolveSeriesWindowBounds(series)
-  const visibleIsolatedActorId =
-    isolatedActorId !== null &&
-    series.some((item) => item.actorId === isolatedActorId)
-      ? isolatedActorId
-      : null
 
-  const legendNames = series.map((item) => item.label)
-  const actorIdByLabel = new Map(
-    series.map((item) => [item.label, item.actorId]),
-  )
   const playerIdByLabel = new Map(
     series.map((item) => [
       item.label,
       item.actorType === 'Player' ? item.actorId : item.ownerId,
     ]),
   )
-
-  useEffect(() => {
-    const updateThemeColors = (): void => {
-      setThemeColors(readChartThemeColors())
-    }
-
-    window.addEventListener('themechange', updateThemeColors)
-    return () => {
-      window.removeEventListener('themechange', updateThemeColors)
-    }
-  }, [])
 
   useEffect(() => {
     const container = chartContainerRef.current
@@ -312,12 +201,10 @@ export const ThreatChart: FC<ThreatChartProps> = ({
 
   const startValue = windowStartMs ?? bounds.min
   const endValue = windowEndMs ?? bounds.max
-  const legendWidthPx = 128
-  const legendRightOffsetPx = 8
-  const threatStateVisualMaps = buildThreatStateVisualMaps(series)
+  const threatStateVisualMaps = buildThreatStateVisualMaps(visibleSeries)
   const chartSeries = useMemo(
     () =>
-      series.map((item) => {
+      visibleSeries.map((item) => {
         const playerId =
           item.actorType === 'Player' ? item.actorId : item.ownerId
         const toDataPoint = (
@@ -331,13 +218,14 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         })
 
         return {
+          actorId: item.actorId,
           actorType: item.actorType,
           color: item.color,
           data: item.points.map(toDataPoint),
           name: item.label,
         }
       }),
-    [series],
+    [visibleSeries],
   )
 
   const resetZoom = useCallback((): void => {
@@ -353,228 +241,18 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     })
     onWindowChange(null, null)
   }, [bounds.max, bounds.min, onWindowChange])
-
-  useEffect(() => {
-    const chart = chartRef.current?.getEchartsInstance()
-    if (!chart) {
-      return
-    }
-
-    const zr = chart.getZr()
-
-    const hideTooltip = (): void => {
-      if (!lastShownTooltipRef.current) {
-        return
-      }
-
-      chart.dispatchAction({ type: 'hideTip' })
-      lastShownTooltipRef.current = null
-    }
-
-    const resolvePointerPosition = (event: {
-      offsetX?: number
-      offsetY?: number
-      zrX?: number
-      zrY?: number
-    }): { x: number; y: number } | null => {
-      const x = event.offsetX ?? event.zrX
-      const y = event.offsetY ?? event.zrY
-      if (!Number.isFinite(x) || !Number.isFinite(y)) {
-        return null
-      }
-
-      return { x, y }
-    }
-
-    const findNearestPoint = (event: {
-      offsetX?: number
-      offsetY?: number
-      zrX?: number
-      zrY?: number
-    }): {
-      dataIndex: number
-      distance: number
-      seriesIndex: number
-    } | null => {
-      const pointer = resolvePointerPosition(event)
-      if (!pointer) {
-        return null
-      }
-
-      const legendOption = chart.getOption().legend?.[0] as
-        | {
-            selected?: Record<string, boolean>
-          }
-        | undefined
-      const legendSelection = legendOption?.selected
-
-      return chartSeries.reduce<{
-        dataIndex: number
-        distance: number
-        seriesIndex: number
-      } | null>((closest, seriesEntry, seriesIndex) => {
-        if (legendSelection?.[seriesEntry.name] === false) {
-          return closest
-        }
-
-        return seriesEntry.data.reduce<{
-          dataIndex: number
-          distance: number
-          seriesIndex: number
-        } | null>((seriesClosest, point, dataIndex) => {
-          const pixelPoint = chart.convertToPixel(
-            { seriesIndex },
-            point.value,
-          ) as number[] | number
-          if (!Array.isArray(pixelPoint) || pixelPoint.length !== 2) {
-            return seriesClosest
-          }
-
-          const [pointX, pointY] = pixelPoint
-          const distance = Math.hypot(pointX - pointer.x, pointY - pointer.y)
-          if (distance > tooltipSnapDistancePx) {
-            return seriesClosest
-          }
-
-          if (!seriesClosest || distance < seriesClosest.distance) {
-            return {
-              dataIndex,
-              distance,
-              seriesIndex,
-            }
-          }
-
-          return seriesClosest
-        }, closest)
-      }, null)
-    }
-
-    const showNearestTip = (
-      nearest: { seriesIndex: number; dataIndex: number },
-      force = false,
-    ): void => {
-      const previous = lastShownTooltipRef.current
-      if (
-        !force &&
-        previous?.seriesIndex === nearest.seriesIndex &&
-        previous.dataIndex === nearest.dataIndex
-      ) {
-        return
-      }
-
-      chart.dispatchAction({
-        type: 'showTip',
-        seriesIndex: nearest.seriesIndex,
-        dataIndex: nearest.dataIndex,
-      })
-      lastShownTooltipRef.current = {
-        seriesIndex: nearest.seriesIndex,
-        dataIndex: nearest.dataIndex,
-      }
-    }
-
-    const handleMouseMove = (event: {
-      offsetX?: number
-      offsetY?: number
-      zrX?: number
-      zrY?: number
-    }): void => {
-      const pinned = pinnedTooltipRef.current
-      if (pinned) {
-        const hasPinnedPoint =
-          chartSeries[pinned.seriesIndex]?.data[pinned.dataIndex] !== undefined
-        if (!hasPinnedPoint) {
-          pinnedTooltipRef.current = null
-          setPinnedTooltip(null)
-          hideTooltip()
-          return
-        }
-
-        showNearestTip(pinned, true)
-        return
-      }
-
-      const nearest = findNearestPoint(event)
-
-      if (!nearest) {
-        hideTooltip()
-        return
-      }
-
-      showNearestTip(nearest)
-    }
-
-    const handleClick = (event: {
-      offsetX?: number
-      offsetY?: number
-      zrX?: number
-      zrY?: number
-    }): void => {
-      const nearest = findNearestPoint(event)
-      if (!nearest) {
-        pinnedTooltipRef.current = null
-        setPinnedTooltip(null)
-        hideTooltip()
-        return
-      }
-
-      const pinnedPoint = {
-        seriesIndex: nearest.seriesIndex,
-        dataIndex: nearest.dataIndex,
-      }
-      pinnedTooltipRef.current = pinnedPoint
-      setPinnedTooltip(pinnedPoint)
-      showNearestTip(nearest, true)
-    }
-
-    const handleGlobalOut = (): void => {
-      if (pinnedTooltipRef.current) {
-        showNearestTip(pinnedTooltipRef.current, true)
-        return
-      }
-
-      hideTooltip()
-    }
-
-    zr.on('mousemove', handleMouseMove)
-    zr.on('click', handleClick)
-    zr.on('globalout', handleGlobalOut)
-
-    return () => {
-      zr.off('mousemove', handleMouseMove)
-      zr.off('click', handleClick)
-      zr.off('globalout', handleGlobalOut)
-    }
-  }, [chartSeries, resetZoom])
+  const pinnedTooltip = useThreatChartPinnedTooltip({
+    chartRef,
+    chartSeries,
+  })
 
   const option: EChartsOption = {
     animation: false,
     grid: {
       top: 30,
       left: 60,
-      right: legendWidthPx + legendRightOffsetPx,
+      right: 20,
       bottom: 84,
-    },
-    legend: {
-      type: 'scroll',
-      orient: 'vertical',
-      right: legendRightOffsetPx,
-      top: 32,
-      bottom: 32,
-      width: legendWidthPx,
-      itemHeight: 10,
-      itemWidth: 18,
-      data: series.map((item) => ({
-        name: item.label,
-        textStyle: {
-          color: item.color,
-          fontWeight: 600,
-        },
-      })),
-      textStyle: {
-        color: themeColors.muted,
-      },
-      icon: undefined,
     },
     tooltip: {
       trigger: 'item',
@@ -761,7 +439,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
       threatStateVisualMaps.length > 0 ? threatStateVisualMaps : undefined,
     series: chartSeries.map((item, seriesIndex) => {
       const pinnedPoint =
-        pinnedTooltip?.seriesIndex === seriesIndex
+        pinnedTooltip?.actorId === item.actorId
           ? item.data[pinnedTooltip.dataIndex]
           : null
 
@@ -795,7 +473,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
           width: 2,
         },
         markArea: buildAuraMarkArea({
-          fixateWindows: series[seriesIndex]?.fixateWindows ?? [],
+          fixateWindows: visibleSeries[seriesIndex]?.fixateWindows ?? [],
           invulnerabilityWindows: [],
         }),
         markPoint: pinnedPoint
@@ -826,144 +504,92 @@ export const ThreatChart: FC<ThreatChartProps> = ({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          className="rounded-md border border-border bg-panel px-2 py-1 text-xs"
-          type="button"
-          onClick={resetZoom}
-        >
-          Reset zoom
-        </button>
-        {visibleIsolatedActorId !== null ? (
-          <button
-            className="rounded-md border border-border bg-panel px-2 py-1 text-xs"
-            type="button"
-            onClick={() => {
-              const chart = chartRef.current?.getEchartsInstance()
-              if (!chart) {
-                return
-              }
-
-              resetLegendSelection(chart, legendNames)
-              setIsolatedActorId(null)
-            }}
-          >
-            Clear isolate
-          </button>
-        ) : null}
-      </div>
-      <div ref={chartContainerRef}>
-        <ReactEChartsCore
-          echarts={echarts}
-          ref={chartRef}
-          notMerge
-          opts={{ renderer }}
-          option={option}
-          style={{ height: 560, width: '100%' }}
-          onEvents={{
-            datazoom: (params: {
-              batch?: DataZoomWindowPayload[]
-              start?: number
-              end?: number
-              startValue?: number
-              endValue?: number
-            }) => {
-              const chart = chartRef.current?.getEchartsInstance()
-              const optionDataZoom = chart?.getOption().dataZoom
-              const optionPayload = Array.isArray(optionDataZoom)
-                ? (optionDataZoom[0] as DataZoomWindowPayload | undefined)
-                : undefined
-              const resolvedRange = resolveDataZoomWindowRange({
-                bounds,
-                payloads: [params.batch?.[0], params, optionPayload],
-              })
-
-              if (!resolvedRange) {
-                onWindowChange(null, null)
-                return
-              }
-
-              if (
-                isFullWindowRange({
+      <ThreatChartControls
+        showClearIsolate={visibleIsolatedActorId !== null}
+        onResetZoom={resetZoom}
+        onClearIsolate={clearIsolate}
+      />
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_14rem]">
+        <div ref={chartContainerRef}>
+          <ReactEChartsCore
+            echarts={echarts}
+            ref={chartRef}
+            notMerge
+            opts={{ renderer }}
+            option={option}
+            style={{ height: 560, width: '100%' }}
+            onEvents={{
+              datazoom: (params: {
+                batch?: DataZoomWindowPayload[]
+                start?: number
+                end?: number
+                startValue?: number
+                endValue?: number
+              }) => {
+                const chart = chartRef.current?.getEchartsInstance()
+                const optionDataZoom = chart?.getOption().dataZoom
+                const optionPayload = Array.isArray(optionDataZoom)
+                  ? (optionDataZoom[0] as DataZoomWindowPayload | undefined)
+                  : undefined
+                const resolvedRange = resolveDataZoomWindowRange({
                   bounds,
-                  range: resolvedRange,
+                  payloads: [params.batch?.[0], params, optionPayload],
                 })
-              ) {
-                onWindowChange(null, null)
-                return
-              }
 
-              onWindowChange(resolvedRange.startMs, resolvedRange.endMs)
-            },
-            legendselectchanged: (params: {
-              name: string
-              selected: Record<string, boolean>
-            }) => {
-              const chart = chartRef.current?.getEchartsInstance()
-              if (!chart) {
-                return
-              }
+                if (!resolvedRange) {
+                  onWindowChange(null, null)
+                  return
+                }
 
-              const clickedActorId = actorIdByLabel.get(params.name)
-              if (!clickedActorId) {
-                return
-              }
+                if (
+                  isFullWindowRange({
+                    bounds,
+                    range: resolvedRange,
+                  })
+                ) {
+                  onWindowChange(null, null)
+                  return
+                }
 
-              const now = Date.now()
-              const previousClick = lastLegendClickRef.current
-              const isDoubleClick =
-                previousClick?.name === params.name &&
-                now - previousClick.timestamp <= doubleClickThresholdMs
+                onWindowChange(resolvedRange.startMs, resolvedRange.endMs)
+              },
+              click: (params: {
+                componentType?: string
+                seriesName?: string
+                data?: Record<string, unknown>
+                seriesType?: string
+              }) => {
+                if (
+                  params.componentType !== 'series' ||
+                  params.seriesType !== 'line'
+                ) {
+                  return
+                }
 
-              lastLegendClickRef.current = {
-                name: params.name,
-                timestamp: now,
-              }
+                const payloadPlayerId = Number(params.data?.playerId)
+                if (Number.isFinite(payloadPlayerId) && payloadPlayerId > 0) {
+                  onSeriesClick(payloadPlayerId)
+                  return
+                }
 
-              if (!isDoubleClick) {
-                return
-              }
+                if (!params.seriesName) {
+                  return
+                }
 
-              if (visibleIsolatedActorId === clickedActorId) {
-                resetLegendSelection(chart, legendNames)
-                setIsolatedActorId(null)
-                return
-              }
+                const clickedPlayerId = playerIdByLabel.get(params.seriesName)
+                if (!clickedPlayerId) {
+                  return
+                }
 
-              isolateLegendSelection(chart, params.name, legendNames)
-              setIsolatedActorId(clickedActorId)
-            },
-            click: (params: {
-              componentType?: string
-              seriesName?: string
-              data?: Record<string, unknown>
-              seriesType?: string
-            }) => {
-              if (
-                params.componentType !== 'series' ||
-                params.seriesType !== 'line'
-              ) {
-                return
-              }
-
-              const payloadPlayerId = Number(params.data?.playerId)
-              if (Number.isFinite(payloadPlayerId) && payloadPlayerId > 0) {
-                onSeriesClick(payloadPlayerId)
-                return
-              }
-
-              if (!params.seriesName) {
-                return
-              }
-
-              const clickedPlayerId = playerIdByLabel.get(params.seriesName)
-              if (!clickedPlayerId) {
-                return
-              }
-
-              onSeriesClick(clickedPlayerId)
-            },
-          }}
+                onSeriesClick(clickedPlayerId)
+              },
+            }}
+          />
+        </div>
+        <ThreatChartLegend
+          series={series}
+          isActorVisible={isActorVisible}
+          onActorClick={handleLegendItemClick}
         />
       </div>
     </div>

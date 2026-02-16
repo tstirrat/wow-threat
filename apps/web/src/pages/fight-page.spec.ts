@@ -118,15 +118,31 @@ test('defaults to the main boss and shows expected players in the legend', async
     .toBe('svg')
 
   await expect(page.getByLabel('Target')).toHaveValue('100:0')
+  const legendRegion = page.getByRole('region', { name: 'Threat legend' })
   await expect(
-    page.locator('main svg text', { hasText: 'Aegistank' }),
+    legendRegion.getByRole('button', { name: 'Toggle Aegistank' }),
   ).toBeVisible()
   await expect(
-    page.locator('main svg text', { hasText: 'Bladefury' }),
+    legendRegion.getByRole('button', { name: 'Toggle Bladefury' }),
   ).toBeVisible()
   await expect(
-    page.locator('main svg text', { hasText: 'Arrowyn' }),
+    legendRegion.getByRole('button', { name: 'Toggle Arrowyn' }),
   ).toBeVisible()
+  await expect(
+    legendRegion.getByRole('button', { name: 'Toggle Wolfie (Arrowyn)' }),
+  ).toHaveCount(0)
+
+  const showPets = page.getByRole('checkbox', { name: 'Show pets' })
+  await expect(showPets).not.toBeChecked()
+  await showPets.check()
+  await expect(
+    legendRegion.getByRole('button', { name: 'Toggle Wolfie (Arrowyn)' }),
+  ).toBeVisible()
+  await expect(
+    legendRegion.getByRole('button', {
+      name: 'Toggle Searing Totem (Arrowyn)',
+    }),
+  ).toHaveCount(0)
 })
 
 test('supports legend toggling, isolate on double click, and target switching', async ({
@@ -134,20 +150,24 @@ test('supports legend toggling, isolate on double click, and target switching', 
 }) => {
   await page.goto(svgFightUrl)
 
-  const aegistankLegend = page
-    .locator('main svg text', { hasText: 'Aegistank' })
-    .first()
-  const bladefuryLegend = page
-    .locator('main svg text', { hasText: 'Bladefury' })
-    .first()
+  const legendRegion = page.getByRole('region', { name: 'Threat legend' })
+  const aegistankLegend = legendRegion.getByRole('button', {
+    name: 'Toggle Aegistank',
+  })
+  const bladefuryLegend = legendRegion.getByRole('button', {
+    name: 'Toggle Bladefury',
+  })
 
   await bladefuryLegend.click()
-  await expect(bladefuryLegend).toBeVisible()
+  await expect(bladefuryLegend).toHaveAttribute('aria-pressed', 'false')
   await bladefuryLegend.click()
-  await expect(bladefuryLegend).toBeVisible()
+  await expect(bladefuryLegend).toHaveAttribute('aria-pressed', 'true')
 
   await aegistankLegend.dblclick()
+  await expect(aegistankLegend).toHaveAttribute('aria-pressed', 'true')
+  await expect(bladefuryLegend).toHaveAttribute('aria-pressed', 'false')
   await page.getByRole('button', { name: 'Clear isolate' }).click()
+  await expect(bladefuryLegend).toHaveAttribute('aria-pressed', 'true')
 
   await page.getByLabel('Target').selectOption('102:0')
   await expect(page.getByLabel('Target')).toHaveValue('102:0')

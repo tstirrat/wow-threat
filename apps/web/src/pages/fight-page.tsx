@@ -28,7 +28,11 @@ import {
   selectDefaultTarget,
 } from '../lib/threat-aggregation'
 import { buildFightRankingsUrl, buildReportUrl } from '../lib/wcl-url'
-import type { WarcraftLogsHost, WowheadLinksConfig } from '../types/app'
+import type {
+  ThreatSeries,
+  WarcraftLogsHost,
+  WowheadLinksConfig,
+} from '../types/app'
 
 interface LocationState {
   host?: WarcraftLogsHost
@@ -36,6 +40,10 @@ interface LocationState {
 
 const defaultWowheadLinksConfig: WowheadLinksConfig = {
   domain: 'classic',
+}
+
+function isTotemPetSeries(series: ThreatSeries): boolean {
+  return series.actorType === 'Pet' && /\btotem\b/i.test(series.actorName)
 }
 
 export const FightPage: FC = () => {
@@ -77,6 +85,7 @@ export const FightPage: FC = () => {
   ])
 
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null)
+  const [showPets, setShowPets] = useState(false)
 
   const reportData = reportQuery.data ?? null
   const fightData = fightQuery.data ?? null
@@ -192,9 +201,13 @@ export const FightPage: FC = () => {
   const visibleSeries = useMemo(
     () =>
       allSeries
-        .filter((series) => series.actorType === 'Player')
+        .filter(
+          (series) =>
+            series.actorType === 'Player' ||
+            (showPets && !isTotemPetSeries(series)),
+        )
         .sort((a, b) => b.totalThreat - a.totalThreat),
-    [allSeries],
+    [allSeries, showPets],
   )
 
   const windowBounds = useMemo(
@@ -421,12 +434,25 @@ export const FightPage: FC = () => {
         title="Threat timeline"
         headerRight={
           selectedTarget ? (
-            <div className="border-l border-border pl-3">
-              <TargetSelector
-                targets={targetOptions}
-                selectedTarget={selectedTarget}
-                onChange={handleTargetChange}
-              />
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <label className="flex items-center gap-2 text-xs text-muted">
+                <input
+                  checked={showPets}
+                  className="h-4 w-4"
+                  type="checkbox"
+                  onChange={(event) => {
+                    setShowPets(event.target.checked)
+                  }}
+                />
+                Show pets
+              </label>
+              <div className="border-l border-border pl-3">
+                <TargetSelector
+                  targets={targetOptions}
+                  selectedTarget={selectedTarget}
+                  onChange={handleTargetChange}
+                />
+              </div>
             </div>
           ) : (
             <p className="text-sm text-muted">No valid targets available.</p>
