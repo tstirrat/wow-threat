@@ -22,10 +22,12 @@ export interface UseFightQueryStateResult {
 /** Manage fight query params with parsing + normalization rules. */
 export function useFightQueryState({
   validPlayerIds,
+  validActorIds,
   validTargetKeys,
   maxDurationMs,
 }: {
   validPlayerIds: Set<number>
+  validActorIds: Set<number>
   validTargetKeys: Set<string>
   maxDurationMs: number
 }): UseFightQueryStateResult {
@@ -37,10 +39,17 @@ export function useFightQueryState({
       resolveFightQueryState({
         searchParams: new URLSearchParams(searchParamsString),
         validPlayerIds,
+        validActorIds,
         validTargetKeys,
         maxDurationMs,
       }),
-    [maxDurationMs, searchParamsString, validPlayerIds, validTargetKeys],
+    [
+      maxDurationMs,
+      searchParamsString,
+      validActorIds,
+      validPlayerIds,
+      validTargetKeys,
+    ],
   )
 
   const setPlayers = useCallback(

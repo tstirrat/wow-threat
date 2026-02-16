@@ -40,7 +40,7 @@ export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
   if (!summary) {
     return (
       <p aria-live="polite" className="text-sm text-muted">
-        Click a chart line to focus a player.
+        Click a chart line to focus an actor.
       </p>
     )
   }
@@ -51,7 +51,7 @@ export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
     <div className="grid gap-4 md:grid-cols-[280px_minmax(0,1fr)]">
       <div className="space-y-2 rounded-md border border-border bg-panel p-3">
         <div className="text-xs uppercase tracking-wide text-muted">
-          Focused player
+          Focused actor
         </div>
         <div className="text-base">
           <PlayerName color={summary.color} label={summary.label} />
@@ -93,7 +93,7 @@ export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
       <div className="rounded-md border border-border bg-panel p-3">
         {rows.length === 0 ? (
           <p className="text-sm text-muted">
-            No threat-generating abilities for this player in the current chart
+            No threat-generating abilities for this actor in the current chart
             window.
           </p>
         ) : (

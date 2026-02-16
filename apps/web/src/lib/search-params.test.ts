@@ -61,6 +61,7 @@ describe('search-params', () => {
       resolveFightQueryState({
         searchParams: params,
         validPlayerIds: new Set([1, 2]),
+        validActorIds: new Set([1, 2]),
         validTargetKeys: new Set(['20:0']),
         maxDurationMs: 1000,
       }),
@@ -72,6 +73,31 @@ describe('search-params', () => {
       targetInstance: 0,
       startMs: 100,
       endMs: 200,
+    })
+  })
+
+  it('keeps pet focus ids when actor id is valid', () => {
+    const params = new URLSearchParams({
+      players: '1',
+      focusId: '5',
+    })
+
+    expect(
+      resolveFightQueryState({
+        searchParams: params,
+        validPlayerIds: new Set([1]),
+        validActorIds: new Set([1, 5]),
+        validTargetKeys: new Set(),
+        maxDurationMs: 1000,
+      }),
+    ).toEqual({
+      players: [1],
+      pets: false,
+      focusId: 5,
+      targetId: null,
+      targetInstance: null,
+      startMs: null,
+      endMs: null,
     })
   })
 

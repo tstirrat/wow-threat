@@ -105,6 +105,10 @@ export const FightPage: FC = () => {
       ),
     [fightData?.actors],
   )
+  const validActorIds = useMemo(
+    () => new Set((fightData?.actors ?? []).map((actor) => actor.id)),
+    [fightData?.actors],
+  )
   const targetOptions = useMemo(
     () =>
       buildFightTargetOptions({
@@ -148,6 +152,7 @@ export const FightPage: FC = () => {
 
   const queryState = useFightQueryState({
     validPlayerIds,
+    validActorIds,
     validTargetKeys,
     maxDurationMs: durationMs,
   })
@@ -230,9 +235,7 @@ export const FightPage: FC = () => {
     }
 
     const hasVisibleSeries = visibleSeries.some(
-      (series) =>
-        series.actorId === candidatePlayerId ||
-        series.ownerId === candidatePlayerId,
+      (series) => series.actorId === candidatePlayerId,
     )
     return hasVisibleSeries ? candidatePlayerId : null
   }, [queryState.state.focusId, queryState.state.players, visibleSeries])

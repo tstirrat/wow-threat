@@ -144,7 +144,7 @@ export type ThreatChartProps = {
   windowStartMs: number | null
   windowEndMs: number | null
   onWindowChange: (startMs: number | null, endMs: number | null) => void
-  onSeriesClick: (playerId: number) => void
+  onSeriesClick: (actorId: number) => void
   onVisiblePlayerIdsChange?: (playerIds: number[]) => void
 }
 
@@ -171,11 +171,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
 
   const bounds = resolveSeriesWindowBounds(series)
 
-  const playerIdByLabel = new Map(
-    series.map((item) => [
-      item.label,
-      item.actorType === 'Player' ? item.actorId : item.ownerId,
-    ]),
+  const actorIdByLabel = new Map(
+    series.map((item) => [item.label, item.actorId]),
   )
 
   useEffect(() => {
@@ -204,15 +201,13 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   const chartSeries = useMemo(
     () =>
       visibleSeries.map((item) => {
-        const playerId =
-          item.actorType === 'Player' ? item.actorId : item.ownerId
         const toDataPoint = (
           point: ThreatSeries['points'][number],
         ): SeriesChartPoint => ({
           ...point,
           actorId: item.actorId,
           actorColor: item.color,
-          playerId,
+          focusedActorId: item.actorId,
           value: [point.timeMs, point.totalThreat],
         })
 
@@ -592,9 +587,9 @@ export const ThreatChart: FC<ThreatChartProps> = ({
                   return
                 }
 
-                const payloadPlayerId = Number(params.data?.playerId)
-                if (Number.isFinite(payloadPlayerId) && payloadPlayerId > 0) {
-                  onSeriesClick(payloadPlayerId)
+                const payloadActorId = Number(params.data?.focusedActorId)
+                if (Number.isFinite(payloadActorId) && payloadActorId > 0) {
+                  onSeriesClick(payloadActorId)
                   return
                 }
 
@@ -602,12 +597,12 @@ export const ThreatChart: FC<ThreatChartProps> = ({
                   return
                 }
 
-                const clickedPlayerId = playerIdByLabel.get(params.seriesName)
-                if (!clickedPlayerId) {
+                const clickedActorId = actorIdByLabel.get(params.seriesName)
+                if (!clickedActorId) {
                   return
                 }
 
-                onSeriesClick(clickedPlayerId)
+                onSeriesClick(clickedActorId)
               },
             }}
           />

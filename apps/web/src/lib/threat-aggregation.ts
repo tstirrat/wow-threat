@@ -1089,19 +1089,16 @@ export function resolveSeriesWindowBounds(series: ThreatSeries[]): {
   }
 }
 
-function resolveFocusedPlayerSourceIds(
+function resolveFocusedActorSourceIds(
   actors: ReportActorSummary[],
-  focusedPlayerId: number,
+  focusedActorId: number,
 ): Set<number> {
-  return new Set(
-    actors
-      .filter(
-        (actor) =>
-          actor.id === focusedPlayerId ||
-          (actor.type === 'Pet' && actor.petOwner === focusedPlayerId),
-      )
-      .map((actor) => actor.id),
-  )
+  const focusedActor = actors.find((actor) => actor.id === focusedActorId)
+  if (!focusedActor || !trackableActorTypes.has(focusedActor.type)) {
+    return new Set()
+  }
+
+  return new Set([focusedActor.id])
 }
 
 function resolveAbilityName(
@@ -1139,11 +1136,11 @@ export function buildFocusedPlayerSummary({
 
   const actorsById = new Map(actors.map((actor) => [actor.id, actor]))
   const focusedPlayer = actorsById.get(focusedPlayerId)
-  if (!focusedPlayer || focusedPlayer.type !== 'Player') {
+  if (!focusedPlayer || !trackableActorTypes.has(focusedPlayer.type)) {
     return null
   }
 
-  const sourceIds = resolveFocusedPlayerSourceIds(actors, focusedPlayerId)
+  const sourceIds = resolveFocusedActorSourceIds(actors, focusedPlayerId)
   if (sourceIds.size === 0) {
     return null
   }
@@ -1202,12 +1199,15 @@ export function buildFocusedPlayerSummary({
   )
 
   // Extract talent points from combatant info
-  const talentPoints = extractTalentPoints(events, focusedPlayerId)
+  const talentPoints =
+    focusedPlayer.type === 'Player'
+      ? extractTalentPoints(events, focusedPlayerId)
+      : undefined
 
   return {
     actorId: focusedPlayerId,
-    label: focusedPlayer.name,
-    actorClass: (focusedPlayer.subType as PlayerClass | undefined) ?? null,
+    label: buildActorLabel(focusedPlayer, actorsById),
+    actorClass: resolveActorClass(focusedPlayer, actorsById),
     talentPoints,
     totalThreat: totals.totalThreat,
     totalTps: totals.totalThreat / windowDurationSeconds,
@@ -1267,11 +1267,11 @@ export function buildFocusedPlayerThreatRows({
 
   const actorsById = new Map(actors.map((actor) => [actor.id, actor]))
   const focusedPlayer = actorsById.get(focusedPlayerId)
-  if (!focusedPlayer || focusedPlayer.type !== 'Player') {
+  if (!focusedPlayer || !trackableActorTypes.has(focusedPlayer.type)) {
     return []
   }
 
-  const sourceIds = resolveFocusedPlayerSourceIds(actors, focusedPlayerId)
+  const sourceIds = resolveFocusedActorSourceIds(actors, focusedPlayerId)
   if (sourceIds.size === 0) {
     return []
   }

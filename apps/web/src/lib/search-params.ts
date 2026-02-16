@@ -89,11 +89,13 @@ export function parseWindowParams(
 export function resolveFightQueryState({
   searchParams,
   validPlayerIds,
+  validActorIds,
   validTargetKeys,
   maxDurationMs,
 }: {
   searchParams: URLSearchParams
   validPlayerIds: Set<number>
+  validActorIds: Set<number>
   validTargetKeys: Set<string>
   maxDurationMs: number
 }): FightQueryState {
@@ -103,7 +105,7 @@ export function resolveFightQueryState({
   const pets = parseBoolean(searchParams.get('pets'))
   const parsedFocusId = parseInteger(searchParams.get('focusId'))
   const focusId =
-    parsedFocusId !== null && validPlayerIds.has(parsedFocusId)
+    parsedFocusId !== null && validActorIds.has(parsedFocusId)
       ? parsedFocusId
       : null
   const parsedTargetSelection = parseTargetSelectionParams(

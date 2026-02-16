@@ -285,7 +285,7 @@ test('clicking a chart point focuses a player and shows total threat values', as
     .toBe('svg')
 
   await expect(
-    page.getByText('Click a chart line to focus a player.'),
+    page.getByText('Click a chart line to focus an actor.'),
   ).toBeVisible()
 
   await clickSeriesLineByStroke({

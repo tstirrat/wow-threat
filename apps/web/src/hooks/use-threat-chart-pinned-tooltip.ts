@@ -27,7 +27,7 @@ export interface TooltipPointPayload {
 }
 
 export interface SeriesChartPoint extends TooltipPointPayload {
-  playerId: number | null
+  focusedActorId: number
   value: [number, number]
 }
 
