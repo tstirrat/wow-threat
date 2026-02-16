@@ -135,6 +135,13 @@ test('defaults to the main boss and shows expected players in the legend', async
   const showPets = page.getByRole('checkbox', { name: 'Show pets' })
   await expect(showPets).not.toBeChecked()
   await showPets.check()
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        new URLSearchParams(window.location.search).get('pets'),
+      ),
+    )
+    .toBe('true')
   await expect(
     legendRegion.getByRole('button', { name: 'Toggle Wolfie (Arrowyn)' }),
   ).toBeVisible()
@@ -160,18 +167,94 @@ test('supports legend toggling, isolate on double click, and target switching', 
 
   await bladefuryLegend.click()
   await expect(bladefuryLegend).toHaveAttribute('aria-pressed', 'false')
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        new URLSearchParams(window.location.search).get('players'),
+      ),
+    )
+    .toBe('1,3')
+
   await bladefuryLegend.click()
   await expect(bladefuryLegend).toHaveAttribute('aria-pressed', 'true')
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        new URLSearchParams(window.location.search).get('players'),
+      ),
+    )
+    .toBeNull()
 
   await aegistankLegend.dblclick()
   await expect(aegistankLegend).toHaveAttribute('aria-pressed', 'true')
   await expect(bladefuryLegend).toHaveAttribute('aria-pressed', 'false')
   await page.getByRole('button', { name: 'Clear isolate' }).click()
   await expect(bladefuryLegend).toHaveAttribute('aria-pressed', 'true')
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        new URLSearchParams(window.location.search).get('players'),
+      ),
+    )
+    .toBeNull()
 
   await page.getByLabel('Target').selectOption('102:0')
   await expect(page.getByLabel('Target')).toHaveValue('102:0')
   await expect(page).toHaveURL(/targetId=102/)
+})
+
+test('applies players query param as initial legend visibility', async ({
+  page,
+}) => {
+  await page.goto(`${svgFightUrl}&players=1`)
+
+  const legendRegion = page.getByRole('region', { name: 'Threat legend' })
+  const aegistankLegend = legendRegion.getByRole('button', {
+    name: 'Toggle Aegistank',
+  })
+  const bladefuryLegend = legendRegion.getByRole('button', {
+    name: 'Toggle Bladefury',
+  })
+
+  await expect(aegistankLegend).toBeVisible()
+  await expect(bladefuryLegend).toBeVisible()
+  await expect(aegistankLegend).toHaveAttribute('aria-pressed', 'true')
+  await expect(bladefuryLegend).toHaveAttribute('aria-pressed', 'false')
+  await expect(
+    page.getByRole('button', { name: 'Clear isolate' }),
+  ).toBeVisible()
+
+  await bladefuryLegend.click()
+  await expect(bladefuryLegend).toHaveAttribute('aria-pressed', 'true')
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        new URLSearchParams(window.location.search).get('players'),
+      ),
+    )
+    .toBe('1,2')
+
+  await page.getByRole('button', { name: 'Clear isolate' }).click()
+  await expect(bladefuryLegend).toHaveAttribute('aria-pressed', 'true')
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        new URLSearchParams(window.location.search).get('players'),
+      ),
+    )
+    .toBeNull()
+})
+
+test('applies pets query param as initial checkbox state', async ({ page }) => {
+  await page.goto(`${svgFightUrl}&pets=true`)
+
+  const showPets = page.getByRole('checkbox', { name: 'Show pets' })
+  await expect(showPets).toBeChecked()
+
+  const legendRegion = page.getByRole('region', { name: 'Threat legend' })
+  await expect(
+    legendRegion.getByRole('button', { name: 'Toggle Wolfie (Arrowyn)' }),
+  ).toBeVisible()
 })
 
 test('clicking a chart point focuses a player and shows total threat values', async ({
@@ -209,6 +292,7 @@ test('clicking a chart point focuses a player and shows total threat values', as
     page,
     strokeColor: 'rgb(199, 156, 110)',
   })
+  await expect(page).toHaveURL(/focusId=1/)
 
   const summaryRegion = page.getByRole('region', {
     name: 'Focused player summary',

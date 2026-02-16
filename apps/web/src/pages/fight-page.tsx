@@ -2,7 +2,7 @@
  * Fight-level page with target filter and player-focused chart interactions.
  */
 import { resolveConfigOrNull } from '@wcl-threat/threat-config'
-import { type FC, useCallback, useEffect, useMemo, useState } from 'react'
+import { type FC, useCallback, useEffect, useMemo } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 
 import { ErrorState } from '../components/error-state'
@@ -46,6 +46,14 @@ function isTotemPetSeries(series: ThreatSeries): boolean {
   return series.actorType === 'Pet' && /\btotem\b/i.test(series.actorName)
 }
 
+function areEqualIdLists(left: number[], right: number[]): boolean {
+  if (left.length !== right.length) {
+    return false
+  }
+
+  return left.every((id, index) => id === right[index])
+}
+
 export const FightPage: FC = () => {
   const params = useParams<{ reportId: string; fightId: string }>()
   const location = useLocation()
@@ -83,9 +91,6 @@ export const FightPage: FC = () => {
     reportId,
     reportQuery.data,
   ])
-
-  const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null)
-  const [showPets, setShowPets] = useState(false)
 
   const reportData = reportQuery.data ?? null
   const fightData = fightQuery.data ?? null
@@ -204,10 +209,10 @@ export const FightPage: FC = () => {
         .filter(
           (series) =>
             series.actorType === 'Player' ||
-            (showPets && !isTotemPetSeries(series)),
+            (queryState.state.pets && !isTotemPetSeries(series)),
         )
         .sort((a, b) => b.totalThreat - a.totalThreat),
-    [allSeries, showPets],
+    [allSeries, queryState.state.pets],
   )
 
   const windowBounds = useMemo(
@@ -219,7 +224,7 @@ export const FightPage: FC = () => {
 
   const focusedPlayerId = useMemo(() => {
     const candidatePlayerId =
-      selectedPlayerId ?? queryState.state.players[0] ?? null
+      queryState.state.focusId ?? queryState.state.players[0] ?? null
     if (candidatePlayerId === null) {
       return null
     }
@@ -230,7 +235,7 @@ export const FightPage: FC = () => {
         series.ownerId === candidatePlayerId,
     )
     return hasVisibleSeries ? candidatePlayerId : null
-  }, [queryState.state.players, selectedPlayerId, visibleSeries])
+  }, [queryState.state.focusId, queryState.state.players, visibleSeries])
 
   const focusedPlayerSummary = useMemo(() => {
     if (selectedTarget === null) {
@@ -299,9 +304,28 @@ export const FightPage: FC = () => {
     [queryState],
   )
 
-  const handleSeriesClick = useCallback((playerId: number) => {
-    setSelectedPlayerId(playerId)
-  }, [])
+  const handleSeriesClick = useCallback(
+    (playerId: number) => {
+      queryState.setFocusId(playerId)
+    },
+    [queryState],
+  )
+  const handleVisiblePlayerIdsChange = useCallback(
+    (visiblePlayerIds: number[]) => {
+      const allPlayerIds = [...validPlayerIds].sort((a, b) => a - b)
+      const nextPlayers = areEqualIdLists(visiblePlayerIds, allPlayerIds)
+        ? []
+        : visiblePlayerIds
+
+      const currentPlayers = [...queryState.state.players].sort((a, b) => a - b)
+      if (areEqualIdLists(currentPlayers, nextPlayers)) {
+        return
+      }
+
+      queryState.setPlayers(nextPlayers)
+    },
+    [queryState, validPlayerIds],
+  )
 
   const handleWindowChange = useCallback(
     (startMs: number | null, endMs: number | null) => {
@@ -437,11 +461,11 @@ export const FightPage: FC = () => {
             <div className="flex flex-wrap items-center justify-end gap-3">
               <label className="flex items-center gap-2 text-xs text-muted">
                 <input
-                  checked={showPets}
+                  checked={queryState.state.pets}
                   className="h-4 w-4"
                   type="checkbox"
                   onChange={(event) => {
-                    setShowPets(event.target.checked)
+                    queryState.setPets(event.target.checked)
                   }}
                 />
                 Show pets
@@ -471,6 +495,8 @@ export const FightPage: FC = () => {
           <ThreatChart
             renderer={chartRenderer}
             series={visibleSeries}
+            selectedPlayerIds={queryState.state.players}
+            onVisiblePlayerIdsChange={handleVisiblePlayerIdsChange}
             windowEndMs={queryState.state.endMs}
             windowStartMs={queryState.state.startMs}
             onSeriesClick={handleSeriesClick}

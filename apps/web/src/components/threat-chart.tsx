@@ -139,20 +139,24 @@ function resolveSplitCount(
 
 export type ThreatChartProps = {
   series: ThreatSeries[]
+  selectedPlayerIds?: number[]
   renderer?: 'canvas' | 'svg'
   windowStartMs: number | null
   windowEndMs: number | null
   onWindowChange: (startMs: number | null, endMs: number | null) => void
   onSeriesClick: (playerId: number) => void
+  onVisiblePlayerIdsChange?: (playerIds: number[]) => void
 }
 
 export const ThreatChart: FC<ThreatChartProps> = ({
   series,
+  selectedPlayerIds = [],
   renderer = 'canvas',
   windowStartMs,
   windowEndMs,
   onWindowChange,
   onSeriesClick,
+  onVisiblePlayerIdsChange,
 }) => {
   const chartRef = useRef<ReactEChartsCore>(null)
   const chartContainerRef = useRef<HTMLDivElement>(null)
@@ -163,7 +167,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     isActorVisible,
     clearIsolate,
     handleLegendItemClick,
-  } = useThreatChartLegendState(series)
+  } = useThreatChartLegendState(series, selectedPlayerIds)
 
   const bounds = resolveSeriesWindowBounds(series)
 
@@ -240,6 +244,35 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     chartRef,
     chartSeries,
   })
+  const visiblePlayerIds = useMemo(
+    () =>
+      series
+        .filter((item) => item.actorType === 'Player')
+        .filter((item) => isActorVisible(item.actorId))
+        .map((item) => item.actorId)
+        .sort((a, b) => a - b),
+    [isActorVisible, series],
+  )
+  const allPlayerIds = useMemo(
+    () =>
+      series
+        .filter((item) => item.actorType === 'Player')
+        .map((item) => item.actorId)
+        .sort((a, b) => a - b),
+    [series],
+  )
+  const hasHiddenActors = useMemo(
+    () => series.some((item) => !isActorVisible(item.actorId)),
+    [isActorVisible, series],
+  )
+
+  useEffect(() => {
+    onVisiblePlayerIdsChange?.(visiblePlayerIds)
+  }, [onVisiblePlayerIdsChange, visiblePlayerIds])
+  const handleClearIsolate = useCallback((): void => {
+    clearIsolate()
+    onVisiblePlayerIdsChange?.(allPlayerIds)
+  }, [allPlayerIds, clearIsolate, onVisiblePlayerIdsChange])
 
   const option: EChartsOption = {
     animation: false,
@@ -498,9 +531,9 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   return (
     <div className="space-y-3">
       <ThreatChartControls
-        showClearIsolate={visibleIsolatedActorId !== null}
+        showClearIsolate={visibleIsolatedActorId !== null || hasHiddenActors}
         onResetZoom={resetZoom}
-        onClearIsolate={clearIsolate}
+        onClearIsolate={handleClearIsolate}
       />
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_14rem]">
         <div ref={chartContainerRef}>

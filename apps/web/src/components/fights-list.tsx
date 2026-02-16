@@ -42,7 +42,7 @@ export const FightsList: FC<FightsListProps> = ({ reportId, fights }) => {
                 <span>:</span>
                 <Link
                   className="underline"
-                  to={`/report/${reportId}/fight/${fight.id}?type=summary`}
+                  to={`/report/${reportId}/fight/${fight.id}`}
                 >
                   Kill ({formatFightDuration(fight)})
                 </Link>

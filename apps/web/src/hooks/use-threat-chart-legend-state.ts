@@ -15,17 +15,83 @@ export interface UseThreatChartLegendStateResult {
   handleLegendItemClick: (actorId: number) => void
 }
 
+interface LegendVisibilityOverrides {
+  hiddenActorIds: Set<number>
+  shownActorIds: Set<number>
+}
+
+function resolveDefaultHiddenActorIds(
+  series: ThreatSeries[],
+  selectedPlayerIds: number[],
+): Set<number> {
+  if (selectedPlayerIds.length === 0) {
+    return new Set()
+  }
+
+  const selectedPlayers = new Set(selectedPlayerIds)
+
+  return new Set(
+    series
+      .filter((item) => {
+        const playerId =
+          item.actorType === 'Player' ? item.actorId : item.ownerId
+
+        return playerId === null || !selectedPlayers.has(playerId)
+      })
+      .map((item) => item.actorId),
+  )
+}
+
+function createEmptyVisibilityOverrides(): LegendVisibilityOverrides {
+  return {
+    hiddenActorIds: new Set(),
+    shownActorIds: new Set(),
+  }
+}
+
+function isActorVisibleWithOverrides({
+  actorId,
+  defaultHiddenActorIds,
+  hiddenActorIds,
+  shownActorIds,
+  isolatedActorId,
+}: {
+  actorId: number
+  defaultHiddenActorIds: Set<number>
+  hiddenActorIds: Set<number>
+  shownActorIds: Set<number>
+  isolatedActorId: number | null
+}): boolean {
+  if (isolatedActorId !== null) {
+    return actorId === isolatedActorId
+  }
+
+  if (shownActorIds.has(actorId)) {
+    return true
+  }
+
+  if (hiddenActorIds.has(actorId)) {
+    return false
+  }
+
+  return !defaultHiddenActorIds.has(actorId)
+}
+
 /** Manage single-click toggle and double-click isolate behavior for chart legend items. */
 export function useThreatChartLegendState(
   series: ThreatSeries[],
+  selectedPlayerIds: number[] = [],
 ): UseThreatChartLegendStateResult {
   const pendingLegendClickRef = useRef<{
     actorId: number
     timeoutId: ReturnType<typeof setTimeout>
   } | null>(null)
   const [isolatedActorId, setIsolatedActorId] = useState<number | null>(null)
-  const [hiddenActorIds, setHiddenActorIds] = useState<Set<number>>(
-    () => new Set(),
+  const [visibilityOverrides, setVisibilityOverrides] =
+    useState<LegendVisibilityOverrides>(() => createEmptyVisibilityOverrides())
+  const defaultHiddenActorIds = useMemo(
+    () => resolveDefaultHiddenActorIds(series, selectedPlayerIds),
+    [selectedPlayerIds, series],
   )
 
   const visibleIsolatedActorId =
@@ -36,13 +102,15 @@ export function useThreatChartLegendState(
 
   const isActorVisible = useCallback(
     (actorId: number): boolean => {
-      if (visibleIsolatedActorId !== null) {
-        return actorId === visibleIsolatedActorId
-      }
-
-      return !hiddenActorIds.has(actorId)
+      return isActorVisibleWithOverrides({
+        actorId,
+        defaultHiddenActorIds,
+        hiddenActorIds: visibilityOverrides.hiddenActorIds,
+        shownActorIds: visibilityOverrides.shownActorIds,
+        isolatedActorId: visibleIsolatedActorId,
+      })
     },
-    [hiddenActorIds, visibleIsolatedActorId],
+    [defaultHiddenActorIds, visibilityOverrides, visibleIsolatedActorId],
   )
 
   const visibleSeries = useMemo(
@@ -62,22 +130,40 @@ export function useThreatChartLegendState(
   const toggleActorVisibility = useCallback(
     (actorId: number): void => {
       setIsolatedActorId(null)
-      setHiddenActorIds((previous) => {
-        const next = new Set(previous)
-        if (next.has(actorId)) {
-          next.delete(actorId)
+      setVisibilityOverrides((previous) => {
+        const nextHiddenActorIds = new Set(previous.hiddenActorIds)
+        const nextShownActorIds = new Set(previous.shownActorIds)
+        const currentlyVisible = isActorVisibleWithOverrides({
+          actorId,
+          defaultHiddenActorIds,
+          hiddenActorIds: previous.hiddenActorIds,
+          shownActorIds: previous.shownActorIds,
+          isolatedActorId: null,
+        })
+
+        if (currentlyVisible) {
+          nextShownActorIds.delete(actorId)
+          nextHiddenActorIds.add(actorId)
         } else {
-          next.add(actorId)
+          nextHiddenActorIds.delete(actorId)
+          if (defaultHiddenActorIds.has(actorId)) {
+            nextShownActorIds.add(actorId)
+          } else {
+            nextShownActorIds.delete(actorId)
+          }
         }
 
-        return next
+        return {
+          hiddenActorIds: nextHiddenActorIds,
+          shownActorIds: nextShownActorIds,
+        }
       })
     },
-    [setHiddenActorIds],
+    [defaultHiddenActorIds],
   )
 
   const isolateActorVisibility = useCallback((actorId: number): void => {
-    setHiddenActorIds(new Set())
+    setVisibilityOverrides(createEmptyVisibilityOverrides())
     setIsolatedActorId((previous) => (previous === actorId ? null : actorId))
   }, [])
 
@@ -110,7 +196,7 @@ export function useThreatChartLegendState(
 
   const clearIsolate = useCallback((): void => {
     clearPendingLegendClick()
-    setHiddenActorIds(new Set())
+    setVisibilityOverrides(createEmptyVisibilityOverrides())
     setIsolatedActorId(null)
   }, [clearPendingLegendClick])
 

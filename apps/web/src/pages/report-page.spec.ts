@@ -52,5 +52,6 @@ test('choosing a player + boss from player navigation goes to the expected chart
 
   await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}/fight/26`))
   await expect(page).toHaveURL(/players=1/)
+  await expect(page).toHaveURL(/focusId=1/)
   await expect(page.getByLabel('Target')).toHaveValue('100:0')
 })

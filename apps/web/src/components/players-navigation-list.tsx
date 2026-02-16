@@ -131,12 +131,10 @@ export const PlayersNavigationList: FC<PlayersNavigationListProps> = ({
                 ) : null}
                 {bossKillColumns.map((fight) => {
                   const participated = fight.friendlyPlayers.includes(player.id)
-                  const petIds = fight.friendlyPets
-                    .filter((pet) => pet.petOwner === player.id)
-                    .map((pet) => pet.id)
-                  const linkPlayerIds = Array.from(
-                    new Set([player.id, ...petIds]),
-                  ).join(',')
+                  const fightQuery = new URLSearchParams({
+                    players: String(player.id),
+                    focusId: String(player.id),
+                  }).toString()
 
                   return (
                     <td className="px-2 py-2 align-middle" key={fight.id}>
@@ -145,7 +143,7 @@ export const PlayersNavigationList: FC<PlayersNavigationListProps> = ({
                           aria-label={`Open ${fight.name} chart for ${player.name}`}
                           className="inline-flex items-center justify-center rounded border border-border p-1"
                           title={`Open ${fight.name} chart for ${player.name}`}
-                          to={`/report/${reportId}/fight/${fight.id}?players=${linkPlayerIds}&type=summary`}
+                          to={`/report/${reportId}/fight/${fight.id}?${fightQuery}`}
                         >
                           <svg
                             aria-hidden="true"
