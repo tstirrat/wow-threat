@@ -29,8 +29,7 @@ const trackableActorTypes = new Set(['Player', 'Pet'])
 const bossMeleeSpellId = 1
 const markerPriorityByKind: Record<ThreatPointMarkerKind, number> = {
   bossMelee: 1,
-  invulnerabilityStart: 2,
-  death: 3,
+  death: 2,
 }
 const spellSchoolByMask = {
   1: 'physical',
@@ -191,7 +190,19 @@ function resolveEventPointMarkers({
     })
   }
 
-  eventEffects.forEach((effect) => {
+  return markersByActorId
+}
+
+function resolveInvulnerabilityStartActorIds({
+  event,
+  actorsById,
+}: {
+  event: AugmentedEventsResponse['events'][number]
+  actorsById: Map<number, ReportActorSummary>
+}): Set<number> {
+  const actorIds = new Set<number>()
+
+  ;(event.threat?.calculation.effects ?? []).forEach((effect) => {
     if (effect.type !== 'state') {
       return
     }
@@ -203,13 +214,15 @@ function resolveEventPointMarkers({
       return
     }
 
-    setMarker({
-      actorId: effect.state.actorId,
-      markerKind: 'invulnerabilityStart',
-    })
+    const actor = actorsById.get(effect.state.actorId)
+    if (!actor || !trackableActorTypes.has(actor.type)) {
+      return
+    }
+
+    actorIds.add(effect.state.actorId)
   })
 
-  return markersByActorId
+  return actorIds
 }
 
 function getAuraSpellId(aura: CombatantInfoAura): number | null {
@@ -885,7 +898,11 @@ export function buildThreatSeries({
       target,
       actorsById,
     })
-    const actorsWithThreatPoint = new Set<number>()
+    const invulnerabilityStartActorIds = resolveInvulnerabilityStartActorIds({
+      event,
+      actorsById,
+    })
+    const actorsWithEventPoint = new Set<number>()
 
     event.threat?.changes?.forEach((change) => {
       if (
@@ -921,7 +938,7 @@ export function buildThreatSeries({
         formula,
         modifiers,
       })
-      actorsWithThreatPoint.add(change.sourceId)
+      actorsWithEventPoint.add(change.sourceId)
     })
 
     eventMarkersByActorId.forEach((markerKind, actorId) => {
@@ -930,7 +947,7 @@ export function buildThreatSeries({
         return
       }
 
-      if (actorsWithThreatPoint.has(actorId)) {
+      if (actorsWithEventPoint.has(actorId)) {
         for (
           let index = accumulator.points.length - 1;
           index >= 0;
@@ -962,6 +979,35 @@ export function buildThreatSeries({
         modifiers,
         markerKind,
       })
+      actorsWithEventPoint.add(actorId)
+    })
+
+    invulnerabilityStartActorIds.forEach((actorId) => {
+      if (actorsWithEventPoint.has(actorId)) {
+        return
+      }
+
+      const accumulator = accumulators.get(actorId)
+      if (!accumulator) {
+        return
+      }
+
+      ensureEncounterStartPoint(accumulator, fightStartTime)
+      accumulator.points.push({
+        timestamp: event.timestamp,
+        timeMs,
+        totalThreat: accumulator.totalThreat,
+        threatDelta: 0,
+        amount,
+        baseThreat,
+        modifiedThreat,
+        spellSchool,
+        eventType: event.type,
+        abilityName,
+        formula,
+        modifiers,
+      })
+      actorsWithEventPoint.add(actorId)
     })
   })
 

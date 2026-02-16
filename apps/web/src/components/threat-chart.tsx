@@ -53,7 +53,6 @@ echarts.use([
 
 const bossMeleeMarkerColor = '#ef4444'
 const deathMarkerColor = '#dc2626'
-const invulnerabilityMarkerColor = '#22c55e'
 
 function resolvePointColor(
   point: SeriesChartPoint | undefined,
@@ -69,10 +68,6 @@ function resolvePointColor(
 
   if (point.markerKind === 'death') {
     return deathMarkerColor
-  }
-
-  if (point.markerKind === 'invulnerabilityStart') {
-    return invulnerabilityMarkerColor
   }
 
   return seriesColor
@@ -313,9 +308,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
             ? `Marker: <strong style="color:${bossMeleeMarkerColor};">Boss melee</strong>`
             : markerKind === 'death'
               ? `Marker: <strong style="color:${deathMarkerColor};">Death</strong>`
-              : markerKind === 'invulnerabilityStart'
-                ? `Marker: <strong style="color:${invulnerabilityMarkerColor};">Invulnerability applied</strong>`
-                : null
+              : null
         const splitCount = resolveSplitCount(modifiedThreat, threatDelta)
         const visibleModifiers = modifiers.filter(
           (modifier) =>

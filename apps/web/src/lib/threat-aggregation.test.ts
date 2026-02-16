@@ -819,14 +819,11 @@ describe('threat-aggregation', () => {
     expect(series[0]?.invulnerabilityWindows).toEqual([
       { startMs: 150, endMs: 200 },
     ])
-    expect(series[0]?.points).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          timeMs: 150,
-          markerKind: 'invulnerabilityStart',
-        }),
-      ]),
+    const invulnerabilityStartPoint = series[0]?.points.find(
+      (point) => point.timeMs === 150,
     )
+    expect(invulnerabilityStartPoint).toBeDefined()
+    expect(invulnerabilityStartPoint?.markerKind).toBeUndefined()
   })
 
   it('builds focused player summary for the selected window', () => {
