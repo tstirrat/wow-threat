@@ -45,6 +45,7 @@ export interface FightTargetOption extends FightTarget {
   key: string
   name: string
   label: string
+  isBoss: boolean
 }
 
 export interface ThreatPoint {

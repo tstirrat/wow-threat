@@ -299,6 +299,23 @@ function buildTargetLabel({
   return `${name} (${formattedId})`
 }
 
+function compareTargetsByName(
+  left: FightTargetOption,
+  right: FightTargetOption,
+): number {
+  const byName = left.name.localeCompare(right.name)
+  if (byName !== 0) {
+    return byName
+  }
+
+  const byInstance = left.instance - right.instance
+  if (byInstance !== 0) {
+    return byInstance
+  }
+
+  return left.id - right.id
+}
+
 function normalizeThreatModifiers(
   modifiers:
     | Array<{
@@ -729,6 +746,7 @@ export function buildFightTargetOptions({
       key,
       name: enemy.name,
       label: enemy.name,
+      isBoss: enemy.subType === 'Boss',
     })
   }
 
@@ -787,7 +805,15 @@ export function buildFightTargetOptions({
       })
   })
 
-  return [...targetMap.values()]
+  const targets = [...targetMap.values()]
+  const bossTargets = targets
+    .filter((target) => target.isBoss)
+    .sort(compareTargetsByName)
+  const nonBossTargets = targets
+    .filter((target) => !target.isBoss)
+    .sort(compareTargetsByName)
+
+  return [...bossTargets, ...nonBossTargets]
 }
 
 /** Pick default target by highest accumulated threat in the fight. */

@@ -70,7 +70,7 @@ describe('threat-aggregation', () => {
     })
   })
 
-  it('formats target labels using id or id.instance based on instance count', () => {
+  it('sorts boss targets first and formats labels by observed instance count', () => {
     const options = buildFightTargetOptions({
       enemies: [
         {
@@ -118,10 +118,11 @@ describe('threat-aggregation', () => {
     })
 
     expect(options.map((option) => option.label)).toEqual([
+      'Grand Widow (20)',
       'Deathknight Understudy (10.2)',
       'Deathknight Understudy (10.3)',
-      'Grand Widow (20)',
     ])
+    expect(options.map((option) => option.isBoss)).toEqual([true, false, false])
   })
 
   it('filters pet lines by owner when player filter is applied', () => {

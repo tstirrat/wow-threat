@@ -9,6 +9,7 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from './ui/select'
@@ -26,6 +27,8 @@ export const TargetSelector: FC<TargetSelectorProps> = ({
 }) => {
   const selectId = useId()
   const selectedValue = `${selectedTarget.id}:${selectedTarget.instance}`
+  const bossTargets = targets.filter((target) => target.isBoss)
+  const nonBossTargets = targets.filter((target) => !target.isBoss)
 
   return (
     <div className="flex items-center gap-2 text-sm">
@@ -44,7 +47,15 @@ export const TargetSelector: FC<TargetSelectorProps> = ({
           <SelectValue placeholder="Select target" />
         </SelectTrigger>
         <SelectContent>
-          {targets.map((target) => (
+          {bossTargets.map((target) => (
+            <SelectItem key={target.key} value={target.key}>
+              {target.label}
+            </SelectItem>
+          ))}
+          {bossTargets.length > 0 && nonBossTargets.length > 0 ? (
+            <SelectSeparator />
+          ) : null}
+          {nonBossTargets.map((target) => (
             <SelectItem key={target.key} value={target.key}>
               {target.label}
             </SelectItem>
