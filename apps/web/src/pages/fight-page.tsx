@@ -1,10 +1,9 @@
 /**
  * Fight-level page with target filter and player-focused chart interactions.
  */
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { resolveConfigOrNull } from '@wcl-threat/threat-config'
 import { type FC, useCallback, useEffect, useMemo } from 'react'
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 
 import { ErrorState } from '../components/error-state'
 import { LoadingState } from '../components/loading-state'
@@ -60,7 +59,6 @@ function areEqualIdLists(left: number[], right: number[]): boolean {
 
 export const FightPage: FC = () => {
   const params = useParams<{ reportId: string; fightId: string }>()
-  const navigate = useNavigate()
   const location = useLocation()
   const locationState = location.state as LocationState | null
 
@@ -429,33 +427,26 @@ export const FightPage: FC = () => {
 
       <nav aria-label="Fight quick switch">
         {bossKillFights.length > 0 ? (
-          <Tabs
-            value={String(fightId)}
-            onValueChange={(nextFightId) => {
-              if (nextFightId === String(fightId)) {
-                return
-              }
+          <div className="flex w-full gap-1 overflow-x-auto">
+            {bossKillFights.map((fight) => {
+              const isCurrentFight = fight.id === fightId
 
-              navigate(
-                `/report/${reportId}/fight/${nextFightId}${location.search}`,
-              )
-            }}
-          >
-            <TabsList
-              className="h-auto w-full justify-start gap-1 overflow-x-auto bg-transparent p-0"
-              // variant="line"
-            >
-              {bossKillFights.map((fight) => (
-                <TabsTrigger
-                  className="whitespace-nowrap px-3 py-1.5 text-sm"
+              return (
+                <Link
+                  className={[
+                    'rounded-md border border-transparent px-3 py-1.5 text-sm whitespace-nowrap transition-all',
+                    isCurrentFight
+                      ? 'bg-background text-foreground dark:border-input dark:bg-input/30'
+                      : 'text-foreground/60 hover:text-foreground',
+                  ].join(' ')}
                   key={fight.id}
-                  value={String(fight.id)}
+                  to={`/report/${reportId}/fight/${fight.id}`}
                 >
                   {fight.name}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+                </Link>
+              )
+            })}
+          </div>
         ) : (
           <p className="text-sm text-muted-foreground">
             No boss kills found in this report.
