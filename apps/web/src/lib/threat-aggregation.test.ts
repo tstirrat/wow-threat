@@ -1,6 +1,7 @@
 /**
  * Unit tests for threat aggregation helpers.
  */
+import { ResourceTypeCode } from '@wcl-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
 import type { ReportAbilitySummary, ReportActorSummary } from '../types/api'
@@ -248,6 +249,79 @@ describe('threat-aggregation', () => {
         value: 1.6,
       },
     ])
+  })
+
+  it('preserves resource type for resource change events', () => {
+    const actors: ReportActorSummary[] = [
+      {
+        id: 1,
+        name: 'Warrior',
+        type: 'Player',
+        subType: 'Warrior',
+      },
+      {
+        id: 10,
+        name: 'Boss',
+        type: 'NPC',
+        subType: 'Boss',
+      },
+    ]
+    const abilities: ReportAbilitySummary[] = [
+      {
+        gameID: 100,
+        icon: null,
+        name: 'Bloodrage',
+        type: '1',
+      },
+    ]
+    const events = [
+      {
+        timestamp: 1000,
+        type: 'resourcechange',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 10,
+        targetIsFriendly: false,
+        abilityGameID: 100,
+        resourceChange: 5,
+        resourceChangeType: ResourceTypeCode.Rage,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 25,
+              total: 25,
+            },
+          ],
+          calculation: {
+            formula: 'rage * 5',
+            amount: 5,
+            baseThreat: 25,
+            modifiedThreat: 25,
+            isSplit: false,
+            modifiers: [],
+          },
+        },
+      },
+    ]
+
+    const series = buildThreatSeries({
+      events: events as never,
+      actors,
+      abilities,
+      fightStartTime: 1000,
+      fightEndTime: 2000,
+      target: {
+        id: 10,
+        instance: 0,
+      },
+    })
+
+    expect(series[0]?.points[1]?.resourceType).toBe(ResourceTypeCode.Rage)
+    expect(series[0]?.points[1]?.spellSchool).toBeNull()
   })
 
   it('adds boss melee markers to the struck player series for the selected target', () => {

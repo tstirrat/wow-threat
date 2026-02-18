@@ -930,13 +930,22 @@ export function buildThreatSeries({
         : event.type === 'death'
           ? 'Death'
           : 'Unknown ability'
-    const abilitySchoolMask =
-      abilityId !== null
-        ? parseAbilitySchoolMask(abilityById.get(abilityId)?.type ?? null)
-        : 0
-    const abilitySchoolLabels = resolveSchoolLabelsFromMask(abilitySchoolMask)
     const spellSchool =
-      abilitySchoolLabels.length > 0 ? abilitySchoolLabels.join('/') : null
+      event.type === 'damage' || event.type === 'heal'
+        ? (() => {
+            const abilitySchoolMask =
+              abilityId !== null
+                ? parseAbilitySchoolMask(
+                    abilityById.get(abilityId)?.type ?? null,
+                  )
+                : 0
+            const abilitySchoolLabels =
+              resolveSchoolLabelsFromMask(abilitySchoolMask)
+            return abilitySchoolLabels.length > 0
+              ? abilitySchoolLabels.join('/')
+              : null
+          })()
+        : null
     const formula = event.threat?.calculation.formula ?? 'n/a'
     const modifiers = normalizeThreatModifiers(
       event.threat?.calculation.modifiers,
@@ -944,6 +953,7 @@ export function buildThreatSeries({
     const amount = event.threat?.calculation.amount ?? 0
     const baseThreat = event.threat?.calculation.baseThreat ?? 0
     const modifiedThreat = event.threat?.calculation.modifiedThreat ?? 0
+    const resourceType = event.resourceChangeType ?? null
     const timeMs = resolveRelativeTimeMs(
       event.timestamp,
       fightStartTime,
@@ -992,6 +1002,7 @@ export function buildThreatSeries({
         amount,
         baseThreat,
         modifiedThreat,
+        resourceType,
         spellSchool,
         eventType: event.type,
         abilityName,
@@ -1032,6 +1043,7 @@ export function buildThreatSeries({
         amount,
         baseThreat,
         modifiedThreat,
+        resourceType,
         spellSchool,
         eventType: event.type,
         abilityName,
@@ -1061,6 +1073,7 @@ export function buildThreatSeries({
         amount,
         baseThreat,
         modifiedThreat,
+        resourceType,
         spellSchool,
         eventType: event.type,
         abilityName,

@@ -10,6 +10,7 @@ import type {
   ThreatFormula,
 } from '@wcl-threat/shared'
 import { SpellSchool } from '@wcl-threat/shared'
+import { ResourceTypeCode } from '@wcl-threat/wcl-types'
 
 import {
   Spells as EraSpells,
@@ -76,29 +77,6 @@ const SPIRIT_WEAPONS_THRESHOLD = 21
 
 const noThreatFormula = noThreat()
 
-const resourceChangeThreat: ThreatFormula = (ctx) => {
-  if (ctx.event.type !== 'resourcechange' && ctx.event.type !== 'energize') {
-    return undefined
-  }
-
-  if (ctx.event.resourceChangeType === 'energy') {
-    return {
-      formula: '0',
-      value: 0,
-      splitAmongEnemies: false,
-      applyPlayerMultipliers: false,
-    }
-  }
-
-  const multiplier = ctx.event.resourceChangeType === 'rage' ? 5 : 0.5
-  return {
-    formula: `${ctx.event.resourceChangeType} * ${multiplier}`,
-    value: ctx.amount * multiplier,
-    splitAmongEnemies: true,
-    applyPlayerMultipliers: false,
-  }
-}
-
 const LIGHTNING_OVERLOAD_SPELLS = [
   Spells.LightningOverloadR1,
   Spells.LightningOverloadR2,
@@ -153,14 +131,15 @@ export const shamanConfig: ClassThreatConfig = {
 
   abilities: {
     ...eraShamanConfig.abilities,
-    [Spells.EarthShockR1]: threat({ modifier: 1 }),
-    [Spells.EarthShockR2]: threat({ modifier: 1 }),
-    [Spells.EarthShockR3]: threat({ modifier: 1 }),
-    [Spells.EarthShockR4]: threat({ modifier: 1 }),
-    [Spells.EarthShockR5]: threat({ modifier: 1 }),
-    [Spells.EarthShockR6]: threat({ modifier: 1 }),
-    [Spells.EarthShockR7]: threat({ modifier: 1 }),
-    [Spells.EarthShockR8]: threat({ modifier: 1 }),
+    // default dmg = threat formula
+    // [Spells.EarthShockR1]: threat({ modifier: 1 }),
+    // [Spells.EarthShockR2]: threat({ modifier: 1 }),
+    // [Spells.EarthShockR3]: threat({ modifier: 1 }),
+    // [Spells.EarthShockR4]: threat({ modifier: 1 }),
+    // [Spells.EarthShockR5]: threat({ modifier: 1 }),
+    // [Spells.EarthShockR6]: threat({ modifier: 1 }),
+    // [Spells.EarthShockR7]: threat({ modifier: 1 }),
+    // [Spells.EarthShockR8]: threat({ modifier: 1 }),
 
     [Spells.FrostShockR1]: threat({ modifier: 2 }),
     [Spells.FrostShockR2]: threat({ modifier: 2 }),
@@ -175,13 +154,13 @@ export const shamanConfig: ClassThreatConfig = {
     [Spells.UnleashedRageR1]: noThreatFormula,
     [Spells.UnleashedRageR2]: noThreatFormula,
     [Spells.ShamanisticRageCast]: noThreatFormula,
-    [Spells.ShamanisticRageBuff]: resourceChangeThreat,
+    // [Spells.ShamanisticRageBuff]: 'resourceChangeThreat', // default resourcechange handler
+    // [Spells.TotemicCall]: resourceChangeThreat,
     [Spells.Flurry]: noThreatFormula,
     [Spells.WaterShieldCastR1]: noThreatFormula,
     [Spells.WaterShieldCastR2]: noThreatFormula,
     [Spells.WaterShieldManaR1]: noThreatFormula,
     [Spells.WaterShieldManaR2]: noThreatFormula,
-    [Spells.TotemicCall]: resourceChangeThreat,
     [Spells.ElementalMastery]: noThreatFormula,
 
     ...Object.fromEntries(

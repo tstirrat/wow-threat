@@ -39,14 +39,18 @@ export type HitType =
   | 'resist'
   | 'absorb'
 
+export const ResourceTypeCode = {
+  Mana: 0,
+  Rage: 1,
+  Focus: 2,
+  Energy: 3,
+  ComboPoints: 4,
+  RunicPower: 6,
+  HolyPower: 9,
+} as const
+
 export type ResourceType =
-  | 'mana'
-  | 'rage'
-  | 'energy'
-  | 'runic_power'
-  | 'combo_points'
-  | 'focus'
-  | 'holy_power'
+  (typeof ResourceTypeCode)[keyof typeof ResourceTypeCode]
 
 export interface Ability {
   guid: number

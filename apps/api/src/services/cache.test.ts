@@ -173,7 +173,7 @@ describe('CacheKeys', () => {
 
   it('generates correct augmented events key', () => {
     expect(CacheKeys.augmentedEvents('ABC123', 5, 'v1.2.0')).toBe(
-      'augmented:v2:ABC123:5:v1.2.0',
+      'augmented:v4:ABC123:5:v1.2.0',
     )
   })
 })

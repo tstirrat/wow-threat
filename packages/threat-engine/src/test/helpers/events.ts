@@ -4,22 +4,23 @@
  * Provides factory functions to create WCL events with sensible defaults.
  * Reduces boilerplate in test files.
  */
-import type {
-  ApplyBuffEvent,
-  ApplyBuffStackEvent,
-  ApplyDebuffEvent,
-  ApplyDebuffStackEvent,
-  CombatantInfoAura,
-  DamageEvent,
-  EnergizeEvent,
-  HealEvent,
-  RefreshBuffEvent,
-  RefreshDebuffEvent,
-  RemoveBuffEvent,
-  RemoveBuffStackEvent,
-  RemoveDebuffEvent,
-  RemoveDebuffStackEvent,
-  ResourceChangeEvent,
+import {
+  type ApplyBuffEvent,
+  type ApplyBuffStackEvent,
+  type ApplyDebuffEvent,
+  type ApplyDebuffStackEvent,
+  type CombatantInfoAura,
+  type DamageEvent,
+  type EnergizeEvent,
+  type HealEvent,
+  type RefreshBuffEvent,
+  type RefreshDebuffEvent,
+  type RemoveBuffEvent,
+  type RemoveBuffStackEvent,
+  type RemoveDebuffEvent,
+  type RemoveDebuffStackEvent,
+  type ResourceChangeEvent,
+  ResourceTypeCode,
 } from '@wcl-threat/wcl-types'
 
 type LegacyFriendlyFlagOverrides = {
@@ -105,7 +106,7 @@ export function createHealEvent(
  * - sourceID: 1 (player)
  * - targetID: 1 (self)
  * - resourceChange: 20
- * - resourceChangeType: 'rage'
+ * - resourceChangeType: ResourceTypeCode.Rage
  * - waste: 0
  * - Basic ability (id: 1)
  */
@@ -119,7 +120,7 @@ export function createEnergizeEvent(
     targetID: 1,
     abilityGameID: 1,
     resourceChange: 20,
-    resourceChangeType: 'rage',
+    resourceChangeType: ResourceTypeCode.Rage,
     waste: 0,
     ...sanitizeEventOverrides(overrides),
   }
@@ -138,7 +139,7 @@ export function createResourceChangeEvent(
     targetID: 1,
     abilityGameID: 1,
     resourceChange: 20,
-    resourceChangeType: 'rage',
+    resourceChangeType: ResourceTypeCode.Rage,
     waste: 0,
     ...sanitizeEventOverrides(overrides),
   }

@@ -140,7 +140,7 @@ export const CacheKeys = {
     endTime?: number,
   ) =>
     `wcl:events:${CacheKeys.wclEventsSchemaVersion}:${code}:${fightId}:start:${startTime ?? 'full'}:end:${endTime ?? 'full'}`,
-  augmentedSchemaVersion: 'v2',
+  augmentedSchemaVersion: 'v4',
   augmentedEvents: (code: string, fightId: number, configVersion: string) =>
     `augmented:${CacheKeys.augmentedSchemaVersion}:${code}:${fightId}:${configVersion}`,
 }

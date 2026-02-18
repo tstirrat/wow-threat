@@ -13,6 +13,7 @@ import type {
   TalentImplicationContext,
   ThreatContext,
 } from '@wcl-threat/shared/src/types'
+import { ResourceTypeCode } from '@wcl-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
 import { SetIds, Spells, exclusiveAuras, warriorConfig } from './warrior'
@@ -594,7 +595,7 @@ describe('abilities', () => {
               abilityGameID: 2687,
               resourceChange: 10,
               waste: 0,
-              resourceChangeType: 'rage',
+              resourceChangeType: ResourceTypeCode.Rage,
             }),
             amount: 10,
           }),
@@ -618,7 +619,7 @@ describe('abilities', () => {
               abilityGameID: 29131,
               resourceChange: 1,
               waste: 0,
-              resourceChangeType: 'rage',
+              resourceChangeType: ResourceTypeCode.Rage,
             }),
             amount: 1,
           }),

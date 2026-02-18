@@ -4,6 +4,7 @@
  * Base threat calculations and general mechanics for Anniversary Edition.
  */
 import type { BaseThreatConfig } from '@wcl-threat/shared'
+import { ResourceTypeCode } from '@wcl-threat/wcl-types'
 
 import { threat } from '../shared/formulas'
 
@@ -37,9 +38,19 @@ export const baseThreat: BaseThreatConfig = {
     if (event.type !== 'energize' && event.type !== 'resourcechange') {
       return { formula: '0', value: 0, splitAmongEnemies: false }
     }
+    const resourceType = event.resourceChangeType
+    const resourceLabelByCode: Record<number, string> = {
+      [ResourceTypeCode.Mana]: 'mana',
+      [ResourceTypeCode.Rage]: 'rage',
+      [ResourceTypeCode.Focus]: 'focus',
+      [ResourceTypeCode.Energy]: 'energy',
+      [ResourceTypeCode.ComboPoints]: 'combo_points',
+      [ResourceTypeCode.RunicPower]: 'runic_power',
+      [ResourceTypeCode.HolyPower]: 'holy_power',
+    }
 
     // Energy gains do not generate threat
-    if (event.resourceChangeType === 'energy') {
+    if (resourceType === ResourceTypeCode.Energy) {
       return {
         formula: '0',
         value: 0,
@@ -49,8 +60,9 @@ export const baseThreat: BaseThreatConfig = {
     }
 
     // Rage: 5x threat, Mana: 0.5x threat
-    const multiplier = event.resourceChangeType === 'rage' ? 5 : 0.5
-    const resourceLabel = event.resourceChangeType
+    const multiplier = resourceType === ResourceTypeCode.Rage ? 5 : 0.5
+    const resourceLabel =
+      resourceLabelByCode[resourceType] ?? `resource(${resourceType})`
 
     return {
       formula: `${resourceLabel} * ${multiplier}`,

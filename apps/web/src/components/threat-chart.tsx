@@ -1,6 +1,7 @@
 /**
  * ECharts threat timeline with deep-linkable zoom and a custom legend panel.
  */
+import { ResourceTypeCode } from '@wcl-threat/wcl-types'
 import type { EChartsOption } from 'echarts'
 import ReactEChartsCore from 'echarts-for-react/lib/core'
 import { LineChart } from 'echarts/charts'
@@ -118,6 +119,24 @@ function resolveSchoolColor(school: string | null): string | null {
   }
 
   return bySchool[school] ?? null
+}
+
+function formatResourceTypeLabel(resourceType: number | null): string | null {
+  const byResourceTypeCode: Record<number, string> = {
+    [ResourceTypeCode.Mana]: 'Mana',
+    [ResourceTypeCode.Rage]: 'Rage',
+    [ResourceTypeCode.Focus]: 'Focus',
+    [ResourceTypeCode.Energy]: 'Energy',
+    [ResourceTypeCode.ComboPoints]: 'Combo points',
+    [ResourceTypeCode.RunicPower]: 'Runic power',
+    [ResourceTypeCode.HolyPower]: 'Holy power',
+  }
+
+  if (resourceType === null) {
+    return null
+  }
+
+  return byResourceTypeCode[resourceType] ?? `Resource (${resourceType})`
 }
 
 function resolveSplitCount(
@@ -314,11 +333,18 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         const rawEventType = String(
           payload.eventType ?? 'unknown',
         ).toLowerCase()
+        const rawResourceType =
+          typeof payload.resourceType === 'number' ? payload.resourceType : null
         const eventType = escapeHtml(rawEventType)
-        const abilityEventSuffix =
-          rawEventType === 'damage' || rawEventType === 'heal'
+        const isHealEvent = rawEventType === 'heal'
+        const isResourceEvent =
+          rawEventType === 'resourcechange' || rawEventType === 'energize'
+        const abilityEventSuffix = isHealEvent
+          ? ` (${eventType})`
+          : rawEventType === 'damage'
             ? ''
             : ` (${eventType})`
+        const abilityTitleColor = isHealEvent ? '#22c55e' : null
         const actorId = Number(payload.actorId ?? 0)
         const sourceSeries =
           series.find((item) => item.actorId === actorId) ?? null
@@ -350,12 +376,23 @@ export const ThreatChart: FC<ThreatChartProps> = ({
 
           return total * modifier.value
         }, 1)
+        const isSchoolAmountEvent =
+          rawEventType === 'damage' || rawEventType === 'heal'
         const amountSchool =
-          spellSchool && spellSchool !== 'physical'
+          isSchoolAmountEvent && spellSchool && spellSchool !== 'physical'
             ? ` (${escapeHtml(spellSchool)})`
             : ''
         const amountColor =
-          rawEventType === 'heal' ? '#22c55e' : resolveSchoolColor(spellSchool)
+          rawEventType === 'heal'
+            ? '#22c55e'
+            : rawEventType === 'damage'
+              ? resolveSchoolColor(spellSchool)
+              : null
+        const amountLabel = escapeHtml(
+          isResourceEvent
+            ? (formatResourceTypeLabel(rawResourceType) ?? 'Amt')
+            : 'Amt',
+        )
         const modifierLines = visibleModifiers.map((modifier) => {
           const schoolsLabel = modifier.schoolLabels
             .filter((school) => school !== 'physical')
@@ -375,9 +412,9 @@ export const ThreatChart: FC<ThreatChartProps> = ({
 
         return [
           '<div style="min-width:280px;font-size:12px;line-height:1.2;">',
-          `<div style="display:flex;justify-content:space-between;gap:10px;line-height:1.2;"><strong>${abilityName}${abilityEventSuffix}</strong><strong style="color:${actorColor};">${actorName}</strong></div>`,
+          `<div style="display:flex;justify-content:space-between;gap:10px;line-height:1.2;"><strong${abilityTitleColor ? ` style="color:${abilityTitleColor};"` : ''}>${abilityName}${abilityEventSuffix}</strong><strong style="color:${actorColor};">${actorName}</strong></div>`,
           `<div style="line-height:1.2;">T: ${formatTimelineTime(timeMs)}</div>`,
-          `<div style="display:flex;justify-content:space-between;gap:10px;line-height:1.2;${amountColor ? `color:${amountColor};` : ''}"><span>Amt: ${formatTooltipNumber(amount)}${amountSchool}</span><span>${escapeHtml(payload.formula ?? 'n/a')}</span></div>`,
+          `<div style="display:flex;justify-content:space-between;gap:10px;line-height:1.2;${amountColor ? `color:${amountColor};` : ''}"><span>${amountLabel}: ${formatTooltipNumber(amount)}${amountSchool}</span><span>${escapeHtml(payload.formula ?? 'n/a')}</span></div>`,
           `<div style="display:flex;justify-content:space-between;gap:10px;line-height:1.2;"><span>Threat: ${formatSignedThreat(threatDelta)}${splitCount > 1 ? ` / ${splitCount}` : ''}</span><span>&sum; ${formatTooltipNumber(totalThreat)}</span></div>`,
           ...(visibleModifiers.length > 0
             ? [

@@ -32,7 +32,12 @@ import {
   type ThreatContext,
   type ThreatModifier,
 } from '@wcl-threat/shared'
-import type { DamageEvent, GearItem, WCLEvent } from '@wcl-threat/wcl-types'
+import {
+  type DamageEvent,
+  type GearItem,
+  ResourceTypeCode,
+  type WCLEvent,
+} from '@wcl-threat/wcl-types'
 import { describe, expect, it, vi } from 'vitest'
 
 import { createMockThreatConfig } from './test/helpers/config'
@@ -1070,6 +1075,80 @@ describe('calculateModifiedThreat', () => {
 
       expect(result.amount).toBe(30)
       expect(result.baseThreat).toBe(150)
+    })
+
+    it('handles numeric resource type codes in formulas', () => {
+      const resourceAwareConfig = createMockThreatConfig({
+        ...mockConfig,
+        baseThreat: {
+          ...mockConfig.baseThreat,
+          energize: (ctx: ThreatContext) => {
+            const event = ctx.event
+            if (event.type !== 'energize' && event.type !== 'resourcechange') {
+              return { formula: '0', value: 0, splitAmongEnemies: false }
+            }
+            const resourceLabelByCode: Record<number, string> = {
+              [ResourceTypeCode.Mana]: 'mana',
+              [ResourceTypeCode.Rage]: 'rage',
+              [ResourceTypeCode.Focus]: 'focus',
+              [ResourceTypeCode.Energy]: 'energy',
+              [ResourceTypeCode.ComboPoints]: 'combo_points',
+              [ResourceTypeCode.RunicPower]: 'runic_power',
+              [ResourceTypeCode.HolyPower]: 'holy_power',
+            }
+
+            if (event.resourceChangeType === ResourceTypeCode.Energy) {
+              return {
+                formula: '0',
+                value: 0,
+                splitAmongEnemies: false,
+                applyPlayerMultipliers: false,
+              }
+            }
+
+            const multiplier =
+              event.resourceChangeType === ResourceTypeCode.Rage ? 5 : 0.5
+            return {
+              formula: `${resourceLabelByCode[event.resourceChangeType]} * ${multiplier}`,
+              value: ctx.amount * multiplier,
+              splitAmongEnemies: true,
+              applyPlayerMultipliers: false,
+            }
+          },
+        },
+      })
+
+      const manaEvent = {
+        ...createResourceChangeEvent({ resourceChange: 30 }),
+        resourceChangeType: ResourceTypeCode.Mana,
+      } as unknown as WCLEvent
+      const manaResult = calculateModifiedThreat(
+        manaEvent,
+        createTestOptions({
+          sourceActor: defaultActor,
+          targetActor: defaultActor,
+        }),
+        resourceAwareConfig,
+      )
+
+      expect(manaResult.formula).toBe('mana * 0.5')
+      expect(manaResult.baseThreat).toBe(15)
+
+      const energyEvent = {
+        ...createResourceChangeEvent({ resourceChange: 30 }),
+        resourceChangeType: ResourceTypeCode.Energy,
+      } as unknown as WCLEvent
+      const energyResult = calculateModifiedThreat(
+        energyEvent,
+        createTestOptions({
+          sourceActor: defaultActor,
+          targetActor: defaultActor,
+        }),
+        resourceAwareConfig,
+      )
+
+      expect(energyResult.formula).toBe('0')
+      expect(energyResult.baseThreat).toBe(0)
     })
   })
 
@@ -2422,7 +2501,7 @@ describe('base threat calculations', () => {
         sourceID: warriorActor.id,
         targetID: warriorActor.id,
         resourceChange: 30,
-        resourceChangeType: 'rage',
+        resourceChangeType: ResourceTypeCode.Rage,
       }),
     ]
 
@@ -2437,6 +2516,71 @@ describe('base threat calculations', () => {
     expect(result.augmentedEvents[0]?.type).toBe('resourcechange')
     expect(result.augmentedEvents[0]?.threat).toBeDefined()
     expect(result.augmentedEvents[0]?.threat!.calculation.baseThreat).toBe(15)
+  })
+
+  it('preserves numeric resource type codes on augmented events', () => {
+    const resourceAwareConfig = createMockThreatConfig({
+      ...mockConfig,
+      baseThreat: {
+        ...mockConfig.baseThreat,
+        energize: (ctx: ThreatContext) => {
+          const event = ctx.event
+          if (event.type !== 'energize' && event.type !== 'resourcechange') {
+            return { formula: '0', value: 0, splitAmongEnemies: false }
+          }
+          const resourceLabelByCode: Record<number, string> = {
+            [ResourceTypeCode.Mana]: 'mana',
+            [ResourceTypeCode.Rage]: 'rage',
+            [ResourceTypeCode.Focus]: 'focus',
+            [ResourceTypeCode.Energy]: 'energy',
+            [ResourceTypeCode.ComboPoints]: 'combo_points',
+            [ResourceTypeCode.RunicPower]: 'runic_power',
+            [ResourceTypeCode.HolyPower]: 'holy_power',
+          }
+
+          if (event.resourceChangeType === ResourceTypeCode.Energy) {
+            return {
+              formula: '0',
+              value: 0,
+              splitAmongEnemies: false,
+              applyPlayerMultipliers: false,
+            }
+          }
+
+          const multiplier =
+            event.resourceChangeType === ResourceTypeCode.Rage ? 5 : 0.5
+          return {
+            formula: `${resourceLabelByCode[event.resourceChangeType]} * ${multiplier}`,
+            value: ctx.amount * multiplier,
+            splitAmongEnemies: true,
+            applyPlayerMultipliers: false,
+          }
+        },
+      },
+    })
+    const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
+    const events = [
+      {
+        ...createResourceChangeEvent({
+          sourceID: warriorActor.id,
+          targetID: warriorActor.id,
+          resourceChange: 30,
+        }),
+        resourceChangeType: ResourceTypeCode.Energy,
+      } as unknown as WCLEvent,
+    ]
+
+    const result = processEvents({
+      rawEvents: events,
+      actorMap,
+      enemies,
+      config: resourceAwareConfig,
+    })
+
+    expect(result.augmentedEvents[0]?.resourceChangeType).toBe(
+      ResourceTypeCode.Energy,
+    )
+    expect(result.augmentedEvents[0]?.threat?.calculation.baseThreat).toBe(0)
   })
 })
 

@@ -18,6 +18,7 @@ export interface TooltipPointPayload {
   eventType: string
   formula: string
   modifiedThreat: number
+  resourceType?: number | null
   spellSchool: string | null
   modifiers: ThreatPointModifier[]
   threatDelta: number
