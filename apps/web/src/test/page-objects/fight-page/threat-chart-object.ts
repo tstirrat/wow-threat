@@ -14,7 +14,10 @@ export class ThreatChartObject {
   readonly section: Locator
 
   constructor(private readonly page: Page) {
-    this.section = page.getByRole('region', { name: 'Threat timeline' })
+    this.section = page
+      .getByRole('region')
+      .filter({ has: page.getByLabel('Target') })
+      .first()
   }
 
   targetControl(): Locator {

@@ -69,14 +69,14 @@ export function buildReportUrl(
   return `https://${host}/reports/${reportId}`
 }
 
-/** Build a WCL rankings URL deep-linked to a fight. */
+/** Build a WCL fight summary URL deep-linked to a fight. */
 export function buildFightRankingsUrl(
   host: WarcraftLogsHost,
   reportId: string,
   fightId: number,
 ): string {
   const url = new URL(buildReportUrl(host, reportId))
-  url.searchParams.set('view', 'rankings')
   url.searchParams.set('fight', String(fightId))
+  url.searchParams.set('type', 'summary')
   return url.toString()
 }

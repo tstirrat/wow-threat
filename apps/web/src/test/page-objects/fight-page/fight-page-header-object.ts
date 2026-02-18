@@ -1,9 +1,7 @@
 /**
- * Page object for fight page header links and metadata.
+ * Page object for shared report header links and metadata.
  */
 import { type Locator, type Page } from '@playwright/test'
-
-type RegionName = string | RegExp
 
 export class FightPageHeaderObject {
   readonly page: Page
@@ -12,25 +10,17 @@ export class FightPageHeaderObject {
     this.page = page
   }
 
-  section(title: RegionName): Locator {
-    return this.page.getByRole('region', { name: title })
+  section(): Locator {
+    return this.page.getByRole('region', { name: 'Report header' })
   }
 
-  backToReportLink(title: RegionName): Locator {
-    return this.section(title).getByRole('link', { name: 'Back to report' })
-  }
-
-  warcraftLogsReportLink(title: RegionName): Locator {
-    return this.section(title).getByRole('link', {
-      name: 'Report',
-      exact: true,
+  warcraftLogsReportLink(): Locator {
+    return this.section().getByRole('link', {
+      name: 'Open report on Warcraft Logs',
     })
   }
 
-  warcraftLogsFightLink(title: RegionName): Locator {
-    return this.section(title).getByRole('link', {
-      name: 'Fight',
-      exact: true,
-    })
+  threatConfigText(): Locator {
+    return this.section().getByText('Threat config:')
   }
 }

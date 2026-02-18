@@ -7,6 +7,7 @@ import { FightPage } from '../pages/fight-page'
 import { LandingPage } from '../pages/landing-page'
 import { NotFoundPage } from '../pages/not-found-page'
 import { ReportPage } from '../pages/report-page'
+import { ReportLayout } from './report-layout'
 import { RootLayout } from './root-layout'
 
 export const router: ReturnType<typeof createBrowserRouter> =
@@ -21,11 +22,17 @@ export const router: ReturnType<typeof createBrowserRouter> =
         },
         {
           path: 'report/:reportId',
-          element: <ReportPage />,
-        },
-        {
-          path: 'report/:reportId/fight/:fightId',
-          element: <FightPage />,
+          element: <ReportLayout />,
+          children: [
+            {
+              index: true,
+              element: <ReportPage />,
+            },
+            {
+              path: 'fight/:fightId',
+              element: <FightPage />,
+            },
+          ],
         },
         {
           path: '*',

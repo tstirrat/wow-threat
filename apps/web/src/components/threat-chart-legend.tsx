@@ -26,7 +26,9 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
       size="sm"
     >
       <CardHeader className="border-b border-border">
-        <CardTitle className="text-xs font-medium text-muted">Legend</CardTitle>
+        <CardTitle className="text-xs font-medium text-muted-foreground">
+          Legend
+        </CardTitle>
       </CardHeader>
       <CardContent className="min-h-0 flex-1 p-0">
         <ScrollArea className="h-full">

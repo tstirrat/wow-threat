@@ -55,10 +55,16 @@ export interface ThreatConfigSummary {
   version: string
 }
 
+export interface ReportGuildSummary {
+  name: string
+  faction: string
+}
+
 export interface ReportResponse {
   code: string
   title: string
   owner: string
+  guild: ReportGuildSummary | null
   startTime: number
   endTime: number
   gameVersion: number

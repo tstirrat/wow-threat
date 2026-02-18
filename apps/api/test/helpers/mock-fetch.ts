@@ -16,6 +16,15 @@ export interface MockWCLResponses {
     code: string
     title: string
     owner: { name: string }
+    guild?: {
+      name: string
+      faction:
+        | string
+        | {
+            id: number
+            name: string
+          }
+    } | null
     startTime: number
     endTime: number
     zone: {

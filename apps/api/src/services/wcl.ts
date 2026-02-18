@@ -132,6 +132,13 @@ export class WCLClient {
             code
             title
             owner { name }
+            guild {
+              name
+              faction {
+                id
+                name
+              }
+            }
             startTime
             endTime
             zone {

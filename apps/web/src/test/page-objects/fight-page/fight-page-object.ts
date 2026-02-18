@@ -3,20 +3,20 @@
  */
 import { type Page } from '@playwright/test'
 
+import { FightQuickSwitcherObject } from '../components/fight-quick-switcher-object'
 import { FightPageHeaderObject } from './fight-page-header-object'
-import { FightQuickSwitchObject } from './fight-quick-switch-object'
 import { FocusedPlayerSummaryObject } from './focused-player-summary-object'
 import { ThreatChartObject } from './threat-chart-object'
 
 export class FightPageObject {
   readonly chart: ThreatChartObject
   readonly header: FightPageHeaderObject
-  readonly quickSwitch: FightQuickSwitchObject
+  readonly quickSwitch: FightQuickSwitcherObject
   readonly summary: FocusedPlayerSummaryObject
 
   constructor(readonly page: Page) {
     this.header = new FightPageHeaderObject(page)
-    this.quickSwitch = new FightQuickSwitchObject(page)
+    this.quickSwitch = new FightQuickSwitcherObject(page)
     this.chart = new ThreatChartObject(page)
     this.summary = new FocusedPlayerSummaryObject(page)
   }

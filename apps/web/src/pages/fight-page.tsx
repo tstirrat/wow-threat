@@ -2,8 +2,9 @@
  * Fight-level page with target filter and player-focused chart interactions.
  */
 import { resolveConfigOrNull } from '@wcl-threat/threat-config'
-import { type FC, useCallback, useEffect, useMemo } from 'react'
-import { Link, useLocation, useParams } from 'react-router-dom'
+import { ExternalLink } from 'lucide-react'
+import { type FC, useCallback, useMemo } from 'react'
+import { useLocation, useParams } from 'react-router-dom'
 
 import { ErrorState } from '../components/error-state'
 import { LoadingState } from '../components/loading-state'
@@ -17,10 +18,7 @@ import { Separator } from '../components/ui/separator'
 import { useFightData } from '../hooks/use-fight-data'
 import { useFightEvents } from '../hooks/use-fight-events'
 import { useFightQueryState } from '../hooks/use-fight-query-state'
-import { useRecentReports } from '../hooks/use-recent-reports'
-import { useReportData } from '../hooks/use-report-data'
-import { useReportHost } from '../hooks/use-report-host'
-import { buildBossKillNavigationFights } from '../lib/fight-navigation'
+import { formatClockDuration } from '../lib/format'
 import {
   buildFightTargetOptions,
   buildFocusedPlayerSummary,
@@ -30,16 +28,9 @@ import {
   resolveSeriesWindowBounds,
   selectDefaultTarget,
 } from '../lib/threat-aggregation'
-import { buildFightRankingsUrl, buildReportUrl } from '../lib/wcl-url'
-import type {
-  ThreatSeries,
-  WarcraftLogsHost,
-  WowheadLinksConfig,
-} from '../types/app'
-
-interface LocationState {
-  host?: WarcraftLogsHost
-}
+import { buildFightRankingsUrl } from '../lib/wcl-url'
+import { useReportRouteContext } from '../routes/report-layout-context'
+import type { ThreatSeries, WowheadLinksConfig } from '../types/app'
 
 const defaultWowheadLinksConfig: WowheadLinksConfig = {
   domain: 'classic',
@@ -58,44 +49,17 @@ function areEqualIdLists(left: number[], right: number[]): boolean {
 }
 
 export const FightPage: FC = () => {
-  const params = useParams<{ reportId: string; fightId: string }>()
+  const params = useParams<{ fightId: string }>()
   const location = useLocation()
-  const locationState = location.state as LocationState | null
-
-  const reportId = params.reportId ?? ''
+  const { reportData, reportHost, reportId } = useReportRouteContext()
   const fightId = Number.parseInt(params.fightId ?? '', 10)
   const chartRenderer =
     new URLSearchParams(location.search).get('renderer') === 'svg'
       ? 'svg'
       : 'canvas'
 
-  const { recentReports, addRecentReport } = useRecentReports()
-  const reportHost = useReportHost(reportId, recentReports)
-
-  const reportQuery = useReportData(reportId)
   const fightQuery = useFightData(reportId, fightId)
   const eventsQuery = useFightEvents(reportId, fightId)
-
-  useEffect(() => {
-    if (!reportQuery.data) {
-      return
-    }
-
-    addRecentReport({
-      reportId,
-      title: reportQuery.data.title,
-      sourceHost: locationState?.host ?? reportHost,
-      lastOpenedAt: Date.now(),
-    })
-  }, [
-    addRecentReport,
-    locationState?.host,
-    reportHost,
-    reportId,
-    reportQuery.data,
-  ])
-
-  const reportData = reportQuery.data ?? null
   const fightData = fightQuery.data ?? null
   const eventsData = eventsQuery.data ?? null
 
@@ -349,17 +313,8 @@ export const FightPage: FC = () => {
     )
   }
 
-  if (reportQuery.isLoading || fightQuery.isLoading || eventsQuery.isLoading) {
+  if (fightQuery.isLoading || eventsQuery.isLoading) {
     return <LoadingState message="Loading fight data and threat events..." />
-  }
-
-  if (reportQuery.error || !reportData) {
-    return (
-      <ErrorState
-        message={reportQuery.error?.message ?? 'Report metadata unavailable.'}
-        title="Unable to load report"
-      />
-    )
   }
 
   if (fightQuery.error || !fightData) {
@@ -380,82 +335,30 @@ export const FightPage: FC = () => {
     )
   }
 
-  const threatConfigLabel = reportData.threatConfig
-    ? `${reportData.threatConfig.displayName} (${reportData.threatConfig.version})`
-    : 'No supported config'
-  const bossKillFights = buildBossKillNavigationFights(reportData.fights)
+  const fightTimelineTitle = (
+    <div className="flex flex-wrap items-center gap-2">
+      <span>{fightData.name}</span>
+      <span className="text-muted-foreground">|</span>
+      <span className="text-muted-foreground">{formatClockDuration(durationMs)}</span>
+      <span className="text-muted-foreground">|</span>
+      <a
+        aria-label={`Open ${fightData.name} on Warcraft Logs`}
+        className="inline-flex items-center gap-1 leading-none hover:opacity-80"
+        href={buildFightRankingsUrl(reportHost, reportId, fightId)}
+        rel="noreferrer"
+        target="_blank"
+        title={`Open ${fightData.name} on Warcraft Logs`}
+      >
+        <span className="text-[10px] font-medium tracking-wide">WCL</span>
+        <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+      </a>
+    </div>
+  )
 
   return (
     <div className="space-y-5">
       <SectionCard
-        title={`${fightData.name} (Fight #${fightData.id})`}
-        subtitle={`${reportData.title} · ${fightData.kill ? 'Kill' : 'Wipe'} · ${Math.round(durationMs / 1000)}s`}
-        headerRight={
-          <div className="text-right text-xs text-muted-foreground">
-            <p>Threat config: {threatConfigLabel}</p>
-          </div>
-        }
-      >
-        <div className="flex flex-wrap items-center gap-3 text-sm">
-          <Link className="underline" to={`/report/${reportId}`}>
-            Back to report
-          </Link>
-          <span className="text-muted-foreground">Warcraft Logs:</span>
-          <a
-            className="underline"
-            href={buildReportUrl(locationState?.host ?? reportHost, reportId)}
-            rel="noreferrer"
-            target="_blank"
-          >
-            Report
-          </a>
-          <span className="text-muted-foreground">|</span>
-          <a
-            className="underline"
-            href={buildFightRankingsUrl(
-              locationState?.host ?? reportHost,
-              reportId,
-              fightId,
-            )}
-            rel="noreferrer"
-            target="_blank"
-          >
-            Fight
-          </a>
-        </div>
-      </SectionCard>
-
-      <nav aria-label="Fight quick switch">
-        {bossKillFights.length > 0 ? (
-          <div className="flex w-full gap-1 overflow-x-auto">
-            {bossKillFights.map((fight) => {
-              const isCurrentFight = fight.id === fightId
-
-              return (
-                <Link
-                  className={[
-                    'rounded-md border border-transparent px-3 py-1.5 text-sm whitespace-nowrap transition-all',
-                    isCurrentFight
-                      ? 'bg-background text-foreground dark:border-input dark:bg-input/30'
-                      : 'text-foreground/60 hover:text-foreground',
-                  ].join(' ')}
-                  key={fight.id}
-                  to={`/report/${reportId}/fight/${fight.id}`}
-                >
-                  {fight.name}
-                </Link>
-              )
-            })}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            No boss kills found in this report.
-          </p>
-        )}
-      </nav>
-
-      <SectionCard
-        title="Threat timeline"
+        title={fightTimelineTitle}
         headerRight={
           selectedTarget ? (
             <div className="flex flex-wrap items-center justify-end gap-3">

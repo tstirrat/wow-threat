@@ -24,13 +24,12 @@ test.describe('fight page', () => {
     await fightPage.goto(svgFightUrl)
     await expect(page).toHaveURL(/renderer=svg/)
 
-    const header = fightPage.header.section('Patchwerk (Fight #26)')
-    await expect(header.getByText('Warcraft Logs:')).toBeVisible()
+    const header = fightPage.header.section()
+    await expect(header).toBeVisible()
+    await expect(fightPage.header.threatConfigText()).toBeVisible()
+    await expect(fightPage.header.warcraftLogsReportLink()).toBeVisible()
     await expect(
-      fightPage.header.warcraftLogsReportLink('Patchwerk (Fight #26)'),
-    ).toBeVisible()
-    await expect(
-      fightPage.header.warcraftLogsFightLink('Patchwerk (Fight #26)'),
+      page.getByRole('link', { name: 'Open Patchwerk on Warcraft Logs' }),
     ).toBeVisible()
 
     await expect(fightPage.quickSwitch.fightLink('Patchwerk')).toBeVisible()

@@ -123,6 +123,16 @@ Chart requirements:
 - No snapshot tests for unit/component coverage.
 - End-to-end: Playwright with mocked/stubbed Warcraft Logs API responses.
 
+Playwright page object conventions:
+
+- Prefer page objects over inlined locators in e2e specs.
+- Any non-trivial UI component that is exercised in an e2e test should have a corresponding page object.
+- Trivial UI elements do not require dedicated page objects (for example: a single link, a single button, or one simple control).
+- Keep assertions (`expect`) in test files, not inside page object classes.
+- Page objects should expose actions, locators, and lightweight state helpers only.
+- Page objects may compose other page objects (sub-page objects) when it improves reuse and clarity.
+- When updating UI components, check whether related page objects and specs need updates before finalizing the change.
+
 Critical e2e flows:
 
 - Load report from pasted Warcraft Logs URL.

@@ -12,7 +12,7 @@ import {
 } from './ui/card'
 
 export type SectionCardProps = PropsWithChildren<{
-  title: string
+  title: ReactNode
   subtitle?: string
   headerRight?: ReactNode
 }>

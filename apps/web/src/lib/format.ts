@@ -22,6 +22,54 @@ export function formatTimelineTime(valueMs: number): string {
   return `${minutes}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`
 }
 
+function formatOrdinal(value: number): string {
+  const remainder10 = value % 10
+  const remainder100 = value % 100
+
+  if (remainder10 === 1 && remainder100 !== 11) {
+    return `${value}st`
+  }
+  if (remainder10 === 2 && remainder100 !== 12) {
+    return `${value}nd`
+  }
+  if (remainder10 === 3 && remainder100 !== 13) {
+    return `${value}rd`
+  }
+
+  return `${value}th`
+}
+
+/** Format milliseconds into an `m:ss` clock string. */
+export function formatClockDuration(valueMs: number): string {
+  const totalSeconds = Math.max(0, Math.floor(valueMs / 1000))
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+
+  return `${minutes}:${String(seconds).padStart(2, '0')}`
+}
+
+/** Format a report start timestamp for compact header display. */
+export function formatReportHeaderDate(valueMs: number): string {
+  const date = new Date(valueMs)
+  if (Number.isNaN(date.getTime())) {
+    return 'Unknown'
+  }
+
+  const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(
+    date,
+  )
+  const hour24 = date.getHours()
+  const minutes = date.getMinutes()
+  const meridiem = hour24 >= 12 ? 'pm' : 'am'
+  const hour12 = hour24 % 12 || 12
+  const timeLabel =
+    minutes === 0
+      ? `${hour12}${meridiem}`
+      : `${hour12}:${String(minutes).padStart(2, '0')}${meridiem}`
+
+  return `${weekday} ${formatOrdinal(date.getDate())} ${timeLabel}`
+}
+
 /** Format a Unix-milliseconds timestamp as a readable local date/time. */
 export function formatDateTime(valueMs: number): string {
   const date = new Date(valueMs)

@@ -1,9 +1,9 @@
 /**
- * Page object for the fight quick-switch navigation links.
+ * Page object for the shared fight quick-switcher component.
  */
 import { type Locator, type Page } from '@playwright/test'
 
-export class FightQuickSwitchObject {
+export class FightQuickSwitcherObject {
   readonly root: Locator
 
   constructor(page: Page) {
@@ -12,6 +12,10 @@ export class FightQuickSwitchObject {
 
   fightLink(name: string): Locator {
     return this.root.getByRole('link', { name, exact: true })
+  }
+
+  fightLinks(): Locator {
+    return this.root.getByRole('link')
   }
 
   async clickFight(name: string): Promise<void> {

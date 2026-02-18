@@ -67,6 +67,15 @@ reportRoutes.get('/:code', async (c) => {
       code: report.code,
       title: report.title,
       owner: report.owner.name,
+      guild: report.guild
+        ? {
+            name: report.guild.name,
+            faction:
+              typeof report.guild.faction === 'string'
+                ? report.guild.faction
+                : report.guild.faction.name,
+          }
+        : null,
       startTime: report.startTime,
       endTime: report.endTime,
       gameVersion: masterData.gameVersion,

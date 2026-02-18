@@ -37,6 +37,7 @@ export interface Report {
   code: string
   title: string
   owner: string
+  guild: ReportGuild | null
   startTime: number // Unix timestamp ms
   endTime: number
   gameVersion: number // WCL gameVersion integer (determines threat config)
@@ -104,6 +105,16 @@ export interface ReportActorPet {
   petOwner: number | null
 }
 
+export interface GameFaction {
+  id: number
+  name: string
+}
+
+export interface ReportGuild {
+  name: string
+  faction: GameFaction
+}
+
 export interface ReportAbility {
   gameID: number | null
   icon: string | null
@@ -119,6 +130,7 @@ export interface WCLReportResponse {
         code: string
         title: string
         owner: { name: string }
+        guild: ReportGuild | null
         startTime: number
         endTime: number
         zone: Zone

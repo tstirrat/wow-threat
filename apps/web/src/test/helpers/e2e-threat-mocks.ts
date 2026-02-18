@@ -231,6 +231,10 @@ export const e2eReportResponse: ReportResponse = {
     },
   ],
   gameVersion: 2,
+  guild: {
+    name: 'Threat Officer Guild',
+    faction: 'Alliance',
+  },
   owner: 'ThreatOfficer',
   startTime: 1000000,
   threatConfig: {

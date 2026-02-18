@@ -7,55 +7,45 @@ import {
   e2eReportId,
   setupThreatApiMocks,
 } from '../test/helpers/e2e-threat-mocks'
+import { FightQuickSwitcherObject } from '../test/page-objects/components/fight-quick-switcher-object'
 
 test.describe('report page', () => {
   test.beforeEach(async ({ page }) => {
     await setupThreatApiMocks(page)
   })
 
-  test('shows only boss kills in report order', async ({ page }) => {
+  test('shows only boss kills in quick switch order', async ({ page }) => {
+    const quickSwitch = new FightQuickSwitcherObject(page)
+
     await page.goto(`/report/${e2eReportId}`)
 
-    const fightNavigation = page.getByRole('region', {
-      name: 'Fight navigation',
-    })
-    const bossKillLinks = fightNavigation.getByRole('link', { name: /Kill \(/ })
-
-    await expect(bossKillLinks).toHaveCount(2)
-    await expect(fightNavigation.getByText('Patchwerk')).toBeVisible()
-    await expect(fightNavigation.getByText('Grobbulus')).toBeVisible()
-    await expect(bossKillLinks.nth(0)).toContainText('Kill (2:00)')
-    await expect(bossKillLinks.nth(1)).toContainText('Kill (1:15)')
-
-    await expect(fightNavigation.getByText('Naxxramas Trash')).toHaveCount(0)
-    await expect(fightNavigation.getByText('wipe 1')).toHaveCount(0)
+    await expect(quickSwitch.fightLinks()).toHaveCount(2)
+    await expect(quickSwitch.fightLink('Patchwerk')).toBeVisible()
+    await expect(quickSwitch.fightLink('Grobbulus')).toBeVisible()
+    await expect(quickSwitch.fightText('Naxxramas Trash')).toHaveCount(0)
   })
 
   test('choosing a fight navigates to the threat chart page', async ({
     page,
   }) => {
+    const quickSwitch = new FightQuickSwitcherObject(page)
+
     await page.goto(`/report/${e2eReportId}`)
 
-    await page.getByRole('link', { name: 'Kill (2:00)' }).click()
+    await quickSwitch.clickFight('Patchwerk')
 
     await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}/fight/26`))
-    await expect(
-      page.getByRole('region', { name: 'Patchwerk (Fight #26)' }),
-    ).toBeVisible()
+    await expect(page.getByRole('region', { name: /Patchwerk/ })).toBeVisible()
   })
 
-  test('choosing a player + boss from player navigation goes to the expected chart', async ({
-    page,
-  }) => {
+  test('does not render legacy report navigation sections', async ({ page }) => {
     await page.goto(`/report/${e2eReportId}`)
 
-    await page
-      .getByRole('link', { name: 'Open Patchwerk chart for Aegistank' })
-      .click()
-
-    await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}/fight/26`))
-    await expect(page).toHaveURL(/players=1/)
-    await expect(page).toHaveURL(/focusId=1/)
-    await expect(page.getByLabel('Target')).toHaveText('Patchwerk (100)')
+    await expect(
+      page.getByRole('region', { name: 'Fight navigation' }),
+    ).toHaveCount(0)
+    await expect(
+      page.getByRole('region', { name: 'Player navigation' }),
+    ).toHaveCount(0)
   })
 })

@@ -38,6 +38,10 @@ describe('Reports API', () => {
       expect(data.code).toBe('ABC123xyz')
       expect(data.title).toBe('Naxxramas 25 - Test Raid')
       expect(data.owner).toBe('TestGuild')
+      expect(data.guild).toEqual({
+        name: 'TestGuild',
+        faction: 'Alliance',
+      })
       expect(data.gameVersion).toBe(2)
       expect(data.threatConfig).toEqual({
         displayName: 'Vanilla (Era)',

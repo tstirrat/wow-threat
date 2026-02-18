@@ -43,9 +43,10 @@ describe('wcl-url', () => {
     })
   })
 
-  it('builds fight rankings URL', () => {
-    expect(
-      buildFightRankingsUrl('fresh.warcraftlogs.com', 'CODE123', 42),
-    ).toContain('fight=42')
+  it('builds fight summary URL', () => {
+    const url = buildFightRankingsUrl('fresh.warcraftlogs.com', 'CODE123', 42)
+
+    expect(url).toContain('fight=42')
+    expect(url).toContain('type=summary')
   })
 })
