@@ -7,7 +7,6 @@ import { type FC, useCallback, useMemo } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
 
 import { ErrorState } from '../components/error-state'
-import { LoadingState } from '../components/loading-state'
 import { PlayerSummaryTable } from '../components/player-summary-table'
 import { SectionCard } from '../components/section-card'
 import { TargetSelector } from '../components/target-selector'
@@ -46,6 +45,48 @@ function areEqualIdLists(left: number[], right: number[]): boolean {
   }
 
   return left.every((id, index) => id === right[index])
+}
+
+const FightPageLoadingSkeleton: FC = () => {
+  return (
+    <section aria-label="Loading fight data" aria-live="polite" role="status">
+      <SectionCard
+        title={
+          <div className="h-6 w-40 rounded-md bg-muted/70 motion-safe:animate-pulse" />
+        }
+        headerRight={
+          <div className="flex items-center gap-3">
+            <div className="h-5 w-20 rounded-md bg-muted/60 motion-safe:animate-pulse" />
+            <div className="h-7 w-40 rounded-md bg-muted/60 motion-safe:animate-pulse" />
+          </div>
+        }
+      >
+        <div className="mt-4 space-y-3">
+          <div className="h-8 w-24 rounded-md bg-muted/60 motion-safe:animate-pulse" />
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_14rem]">
+            <div
+              className="h-[560px] rounded-md border border-border bg-muted/40 motion-safe:animate-pulse"
+              data-testid="fight-chart-skeleton"
+            />
+            <div
+              className="h-[560px] rounded-md border border-border p-4"
+              data-testid="fight-legend-skeleton"
+            >
+              <div className="h-6 w-20 rounded-md bg-muted/70 motion-safe:animate-pulse" />
+              <div className="mt-4 space-y-3">
+                {Array.from({ length: 14 }, (_, index) => (
+                  <div
+                    key={index}
+                    className="h-4 rounded-md bg-muted/60 motion-safe:animate-pulse"
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </SectionCard>
+    </section>
+  )
 }
 
 export const FightPage: FC = () => {
@@ -314,7 +355,7 @@ export const FightPage: FC = () => {
   }
 
   if (fightQuery.isLoading || eventsQuery.isLoading) {
-    return <LoadingState message="Loading fight data and threat events..." />
+    return <FightPageLoadingSkeleton />
   }
 
   if (fightQuery.error || !fightData) {

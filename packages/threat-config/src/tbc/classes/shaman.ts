@@ -7,10 +7,8 @@ import type {
   ClassThreatConfig,
   SpellId,
   TalentImplicationContext,
-  ThreatFormula,
 } from '@wcl-threat/shared'
 import { SpellSchool } from '@wcl-threat/shared'
-import { ResourceTypeCode } from '@wcl-threat/wcl-types'
 
 import {
   Spells as EraSpells,

@@ -723,8 +723,27 @@ function errorResponse(message: string): {
   }
 }
 
+async function delayResponse(delayMs: number): Promise<void> {
+  if (delayMs <= 0) {
+    return
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, delayMs))
+}
+
+export type ThreatApiMocksOptions = {
+  fightResponseDelayMs?: number
+  eventsResponseDelayMs?: number
+}
+
 /** Install local storage reset + mocked API routes for threat e2e page tests. */
-export async function setupThreatApiMocks(page: Page): Promise<void> {
+export async function setupThreatApiMocks(
+  page: Page,
+  options: ThreatApiMocksOptions = {},
+): Promise<void> {
+  const fightResponseDelayMs = options.fightResponseDelayMs ?? 0
+  const eventsResponseDelayMs = options.eventsResponseDelayMs ?? 0
+
   await page.addInitScript(() => {
     window.localStorage.clear()
   })
@@ -752,6 +771,7 @@ export async function setupThreatApiMocks(page: Page): Promise<void> {
       const requestedReportId = fightMatch[1]
       const fightId = Number.parseInt(fightMatch[2] ?? '', 10)
       if (requestedReportId === e2eReportId && fightsById[fightId]) {
+        await delayResponse(fightResponseDelayMs)
         await route.fulfill(jsonResponse(fightsById[fightId]))
         return
       }
@@ -767,6 +787,7 @@ export async function setupThreatApiMocks(page: Page): Promise<void> {
       const requestedReportId = eventsMatch[1]
       const fightId = Number.parseInt(eventsMatch[2] ?? '', 10)
       if (requestedReportId === e2eReportId && fightEventsById[fightId]) {
+        await delayResponse(eventsResponseDelayMs)
         await route.fulfill(jsonResponse(fightEventsById[fightId]))
         return
       }

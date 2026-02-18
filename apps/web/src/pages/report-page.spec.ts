@@ -14,6 +14,21 @@ test.describe('report page', () => {
     await setupThreatApiMocks(page)
   })
 
+  test('shows a zero state prompt before a fight is selected', async ({
+    page,
+  }) => {
+    await page.goto(`/report/${e2eReportId}`)
+
+    await expect(
+      page.getByRole('region', { name: 'Choose a fight' }),
+    ).toBeVisible()
+    await expect(
+      page.getByText(
+        'Choose a fight from the quick switcher to view the chart and legend.',
+      ),
+    ).toBeVisible()
+  })
+
   test('shows only boss kills in quick switch order', async ({ page }) => {
     const quickSwitch = new FightQuickSwitcherObject(page)
 
