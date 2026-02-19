@@ -16,6 +16,7 @@ import {
   resolveConfigOrNull,
   sodConfig,
 } from '../..'
+import { resolveFixtureEventsFilePath } from './fixture-files'
 import {
   type ConfigFixture,
   buildThreatSnapshotLines,
@@ -29,7 +30,7 @@ import {
 } from './report-cli-utils'
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..')
-const fixturesRoot = resolve(packageRoot, 'test/fixtures')
+const fixturesRoot = resolve(packageRoot, 'src/test/fixtures')
 
 function configFromHost(host: string | undefined): ThreatConfig | null {
   const normalizedHost = host?.toLowerCase()
@@ -107,39 +108,47 @@ function resolveRunConfig(
 async function loadFixtureFromDirectory(
   fixtureDirectory: string,
   fixtureName: string,
+  fightId: number,
 ): Promise<ConfigFixture> {
-  const [metadataRaw, reportRaw, eventsRaw] = await Promise.all([
+  const [metadataRaw, reportRaw] = await Promise.all([
     readFile(resolve(fixtureDirectory, 'metadata.json'), 'utf8'),
     readFile(resolve(fixtureDirectory, 'report.json'), 'utf8'),
-    readFile(resolve(fixtureDirectory, 'events.json'), 'utf8'),
   ])
+  const metadata = JSON.parse(metadataRaw) as ConfigFixture['metadata']
+  const report = JSON.parse(reportRaw) as ConfigFixture['report']
+  const fight = report.fights.find((candidate) => candidate.id === fightId)
+  if (!fight) {
+    throw new Error(
+      `Report ${metadata.reportCode} does not include fight ${fightId}`,
+    )
+  }
+
+  const eventsPath = resolveFixtureEventsFilePath(
+    fixtureDirectory,
+    fightId,
+    fight.name,
+  )
+  const eventsRaw = await readFile(eventsPath, 'utf8')
+  const events = JSON.parse(eventsRaw) as ConfigFixture['events']
 
   return {
     fixtureName,
-    metadata: JSON.parse(metadataRaw) as ConfigFixture['metadata'],
-    report: JSON.parse(reportRaw) as ConfigFixture['report'],
-    events: JSON.parse(eventsRaw) as ConfigFixture['events'],
+    metadata: {
+      ...metadata,
+      fightId: fight.id,
+      fightName: fight.name,
+      eventCount: events.length,
+    },
+    report,
+    events,
   }
 }
 
-function runPnpmFixturesDownload(args: {
-  host: string
-  reportCode: string
-  fightId: number
-}): Promise<void> {
+function runPnpmFixturesDownload(args: { reportUrl: string }): Promise<void> {
   return new Promise((resolvePromise, rejectPromise) => {
     const child = spawn(
       'pnpm',
-      [
-        'fixtures:download',
-        '--',
-        '--host',
-        args.host,
-        '--report',
-        args.reportCode,
-        '--fight',
-        String(args.fightId),
-      ],
+      ['fixtures:download', '--', '--report-url', args.reportUrl],
       {
         cwd: packageRoot,
         stdio: 'inherit',
@@ -181,9 +190,7 @@ async function main(): Promise<void> {
       `No cached fixture for ${args.reportCode} fight ${args.fightId}. Downloading from ${args.reportHost}...`,
     )
     await runPnpmFixturesDownload({
-      host: args.reportHost,
-      reportCode: args.reportCode,
-      fightId: args.fightId,
+      reportUrl: args.reportUrl,
     })
 
     fixtureMatch = await findCachedFixtureByReportFight(
@@ -202,6 +209,7 @@ async function main(): Promise<void> {
   const fixture = await loadFixtureFromDirectory(
     fixtureMatch.fixtureDirectory,
     fixtureMatch.fixtureName,
+    args.fightId,
   )
 
   const config = resolveRunConfig(fixture, args.config)

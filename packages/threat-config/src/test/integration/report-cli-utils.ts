@@ -6,6 +6,7 @@
 import { readFile, readdir } from 'node:fs/promises'
 import { dirname, relative, resolve, sep } from 'node:path'
 
+import { hasFightEventsFile } from './fixture-files'
 import type { ConfigFixtureMetadata } from './helpers'
 
 export interface ReportCliHelpArgs {
@@ -171,7 +172,7 @@ export function reportCliUsage(): string {
     '    [--stdout]',
     '',
     'Notes:',
-    '  - Searches test/fixtures cache first by report + fight.',
+    '  - Searches src/test/fixtures cache first by report + fight.',
     '  - If missing, reuses fixtures:download and infers host from the report URL.',
     '  - URL must include fight and source query params.',
     '  - --enemy-id is the enemy target actor; source actor comes from URL ?source=.',
@@ -244,11 +245,20 @@ export async function findCachedFixtureByReportFight(
         return null
       }
 
-      if (metadata.reportCode !== reportCode || metadata.fightId !== fightId) {
+      if (metadata.reportCode !== reportCode) {
         return null
       }
 
       const fixtureDirectory = dirname(metadataPath)
+      const hasRequestedFightEvents = hasFightEventsFile(
+        fixtureDirectory,
+        fightId,
+      )
+
+      if (!hasRequestedFightEvents) {
+        return null
+      }
+
       const fixtureName = relative(fixturesRoot, fixtureDirectory)
         .split(sep)
         .join('/')

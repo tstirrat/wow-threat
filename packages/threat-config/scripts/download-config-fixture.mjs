@@ -5,7 +5,7 @@
  * Usage:
  *   pnpm --filter @wcl-threat/threat-config fixtures:download -- \
  *     --report-url "https://fresh.warcraftlogs.com/reports/f9yPamzBxQqhGndZ?fight=26&type=damage-done&source=19" \
- *     --name anniversary/naxx/patchwerk-fight-26 \
+ *     --name fresh/naxx \
  *     --focus-actor-id 12
  */
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
@@ -20,6 +20,19 @@ const HOSTS = {
   sod: 'https://sod.warcraftlogs.com',
 }
 const EVENTS_PAGE_LIMIT = 10000
+
+function slugifyFightName(fightName) {
+  const slug = fightName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  return slug.length > 0 ? slug : 'unknown-fight'
+}
+
+function fightEventsFileName(fightId, fightName) {
+  return `fight-${fightId}-${slugifyFightName(fightName)}-events.json`
+}
 
 const REPORT_QUERY = `
   query GetReport($code: String!) {
@@ -313,18 +326,7 @@ function printUsage() {
       '    [--focus-actor-id <ACTOR_ID>] \\',
       '    [--max-snapshot-lines <N>]',
       '',
-      'Alternative (legacy args):',
-      '  pnpm --filter @wcl-threat/threat-config fixtures:download -- \\',
-      '    --host fresh|vanilla|classic|sod|retail|<domain> \\',
-      '    --report <REPORT_CODE> \\',
-      '    --fight <FIGHT_ID> \\',
-      '    [--name <fixture/path>] \\',
-      '    [--output <absolute/or/relative/path>] \\',
-      '    [--focus-actor-id <ACTOR_ID>] \\',
-      '    [--max-snapshot-lines <N>]',
-      '',
       'Notes:',
-      '  - When --report-url is used, only host/report/fight are parsed from the URL.',
       '  - Source query params in the URL are ignored (all fight events are downloaded).',
       '',
       'Auth:',
@@ -342,18 +344,11 @@ async function main() {
     return
   }
 
-  const reportUrl =
-    args['report-url'] ??
-    (typeof args.report === 'string' &&
-    (args.report.startsWith('http://') || args.report.startsWith('https://'))
-      ? args.report
-      : undefined)
-
+  const reportUrl = args['report-url']
   const parsedReportUrl = reportUrl ? parseReportUrl(reportUrl) : null
-  const host = resolveHost(parsedReportUrl?.host ?? args.host)
-  const reportCode = parsedReportUrl?.reportCode ?? args.report
-  const fightId =
-    parsedReportUrl?.fightId ?? Number.parseInt(args.fight ?? '', 10)
+  const host = resolveHost(parsedReportUrl?.host)
+  const reportCode = parsedReportUrl?.reportCode
+  const fightId = parsedReportUrl?.fightId
   const focusActorIdRaw = args['focus-actor-id']
   const focusActorId = focusActorIdRaw
     ? Number.parseInt(focusActorIdRaw, 10)
@@ -375,7 +370,7 @@ async function main() {
   if (
     !host ||
     !reportCode ||
-    !Number.isFinite(fightId) ||
+    !Number.isFinite(fightId ?? Number.NaN) ||
     !clientId ||
     !clientSecret
   ) {
@@ -392,10 +387,10 @@ async function main() {
     throw new Error(`Invalid --max-snapshot-lines: ${maxSnapshotLinesRaw}`)
   }
 
-  const fixtureName = args.name ?? `${host.key}/${reportCode}/fight-${fightId}`
+  const fixtureName = args.name ?? `${host.key}/${reportCode}`
   const outputDir = args.output
     ? resolve(process.cwd(), args.output)
-    : resolve(packageRoot, 'test/fixtures', fixtureName)
+    : resolve(packageRoot, 'src/test/fixtures', fixtureName)
 
   console.log(`Using host: ${host.origin}`)
   console.log(`Downloading report ${reportCode} fight ${fightId}...`)
@@ -441,7 +436,7 @@ async function main() {
       query: EVENTS_QUERY,
       variables: {
         code: reportCode,
-        fightId,
+        fightId: fightId,
         startTime,
         endTime: fight.endTime,
         limit: EVENTS_PAGE_LIMIT,
@@ -488,7 +483,7 @@ async function main() {
     host: host.key,
     origin: host.origin,
     reportCode,
-    fightId,
+    fightId: fightId,
     fightName: fight.name,
     gameVersion: report.masterData.gameVersion,
     downloadedAt: new Date().toISOString(),
@@ -497,6 +492,7 @@ async function main() {
     maxSnapshotLines: Number.isFinite(maxSnapshotLines)
       ? maxSnapshotLines
       : undefined,
+    eventsFile: fightEventsFileName(fightId, fight.name),
   }
 
   await mkdir(outputDir, { recursive: true })
@@ -512,7 +508,7 @@ async function main() {
       'utf8',
     ),
     writeFile(
-      resolve(outputDir, 'events.json'),
+      resolve(outputDir, fightEventsFileName(fightId, fight.name)),
       `${JSON.stringify(events, null, 2)}\n`,
       'utf8',
     ),

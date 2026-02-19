@@ -1,0 +1,11 @@
+{
+  "host": "sod",
+  "origin": "https://sod.warcraftlogs.com",
+  "reportCode": "JvA4KLpyZ1fxrPgN",
+  "fightId": 14,
+  "fightName": "Fankriss the Unyielding",
+  "gameVersion": 2,
+  "downloadedAt": "2026-02-19T02:05:48.500Z",
+  "eventCount": 21595,
+  "eventsFile": "fight-14-fankriss-the-unyielding-events.json"
+}

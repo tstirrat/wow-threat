@@ -88,10 +88,7 @@ describe('findCachedFixtureByReportFight', () => {
     )
     tempDirectories.push(fixturesRoot)
 
-    const fixtureDirectory = resolve(
-      fixturesRoot,
-      'anniversary/naxx/patchwerk-fight-26',
-    )
+    const fixtureDirectory = resolve(fixturesRoot, 'fresh/naxx')
     await mkdir(fixtureDirectory, { recursive: true })
 
     await writeFile(
@@ -111,6 +108,11 @@ describe('findCachedFixtureByReportFight', () => {
       )}\n`,
       'utf8',
     )
+    await writeFile(
+      resolve(fixtureDirectory, 'fight-26-patchwerk-events.json'),
+      '[]\n',
+      'utf8',
+    )
 
     const match = await findCachedFixtureByReportFight(
       fixturesRoot,
@@ -118,7 +120,51 @@ describe('findCachedFixtureByReportFight', () => {
       26,
     )
 
-    expect(match?.fixtureName).toBe('anniversary/naxx/patchwerk-fight-26')
+    expect(match?.fixtureName).toBe('fresh/naxx')
     expect(match?.metadata.fightName).toBe('Patchwerk')
+  })
+
+  it('matches fight-specific event files even when metadata points at another fight', async () => {
+    const fixturesRoot = await mkdtemp(
+      resolve(tmpdir(), 'threat-config-fixtures-'),
+    )
+    tempDirectories.push(fixturesRoot)
+
+    const fixtureDirectory = resolve(fixturesRoot, 'sod/JvA4KLpyZ1fxrPgN')
+    await mkdir(fixtureDirectory, { recursive: true })
+
+    await Promise.all([
+      writeFile(
+        resolve(fixtureDirectory, 'metadata.json'),
+        `${JSON.stringify(
+          {
+            host: 'sod',
+            reportCode: 'JvA4KLpyZ1fxrPgN',
+            fightId: 12,
+            fightName: 'Other Fight',
+            gameVersion: 6,
+            downloadedAt: '2026-02-19T00:00:00.000Z',
+            eventCount: 321,
+          },
+          null,
+          2,
+        )}\n`,
+        'utf8',
+      ),
+      writeFile(
+        resolve(fixtureDirectory, 'fight-14-patchwerk-events.json'),
+        '[]\n',
+        'utf8',
+      ),
+    ])
+
+    const match = await findCachedFixtureByReportFight(
+      fixturesRoot,
+      'JvA4KLpyZ1fxrPgN',
+      14,
+    )
+
+    expect(match?.fixtureName).toBe('sod/JvA4KLpyZ1fxrPgN')
+    expect(match?.metadata.reportCode).toBe('JvA4KLpyZ1fxrPgN')
   })
 })

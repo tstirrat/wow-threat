@@ -16,6 +16,10 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { resolveConfig } from '../..'
+import {
+  hasAnyFightEventsFile,
+  resolveFixtureEventsFilePath,
+} from './fixture-files'
 
 export interface ConfigFixtureMetadata {
   host: string
@@ -26,6 +30,7 @@ export interface ConfigFixtureMetadata {
   gameVersion: number
   downloadedAt: string
   eventCount: number
+  eventsFile?: string
   focusActorId?: number
   maxSnapshotLines?: number
 }
@@ -91,10 +96,12 @@ async function loadJsonFile<T>(filePath: string): Promise<T> {
  * Check whether metadata, report, and events files exist for a fixture.
  */
 export function hasConfigFixture(fixtureName: string): boolean {
+  const directory = fixtureDirectory(fixtureName)
+
   return (
-    existsSync(fixtureFilePath(fixtureName, 'metadata.json')) &&
-    existsSync(fixtureFilePath(fixtureName, 'report.json')) &&
-    existsSync(fixtureFilePath(fixtureName, 'events.json'))
+    existsSync(resolve(directory, 'metadata.json')) &&
+    existsSync(resolve(directory, 'report.json')) &&
+    hasAnyFightEventsFile(directory)
   )
 }
 
@@ -108,15 +115,21 @@ export async function loadConfigFixture(
     return null
   }
 
-  const [metadata, report, events] = await Promise.all([
+  const directory = fixtureDirectory(fixtureName)
+  const [metadata, report] = await Promise.all([
     loadJsonFile<ConfigFixtureMetadata>(
       fixtureFilePath(fixtureName, 'metadata.json'),
     ),
     loadJsonFile<WCLReportResponse['data']['reportData']['report']>(
       fixtureFilePath(fixtureName, 'report.json'),
     ),
-    loadJsonFile<WCLEvent[]>(fixtureFilePath(fixtureName, 'events.json')),
   ])
+  const eventsPath = resolveFixtureEventsFilePath(
+    directory,
+    metadata.fightId,
+    metadata.fightName,
+  )
+  const events = await loadJsonFile<WCLEvent[]>(eventsPath)
 
   return {
     metadata,
