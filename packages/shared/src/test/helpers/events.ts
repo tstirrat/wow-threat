@@ -10,6 +10,7 @@ import {
   type ApplyBuffStackEvent,
   type ApplyDebuffEvent,
   type ApplyDebuffStackEvent,
+  type BeginCastEvent,
   type CastEvent,
   type CombatantInfoAura,
   type CombatantInfoEvent,
@@ -112,6 +113,28 @@ export function createCastEvent(
   return {
     timestamp: 1000,
     type: 'cast',
+    sourceID: 1,
+    targetID: 99,
+    abilityGameID: 1,
+    ...sanitizeEventOverrides(overrides),
+  }
+}
+
+/**
+ * Create a begincast event with default values
+ *
+ * Defaults:
+ * - timestamp: 1000
+ * - sourceID: 1 (player)
+ * - targetID: 99 (enemy)
+ * - Basic ability (id: 1)
+ */
+export function createBeginCastEvent(
+  overrides: EventOverrides<BeginCastEvent> = {},
+): BeginCastEvent {
+  return {
+    timestamp: 1000,
+    type: 'begincast',
     sourceID: 1,
     targetID: 99,
     abilityGameID: 1,

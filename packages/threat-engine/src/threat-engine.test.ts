@@ -11,6 +11,7 @@ import {
   createApplyBuffStackEvent,
   createApplyDebuffEvent,
   createApplyDebuffStackEvent,
+  createBeginCastEvent,
   createCastEvent,
   createCombatantInfoAura,
   createDamageEvent,
@@ -625,6 +626,77 @@ describe('processEvents', () => {
       expect(postCastDamageChange?.amount ?? 0).toBeGreaterThan(0)
       expect(postCastDamageChange?.total).toBe(
         (castThreatTotal ?? 0) + (postCastDamageChange?.amount ?? 0),
+      )
+    })
+
+    it('keeps dead players at zero threat until begincast activity marks them alive', () => {
+      const actorMap = new Map<number, Actor>([
+        [warriorActor.id, warriorActor],
+        [bossEnemy.id, { id: bossEnemy.id, name: 'Boss', class: null }],
+      ])
+
+      const events: WCLEvent[] = [
+        createDamageEvent({
+          timestamp: 1000,
+          sourceID: warriorActor.id,
+          targetID: bossEnemy.id,
+          amount: 100,
+        }),
+        {
+          timestamp: 1500,
+          type: 'death',
+          sourceID: bossEnemy.id,
+          sourceIsFriendly: false,
+          targetID: warriorActor.id,
+          targetIsFriendly: true,
+        },
+        createDamageEvent({
+          timestamp: 2000,
+          sourceID: warriorActor.id,
+          targetID: bossEnemy.id,
+          amount: 100,
+          tick: true,
+        }),
+        createBeginCastEvent({
+          timestamp: 2500,
+          sourceID: warriorActor.id,
+          targetID: bossEnemy.id,
+          abilityGameID: SPELLS.MOCK_ABILITY_1,
+        }),
+        createDamageEvent({
+          timestamp: 3000,
+          sourceID: warriorActor.id,
+          targetID: bossEnemy.id,
+          amount: 100,
+        }),
+      ]
+
+      const result = processEvents({
+        rawEvents: events,
+        actorMap,
+        enemies,
+        config: mockConfig,
+      })
+
+      const deadDotTick = result.augmentedEvents[2]
+      expect(deadDotTick?.threat?.changes).toBeUndefined()
+
+      const beginCastEvent = result.augmentedEvents[3]
+      expect(beginCastEvent?.type).toBe('begincast')
+      const beginCastThreatTotal = beginCastEvent?.threat?.changes?.[0]?.total
+
+      const postBeginCastDamage = result.augmentedEvents[4]
+      const postBeginCastDamageChange =
+        postBeginCastDamage?.threat?.changes?.[0]
+      expect(postBeginCastDamageChange).toBeDefined()
+      expect(postBeginCastDamageChange).toMatchObject({
+        sourceId: warriorActor.id,
+        targetId: bossEnemy.id,
+        operator: 'add',
+      })
+      expect(postBeginCastDamageChange?.amount ?? 0).toBeGreaterThan(0)
+      expect(postBeginCastDamageChange?.total).toBe(
+        (beginCastThreatTotal ?? 0) + (postBeginCastDamageChange?.amount ?? 0),
       )
     })
 

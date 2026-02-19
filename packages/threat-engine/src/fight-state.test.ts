@@ -6,6 +6,7 @@
  */
 import {
   createApplyBuffEvent,
+  createBeginCastEvent,
   createCombatantInfoEvent,
   createMockThreatConfig,
   createRemoveBuffEvent,
@@ -14,6 +15,7 @@ import {
   createApplyBuffStackEvent,
   createApplyDebuffEvent,
   createApplyDebuffStackEvent,
+  createCastEvent,
   createCombatantInfoAura,
   createDamageEvent,
   createRefreshBuffEvent,
@@ -860,7 +862,7 @@ describe('FightState', () => {
   })
 
   describe('engine lifecycle state', () => {
-    it('marks actors dead on death and alive on cast activity', () => {
+    it('marks actors dead on death and alive on cast and begincast activity', () => {
       const state = new FightState(defaultActorMap, testConfig)
 
       state.processEvent(
@@ -877,15 +879,40 @@ describe('FightState', () => {
       expect(state.isActorAlive({ id: 1 })).toBe(false)
 
       state.processEvent(
-        {
+        createBeginCastEvent({
           timestamp: 200,
-          type: 'cast',
           sourceID: 1,
           sourceIsFriendly: true,
           targetID: 25,
           targetIsFriendly: false,
           abilityGameID: 123,
+        }),
+        testConfig,
+      )
+      expect(state.isActorAlive({ id: 1 })).toBe(true)
+
+      state.processEvent(
+        {
+          timestamp: 250,
+          type: 'death',
+          sourceID: 25,
+          sourceIsFriendly: false,
+          targetID: 1,
+          targetIsFriendly: true,
         },
+        testConfig,
+      )
+      expect(state.isActorAlive({ id: 1 })).toBe(false)
+
+      state.processEvent(
+        createCastEvent({
+          timestamp: 300,
+          sourceID: 1,
+          sourceIsFriendly: true,
+          targetID: 25,
+          targetIsFriendly: false,
+          abilityGameID: 123,
+        }),
         testConfig,
       )
       expect(state.isActorAlive({ id: 1 })).toBe(true)
