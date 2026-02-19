@@ -6,6 +6,7 @@
  * real config evolution.
  */
 import {
+  createAbsorbedEvent,
   createApplyBuffEvent,
   createApplyBuffStackEvent,
   createApplyDebuffEvent,
@@ -33,6 +34,7 @@ import {
   type ThreatModifier,
 } from '@wcl-threat/shared'
 import {
+  type AbsorbedEvent,
   type DamageEvent,
   type GearItem,
   ResourceTypeCode,
@@ -87,6 +89,11 @@ const mockConfig = createMockThreatConfig({
     damage: (ctx: ThreatContext) => ({
       formula: '(base) 2 * damage',
       value: ctx.amount * 2,
+      splitAmongEnemies: false,
+    }),
+    absorbed: (ctx: ThreatContext) => ({
+      formula: '(base) absorbAmount',
+      value: ctx.amount,
       splitAmongEnemies: false,
     }),
     heal: (ctx: ThreatContext) => ({
@@ -2246,6 +2253,7 @@ describe('ability-specific threat calculation', () => {
           value: 999,
           splitAmongEnemies: false,
         }),
+        absorbed: mockConfig.baseThreat.absorbed,
         heal: mockConfig.baseThreat.heal,
         energize: mockConfig.baseThreat.energize,
       },
@@ -2518,6 +2526,44 @@ describe('base threat calculations', () => {
     expect(result.augmentedEvents[0]?.threat!.calculation.baseThreat).toBe(15)
   })
 
+  it('attributes absorbed threat to the absorbed caster sourceID', () => {
+    const actorMap = new Map<number, Actor>([
+      [warriorActor.id, warriorActor],
+      [priestActor.id, priestActor],
+    ])
+    const events: WCLEvent[] = [
+      createAbsorbedEvent({
+        sourceID: priestActor.id,
+        targetID: warriorActor.id,
+        attackerID: bossEnemy.id,
+        abilityGameID: 10901,
+        amount: 400,
+      }),
+    ]
+
+    const result = processEvents({
+      rawEvents: events,
+      actorMap,
+      enemies,
+      config: mockConfig,
+    })
+
+    expect(result.augmentedEvents).toHaveLength(1)
+    expect(result.augmentedEvents[0]?.type).toBe('absorbed')
+    expect(result.augmentedEvents[0]?.threat!.calculation.baseThreat).toBe(400)
+    expect(result.augmentedEvents[0]?.threat!.calculation.isSplit).toBe(false)
+    expect(result.augmentedEvents[0]?.threat!.changes).toEqual([
+      {
+        sourceId: priestActor.id,
+        targetId: bossEnemy.id,
+        targetInstance: bossEnemy.instance,
+        operator: 'add',
+        amount: 400,
+        total: 400,
+      },
+    ])
+  })
+
   it('preserves numeric resource type codes on augmented events', () => {
     const resourceAwareConfig = createMockThreatConfig({
       ...mockConfig,
@@ -2629,6 +2675,36 @@ describe('augmented event structure', () => {
     expect(augmented?.mitigated).toBe(50)
     expect(augmented?.hitType).toBe('hit')
     expect(augmented?.tick).toBe(false)
+  })
+
+  it('includes absorbed event passthrough fields in augmented output', () => {
+    const actorMap = new Map<number, Actor>([
+      [warriorActor.id, warriorActor],
+      [priestActor.id, priestActor],
+    ])
+    const absorbedEvent: AbsorbedEvent = {
+      timestamp: 1000,
+      type: 'absorbed',
+      sourceID: priestActor.id,
+      targetID: warriorActor.id,
+      abilityGameID: 10901,
+      amount: 350,
+      attackerID: bossEnemy.id,
+      extraAbilityGameID: 1,
+    }
+
+    const result = processEvents({
+      rawEvents: [absorbedEvent],
+      actorMap,
+      enemies,
+      config: mockConfig,
+    })
+
+    const augmented = result.augmentedEvents[0]
+    expect(augmented?.type).toBe('absorbed')
+    expect(augmented?.amount).toBe(350)
+    expect(augmented?.attackerID).toBe(bossEnemy.id)
+    expect(augmented?.extraAbilityGameID).toBe(1)
   })
 
   it('includes threat calculation details', () => {

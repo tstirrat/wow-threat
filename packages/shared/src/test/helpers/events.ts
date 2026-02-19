@@ -5,6 +5,7 @@
  * Reduces boilerplate in test files.
  */
 import {
+  type AbsorbedEvent,
   type ApplyBuffEvent,
   type ApplyBuffStackEvent,
   type ApplyDebuffEvent,
@@ -68,6 +69,30 @@ export function createDamageEvent(
     hitType: 'hit',
     tick: false,
     multistrike: false,
+    ...sanitizeEventOverrides(overrides),
+  }
+}
+
+/**
+ * Create an absorbed event with default values
+ *
+ * Defaults:
+ * - timestamp: 1000
+ * - sourceID: 2 (caster/healer)
+ * - targetID: 1 (shielded target)
+ * - amount: 100
+ * - Basic absorb ability (id: 1)
+ */
+export function createAbsorbedEvent(
+  overrides: EventOverrides<AbsorbedEvent> = {},
+): AbsorbedEvent {
+  return {
+    timestamp: 1000,
+    type: 'absorbed',
+    sourceID: 2,
+    targetID: 1,
+    abilityGameID: 1,
+    amount: 100,
     ...sanitizeEventOverrides(overrides),
   }
 }

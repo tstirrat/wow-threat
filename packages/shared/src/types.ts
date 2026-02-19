@@ -261,6 +261,7 @@ export type ThreatFormula = (
 
 export interface BaseThreatConfig {
   damage: ThreatFormula
+  absorbed: ThreatFormula
   heal: ThreatFormula
   energize: ThreatFormula
 }
@@ -452,6 +453,8 @@ export interface AugmentedEvent {
   waste?: number
   stacks?: number
   killerID?: number
+  attackerID?: number
+  extraAbilityGameID?: number
   auras?: CombatantInfoAura[]
   talents?: TalentPoints
 

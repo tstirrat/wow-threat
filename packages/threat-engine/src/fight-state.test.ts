@@ -62,6 +62,11 @@ const testConfig = createMockThreatConfig({
       value: ctx.amount,
       splitAmongEnemies: false,
     }),
+    absorbed: (ctx: ThreatContext) => ({
+      formula: 'amt',
+      value: ctx.amount,
+      splitAmongEnemies: false,
+    }),
     heal: (ctx: ThreatContext) => ({
       formula: 'amt * 0.5',
       value: ctx.amount * 0.5,

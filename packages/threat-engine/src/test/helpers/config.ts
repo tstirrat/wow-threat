@@ -10,7 +10,7 @@ import type { ThreatConfig, ThreatContext } from '@wcl-threat/shared'
  * Create a minimal mock threat configuration for testing
  *
  * Default config includes:
- * - Simple base threat formulas (damage 1:1, heal 0.5x, energize 5x)
+ * - Simple base threat formulas (damage 1:1, absorbed 1:1, heal 0.5x, energize 5x)
  * - Warrior (baseThreatFactor 1.0) and Rogue (baseThreatFactor 0.71)
  * - Empty aura modifiers and abilities
  *
@@ -48,6 +48,11 @@ export function createMockThreatConfig(
 
     baseThreat: {
       damage: (ctx: ThreatContext) => ({
+        formula: 'amount',
+        value: ctx.amount,
+        splitAmongEnemies: false,
+      }),
+      absorbed: (ctx: ThreatContext) => ({
         formula: 'amount',
         value: ctx.amount,
         splitAmongEnemies: false,

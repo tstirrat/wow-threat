@@ -22,7 +22,7 @@ export const InitialAuras: FC<InitialAurasProps> = ({ auras, wowhead }) => {
 
   return (
     <div className="space-y-1">
-      <div className="text-xs uppercase tracking-wide text-muted">
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">
         Initial auras
       </div>
       <div className="flex flex-wrap gap-1">

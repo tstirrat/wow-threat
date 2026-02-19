@@ -19,6 +19,7 @@ describe('ActorState', () => {
       expect(positionUpdateActorByEventType).toEqual(
         new Map([
           ['damage', 'target'],
+          ['absorbed', 'target'],
           ['heal', 'target'],
           ['applybuff', 'target'],
           ['refreshbuff', 'target'],

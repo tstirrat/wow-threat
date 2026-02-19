@@ -18,6 +18,16 @@ export const baseThreat: BaseThreatConfig = {
   damage: threat(),
 
   /**
+   * Absorbed threat: absorbed amount generates threat on a single target.
+   * Threat is attributed to event.sourceID (absorbed-event caster in WCL payloads).
+   */
+  absorbed: (ctx) => ({
+    formula: 'absorbAmount',
+    value: ctx.amount,
+    splitAmongEnemies: false,
+  }),
+
+  /**
    * Healing threat: effective healing * 0.5, split among enemies
    * Overheal does not generate threat (handled in getEventAmount)
    */

@@ -5,6 +5,7 @@
 
 export type EventType =
   | 'damage'
+  | 'absorbed'
   | 'heal'
   | 'applybuff'
   | 'refreshbuff'
@@ -82,6 +83,14 @@ export interface DamageEvent extends BaseWCLEvent {
   hitType: HitType
   tick: boolean // DoT tick
   multistrike: boolean
+}
+
+export interface AbsorbedEvent extends BaseWCLEvent {
+  type: 'absorbed'
+  abilityGameID: number
+  amount: number
+  attackerID?: number
+  extraAbilityGameID?: number
 }
 
 export interface HealEvent extends BaseWCLEvent {
@@ -253,6 +262,7 @@ type LegacyFriendlinessFlags = {
 
 export type WCLEvent = (
   | DamageEvent
+  | AbsorbedEvent
   | HealEvent
   | ApplyBuffEvent
   | RefreshBuffEvent

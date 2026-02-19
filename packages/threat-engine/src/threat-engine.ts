@@ -321,21 +321,16 @@ function applyThreat(
       }
     }
   } else if (calculation.modifiedThreat !== 0) {
-    // single target event
-    const targetInstance = event.targetInstance ?? 0
-    const isEnemyTarget = enemies.some(
-      (enemy) =>
-        enemy.id === event.targetID && enemy.instance === targetInstance,
-    )
-    if (!isEnemyTarget) {
+    const threatTarget = resolveThreatTarget(event, enemies)
+    if (!threatTarget) {
       return changes
     }
 
     const change = applyThreatDelta(
       fightState,
       threatRecipient,
-      event.targetID,
-      targetInstance,
+      threatTarget.targetId,
+      threatTarget.targetInstance,
       calculation.modifiedThreat,
     )
     if (change) {
@@ -343,6 +338,34 @@ function applyThreat(
     }
   }
   return changes
+}
+
+function resolveThreatTarget(
+  event: FriendlyResolvedEvent,
+  enemies: Enemy[],
+): { targetId: number; targetInstance: number } | null {
+  if (event.type === 'absorbed' && typeof event.attackerID === 'number') {
+    const matchedEnemy = enemies.find((enemy) => enemy.id === event.attackerID)
+    if (matchedEnemy) {
+      return {
+        targetId: matchedEnemy.id,
+        targetInstance: matchedEnemy.instance,
+      }
+    }
+  }
+
+  const targetInstance = event.targetInstance ?? 0
+  const matchedEnemy = enemies.find(
+    (enemy) => enemy.id === event.targetID && enemy.instance === targetInstance,
+  )
+  if (!matchedEnemy) {
+    return null
+  }
+
+  return {
+    targetId: matchedEnemy.id,
+    targetInstance: matchedEnemy.instance,
+  }
 }
 
 /** Apply additive threat change and return the effective delta after clamping */
@@ -795,6 +818,12 @@ function buildAugmentedEvent(
   if ('killerID' in event) {
     base.killerID = event.killerID
   }
+  if ('attackerID' in event) {
+    base.attackerID = event.attackerID
+  }
+  if ('extraAbilityGameID' in event) {
+    base.extraAbilityGameID = event.extraAbilityGameID
+  }
   if ('auras' in event) {
     base.auras = event.auras
   }
@@ -902,6 +931,8 @@ function getEventAmount(event: WCLEvent): number {
   switch (event.type) {
     case 'damage':
       return event.amount
+    case 'absorbed':
+      return event.amount
     case 'heal': {
       // Only effective healing generates threat (exclude overheal)
       const overheal = 'overheal' in event ? event.overheal : 0
@@ -942,6 +973,8 @@ function getFormulaResult(ctx: ThreatContext, config: ThreatConfig) {
   switch (event.type) {
     case 'damage':
       return config.baseThreat.damage(ctx) ?? NO_THREAT_FORMULA_RESULT
+    case 'absorbed':
+      return config.baseThreat.absorbed(ctx) ?? NO_THREAT_FORMULA_RESULT
     case 'heal':
       return config.baseThreat.heal(ctx) ?? NO_THREAT_FORMULA_RESULT
     case 'energize':

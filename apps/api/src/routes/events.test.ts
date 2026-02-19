@@ -3,6 +3,7 @@
  */
 import type { ApiError } from '@/middleware/error'
 import {
+  createAbsorbedEvent,
   createApplyBuffEvent,
   createDamageEvent,
   createHealEvent,
@@ -40,6 +41,15 @@ const mockEvents = [
     absorbed: 0,
     overheal: 500,
     tick: false,
+  }),
+  createAbsorbedEvent({
+    timestamp: 2500,
+    sourceID: 2,
+    targetID: 1,
+    abilityGameID: 10901,
+    amount: 400,
+    attackerID: 25,
+    extraAbilityGameID: 1,
   }),
   createApplyBuffEvent({
     timestamp: 3000,
@@ -115,6 +125,24 @@ describe('Events API', () => {
 
       expect(healEvent).toBeDefined()
       expect(healEvent!.threat).toBeDefined()
+    })
+
+    it('preserves absorbed event passthrough fields', async () => {
+      const res = await app.request(
+        'http://localhost/v1/reports/ABC123xyz/fights/1/events',
+        {},
+        createMockBindings(),
+      )
+
+      const data: AugmentedEventsResponse = await res.json()
+      const absorbedEvent = data.events.find(
+        (e: { type: string }) => e.type === 'absorbed',
+      )
+
+      expect(absorbedEvent).toBeDefined()
+      expect(absorbedEvent?.attackerID).toBe(25)
+      expect(absorbedEvent?.extraAbilityGameID).toBe(1)
+      expect(absorbedEvent?.threat?.calculation.isSplit).toBe(false)
     })
 
     it('returns event counts in summary', async () => {

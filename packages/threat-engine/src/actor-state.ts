@@ -38,6 +38,7 @@ export const positionUpdateActorByEventType: Map<
   'source' | 'target'
 > = new Map<WCLEvent['type'], 'source' | 'target'>([
   ['damage', 'target'],
+  ['absorbed', 'target'],
   ['heal', 'target'],
   ['applybuff', 'target'],
   ['refreshbuff', 'target'],
