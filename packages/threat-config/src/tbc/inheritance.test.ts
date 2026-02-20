@@ -4,7 +4,6 @@
 import { describe, expect, it } from 'vitest'
 
 import { druidConfig as eraDruidConfig } from '../era/classes/druid'
-import { hunterConfig as eraHunterConfig } from '../era/classes/hunter'
 import { paladinConfig as eraPaladinConfig } from '../era/classes/paladin'
 import { priestConfig as eraPriestConfig } from '../era/classes/priest'
 import { rogueConfig as eraRogueConfig } from '../era/classes/rogue'
@@ -43,9 +42,7 @@ describe('anniversary deltas', () => {
     expect(anniversaryNaxxAbilities[28308]).not.toBe(eraNaxxAbilities[28308])
   })
 
-  it('keeps hunter unchanged and overrides other tbc classes', () => {
-    expect(anniversaryHunterConfig).toBe(eraHunterConfig)
-
+  it('keeps unchanged tbc classes shared by reference and overrides others', () => {
     expect(anniversaryDruidConfig).not.toBe(eraDruidConfig)
     expect(anniversaryWarriorConfig).not.toBe(eraWarriorConfig)
     expect(anniversaryPaladinConfig).not.toBe(eraPaladinConfig)
@@ -65,6 +62,7 @@ describe('anniversary deltas', () => {
     expect(anniversaryShamanConfig.abilities[25464]).toBeDefined()
     expect(anniversaryWarlockConfig.abilities[29858]).toBeDefined()
     expect(anniversaryMageConfig.abilities[66]).toBeDefined()
+    expect(anniversaryHunterConfig.abilities[27020]).toBeDefined()
   })
 
   it('registers tbc raid abilities from karazhan/ssc/tk/gruul/bt', () => {

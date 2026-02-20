@@ -14,6 +14,7 @@ import type {
 } from '@wcl-threat/shared/src/types'
 import { describe, expect, it, vi } from 'vitest'
 
+import { createCastContext } from '../../test/helpers/context'
 import { Spells, hunterConfig } from './hunter'
 
 const HunterDamageSpells = {
@@ -99,6 +100,25 @@ function createMisdirectionHandler(
 }
 
 describe('tbc hunter config', () => {
+  describe('distracting shot', () => {
+    it('adds distracting shot rank 7', () => {
+      const formula = hunterConfig.abilities[Spells.DistractingShotR7]!
+
+      const result = assertDefined(
+        formula?.(
+          createCastContext({
+            sourceID: 1,
+            targetID: 10,
+            abilityGameID: Spells.DistractingShotR7,
+          }),
+        ),
+      )
+
+      expect(result.formula).toBe('amt + 900')
+      expect(result.value).toBe(900)
+    })
+  })
+
   describe('misdirection', () => {
     it('installs an interceptor for redirect behavior', () => {
       const formula = hunterConfig.abilities[Spells.Misdirection]

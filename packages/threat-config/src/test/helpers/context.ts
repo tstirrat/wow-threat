@@ -12,6 +12,7 @@ import type {
   ApplyDebuffEvent,
   CastEvent,
   DamageEvent,
+  WCLEvent,
 } from '@wcl-threat/wcl-types'
 
 type LegacyFriendlyFlagOverrides = {
@@ -27,7 +28,7 @@ export function createContext(
 ): ThreatContext {
   return {
     event,
-    amount: 100,
+    amount: eventHasAmount(event) ? 100 : 0,
     sourceAuras,
     targetAuras: new Set(),
     sourceActor: { id: event.sourceID, name: 'Source', class: 'warrior' },
@@ -36,6 +37,16 @@ export function createContext(
     spellSchoolMask: 0,
     actors: createMockActorContext(),
   }
+}
+
+function eventHasAmount(event: WCLEvent) {
+  return (
+    event.type === 'damage' ||
+    event.type === 'heal' ||
+    event.type === 'resourcechange' ||
+    event.type === 'absorbed' ||
+    event.type === 'energize'
+  )
 }
 
 export function createDamageContext(

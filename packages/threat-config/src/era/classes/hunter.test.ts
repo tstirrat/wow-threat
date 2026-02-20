@@ -5,6 +5,7 @@ import { createDamageEvent, createMockActorContext } from '@wcl-threat/shared'
 import type { ThreatContext } from '@wcl-threat/shared/src/types'
 import { describe, expect, it } from 'vitest'
 
+import { createCastContext } from '../../test/helpers/context'
 import { Spells, hunterConfig } from './hunter'
 
 function assertDefined<T>(value: T | undefined): T {
@@ -49,14 +50,14 @@ describe('era hunter config', () => {
       const formula = hunterConfig.abilities[Spells.DistractingShotR1]
       const result = assertDefined(
         formula?.(
-          createMockContext({
-            amount: 100,
+          createCastContext({
+            abilityGameID: Spells.DistractingShotR1,
           }),
         ),
       )
 
       expect(result.formula).toBe('amt + 110')
-      expect(result.value).toBe(210)
+      expect(result.value).toBe(110)
     })
 
     it('returns negative threat for disengage', () => {
