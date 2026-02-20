@@ -11,9 +11,18 @@ export interface Bindings {
   // WCL API credentials
   WCL_CLIENT_ID: string
   WCL_CLIENT_SECRET: string
+  WCL_OAUTH_REDIRECT_URI: string
 
-  // API authentication
-  API_KEY_SALT: string
+  // Firebase/Firestore credentials
+  FIREBASE_PROJECT_ID: string
+  FIREBASE_CLIENT_EMAIL: string
+  FIREBASE_PRIVATE_KEY: string
+  FIRESTORE_PROJECT_ID: string
+
+  // Security and CORS settings
+  WCL_TOKEN_ENCRYPTION_KEY: string
+  BRIDGE_CODE_SIGNING_SECRET: string
+  ALLOWED_ORIGINS: string
 
   // KV Namespaces
   WCL_CACHE: KVNamespace
@@ -24,6 +33,7 @@ export interface Bindings {
 export interface Variables {
   requestId: string
   startTime: number
+  uid?: string
 }
 
 export interface HealthCheckResponse {

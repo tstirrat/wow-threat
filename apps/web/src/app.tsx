@@ -1,6 +1,7 @@
 /**
  * Root application component with providers.
  */
+import { AuthProvider } from '@/auth/auth-provider'
 import { ThemeProvider } from '@/components/theme-provider'
 import { QueryClientProvider } from '@tanstack/react-query'
 import type { FC } from 'react'
@@ -13,10 +14,12 @@ const queryClient = createQueryClient()
 
 export const App: FC = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <RouterProvider router={router} />
-      </ThemeProvider>
-    </QueryClientProvider>
+    <AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+          <RouterProvider router={router} />
+        </ThemeProvider>
+      </QueryClientProvider>
+    </AuthProvider>
   )
 }

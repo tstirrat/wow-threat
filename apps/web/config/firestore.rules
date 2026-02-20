@@ -2,6 +2,22 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    match /wcl_auth_tokens/{uid} {
+      allow read, write: if false;
+    }
+
+    match /wcl_bridge_codes/{code} {
+      allow read, write: if false;
+    }
+
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    match /recent_reports/{uid}/items/{id} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

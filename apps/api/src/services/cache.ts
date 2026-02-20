@@ -14,6 +14,21 @@ export interface CacheService {
   delete(key: string): Promise<void>
 }
 
+export type CacheVisibility = 'public' | 'private'
+
+/** Normalize report visibility; missing/invalid values are treated as private. */
+export function normalizeVisibility(visibility: unknown): CacheVisibility {
+  return visibility === 'public' ? 'public' : 'private'
+}
+
+function resolveVisibilityScope(visibility: unknown, uid?: string): string {
+  if (normalizeVisibility(visibility) === 'public') {
+    return 'shared'
+  }
+
+  return `uid:${uid?.trim() || 'anonymous'}`
+}
+
 /**
  * Production cache using Cloudflare KV
  */
@@ -130,17 +145,29 @@ export function createCache(
 // Cache key builders
 export const CacheKeys = {
   wclToken: () => 'wcl:token',
-  report: (code: string) => `wcl:report:${code}`,
-  fights: (code: string) => `wcl:fights:${code}`,
-  wclEventsSchemaVersion: 'v2',
+  reportSchemaVersion: 'v3',
+  report: (code: string, visibility: unknown, uid?: string) =>
+    `wcl:report:${CacheKeys.reportSchemaVersion}:${code}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
+  fightsSchemaVersion: 'v2',
+  fights: (code: string, visibility: unknown, uid?: string) =>
+    `wcl:fights:${CacheKeys.fightsSchemaVersion}:${code}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
+  wclEventsSchemaVersion: 'v3',
   events: (
     code: string,
     fightId: number,
+    visibility: unknown,
+    uid?: string,
     startTime?: number,
     endTime?: number,
   ) =>
-    `wcl:events:${CacheKeys.wclEventsSchemaVersion}:${code}:${fightId}:start:${startTime ?? 'full'}:end:${endTime ?? 'full'}`,
-  augmentedSchemaVersion: 'v4',
-  augmentedEvents: (code: string, fightId: number, configVersion: string) =>
-    `augmented:${CacheKeys.augmentedSchemaVersion}:${code}:${fightId}:${configVersion}`,
+    `wcl:events:${CacheKeys.wclEventsSchemaVersion}:${code}:${fightId}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}:start:${startTime ?? 'full'}:end:${endTime ?? 'full'}`,
+  augmentedSchemaVersion: 'v5',
+  augmentedEvents: (
+    code: string,
+    fightId: number,
+    configVersion: string,
+    visibility: unknown,
+    uid?: string,
+  ) =>
+    `augmented:${CacheKeys.augmentedSchemaVersion}:${code}:${fightId}:${configVersion}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
 }

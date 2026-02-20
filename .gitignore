@@ -45,5 +45,4 @@ coverage/
 *.tsbuildinfo
 
 # Playwright
-apps/web/test-results/
 packages/threat-config/src/test/fixtures/**/*.txt

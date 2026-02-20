@@ -11,7 +11,12 @@ import type {
 } from '@wcl-threat/wcl-types'
 import { Hono } from 'hono'
 
-import { invalidReportCode, reportNotFound } from '../middleware/error'
+import {
+  invalidReportCode,
+  reportNotFound,
+  unauthorized,
+} from '../middleware/error'
+import { normalizeVisibility } from '../services/cache'
 import { WCLClient } from '../services/wcl'
 import type { ReportResponse } from '../types/api'
 import {
@@ -44,7 +49,12 @@ reportRoutes.get('/:code', async (c) => {
     throw invalidReportCode(code || 'empty')
   }
 
-  const wcl = new WCLClient(c.env)
+  const uid = c.get('uid')
+  if (!uid) {
+    throw unauthorized('Missing authenticated uid context')
+  }
+
+  const wcl = new WCLClient(c.env, uid)
   const data = await wcl.getReport(code)
 
   if (!data?.reportData?.report) {
@@ -52,6 +62,7 @@ reportRoutes.get('/:code', async (c) => {
   }
 
   const report = data.reportData.report
+  const visibility = normalizeVisibility(report.visibility)
   const threatConfig = resolveConfigOrNull({
     report,
   })
@@ -60,12 +71,15 @@ reportRoutes.get('/:code', async (c) => {
   const cacheControl =
     c.env.ENVIRONMENT === 'development'
       ? 'no-store, no-cache, must-revalidate'
-      : 'public, max-age=31536000, immutable'
+      : visibility === 'public'
+        ? 'public, max-age=31536000, immutable'
+        : 'private, no-store'
 
   return c.json<ReportResponse>(
     {
       code: report.code,
       title: report.title,
+      visibility,
       owner: report.owner.name,
       guild: report.guild
         ? {

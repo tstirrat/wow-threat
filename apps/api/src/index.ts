@@ -13,7 +13,9 @@ import { timing } from 'hono/timing'
 
 import { authMiddleware } from './middleware/auth'
 import { errorHandler } from './middleware/error'
+import { authRoutes } from './routes/auth'
 import { reportRoutes } from './routes/reports'
+import { isOriginAllowed, parseAllowedOrigins } from './services/origins'
 import type { Bindings, Variables } from './types/bindings'
 
 const app = new Hono<{ Bindings: Bindings; Variables: Variables }>()
@@ -25,18 +27,38 @@ app.use('*', async (c, next) => {
   await next()
 })
 
+// Structured access logging
+app.use('*', async (c, next) => {
+  await next()
+
+  console.info(
+    JSON.stringify({
+      durationMs: Date.now() - c.get('startTime'),
+      method: c.req.method,
+      path: c.req.path,
+      requestId: c.get('requestId'),
+      status: c.res.status,
+      uid: c.get('uid') ?? null,
+    }),
+  )
+})
+
 // Global middleware
 app.use('*', timing())
 app.use('*', secureHeaders())
 app.use(
   '*',
   cors({
-    origin: [
-      'https://wcl-threat.dev',
-      'http://localhost:3000',
-      'http://localhost:5173',
-      'http://localhost:5174',
-    ],
+    origin: (requestOrigin, c) => {
+      const allowedOrigins = parseAllowedOrigins(c.env.ALLOWED_ORIGINS)
+      if (!requestOrigin) {
+        return allowedOrigins[0] ?? ''
+      }
+
+      return isOriginAllowed(requestOrigin, allowedOrigins)
+        ? requestOrigin
+        : (allowedOrigins[0] ?? '')
+    },
     credentials: true,
   }),
 )
@@ -54,6 +76,9 @@ app.get('/health', (c) =>
     requestId: c.get('requestId'),
   }),
 )
+
+// Authentication routes (no /v1 auth middleware)
+app.route('/auth', authRoutes)
 
 // API routes (with auth)
 const api = new Hono<{ Bindings: Bindings; Variables: Variables }>()

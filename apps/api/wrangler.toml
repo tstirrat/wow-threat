@@ -1,4 +1,4 @@
-name = "wcl-threat-api"
+name = "wow-threat-api"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 compatibility_flags = ["nodejs_compat"]
@@ -8,28 +8,35 @@ enabled = true
 
 [vars]
 ENVIRONMENT = "production"
+WCL_OAUTH_REDIRECT_URI = "https://wow-threat-api.hardlyworkin.workers.dev/auth/wcl/callback"
+FIREBASE_PROJECT_ID = "wow-threat"
+FIRESTORE_PROJECT_ID = "wow-threat"
+ALLOWED_ORIGINS = "https://wow-threat.web.app,http://localhost:5173,http://localhost:5174"
 
 # KV Namespaces - IDs to be set after creation
 [[kv_namespaces]]
 binding = "WCL_CACHE"
-id = "YOUR_WCL_CACHE_ID"
-preview_id = "YOUR_WCL_CACHE_PREVIEW_ID"
+id = "b3e631b8283b444390326bbb52ccbda3"
+preview_id = "b3e631b8283b444390326bbb52ccbda3"
 
 [[kv_namespaces]]
 binding = "AUGMENTED_CACHE"
-id = "YOUR_AUGMENTED_CACHE_ID"
-preview_id = "YOUR_AUGMENTED_CACHE_PREVIEW_ID"
+id = "ed12aa0b5d354c84a8874d961b430d54"
+preview_id = "ed12aa0b5d354c84a8874d961b430d54"
 
 # Secrets (set via `wrangler secret put`)
 # WCL_CLIENT_ID
 # WCL_CLIENT_SECRET
-# API_KEY_SALT
+# FIREBASE_CLIENT_EMAIL
+# FIREBASE_PRIVATE_KEY
+# WCL_TOKEN_ENCRYPTION_KEY
+# BRIDGE_CODE_SIGNING_SECRET
 
 [env.staging]
-name = "wcl-threat-api-staging"
-vars = { ENVIRONMENT = "staging" }
+name = "wow-threat-api-staging"
+vars = { ENVIRONMENT = "staging", WCL_OAUTH_REDIRECT_URI = "https://staging-wow-threat-api.hardlyworkin.workers.dev/auth/wcl/callback", FIREBASE_PROJECT_ID = "wow-threat", FIRESTORE_PROJECT_ID = "wow-threat", ALLOWED_ORIGINS = "https://staging-wow-threat.web.app,https://wow-threat.web.app,http://localhost:5173,http://localhost:5174" }
 
 [env.development]
-name = "wcl-threat-api-dev"
-vars = { ENVIRONMENT = "development" }
+name = "wow-threat-api-dev"
+vars = { ENVIRONMENT = "development", WCL_OAUTH_REDIRECT_URI = "http://localhost:8787/auth/wcl/callback", FIREBASE_PROJECT_ID = "wow-threat", FIRESTORE_PROJECT_ID = "wow-threat", ALLOWED_ORIGINS = "http://localhost:5173,http://localhost:5174" }
 # KV bindings are optional in development - memory cache used instead

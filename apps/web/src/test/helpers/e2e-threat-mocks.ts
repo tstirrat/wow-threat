@@ -167,6 +167,7 @@ export const e2eReportResponse: ReportResponse = {
   ],
   actors: reportActors,
   code: e2eReportId,
+  visibility: 'public',
   endTime: 1400000,
   fights: [
     {

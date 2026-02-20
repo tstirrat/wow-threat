@@ -11,7 +11,9 @@ import {
   fightNotFound,
   invalidFightId,
   reportNotFound,
+  unauthorized,
 } from '../middleware/error'
+import { normalizeVisibility } from '../services/cache'
 import { WCLClient } from '../services/wcl'
 import type { FightsResponse } from '../types/api'
 import { toReportActorSummary } from '../types/api-transformers'
@@ -39,7 +41,12 @@ fightsRoutes.get('/:id', async (c) => {
     throw invalidFightId(idParam)
   }
 
-  const wcl = new WCLClient(c.env)
+  const uid = c.get('uid')
+  if (!uid) {
+    throw unauthorized('Missing authenticated uid context')
+  }
+
+  const wcl = new WCLClient(c.env, uid)
   const data = await wcl.getReport(code)
 
   if (!data?.reportData?.report) {
@@ -47,6 +54,7 @@ fightsRoutes.get('/:id', async (c) => {
   }
 
   const report = data.reportData.report
+  const visibility = normalizeVisibility(report.visibility)
 
   // Find the specific fight
   const fight = report.fights.find((f) => f.id === fightId)
@@ -93,7 +101,9 @@ fightsRoutes.get('/:id', async (c) => {
   const cacheControl =
     c.env.ENVIRONMENT === 'development'
       ? 'no-store, no-cache, must-revalidate'
-      : 'public, max-age=31536000, immutable'
+      : visibility === 'public'
+        ? 'public, max-age=31536000, immutable'
+        : 'private, no-store'
 
   return c.json<FightsResponse>(
     {

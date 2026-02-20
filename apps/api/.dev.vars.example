@@ -1,6 +1,15 @@
 # WCL API Credentials
 WCL_CLIENT_ID=your_client_id_here
 WCL_CLIENT_SECRET=your_client_secret_here
+WCL_OAUTH_REDIRECT_URI=http://localhost:8787/auth/wcl/callback
 
-# API Authentication
-API_KEY_SALT=your_random_salt_here
+# Firebase / Firestore
+FIREBASE_PROJECT_ID=wow-threat
+FIREBASE_CLIENT_EMAIL=your_service_account_email_here
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+FIRESTORE_PROJECT_ID=wow-threat
+
+# Security + CORS
+WCL_TOKEN_ENCRYPTION_KEY=your_32_byte_encryption_key_here
+BRIDGE_CODE_SIGNING_SECRET=your_bridge_hmac_secret_here
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5174

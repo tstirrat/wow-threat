@@ -20,8 +20,9 @@ import {
   invalidFightId,
   invalidGameVersion,
   reportNotFound,
+  unauthorized,
 } from '../middleware/error'
-import { CacheKeys, createCache } from '../services/cache'
+import { CacheKeys, createCache, normalizeVisibility } from '../services/cache'
 import { WCLClient } from '../services/wcl'
 import type { AugmentedEventsResponse } from '../types/api'
 import type { Bindings, Variables } from '../types/bindings'
@@ -48,7 +49,12 @@ eventsRoutes.get('/', async (c) => {
     throw invalidFightId(idParam)
   }
 
-  const wcl = new WCLClient(c.env)
+  const uid = c.get('uid')
+  if (!uid) {
+    throw unauthorized('Missing authenticated uid context')
+  }
+
+  const wcl = new WCLClient(c.env, uid)
 
   // Get report to find game version and fight info
   const reportData = await wcl.getReport(code)
@@ -57,6 +63,7 @@ eventsRoutes.get('/', async (c) => {
   }
 
   const report = reportData.reportData.report
+  const visibility = normalizeVisibility(report.visibility)
   const fight = report.fights.find((f) => f.id === fightId)
   if (!fight) {
     throw fightNotFound(code, fightId)
@@ -89,7 +96,13 @@ eventsRoutes.get('/', async (c) => {
 
   // Check augmented cache
   const augmentedCache = createCache(c.env, 'augmented')
-  const cacheKey = CacheKeys.augmentedEvents(code, fightId, configVersion)
+  const cacheKey = CacheKeys.augmentedEvents(
+    code,
+    fightId,
+    configVersion,
+    visibility,
+    visibility === 'private' ? uid : undefined,
+  )
   const cached = bypassAugmentedCache
     ? null
     : await augmentedCache.get<AugmentedEventsResponse>(cacheKey)
@@ -98,7 +111,9 @@ eventsRoutes.get('/', async (c) => {
     const cacheControl =
       c.env.ENVIRONMENT === 'development'
         ? 'no-store, no-cache, must-revalidate'
-        : 'public, max-age=31536000, immutable'
+        : visibility === 'public'
+          ? 'public, max-age=31536000, immutable'
+          : 'private, no-store'
 
     return c.json(cached, 200, {
       'Cache-Control': cacheControl,
@@ -112,6 +127,7 @@ eventsRoutes.get('/', async (c) => {
   const rawEvents = (await wcl.getEvents(
     code,
     fightId,
+    visibility,
     fight.startTime,
     fight.endTime,
     {
@@ -158,7 +174,9 @@ eventsRoutes.get('/', async (c) => {
   const cacheControl =
     c.env.ENVIRONMENT === 'development'
       ? 'no-store, no-cache, must-revalidate'
-      : 'public, max-age=31536000, immutable'
+      : visibility === 'public'
+        ? 'public, max-age=31536000, immutable'
+        : 'private, no-store'
 
   return c.json(response, 200, {
     'Cache-Control': cacheControl,

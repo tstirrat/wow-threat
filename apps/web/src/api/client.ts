@@ -1,6 +1,9 @@
 /**
  * Minimal fetch client for API requests.
  */
+import { signOut as firebaseSignOut } from 'firebase/auth'
+
+import { getFirebaseAuth } from '../lib/firebase'
 
 export class ApiClientError extends Error {
   public readonly status: number
@@ -12,14 +15,28 @@ export class ApiClientError extends Error {
 }
 
 /** Execute a JSON request and return parsed data. */
-export async function requestJson<T>(url: string): Promise<T> {
+export async function requestJson<T>(
+  url: string,
+  init: RequestInit = {},
+): Promise<T> {
+  const auth = getFirebaseAuth()
+  const idToken = auth?.currentUser ? await auth.currentUser.getIdToken() : null
+  const headers = new Headers(init.headers)
+  headers.set('Accept', 'application/json')
+  if (idToken) {
+    headers.set('Authorization', `Bearer ${idToken}`)
+  }
+
   const response = await fetch(url, {
-    headers: {
-      Accept: 'application/json',
-    },
+    ...init,
+    headers,
   })
 
   if (!response.ok) {
+    if (response.status === 401 && auth?.currentUser) {
+      await firebaseSignOut(auth)
+    }
+
     const body = await response.text()
     let message = body || `Request failed with status ${response.status}`
 

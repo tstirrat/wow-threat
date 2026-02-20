@@ -1,47 +1,42 @@
 /**
  * Authentication Middleware
  *
- * Validates API key from Authorization header.
+ * Validates Firebase ID tokens from Authorization headers.
  */
 import type { MiddlewareHandler } from 'hono'
 
+import { verifyFirebaseIdToken } from '../services/firebase-auth'
 import type { Bindings, Variables } from '../types/bindings'
 import { unauthorized } from './error'
 
 /**
- * Simple API key authentication
- * In production, this should validate against a database or external service
+ * Validate a Firebase ID token and attach uid to request context.
  */
 export const authMiddleware: MiddlewareHandler<{
   Bindings: Bindings
   Variables: Variables
 }> = async (c, next) => {
-  // Skip auth in development/test
-  if (c.env.ENVIRONMENT === 'development' || c.env.ENVIRONMENT === 'test') {
+  const authHeader = c.req.header('authorization')
+
+  if (c.env.ENVIRONMENT === 'test' && !authHeader) {
+    c.set('uid', 'wcl-test-user')
     await next()
     return
   }
-
-  const authHeader = c.req.header('Authorization')
 
   if (!authHeader) {
     throw unauthorized('Missing Authorization header')
   }
 
-  // Expect format: "Bearer <api_key>"
+  // Expect format: "Bearer <firebase_id_token>"
   const [scheme, token] = authHeader.split(' ')
 
   if (scheme !== 'Bearer' || !token) {
-    throw unauthorized(
-      'Invalid Authorization header format. Expected: Bearer <api_key>',
-    )
+    throw unauthorized('Invalid Authorization header format')
   }
 
-  // TODO: Validate the token against your authentication system
-  // For now, just check it's not empty
-  if (!token.trim()) {
-    throw unauthorized('Invalid API key')
-  }
+  const verifiedToken = await verifyFirebaseIdToken(token, c.env)
+  c.set('uid', verifiedToken.uid)
 
   await next()
 }

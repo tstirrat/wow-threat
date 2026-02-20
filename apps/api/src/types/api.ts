@@ -4,7 +4,7 @@
  * Frontend-facing response contracts for the public HTTP API.
  */
 import type { AugmentedEvent } from '@wcl-threat/shared'
-import type { PlayerClass, Zone } from '@wcl-threat/wcl-types'
+import type { PlayerClass, ReportVisibility, Zone } from '@wcl-threat/wcl-types'
 
 export type ReportActorType = 'Player' | 'NPC' | 'Pet'
 export type ReportActorSubType = PlayerClass | 'Boss' | 'NPC'
@@ -63,6 +63,7 @@ export interface ReportGuildSummary {
 export interface ReportResponse {
   code: string
   title: string
+  visibility: ReportVisibility
   owner: string
   guild: ReportGuildSummary | null
   startTime: number

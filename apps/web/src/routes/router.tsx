@@ -3,6 +3,7 @@
  */
 import { createBrowserRouter } from 'react-router-dom'
 
+import { AuthCompletePage } from '../pages/auth-complete-page'
 import { FightPage } from '../pages/fight-page'
 import { LandingPage } from '../pages/landing-page'
 import { NotFoundPage } from '../pages/not-found-page'
@@ -16,6 +17,10 @@ export const router: ReturnType<typeof createBrowserRouter> =
       path: '/',
       element: <RootLayout />,
       children: [
+        {
+          path: 'auth/complete',
+          element: <AuthCompletePage />,
+        },
         {
           index: true,
           element: <LandingPage />,

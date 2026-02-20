@@ -26,6 +26,8 @@ export interface ReportFightNPC {
   petOwner?: number | null
 }
 
+export type ReportVisibility = 'public' | 'private'
+
 export interface PhaseMetadata {
   id: number
   name: string
@@ -37,6 +39,7 @@ export interface Report {
   code: string
   title: string
   owner: string
+  visibility?: ReportVisibility | null
   guild: ReportGuild | null
   startTime: number // Unix timestamp ms
   endTime: number
@@ -129,6 +132,7 @@ export interface WCLReportResponse {
       report: {
         code: string
         title: string
+        visibility?: ReportVisibility | null
         owner: { name: string }
         guild: ReportGuild | null
         startTime: number

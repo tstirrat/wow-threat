@@ -152,28 +152,52 @@ describe('CacheKeys', () => {
   })
 
   it('generates correct report key', () => {
-    expect(CacheKeys.report('ABC123')).toBe('wcl:report:ABC123')
+    expect(CacheKeys.report('ABC123', 'public')).toBe(
+      'wcl:report:v3:ABC123:visibility:public:scope:shared',
+    )
   })
 
   it('generates correct fights key', () => {
-    expect(CacheKeys.fights('ABC123')).toBe('wcl:fights:ABC123')
+    expect(CacheKeys.fights('ABC123', 'private', 'uid-1')).toBe(
+      'wcl:fights:v2:ABC123:visibility:private:scope:uid:uid-1',
+    )
   })
 
   it('generates correct events key', () => {
-    expect(CacheKeys.events('ABC123', 5)).toBe(
-      'wcl:events:v2:ABC123:5:start:full:end:full',
+    expect(CacheKeys.events('ABC123', 5, 'public')).toBe(
+      'wcl:events:v3:ABC123:5:visibility:public:scope:shared:start:full:end:full',
     )
   })
 
   it('generates correct events key with explicit time bounds', () => {
-    expect(CacheKeys.events('ABC123', 5, 1000, 2000)).toBe(
-      'wcl:events:v2:ABC123:5:start:1000:end:2000',
+    expect(CacheKeys.events('ABC123', 5, 'private', 'uid-1', 1000, 2000)).toBe(
+      'wcl:events:v3:ABC123:5:visibility:private:scope:uid:uid-1:start:1000:end:2000',
     )
   })
 
   it('generates correct augmented events key', () => {
-    expect(CacheKeys.augmentedEvents('ABC123', 5, 'v1.2.0')).toBe(
-      'augmented:v4:ABC123:5:v1.2.0',
+    expect(
+      CacheKeys.augmentedEvents('ABC123', 5, 'v1.2.0', 'private', 'uid-1'),
+    ).toBe('augmented:v5:ABC123:5:v1.2.0:visibility:private:scope:uid:uid-1')
+  })
+
+  it('does not collide public and private cache keys', () => {
+    const publicEventsKey = CacheKeys.events('ABC123', 5, 'public')
+    const privateEventsKey = CacheKeys.events('ABC123', 5, 'private', 'uid-1')
+
+    expect(publicEventsKey).not.toBe(privateEventsKey)
+  })
+
+  it('does not collide private cache keys across users', () => {
+    const firstUserKey = CacheKeys.events('ABC123', 5, 'private', 'uid-1')
+    const secondUserKey = CacheKeys.events('ABC123', 5, 'private', 'uid-2')
+
+    expect(firstUserKey).not.toBe(secondUserKey)
+  })
+
+  it('treats invalid visibility values as private', () => {
+    expect(CacheKeys.report('ABC123', 'internal')).toBe(
+      'wcl:report:v3:ABC123:visibility:private:scope:uid:anonymous',
     )
   })
 })

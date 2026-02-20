@@ -15,7 +15,16 @@ export default defineWorkersConfig({
             ENVIRONMENT: 'test',
             WCL_CLIENT_ID: 'test-client',
             WCL_CLIENT_SECRET: 'test-secret',
-            API_KEY_SALT: 'test-salt',
+            WCL_OAUTH_REDIRECT_URI: 'http://localhost:8787/auth/wcl/callback',
+            FIREBASE_PROJECT_ID: 'wow-threat',
+            FIREBASE_CLIENT_EMAIL:
+              'firebase-adminsdk@test-project.iam.gserviceaccount.com',
+            FIREBASE_PRIVATE_KEY:
+              '-----BEGIN PRIVATE KEY-----\\nTEST_KEY\\n-----END PRIVATE KEY-----\\n',
+            FIRESTORE_PROJECT_ID: 'wow-threat',
+            WCL_TOKEN_ENCRYPTION_KEY: 'test-encryption-key',
+            BRIDGE_CODE_SIGNING_SECRET: 'test-bridge-secret',
+            ALLOWED_ORIGINS: 'http://localhost:5173,http://localhost:5174',
           },
         },
       },

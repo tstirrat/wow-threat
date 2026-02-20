@@ -1,59 +1,82 @@
 /**
- * WCL API Client
- *
- * Handles OAuth authentication and GraphQL queries to WCL API.
+ * Warcraft Logs API client with visibility-aware caching and private token support.
  */
 import type {
   WCLEventsResponse,
   WCLReportResponse,
 } from '@wcl-threat/wcl-types'
 
-import { wclApiError, wclRateLimited } from '../middleware/error'
+import {
+  AppError,
+  unauthorized,
+  wclApiError,
+  wclRateLimited,
+} from '../middleware/error'
 import type { Bindings } from '../types/bindings'
-import { CacheKeys, type CacheService, createCache } from './cache'
+import { AuthStore } from './auth-store'
+import {
+  CacheKeys,
+  type CacheService,
+  createCache,
+  normalizeVisibility,
+} from './cache'
+import { refreshWclAccessToken } from './wcl-oauth'
 
 const WCL_API_URL = 'https://www.warcraftlogs.com/api/v2/client'
 const WCL_TOKEN_URL = 'https://www.warcraftlogs.com/oauth/token'
 
 interface OAuthToken {
   access_token: string
-  token_type: string
+  expires_at: number
   expires_in: number
-  expires_at: number // Added for tracking expiration
+  token_type: string
+}
+
+interface WclQueryResult<T> {
+  data?: T
+  errors?: Array<{ message: string }>
+}
+
+function shouldFallbackToUserToken(error: unknown): boolean {
+  if (!(error instanceof AppError)) {
+    return true
+  }
+
+  return /access|forbidden|permission|private|unauthorized/i.test(error.message)
 }
 
 export class WCLClient {
-  private cache: CacheService
-  private env: Bindings
+  private readonly authStore: AuthStore
+  private readonly cache: CacheService
+  private readonly env: Bindings
+  private readonly uid: string
 
-  constructor(env: Bindings) {
+  constructor(env: Bindings, uid: string) {
     this.env = env
+    this.uid = uid
     this.cache = createCache(env, 'wcl')
+    this.authStore = new AuthStore(env)
   }
 
   /**
-   * Get a valid OAuth token, refreshing if necessary
+   * Get a valid client credentials token, refreshing it as needed.
    */
-  private async getToken(): Promise<string> {
-    // Check cache first
+  private async getClientToken(): Promise<string> {
     const cached = await this.cache.get<OAuthToken>(CacheKeys.wclToken())
-    if (cached && cached.expires_at > Date.now() + 60000) {
-      // 1 min buffer
+    if (cached && cached.expires_at > Date.now() + 60_000) {
       return cached.access_token
     }
 
-    // Fetch new token
     const credentials = btoa(
       `${this.env.WCL_CLIENT_ID}:${this.env.WCL_CLIENT_SECRET}`,
     )
-
     const response = await fetch(WCL_TOKEN_URL, {
-      method: 'POST',
+      body: 'grant_type=client_credentials',
       headers: {
         Authorization: `Basic ${credentials}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: 'grant_type=client_credentials',
+      method: 'POST',
     })
 
     if (!response.ok) {
@@ -62,51 +85,79 @@ export class WCLClient {
 
     const token = (await response.json()) as OAuthToken
     token.expires_at = Date.now() + token.expires_in * 1000
-
-    // Cache the token (expire 5 minutes early)
     await this.cache.set(CacheKeys.wclToken(), token, token.expires_in - 300)
 
     return token.access_token
   }
 
   /**
-   * Execute a GraphQL query against WCL API
+   * Resolve a valid user access token from Firestore and refresh when expired.
+   */
+  private async getUserAccessToken(): Promise<string> {
+    const tokenRecord = await this.authStore.getWclTokens(this.uid)
+    if (!tokenRecord) {
+      throw unauthorized('No Warcraft Logs tokens found for this user')
+    }
+
+    if (tokenRecord.accessTokenExpiresAtMs > Date.now() + 60_000) {
+      return tokenRecord.accessToken
+    }
+
+    if (!tokenRecord.refreshToken) {
+      throw unauthorized('Warcraft Logs token has expired; sign in again')
+    }
+
+    const refreshed = await refreshWclAccessToken(
+      this.env,
+      tokenRecord.refreshToken,
+    )
+    const nextRefreshToken = refreshed.refresh_token ?? tokenRecord.refreshToken
+    await this.authStore.saveWclTokens({
+      accessToken: refreshed.access_token,
+      accessTokenExpiresAtMs: Date.now() + refreshed.expires_in * 1000,
+      refreshToken: nextRefreshToken,
+      refreshTokenExpiresAtMs: tokenRecord.refreshTokenExpiresAtMs,
+      tokenType: refreshed.token_type,
+      uid: this.uid,
+      wclUserId: tokenRecord.wclUserId,
+      wclUserName: tokenRecord.wclUserName,
+    })
+
+    return refreshed.access_token
+  }
+
+  /**
+   * Execute a GraphQL request against WCL API.
    */
   private async query<T>(
     graphqlQuery: string,
-    variables: Record<string, unknown> = {},
+    variables: Record<string, unknown>,
+    options: { accessToken?: string } = {},
   ): Promise<T> {
-    const token = await this.getToken()
-
+    const accessToken = options.accessToken ?? (await this.getClientToken())
     const response = await fetch(WCL_API_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({
         query: graphqlQuery,
         variables,
       }),
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
     })
 
     if (response.status === 429) {
       throw wclRateLimited()
     }
-
     if (!response.ok) {
       throw wclApiError(`WCL API error: ${response.status}`)
     }
 
-    const result = (await response.json()) as {
-      data?: T
-      errors?: Array<{ message: string }>
-    }
-
+    const result = (await response.json()) as WclQueryResult<T>
     if (result.errors?.length) {
       throw wclApiError(result.errors[0]?.message ?? 'Unknown GraphQL error')
     }
-
     if (!result.data) {
       throw wclApiError('No data returned from WCL API')
     }
@@ -115,14 +166,38 @@ export class WCLClient {
   }
 
   /**
-   * Get report metadata
+   * Store report metadata in visibility-aware cache namespaces.
+   */
+  private async cacheReport(
+    code: string,
+    data: WCLReportResponse['data'],
+  ): Promise<void> {
+    const visibility = normalizeVisibility(data.reportData.report.visibility)
+    const cacheKey = CacheKeys.report(
+      code,
+      visibility,
+      visibility === 'private' ? this.uid : undefined,
+    )
+    await this.cache.set(cacheKey, data)
+  }
+
+  /**
+   * Get report metadata, including visibility, with client-token fallback to user-token.
    */
   async getReport(code: string): Promise<WCLReportResponse['data']> {
-    // Check cache
-    const cacheKey = CacheKeys.report(code)
-    const cached = await this.cache.get<WCLReportResponse['data']>(cacheKey)
-    if (cached) {
-      return cached
+    const privateCacheKey = CacheKeys.report(code, 'private', this.uid)
+    const publicCacheKey = CacheKeys.report(code, 'public')
+
+    const privateCached =
+      await this.cache.get<WCLReportResponse['data']>(privateCacheKey)
+    if (privateCached) {
+      return privateCached
+    }
+
+    const publicCached =
+      await this.cache.get<WCLReportResponse['data']>(publicCacheKey)
+    if (publicCached) {
+      return publicCached
     }
 
     const query = `
@@ -131,6 +206,7 @@ export class WCLClient {
           report(code: $code) {
             code
             title
+            visibility
             owner { name }
             guild {
               name
@@ -202,27 +278,58 @@ export class WCLClient {
       }
     `
 
-    const data = await this.query<WCLReportResponse['data']>(query, { code })
+    try {
+      const clientData = await this.query<WCLReportResponse['data']>(query, {
+        code,
+      })
+      if (clientData.reportData.report) {
+        await this.cacheReport(code, clientData)
+        return clientData
+      }
+    } catch (error) {
+      if (!shouldFallbackToUserToken(error)) {
+        throw error
+      }
+      // A failed client-token query may indicate a private report. Fall through.
+    }
 
-    // Cache permanently (report metadata never changes)
-    await this.cache.set(cacheKey, data)
+    const userAccessToken = await this.getUserAccessToken()
+    const userData = await this.query<WCLReportResponse['data']>(
+      query,
+      { code },
+      { accessToken: userAccessToken },
+    )
 
-    return data
+    if (!userData.reportData.report) {
+      throw wclApiError('Report not found')
+    }
+
+    await this.cacheReport(code, userData)
+    return userData
   }
 
   /**
-   * Get events for a fight
+   * Get fight events using visibility-specific cache scope and token selection.
    */
   async getEvents(
     code: string,
     fightId: number,
+    visibility: unknown,
     startTime?: number,
     endTime?: number,
     options: { bypassCache?: boolean } = {},
   ): Promise<unknown[]> {
     const { bypassCache = false } = options
-    // Check cache
-    const cacheKey = CacheKeys.events(code, fightId, startTime, endTime)
+    const normalizedVisibility = normalizeVisibility(visibility)
+    const cacheKey = CacheKeys.events(
+      code,
+      fightId,
+      normalizedVisibility,
+      normalizedVisibility === 'private' ? this.uid : undefined,
+      startTime,
+      endTime,
+    )
+
     if (!bypassCache) {
       const cached = await this.cache.get<unknown[]>(cacheKey)
       if (cached) {
@@ -230,10 +337,14 @@ export class WCLClient {
       }
     }
 
-    const allEvents: unknown[] = []
-    let requestStartTime: number | undefined = startTime
+    const accessToken =
+      normalizedVisibility === 'private'
+        ? await this.getUserAccessToken()
+        : undefined
 
-    // Paginate through all events
+    const allEvents: unknown[] = []
+    let requestStartTime = startTime
+
     while (true) {
       const query = `
         query GetEvents($code: String!, $fightId: Int!, $startTime: Float, $endTime: Float) {
@@ -254,26 +365,28 @@ export class WCLClient {
         }
       `
 
-      const data = await this.query<WCLEventsResponse['data']>(query, {
-        code,
-        fightId,
-        startTime: requestStartTime,
-        endTime,
-      })
-
+      const data = await this.query<WCLEventsResponse['data']>(
+        query,
+        {
+          code,
+          endTime,
+          fightId,
+          startTime: requestStartTime,
+        },
+        {
+          accessToken,
+        },
+      )
       const events = data.reportData.report.events
       allEvents.push(...events.data)
-      const nextPageTimestamp = events.nextPageTimestamp
-      if (!nextPageTimestamp) {
+
+      if (!events.nextPageTimestamp) {
         break
       }
-
-      requestStartTime = nextPageTimestamp
+      requestStartTime = events.nextPageTimestamp
     }
 
-    // Cache permanently
     await this.cache.set(cacheKey, allEvents)
-
     return allEvents
   }
 }

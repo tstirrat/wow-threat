@@ -15,6 +15,7 @@ export interface MockWCLResponses {
   report?: {
     code: string
     title: string
+    visibility?: 'public' | 'private'
     owner: { name: string }
     guild?: {
       name: string
@@ -144,7 +145,10 @@ export function createMockFetch(responses: MockWCLResponses = {}) {
             JSON.stringify({
               data: {
                 reportData: {
-                  report: responses.report,
+                  report: {
+                    visibility: 'public',
+                    ...responses.report,
+                  },
                 },
               },
             }),
