@@ -1,0 +1,338 @@
+Hateful Top-4 Threat Snapshot Report
+Generated at: 2026-02-15T07:59:55.072Z
+Report: f9yPamzBxQqhGndZ
+Fight: 26 (Patchwerk)
+Source fixture: test/fixtures/anniversary/naxx/patchwerk-fight-26
+Patchwerk actor: Patchwerk#203:0
+Distance filter: <= 7 yards (raw/200)
+Hateful events found: 55
+
+00:03.122 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Primthree#13 | threat=1454.38 | distanceRaw=622.25 | distanceYards=3.11
+  2. Markymarkx#3 | threat=1284.92 | distanceRaw=718.94 | distanceYards=3.59
+  3. Shapes#42 | threat=656.20 | distanceRaw=781.11 | distanceYards=3.91
+  4. Treadwell#19 | threat=500.00 | distanceRaw=676.66 | distanceYards=3.38
+
+00:04.973 | directTarget=Markymarkx#3 | patchwerkPos=311445,309255
+  1. Treadwell#19 | threat=5420.72 | distanceRaw=669.58 | distanceYards=3.35
+  2. Primthree#13 | threat=4838.74 | distanceRaw=622.25 | distanceYards=3.11
+  3. Markymarkx#3 | threat=4375.30 | distanceRaw=642.66 | distanceYards=3.21
+  4. Darbs#15 | threat=3029.39 | distanceRaw=385.57 | distanceYards=1.93
+
+00:06.181 | directTarget=Markymarkx#3 | patchwerkPos=311445,309255
+  1. Treadwell#19 | threat=7850.76 | distanceRaw=669.58 | distanceYards=3.35
+  2. Primthree#13 | threat=6475.97 | distanceRaw=622.25 | distanceYards=3.11
+  3. Markymarkx#3 | threat=5267.50 | distanceRaw=642.66 | distanceYards=3.21
+  4. Darbs#15 | threat=3952.55 | distanceRaw=433.42 | distanceYards=2.17
+
+00:07.249 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Primthree#13 | threat=9825.35 | distanceRaw=622.25 | distanceYards=3.11
+  2. Treadwell#19 | threat=9424.17 | distanceRaw=669.58 | distanceYards=3.35
+  3. Markymarkx#3 | threat=8726.62 | distanceRaw=642.66 | distanceYards=3.21
+  4. Darbs#15 | threat=5460.75 | distanceRaw=503.54 | distanceYards=2.52
+
+00:08.596 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Primthree#13 | threat=17406.19 | distanceRaw=622.25 | distanceYards=3.11
+  2. Markymarkx#3 | threat=11869.31 | distanceRaw=642.66 | distanceYards=3.21
+  3. Treadwell#19 | threat=11058.88 | distanceRaw=669.58 | distanceYards=3.35
+  4. Wp#43 | threat=7562.00 | distanceRaw=795.86 | distanceYards=3.98
+
+00:09.814 | directTarget=Markymarkx#3 | patchwerkPos=311445,309255
+  1. Primthree#13 | threat=18613.84 | distanceRaw=622.25 | distanceYards=3.11
+  2. Markymarkx#3 | threat=15952.83 | distanceRaw=642.66 | distanceYards=3.21
+  3. Treadwell#19 | threat=13704.20 | distanceRaw=669.58 | distanceYards=3.35
+  4. Cabo#63 | threat=11659.00 | distanceRaw=670.91 | distanceYards=3.35
+
+00:11.051 | directTarget=Markymarkx#3 | patchwerkPos=311445,309255
+  1. Primthree#13 | threat=21892.58 | distanceRaw=692.93 | distanceYards=3.46
+  2. Markymarkx#3 | threat=19288.84 | distanceRaw=642.66 | distanceYards=3.21
+  3. Treadwell#19 | threat=17149.35 | distanceRaw=669.58 | distanceYards=3.35
+  4. Cabo#63 | threat=13329.60 | distanceRaw=670.91 | distanceYards=3.35
+
+00:12.259 | directTarget=Markymarkx#3 | patchwerkPos=311445,309255
+  1. Primthree#13 | threat=25792.96 | distanceRaw=692.93 | distanceYards=3.46
+  2. Markymarkx#3 | threat=23134.65 | distanceRaw=642.66 | distanceYards=3.21
+  3. Treadwell#19 | threat=17649.35 | distanceRaw=669.58 | distanceYards=3.35
+  4. Cabo#63 | threat=13829.60 | distanceRaw=670.91 | distanceYards=3.35
+
+00:13.452 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Primthree#13 | threat=29765.09 | distanceRaw=692.93 | distanceYards=3.46
+  2. Markymarkx#3 | threat=26043.10 | distanceRaw=642.66 | distanceYards=3.21
+  3. Treadwell#19 | threat=20998.82 | distanceRaw=669.58 | distanceYards=3.35
+  4. Cabo#63 | threat=16720.40 | distanceRaw=670.91 | distanceYards=3.35
+
+00:14.664 | directTarget=Markymarkx#3 | patchwerkPos=311445,309255
+  1. Primthree#13 | threat=30345.82 | distanceRaw=692.93 | distanceYards=3.46
+  2. Markymarkx#3 | threat=26580.47 | distanceRaw=642.66 | distanceYards=3.21
+  3. Treadwell#19 | threat=21588.52 | distanceRaw=669.58 | distanceYards=3.35
+  4. Cabo#63 | threat=17331.60 | distanceRaw=670.91 | distanceYards=3.35
+
+00:15.894 | directTarget=Markymarkx#3 | patchwerkPos=311445,309255
+  1. Primthree#13 | threat=31623.22 | distanceRaw=692.93 | distanceYards=3.46
+  2. Markymarkx#3 | threat=29469.48 | distanceRaw=642.66 | distanceYards=3.21
+  3. Treadwell#19 | threat=24902.11 | distanceRaw=669.58 | distanceYards=3.35
+  4. Cabo#63 | threat=19734.20 | distanceRaw=670.91 | distanceYards=3.35
+
+00:17.017 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=34196.60 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=32181.53 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=30827.47 | distanceRaw=669.58 | distanceYards=3.35
+  4. Cabo#63 | threat=21134.20 | distanceRaw=670.91 | distanceYards=3.35
+
+00:18.311 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=38109.68 | distanceRaw=642.66 | distanceYards=3.21
+  2. Treadwell#19 | threat=33206.68 | distanceRaw=669.58 | distanceYards=3.35
+  3. Primthree#13 | threat=32681.53 | distanceRaw=692.93 | distanceYards=3.46
+  4. Cabo#63 | threat=22917.40 | distanceRaw=670.91 | distanceYards=3.35
+
+00:19.522 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=39481.27 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=38883.46 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=36141.29 | distanceRaw=669.58 | distanceYards=3.35
+  4. Cabo#63 | threat=27312.00 | distanceRaw=670.91 | distanceYards=3.35
+
+00:20.725 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=42489.88 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=41581.11 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=37194.44 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=29179.80 | distanceRaw=629.73 | distanceYards=3.15
+
+00:21.964 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=50067.96 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=43911.50 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=40330.12 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=31889.40 | distanceRaw=629.73 | distanceYards=3.15
+
+00:23.174 | directTarget=Primthree#13 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=52585.46 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=45206.84 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=42652.53 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=33620.00 | distanceRaw=682.53 | distanceYards=3.41
+
+00:24.375 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=53524.99 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=46327.27 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=43152.53 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=35533.00 | distanceRaw=682.53 | distanceYards=3.41
+
+00:25.601 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=56838.58 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=54954.09 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=45250.31 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=38517.20 | distanceRaw=682.53 | distanceYards=3.41
+
+00:26.792 | directTarget=Primthree#13 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=61585.13 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=56823.51 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=50263.71 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=41917.60 | distanceRaw=682.53 | distanceYards=3.41
+
+00:28.021 | directTarget=Primthree#13 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=68960.63 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=57323.51 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=52702.73 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=44718.60 | distanceRaw=682.53 | distanceYards=3.41
+
+00:29.254 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=72304.12 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=60584.40 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=55095.40 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=47584.40 | distanceRaw=682.53 | distanceYards=3.41
+
+00:30.463 | directTarget=Primthree#13 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=74858.25 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=63977.22 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=60524.41 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=49770.80 | distanceRaw=682.53 | distanceYards=3.41
+
+00:31.652 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=78103.07 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=67304.27 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=61024.41 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=51818.60 | distanceRaw=682.53 | distanceYards=3.41
+
+00:32.887 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=80785.77 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=69683.48 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=62499.90 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=54062.60 | distanceRaw=682.53 | distanceYards=3.41
+
+00:34.084 | directTarget=Primthree#13 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=84329.59 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=73545.51 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=64064.34 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=56661.80 | distanceRaw=682.53 | distanceYards=3.41
+
+00:35.312 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=87058.64 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=76163.92 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=67972.19 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=61242.40 | distanceRaw=682.53 | distanceYards=3.41
+
+00:36.508 | directTarget=Primthree#13 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=90033.61 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=77830.02 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=69786.30 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=63635.80 | distanceRaw=682.53 | distanceYards=3.41
+
+00:37.718 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=93235.07 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=80906.42 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=71894.17 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=64599.80 | distanceRaw=682.53 | distanceYards=3.41
+
+00:38.948 | directTarget=Primthree#13 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=95801.16 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=83303.58 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=73561.77 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=68387.00 | distanceRaw=682.53 | distanceYards=3.41
+
+00:40.138 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=101562.07 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=87002.50 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=76108.19 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=70302.40 | distanceRaw=682.53 | distanceYards=3.41
+
+00:41.364 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=102694.45 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=87533.90 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=76618.19 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=71667.60 | distanceRaw=682.53 | distanceYards=3.41
+
+00:42.577 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=105680.64 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=89200.00 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=77141.13 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=73976.60 | distanceRaw=682.53 | distanceYards=3.41
+
+00:43.797 | directTarget=Primthree#13 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=106651.56 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=91602.67 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=81314.11 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=75385.40 | distanceRaw=682.53 | distanceYards=3.41
+
+00:45.012 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=110234.25 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=93913.11 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=82875.33 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=80323.00 | distanceRaw=682.53 | distanceYards=3.41
+
+00:46.195 | directTarget=Primthree#13 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=112232.24 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=95487.04 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=83527.82 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=82559.60 | distanceRaw=729.16 | distanceYards=3.65
+
+00:47.420 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=116631.20 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=95987.04 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=88016.99 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=84626.00 | distanceRaw=729.16 | distanceYards=3.65
+
+00:48.616 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=119901.44 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=100337.41 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=90695.21 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=88056.40 | distanceRaw=729.16 | distanceYards=3.65
+
+00:49.837 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=123318.18 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=103313.13 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=94112.70 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=92951.40 | distanceRaw=729.16 | distanceYards=3.65
+
+00:51.047 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=128524.44 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=104978.25 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=96556.20 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=93725.40 | distanceRaw=729.16 | distanceYards=3.65
+
+00:52.255 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=132062.28 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=106737.04 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=97056.20 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=95927.20 | distanceRaw=729.16 | distanceYards=3.65
+
+00:53.490 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=137090.64 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=107237.04 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=100966.30 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=96912.00 | distanceRaw=729.16 | distanceYards=3.65
+
+00:54.701 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=140915.52 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=111303.13 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=103645.26 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=99688.80 | distanceRaw=729.16 | distanceYards=3.65
+
+00:55.922 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=146585.23 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=111834.53 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=107618.89 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=102329.80 | distanceRaw=729.16 | distanceYards=3.65
+
+00:57.115 | directTarget=Primthree#13 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=149241.02 | distanceRaw=642.66 | distanceYards=3.21
+  2. Primthree#13 | threat=114405.10 | distanceRaw=692.93 | distanceYards=3.46
+  3. Treadwell#19 | threat=112813.19 | distanceRaw=669.58 | distanceYards=3.35
+  4. Harddad#46 | threat=103181.80 | distanceRaw=729.16 | distanceYards=3.65
+
+00:58.327 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=151999.96 | distanceRaw=642.66 | distanceYards=3.21
+  2. Treadwell#19 | threat=115343.40 | distanceRaw=669.58 | distanceYards=3.35
+  3. Primthree#13 | threat=114923.04 | distanceRaw=692.93 | distanceYards=3.46
+  4. Harddad#46 | threat=112402.60 | distanceRaw=729.16 | distanceYards=3.65
+
+00:59.564 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=154337.32 | distanceRaw=642.66 | distanceYards=3.21
+  2. Harddad#46 | threat=117435.80 | distanceRaw=729.16 | distanceYards=3.65
+  3. Primthree#13 | threat=117305.25 | distanceRaw=692.93 | distanceYards=3.46
+  4. Treadwell#19 | threat=115868.07 | distanceRaw=669.58 | distanceYards=3.35
+
+01:00.749 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=156631.32 | distanceRaw=642.66 | distanceYards=3.21
+  2. Treadwell#19 | threat=119048.60 | distanceRaw=669.58 | distanceYards=3.35
+  3. Primthree#13 | threat=118968.36 | distanceRaw=692.93 | distanceYards=3.46
+  4. Harddad#46 | threat=118279.40 | distanceRaw=729.16 | distanceYards=3.65
+
+01:01.964 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=158663.69 | distanceRaw=642.66 | distanceYards=3.21
+  2. Harddad#46 | threat=122815.40 | distanceRaw=729.16 | distanceYards=3.65
+  3. Primthree#13 | threat=120585.64 | distanceRaw=692.93 | distanceYards=3.46
+  4. Treadwell#19 | threat=119580.00 | distanceRaw=669.58 | distanceYards=3.35
+
+01:03.184 | directTarget=Primthree#13 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=160685.60 | distanceRaw=642.66 | distanceYards=3.21
+  2. Harddad#46 | threat=126659.40 | distanceRaw=729.16 | distanceYards=3.65
+  3. Primthree#13 | threat=122166.52 | distanceRaw=692.93 | distanceYards=3.46
+  4. Treadwell#19 | threat=121495.76 | distanceRaw=669.58 | distanceYards=3.35
+
+01:04.389 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=163460.99 | distanceRaw=642.66 | distanceYards=3.21
+  2. Harddad#46 | threat=127831.40 | distanceRaw=735.62 | distanceYards=3.68
+  3. Benus#113 | threat=124889.20 | distanceRaw=688.57 | distanceYards=3.44
+  4. Primthree#13 | threat=124210.19 | distanceRaw=692.93 | distanceYards=3.46
+
+01:05.606 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=165871.60 | distanceRaw=642.66 | distanceYards=3.21
+  2. Harddad#46 | threat=138744.40 | distanceRaw=757.45 | distanceYards=3.79
+  3. Benus#113 | threat=130236.60 | distanceRaw=688.57 | distanceYards=3.44
+  4. Treadwell#19 | threat=126269.14 | distanceRaw=669.58 | distanceYards=3.35
+
+01:06.839 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=169017.75 | distanceRaw=642.66 | distanceYards=3.21
+  2. Harddad#46 | threat=147195.80 | distanceRaw=757.45 | distanceYards=3.79
+  3. Benus#113 | threat=138011.40 | distanceRaw=688.57 | distanceYards=3.44
+  4. Treadwell#19 | threat=130490.20 | distanceRaw=669.58 | distanceYards=3.35
+
+01:08.053 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=170242.83 | distanceRaw=642.66 | distanceYards=3.21
+  2. Harddad#46 | threat=154051.00 | distanceRaw=757.45 | distanceYards=3.79
+  3. Benus#113 | threat=139365.80 | distanceRaw=688.57 | distanceYards=3.44
+  4. Tylaron#53 | threat=133549.60 | distanceRaw=587.55 | distanceYards=2.94
+
+01:09.239 | directTarget=Treadwell#19 | patchwerkPos=311445,309255
+  1. Markymarkx#3 | threat=172363.41 | distanceRaw=642.66 | distanceYards=3.21
+  2. Harddad#46 | threat=156219.20 | distanceRaw=757.45 | distanceYards=3.79
+  3. Benus#113 | threat=148194.40 | distanceRaw=688.57 | distanceYards=3.44
+  4. Juck#35 | threat=136367.20 | distanceRaw=686.39 | distanceYards=3.43

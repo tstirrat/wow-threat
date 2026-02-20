@@ -1,0 +1,266 @@
+newthreat
+Report URL: https://fresh.warcraftlogs.com/reports/f9yPamzBxQqhGndZ?fight=26&type=damage-done&source=3
+Report Code: f9yPamzBxQqhGndZ
+
+Damage to Patchwerk 203:0
+Source: Markymarkx#3
+
+T         | Spell                              | Amount  | Formula              | Threat  | To Target | Total     | Multipliers
+-------------------------------------------------------------------------------------------------------------------------------
+00:00.023 | Dense Dynamite (damage)            | 451.00  | amt                  | 674.25  | 674.25    | 674.25    | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:00.552 | Bloodrage (resourcechange)         | 1.00    | amt * 5              | 5.00    | 5.00      | 679.25    | -
+00:01.387 | Battle Shout (applybuff)           | 0.00    | 52                   | 77.74   | 77.74     | 756.99    | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:01.556 | Bloodrage (resourcechange)         | 1.00    | amt * 5              | 5.00    | 5.00      | 761.99    | -
+00:02.555 | Bloodrage (resourcechange)         | 1.00    | amt * 5              | 5.00    | 5.00      | 766.99    | -
+00:03.025 | Razorhide (damage)                 | 12.00   | amt                  | 17.94   | 17.94     | 784.92    | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:03.161 | Heroic Strike (damage)             | 506.00  | amt + 175            | 1018.09 | 1018.10   | 1803.02   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:03.315 | Melee (damage)                     | 164.00  | amt                  | 245.18  | 245.18    | 2048.20   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:03.570 | Bloodrage (resourcechange)         | 1.00    | amt * 5              | 5.00    | 5.00      | 2053.20   | -
+00:04.555 | Bloodrage (resourcechange)         | 1.00    | amt * 5              | 5.00    | 5.00      | 2058.20   | -
+00:04.627 | Melee (damage)                     | 188.00  | amt                  | 281.06  | 281.06    | 2339.26   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:04.806 | Heroic Strike (damage)             | 518.00  | amt + 175            | 1036.03 | 1036.03   | 3375.29   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:04.973 | Hateful Strike (damage)            | 0.00    | hatefulStrike(500)   | 500.00  | 500.00    | 3875.29   | -
+00:05.560 | Bloodrage (resourcechange)         | 1.00    | amt * 5              | 5.00    | 5.00      | 3880.29   | -
+00:05.935 | Melee (damage)                     | 259.00  | amt                  | 387.20  | 387.21    | 4267.50   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:06.181 | Hateful Strike (damage)            | 7018.00 | hatefulStrike(500)   | 500.00  | 500.00    | 4767.50   | -
+00:06.196 | Razorhide (damage)                 | 11.00   | amt                  | 16.45   | 16.44     | 4783.94   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:06.462 | Heroic Strike (damage)             | 1376.00 | amt + 175            | 2318.74 | 2318.74   | 7102.69   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:06.490 | Dragonbreath Chili (damage)        | 154.00  | amt                  | 230.23  | 230.23    | 7332.92   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:06.564 | Bloodrage (resourcechange)         | 1.00    | amt * 5              | 5.00    | 5.00      | 7337.92   | -
+00:07.071 | Melee (damage)                     | 260.00  | amt                  | 388.70  | 388.70    | 7726.62   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:07.489 | Rend (damage)                      | 25.00   | amt                  | 37.38   | 37.38     | 7763.99   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:07.567 | Bloodrage (resourcechange)         | 1.00    | amt * 5              | 5.00    | 5.00      | 7768.99   | -
+00:07.744 | Heroic Strike (damage)             | 1295.00 | amt + 175            | 2197.65 | 2197.65   | 9966.64   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:08.071 | Melee (damage)                     | 266.00  | amt                  | 397.67  | 397.67    | 10364.31  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:08.569 | Bloodrage (resourcechange)         | 1.00    | amt * 5              | 5.00    | 5.00      | 10369.31  | -
+00:09.016 | Heroic Strike (damage)             | 697.00  | amt + 175            | 1303.64 | 1303.64   | 11672.95  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:09.075 | Melee (damage)                     | 291.00  | amt                  | 435.04  | 435.05    | 12108.00  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:09.122 | Bloodthirst (damage)               | 1234.00 | amt                  | 1844.83 | 1844.83   | 13952.83  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:09.814 | Hateful Strike (damage)            | 0.00    | hatefulStrike(500)   | 500.00  | 500.00    | 14452.83  | -
+00:10.379 | Melee (damage)                     | 296.00  | amt                  | 442.52  | 442.52    | 14895.35  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:10.499 | Rend (damage)                      | 25.00   | amt                  | 37.38   | 37.38     | 14932.72  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:10.691 | Heroic Strike (damage)             | 1401.00 | amt + 175            | 2356.12 | 2356.12   | 17288.84  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:11.051 | Hateful Strike (damage)            | 9022.00 | hatefulStrike(500)   | 500.00  | 500.00    | 17788.84  | -
+00:11.056 | Razorhide (damage)                 | 12.00   | amt                  | 17.94   | 17.94     | 17806.78  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:11.454 | Melee (damage)                     | 570.00  | amt                  | 852.15  | 852.15    | 18658.93  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:11.468 | Bloodthirst (heal)                 | 20.00   | amt * 0.5            | 14.95   | 14.95     | 18673.88  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:11.932 | Heroic Strike (damage)             | 1471.00 | amt + 175            | 2460.77 | 2460.77   | 21134.65  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:12.259 | Hateful Strike (damage)            | 8705.00 | hatefulStrike(500)   | 500.00  | 500.00    | 21634.65  | -
+00:12.260 | Gift of Arthas (applydebuff)       | 0.00    | 90                   | 134.55  | 134.55    | 21769.20  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:12.260 | Razorhide (damage)                 | 11.00   | amt                  | 16.45   | 16.44     | 21785.65  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:12.463 | Melee (damage)                     | 616.00  | amt                  | 920.92  | 920.92    | 22706.57  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:13.224 | Heroic Strike (damage)             | 719.00  | amt + 175            | 1336.53 | 1336.53   | 24043.10  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:13.701 | Rend (damage)                      | 25.00   | amt                  | 37.38   | 37.38     | 24080.47  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:14.664 | Hateful Strike (damage)            | 0.00    | hatefulStrike(500)   | 500.00  | 500.00    | 24580.47  | -
+00:14.708 | Melee (damage)                     | 296.00  | amt                  | 442.52  | 442.52    | 25022.99  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:15.218 | Bloodthirst (damage)               | 1302.00 | amt                  | 1946.49 | 1946.49   | 26969.48  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:15.894 | Hateful Strike (damage)            | 7539.00 | hatefulStrike(500)   | 500.00  | 500.00    | 27469.48  | -
+00:15.894 | Razorhide (damage)                 | 12.00   | amt                  | 17.94   | 17.94     | 27487.42  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:15.895 | Melee (damage)                     | 255.00  | amt                  | 381.22  | 381.22    | 27868.65  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:15.920 | Bloodthirst (heal)                 | 30.00   | amt * 0.5            | 22.42   | 22.42     | 27891.07  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:15.972 | Diamond Flask (heal)               | 1009.00 | effectiveHeal * 0.50 | 754.23  | 754.23    | 28645.30  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:16.228 | Heroic Strike (damage)             | 670.00  | amt + 175            | 1263.27 | 1263.28   | 29908.58  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:16.248 | Bloodthirst (heal)                 | 20.00   | amt * 0.5            | 14.95   | 14.95     | 29923.53  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:16.715 | Rend (damage)                      | 25.00   | amt                  | 37.38   | 37.38     | 29960.90  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:16.716 | Revenge (damage)                   | 396.00  | (amt * 2.25) + 270   | 1735.69 | 1735.69   | 31696.60  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:17.017 | Melee (damage)                     | 623.00  | amt                  | 931.38  | 931.38    | 32627.98  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:17.514 | Heroic Strike (damage)             | 667.00  | amt + 175            | 1258.79 | 1258.79   | 33886.77  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:17.930 | Melee (damage)                     | 286.00  | amt                  | 427.57  | 427.57    | 34314.34  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:18.232 | Thunderfury (applydebuff)          | 0.00    | 90                   | 134.55  | 134.55    | 34448.89  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:18.233 | Thunderfury (damage)               | 297.00  | amt                  | 444.01  | 444.01    | 34892.91  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:18.233 | Thunderfury (applydebuff)          | 0.00    | 145                  | 216.77  | 216.78    | 35109.68  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:18.900 | Melee (damage)                     | 583.00  | amt                  | 871.58  | 871.58    | 35981.27  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:19.833 | Melee (damage)                     | 271.00  | amt                  | 405.14  | 405.14    | 36386.41  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:19.907 | Heroic Strike (damage)             | 700.00  | amt + 175            | 1308.13 | 1308.13   | 37694.54  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:19.907 | Thunderfury (refreshdebuff)        | 0.00    | 90                   | 134.55  | 134.55    | 37829.09  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:19.907 | Thunderfury (damage)               | 297.00  | amt                  | 444.01  | 444.01    | 38273.10  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:19.907 | Thunderfury (refreshdebuff)        | 0.00    | 145                  | 216.77  | 216.78    | 38489.88  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:20.947 | Razorhide (damage)                 | 11.00   | amt                  | 16.45   | 16.44     | 38506.32  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:20.960 | Diamond Flask (heal)               | 1009.00 | effectiveHeal * 0.50 | 754.23  | 754.23    | 39260.55  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:21.141 | Heroic Strike (damage)             | 748.00  | amt + 175            | 1379.88 | 1379.89   | 40640.43  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:21.230 | Rend (damage)                      | 25.00   | amt                  | 37.38   | 37.38     | 40677.81  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:21.273 | Bloodthirst (damage)               | 2602.00 | amt                  | 3889.99 | 3889.99   | 44567.80  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:21.290 | Bloodthirst (heal)                 | 20.00   | amt * 0.5            | 14.95   | 14.95     | 44582.75  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:21.773 | Melee (damage)                     | 647.00  | amt                  | 967.26  | 967.26    | 45550.01  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:21.830 | Razorhide (damage)                 | 12.00   | amt                  | 17.94   | 17.94     | 45567.95  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:22.535 | Razorhide (damage)                 | 12.00   | amt                  | 17.94   | 17.94     | 45585.89  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:22.711 | Melee (damage)                     | 597.00  | amt                  | 892.51  | 892.51    | 46478.41  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:22.711 | Bloodthirst (heal)                 | 20.00   | amt * 0.5            | 14.95   | 14.95     | 46493.36  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:22.794 | Revenge (damage)                   | 198.00  | (amt * 2.25) + 270   | 1069.67 | 1069.67   | 47563.03  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:22.794 | Bloodthirst (heal)                 | 30.00   | amt * 0.5            | 22.42   | 22.43     | 47585.46  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:23.603 | Melee (damage)                     | 259.00  | amt                  | 387.20  | 387.21    | 47972.66  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:23.616 | Bloodthirst (heal)                 | 20.00   | amt * 0.5            | 14.95   | 14.95     | 47987.61  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:24.229 | Rend (damage)                      | 25.00   | amt                  | 37.38   | 37.38     | 48024.99  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:24.564 | Melee (damage)                     | 651.00  | amt                  | 973.24  | 973.25    | 48998.23  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:24.702 | Heroic Strike (damage)             | 730.00  | amt + 175            | 1352.97 | 1352.97   | 50351.21  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:25.581 | Melee (damage)                     | 326.00  | amt                  | 487.37  | 487.37    | 50838.58  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:25.765 | Razorhide (damage)                 | 15.00   | amt                  | 22.42   | 22.43     | 50861.00  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:25.968 | Heroic Strike (damage)             | 1755.00 | amt + 175            | 2885.35 | 2885.35   | 53746.35  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:25.982 | Diamond Flask (heal)               | 1009.00 | effectiveHeal * 0.50 | 754.23  | 754.23    | 54500.58  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:26.595 | Melee (damage)                     | 377.00  | amt                  | 563.62  | 563.61    | 55064.19  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:26.653 | Razorhide (damage)                 | 14.00   | amt                  | 20.93   | 20.93     | 55085.13  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:27.239 | Rend (damage)                      | 25.00   | amt                  | 37.38   | 37.38     | 55122.50  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:27.240 | Heroic Strike (damage)             | 989.00  | amt + 175            | 1740.18 | 1740.18   | 56862.68  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:27.269 | Bloodthirst (damage)               | 1930.00 | amt                  | 2885.35 | 2885.35   | 59748.03  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:27.270 | Thunderfury (applydebuff)          | 0.00    | 90                   | 134.55  | 134.55    | 59882.58  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:27.270 | Thunderfury (damage)               | 445.00  | amt                  | 665.27  | 665.28    | 60547.86  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:27.271 | Thunderfury (applydebuff)          | 0.00    | 145                  | 216.77  | 216.78    | 60764.63  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:27.291 | Melee (damage)                     | 800.00  | amt                  | 1196.00 | 1196.00   | 61960.63  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:28.103 | Razorhide (damage)                 | 15.00   | amt                  | 22.42   | 22.43     | 61983.06  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:28.271 | Heroic Strike (damage)             | 975.00  | amt + 175            | 1719.25 | 1719.25   | 63702.31  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:28.294 | Bloodthirst (heal)                 | 30.00   | amt * 0.5            | 22.42   | 22.43     | 63724.73  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:28.644 | Razorhide (damage)                 | 15.00   | amt                  | 22.42   | 22.43     | 63747.16  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:28.984 | Melee (damage)                     | 685.00  | amt                  | 1024.07 | 1024.07   | 64771.23  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:29.014 | Bloodthirst (heal)                 | 20.00   | amt * 0.5            | 14.95   | 14.95     | 64786.18  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:29.194 | Razorhide (damage)                 | 12.00   | amt                  | 17.94   | 17.94     | 64804.12  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:29.729 | Heroic Strike (damage)             | 786.00  | amt + 175            | 1436.69 | 1436.70   | 66240.82  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:29.746 | Bloodthirst (heal)                 | 20.00   | amt * 0.5            | 14.95   | 14.95     | 66255.77  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:30.015 | Melee (damage)                     | 335.00  | amt                  | 500.82  | 500.82    | 66756.59  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:30.240 | Rend (damage)                      | 25.00   | amt                  | 37.38   | 37.38     | 66793.97  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:30.423 | Demoralizing Shout (applydebuff)   | 0.00    | 43                   | 64.28   | 64.29     | 66858.25  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:31.008 | Gift of Arthas (applydebuff)       | 0.00    | 90                   | 134.55  | 134.55    | 66992.80  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:31.008 | Razorhide (damage)                 | 13.00   | amt                  | 19.43   | 19.43     | 67012.24  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:31.009 | Heroic Strike (damage)             | 1545.00 | amt + 175            | 2571.40 | 2571.40   | 69583.64  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:31.564 | Razorhide (damage)                 | 13.00   | amt                  | 19.43   | 19.43     | 69603.07  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:32.025 | Melee (damage)                     | 340.00  | amt                  | 508.30  | 508.30    | 70111.37  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:32.120 | Gift of Arthas (refreshdebuff)     | 0.00    | 90                   | 134.55  | 134.55    | 70245.92  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:32.120 | Razorhide (damage)                 | 12.00   | amt                  | 17.94   | 17.94     | 70263.86  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:32.287 | Heroic Strike (damage)             | 843.00  | amt + 175            | 1521.91 | 1521.91   | 71785.77  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:33.731 | Heroic Strike (damage)             | 1357.00 | amt + 175            | 2290.34 | 2290.34   | 74076.11  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:33.733 | Melee (damage)                     | 494.00  | amt                  | 738.53  | 738.53    | 74814.64  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:33.864 | Razorhide (damage)                 | 10.00   | amt                  | 14.95   | 14.95     | 74829.59  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:34.411 | Razorhide (damage)                 | 10.00   | amt                  | 14.95   | 14.95     | 74844.54  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:35.014 | Heroic Strike (damage)             | 1280.00 | amt + 175            | 2175.22 | 2175.23   | 77019.77  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:35.086 | Rend (damage)                      | 26.00   | amt                  | 38.87   | 38.87     | 77058.64  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:35.340 | Gift of Arthas (applydebuff)       | 0.00    | 90                   | 134.55  | 134.55    | 77193.19  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:35.340 | Razorhide (damage)                 | 10.00   | amt                  | 14.95   | 14.95     | 77208.14  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:35.992 | Diamond Flask (heal)               | 1009.00 | effectiveHeal * 0.50 | 754.23  | 754.23    | 77962.36  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:36.197 | Melee (damage)                     | 254.00  | amt                  | 379.73  | 379.73    | 78342.09  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:36.230 | Razorhide (damage)                 | 10.00   | amt                  | 14.95   | 14.95     | 78357.04  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:36.306 | Heroic Strike (damage)             | 612.00  | amt + 175            | 1176.56 | 1176.57   | 79533.61  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:36.708 | Heroic Strike (damage)             | 1360.00 | amt + 175            | 2294.82 | 2294.82   | 81828.43  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:37.136 | Razorhide (damage)                 | 10.00   | amt                  | 14.95   | 14.95     | 81843.38  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:37.323 | Melee (damage)                     | 262.00  | amt                  | 391.69  | 391.69    | 82235.07  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:37.973 | Heroic Strike (damage)             | 575.00  | amt + 175            | 1121.25 | 1121.25   | 83356.32  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:38.025 | Gift of Arthas (refreshdebuff)     | 0.00    | 90                   | 134.55  | 134.55    | 83490.87  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:38.025 | Razorhide (damage)                 | 10.00   | amt                  | 14.95   | 14.95     | 83505.82  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:38.213 | Thunderfury (applydebuff)          | 0.00    | 90                   | 134.55  | 134.55    | 83640.37  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:38.213 | Thunderfury (damage)               | 297.00  | amt                  | 444.01  | 444.01    | 84084.39  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:38.213 | Thunderfury (applydebuff)          | 0.00    | 145                  | 216.77  | 216.77    | 84301.16  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:39.412 | Gift of Arthas (applydebuff)       | 0.00    | 90                   | 134.55  | 134.55    | 84435.71  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:39.427 | Razorhide (damage)                 | 12.00   | amt                  | 17.94   | 17.94     | 84453.65  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:39.610 | Melee (damage)                     | 692.00  | amt                  | 1034.54 | 1034.54   | 85488.19  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:39.776 | Bloodthirst (damage)               | 1609.00 | amt                  | 2405.45 | 2405.46   | 87893.65  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:39.807 | Bloodthirst (heal)                 | 30.00   | amt * 0.5            | 22.42   | 22.43     | 87916.07  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:39.807 | Heroic Strike (damage)             | 916.00  | amt + 175            | 1631.04 | 1631.04   | 89547.12  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:39.808 | Bloodthirst (heal)                 | 20.00   | amt * 0.5            | 14.95   | 14.95     | 89562.07  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:40.306 | Razorhide (damage)                 | 12.00   | amt                  | 17.94   | 17.94     | 89580.01  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:40.637 | Melee (damage)                     | 380.00  | amt                  | 568.10  | 568.10    | 90148.11  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:40.637 | Bloodthirst (heal)                 | 20.00   | amt * 0.5            | 14.95   | 14.95     | 90163.06  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:41.210 | Rend (damage)                      | 21.00   | amt                  | 31.39   | 31.40     | 90194.45  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:41.801 | Melee (damage)                     | 708.00  | amt                  | 1058.46 | 1058.46   | 91252.91  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:42.517 | Heroic Strike (damage)             | 780.00  | amt + 175            | 1427.72 | 1427.73   | 92680.64  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:42.796 | Demoralizing Shout (refreshdebuff) | 0.00    | 43                   | 64.28   | 64.29     | 92744.92  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:42.810 | Melee (damage)                     | 272.00  | amt                  | 406.64  | 406.64    | 93151.56  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:43.799 | Heroic Strike (damage)             | 1514.00 | amt + 175            | 2525.05 | 2525.05   | 95676.62  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:43.826 | Melee (damage)                     | 329.00  | amt                  | 491.85  | 491.85    | 96168.47  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:43.826 | Razorhide (damage)                 | 13.00   | amt                  | 19.43   | 19.43     | 96187.91  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:44.206 | Rend (damage)                      | 21.00   | amt                  | 31.39   | 31.40     | 96219.30  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:44.640 | Razorhide (damage)                 | 10.00   | amt                  | 14.95   | 14.95     | 96234.25  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:45.075 | Heroic Strike (damage)             | 586.00  | amt + 175            | 1137.69 | 1137.70   | 97371.95  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:46.076 | Melee (damage)                     | 241.00  | amt                  | 360.29  | 360.29    | 97732.24  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:46.733 | Heroic Strike (damage)             | 647.00  | amt + 175            | 1228.89 | 1228.89   | 98961.13  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:46.733 | Thunderfury (applydebuff)          | 0.00    | 90                   | 134.55  | 134.55    | 99095.68  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:46.734 | Thunderfury (damage)               | 297.00  | amt                  | 444.01  | 444.01    | 99539.70  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:46.734 | Thunderfury (applydebuff)          | 0.00    | 145                  | 216.77  | 216.77    | 99756.47  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:46.986 | Razorhide (damage)                 | 10.00   | amt                  | 14.95   | 14.95     | 99771.42  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:47.301 | Rend (damage)                      | 26.00   | amt                  | 38.87   | 38.87     | 99810.29  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:47.373 | Melee (damage)                     | 561.00  | amt                  | 838.69  | 838.70    | 100648.99 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:47.420 | Revenge (damage)                   | 172.00  | (amt * 2.25) + 270   | 982.21  | 982.21    | 101631.20 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:48.165 | Heroic Strike (damage)             | 596.00  | amt + 175            | 1152.64 | 1152.65   | 102783.85 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:48.165 | Thunderfury (applydebuff)          | 0.00    | 90                   | 134.55  | 134.55    | 102918.40 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:48.165 | Thunderfury (damage)               | 297.00  | amt                  | 444.01  | 444.01    | 103362.41 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:48.166 | Thunderfury (applydebuff)          | 0.00    | 145                  | 216.77  | 216.77    | 103579.19 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:48.387 | Melee (damage)                     | 550.00  | amt                  | 822.25  | 822.25    | 104401.44 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:48.963 | Heroic Strike (damage)             | 581.00  | amt + 175            | 1130.22 | 1130.22   | 105531.66 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:48.964 | Thunderfury (applydebuff)          | 0.00    | 90                   | 134.55  | 134.55    | 105666.21 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:48.964 | Thunderfury (damage)               | 445.00  | amt                  | 665.27  | 665.27    | 106331.48 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:48.964 | Thunderfury (applydebuff)          | 0.00    | 145                  | 216.77  | 216.77    | 106548.26 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:49.397 | Melee (damage)                     | 515.00  | amt                  | 769.92  | 769.93    | 107318.18 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:50.261 | Heroic Strike (damage)             | 1120.00 | amt + 175            | 1936.02 | 1936.02   | 109254.21 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:50.310 | Rend (damage)                      | 26.00   | amt                  | 38.87   | 38.87     | 109293.08 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:50.399 | Melee (damage)                     | 486.00  | amt                  | 726.57  | 726.57    | 110019.65 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:50.487 | Heroic Strike (damage)             | 634.00  | amt + 175            | 1209.45 | 1209.46   | 111229.10 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:50.487 | Thunderfury (refreshdebuff)        | 0.00    | 90                   | 134.55  | 134.55    | 111363.65 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:50.487 | Thunderfury (damage)               | 297.00  | amt                  | 444.01  | 444.01    | 111807.67 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:50.487 | Thunderfury (refreshdebuff)        | 0.00    | 145                  | 216.77  | 216.77    | 112024.44 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:51.337 | Heroic Strike (damage)             | 637.00  | amt + 175            | 1213.94 | 1213.94   | 113238.38 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:51.403 | Melee (damage)                     | 210.00  | amt                  | 313.95  | 313.95    | 113552.33 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:51.967 | Bloodthirst (damage)               | 1010.00 | amt                  | 1509.95 | 1509.95   | 115062.28 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:52.698 | Melee (damage)                     | 478.00  | amt                  | 714.61  | 714.61    | 115776.89 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:52.723 | Dragonbreath Chili (damage)        | 401.00  | amt                  | 599.50  | 599.49    | 116376.39 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:52.801 | Razorhide (damage)                 | 12.00   | amt                  | 17.94   | 17.94     | 116394.33 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:52.896 | Heroic Strike (damage)             | 1400.00 | amt + 175            | 2354.63 | 2354.63   | 118748.95 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:52.896 | Thunderfury (refreshdebuff)        | 0.00    | 90                   | 134.55  | 134.55    | 118883.50 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:52.896 | Thunderfury (damage)               | 297.00  | amt                  | 444.01  | 444.01    | 119327.52 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:52.897 | Thunderfury (refreshdebuff)        | 0.00    | 145                  | 216.77  | 216.77    | 119544.29 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:52.918 | Bloodthirst (heal)                 | 20.00   | amt * 0.5            | 14.95   | 14.95     | 119559.24 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:53.472 | Rend (damage)                      | 21.00   | amt                  | 31.39   | 31.40     | 119590.64 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:53.507 | Revenge (damage)                   | 208.00  | (amt * 2.25) + 270   | 1103.31 | 1103.31   | 120693.95 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:53.507 | Bloodthirst (heal)                 | 20.00   | amt * 0.5            | 14.95   | 14.95     | 120708.90 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:53.689 | Razorhide (damage)                 | 13.00   | amt                  | 19.43   | 19.43     | 120728.33 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:53.713 | Melee (damage)                     | 590.00  | amt                  | 882.05  | 882.05    | 121610.38 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:53.729 | Bloodthirst (heal)                 | 20.00   | amt * 0.5            | 14.95   | 14.95     | 121625.33 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:54.178 | Heroic Strike (damage)             | 676.00  | amt + 175            | 1272.24 | 1272.24   | 122897.58 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:54.603 | Razorhide (damage)                 | 12.00   | amt                  | 17.94   | 17.94     | 122915.52 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:54.721 | Melee (damage)                     | 299.00  | amt                  | 447.00  | 447.01    | 123362.52 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:55.014 | Thunderfury (applydebuff)          | 0.00    | 90                   | 134.55  | 134.55    | 123497.07 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:55.015 | Thunderfury (damage)               | 445.00  | amt                  | 665.27  | 665.27    | 124162.35 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:55.015 | Thunderfury (applydebuff)          | 0.00    | 145                  | 216.77  | 216.77    | 124379.12 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:55.450 | Heroic Strike (damage)             | 1450.00 | amt + 175            | 2429.38 | 2429.38   | 126808.50 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:55.479 | Melee (damage)                     | 544.00  | amt                  | 813.28  | 813.28    | 127621.78 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:55.721 | Melee (damage)                     | 310.00  | amt                  | 463.45  | 463.45    | 128085.23 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:56.390 | Razorhide (damage)                 | 13.00   | amt                  | 19.43   | 19.43     | 128104.66 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:56.730 | Heroic Strike (damage)             | 712.00  | amt + 175            | 1326.06 | 1326.07   | 129430.73 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:56.731 | Thunderfury (applydebuff)          | 0.00    | 90                   | 134.55  | 134.55    | 129565.28 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:56.731 | Thunderfury (damage)               | 297.00  | amt                  | 444.01  | 444.01    | 130009.29 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:56.732 | Thunderfury (applydebuff)          | 0.00    | 145                  | 216.77  | 216.77    | 130226.07 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:56.945 | Razorhide (damage)                 | 10.00   | amt                  | 14.95   | 14.95     | 130241.02 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:58.058 | Melee (damage)                     | 502.00  | amt                  | 750.49  | 750.49    | 130991.51 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:58.116 | Bloodthirst (damage)               | 1009.00 | amt                  | 1508.45 | 1508.46   | 132499.96 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:59.083 | Melee (damage)                     | 480.00  | amt                  | 717.60  | 717.60    | 133217.56 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:59.084 | Heroic Strike (damage)             | 564.00  | amt + 175            | 1104.80 | 1104.80   | 134322.37 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:59.515 | Razorhide (damage)                 | 10.00   | amt                  | 14.95   | 14.95     | 134337.32 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:59.565 | Rend (damage)                      | 26.00   | amt                  | 38.87   | 38.87     | 134376.19 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:00.078 | Melee (damage)                     | 446.00  | amt                  | 666.77  | 666.77    | 135042.96 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:00.097 | Bloodthirst (heal)                 | 20.00   | amt * 0.5            | 14.95   | 14.95     | 135057.91 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:00.354 | Heroic Strike (damage)             | 533.00  | amt + 175            | 1058.46 | 1058.46   | 136116.37 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:00.369 | Bloodthirst (heal)                 | 20.00   | amt * 0.5            | 14.95   | 14.95     | 136131.32 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:00.967 | Razorhide (damage)                 | 10.00   | amt                  | 14.95   | 14.95     | 136146.27 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:01.085 | Melee (damage)                     | 192.00  | amt                  | 287.04  | 287.04    | 136433.31 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:01.251 | Heroic Strike (damage)             | 648.00  | amt + 175            | 1230.38 | 1230.39   | 137663.69 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:02.363 | Melee (damage)                     | 262.00  | amt                  | 391.69  | 391.69    | 138055.38 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:02.420 | Razorhide (damage)                 | 10.00   | amt                  | 14.95   | 14.95     | 138070.33 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:02.906 | Heroic Strike (damage)             | 562.00  | amt + 175            | 1101.81 | 1101.82   | 139172.15 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:02.972 | Razorhide (damage)                 | 9.00    | amt                  | 13.45   | 13.45     | 139185.60 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:03.662 | Melee (damage)                     | 482.00  | amt                  | 720.59  | 720.59    | 139906.19 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:03.887 | Razorhide (damage)                 | 10.00   | amt                  | 14.95   | 14.95     | 139921.14 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:04.173 | Bloodthirst (damage)               | 1009.00 | amt                  | 1508.45 | 1508.45   | 141429.60 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:04.221 | Rend (damage)                      | 21.00   | amt                  | 31.39   | 31.39     | 141460.99 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:04.678 | Melee (damage)                     | 530.00  | amt                  | 792.35  | 792.35    | 142253.34 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:05.465 | Heroic Strike (damage)             | 573.00  | amt + 175            | 1118.26 | 1118.26   | 143371.60 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:05.676 | Melee (damage)                     | 492.00  | amt                  | 735.54  | 735.54    | 144107.14 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:06.168 | Razorhide (damage)                 | 9.00    | amt                  | 13.45   | 13.45     | 144120.60 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:06.712 | Razorhide (damage)                 | 10.00   | amt                  | 14.95   | 14.95     | 144135.55 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:06.733 | Heroic Strike (damage)             | 1074.00 | amt + 175            | 1867.25 | 1867.26   | 146002.80 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:06.748 | Bloodthirst (heal)                 | 20.00   | amt * 0.5            | 14.95   | 14.95     | 146017.75 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:07.701 | Melee (damage)                     | 485.00  | amt                  | 725.07  | 725.08    | 146742.83 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:08.139 | Gift of Arthas (applydebuff)       | 0.00    | 90                   | 134.55  | 134.55    | 146877.38 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:08.139 | Razorhide (damage)                 | 10.00   | amt                  | 14.95   | 14.95     | 146892.33 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:08.712 | Melee (damage)                     | 452.00  | amt                  | 675.74  | 675.74    | 147568.07 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:08.735 | Thunderfury (applydebuff)          | 0.00    | 90                   | 134.55  | 134.55    | 147702.62 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:08.736 | Thunderfury (damage)               | 297.00  | amt                  | 444.01  | 444.02    | 148146.63 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:08.736 | Thunderfury (applydebuff)          | 0.00    | 145                  | 216.77  | 216.77    | 148363.41 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+01:09.714 | Melee (damage)                     | 237.00  | amt                  | 354.31  | 354.32    | 148717.72 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+
+Fight Total: 148717.72
