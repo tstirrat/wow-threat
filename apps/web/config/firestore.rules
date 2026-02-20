@@ -7,6 +7,7 @@ service cloud.firestore {
     }
 
     match /wcl_bridge_codes/{code} {
+      // TTL: run scripts/setup-firestore-ttl.sh to enable auto-deletion
       allow read, write: if false;
     }
 

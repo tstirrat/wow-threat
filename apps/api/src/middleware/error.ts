@@ -39,6 +39,7 @@ export const ErrorCodes = {
   WCL_API_ERROR: 'WCL_API_ERROR',
   WCL_RATE_LIMITED: 'WCL_RATE_LIMITED',
   UNAUTHORIZED: 'UNAUTHORIZED',
+  FIRESTORE_ERROR: 'FIRESTORE_ERROR',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
 } as const
 
@@ -124,6 +125,10 @@ export function wclRateLimited(): AppError {
 
 export function unauthorized(message = 'Unauthorized'): AppError {
   return new AppError(ErrorCodes.UNAUTHORIZED, message, 401)
+}
+
+export function firestoreError(message: string): AppError {
+  return new AppError(ErrorCodes.FIRESTORE_ERROR, message, 500)
 }
 
 /**

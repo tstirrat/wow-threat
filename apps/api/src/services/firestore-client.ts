@@ -3,7 +3,7 @@
  */
 import { SignJWT, importPKCS8 } from 'jose'
 
-import { unauthorized } from '../middleware/error'
+import { firestoreError } from '../middleware/error'
 import type { Bindings } from '../types/bindings'
 
 const FIRESTORE_TOKEN_SCOPE = 'https://www.googleapis.com/auth/datastore'
@@ -82,7 +82,7 @@ export class FirestoreClient {
     }
     if (!response.ok) {
       const body = await response.text()
-      throw unauthorized(
+      throw firestoreError(
         `Failed to read Firestore document: ${parseFirestoreErrorMessage(body)}`,
       )
     }
@@ -102,7 +102,7 @@ export class FirestoreClient {
     }
     if (!response.ok) {
       const body = await response.text()
-      throw unauthorized(
+      throw firestoreError(
         `Failed to delete Firestore document: ${parseFirestoreErrorMessage(body)}`,
       )
     }
@@ -140,7 +140,7 @@ export class FirestoreClient {
     }
     if (!response.ok) {
       const body = await response.text()
-      throw unauthorized(
+      throw firestoreError(
         `Failed to write Firestore document: ${parseFirestoreErrorMessage(body)}`,
       )
     }
@@ -188,7 +188,7 @@ export class FirestoreClient {
     })
 
     if (!response.ok) {
-      throw unauthorized(
+      throw firestoreError(
         'Unable to authenticate with Firestore service account',
       )
     }
