@@ -83,7 +83,7 @@ export const ReportSummaryHeader: FC<ReportSummaryHeaderProps> = ({
                 </span>
               ) : null}
               <span className="text-muted-foreground">|</span>
-              <span className="text-muted-foreground">{report.zone.name}</span>
+              <span className="text-muted-foreground">{report.zone?.name}</span>
             </CardTitle>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
               <span>{formatReportHeaderDate(report.startTime)}</span>

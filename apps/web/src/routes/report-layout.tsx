@@ -43,7 +43,7 @@ export const ReportLayout: FC = () => {
       title: data.title,
       sourceHost: reportHost,
       lastOpenedAt: Date.now(),
-      zoneName: data.zone.name,
+      zoneName: data.zone?.name,
       startTime: data.startTime,
       bossKillCount: buildBossKillNavigationFights(data.fights).length,
       guildName: data.guild?.name ?? null,

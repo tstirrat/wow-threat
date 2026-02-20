@@ -67,7 +67,7 @@ export interface ReportResponse {
   endTime: number
   gameVersion: number
   threatConfig: ThreatConfigSummary | null
-  zone: Zone
+  zone: Zone | null
   fights: ReportFightSummary[]
   actors: ReportActorSummary[]
   abilities: ReportAbilitySummary[]

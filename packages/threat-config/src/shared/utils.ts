@@ -117,7 +117,7 @@ export function hasZonePartition(
   input: ThreatConfigResolutionInput,
   expected: string[],
 ): boolean {
-  return (input.report.zone.partitions ?? []).some((partition) => {
+  return (input.report.zone?.partitions ?? []).some((partition) => {
     const zoneName = partition.name.toLowerCase()
     return expected.some((expectedName) => zoneName.includes(expectedName))
   })
