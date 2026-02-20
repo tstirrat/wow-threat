@@ -11,7 +11,7 @@ Each fixture directory contains:
 Download a fixture:
 
 ```bash
-pnpm --filter @wcl-threat/threat-config fixtures:download -- \
+pnpm --filter @wow-threat/config fixtures:download -- \
   --report-url "https://fresh.warcraftlogs.com/reports/f9yPamzBxQqhGndZ?fight=26&type=damage-done&source=19" \
   --name fresh/naxx
 ```
@@ -19,14 +19,14 @@ pnpm --filter @wcl-threat/threat-config fixtures:download -- \
 Run integration tests:
 
 ```bash
-pnpm --filter @wcl-threat/threat-config test:integration
+pnpm --filter @wow-threat/config test:integration
 ```
 
 Generate a local threat debug report from fixtures (cache-first, auto-download when
 missing):
 
 ```bash
-pnpm --filter @wcl-threat/threat-config report:debug -- \
+pnpm --filter @wow-threat/config report:debug -- \
   --report "https://fresh.warcraftlogs.com/reports/f9yPamzBxQqhGndZ?fight=26&type=damage-done&source=19" \
   --enemy-id 203
 ```

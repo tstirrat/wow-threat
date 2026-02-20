@@ -8,7 +8,7 @@ import {
   createDamageEvent,
   createHealEvent,
   createResourceChangeEvent,
-} from '@wcl-threat/shared'
+} from '@wow-threat/shared'
 import { describe, expect, it } from 'vitest'
 
 import { ActorState, positionUpdateActorByEventType } from './actor-state'

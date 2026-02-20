@@ -1,5 +1,5 @@
 {
-  "name": "@wcl-threat/api",
+  "name": "@wow-threat/api",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -15,10 +15,10 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@wcl-threat/shared": "workspace:*",
-    "@wcl-threat/threat-config": "workspace:*",
-    "@wcl-threat/threat-engine": "workspace:*",
-    "@wcl-threat/wcl-types": "workspace:*",
+    "@wow-threat/shared": "workspace:*",
+    "@wow-threat/config": "workspace:*",
+    "@wow-threat/engine": "workspace:*",
+    "@wow-threat/wcl-types": "workspace:*",
     "hono": "^4.6.0",
     "jose": "^6.1.3"
   },
@@ -30,7 +30,7 @@
     "@eslint/markdown": "^7.5.1",
     "@vitest/coverage-istanbul": "^2.1.9",
     "@vitest/coverage-v8": "2.1.9",
-    "@wcl-threat/typescript-config": "workspace:*",
+    "@wow-threat/typescript-config": "workspace:*",
     "eslint": "^9.39.2",
     "globals": "^17.3.0",
     "jiti": "^2.6.1",

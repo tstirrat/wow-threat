@@ -7,7 +7,7 @@ import type {
   EventInterceptorResult,
   ThreatEffect,
   ThreatFormula,
-} from '@wcl-threat/shared'
+} from '@wow-threat/shared'
 
 import { modifyThreat } from '../../shared/formulas'
 

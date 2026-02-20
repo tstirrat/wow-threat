@@ -1,7 +1,7 @@
 /**
  * Anniversary Naxxramas deltas over Era.
  */
-import type { Abilities } from '@wcl-threat/shared'
+import type { Abilities } from '@wow-threat/shared'
 
 import {
   Spells as EraSpells,

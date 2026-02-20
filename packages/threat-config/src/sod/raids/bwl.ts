@@ -1,7 +1,7 @@
 /**
  * Blackwing Lair Abilities - Season of Discovery
  */
-import type { ThreatFormula } from '@wcl-threat/shared'
+import type { ThreatFormula } from '@wow-threat/shared'
 
 import { bwlAbilities as eraBwlAbilities } from '../../era/raids/bwl'
 

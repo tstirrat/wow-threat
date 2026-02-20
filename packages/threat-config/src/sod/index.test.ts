@@ -8,9 +8,9 @@ import {
   createCastEvent,
   createDamageEvent,
   createMockActorContext,
-} from '@wcl-threat/shared'
-import type { ThreatContext } from '@wcl-threat/shared/src/types'
-import type { GearItem } from '@wcl-threat/wcl-types'
+} from '@wow-threat/shared'
+import type { ThreatContext } from '@wow-threat/shared/src/types'
+import type { GearItem } from '@wow-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
 import { bwlAbilities as eraBwlAbilities } from '../era/raids/bwl'

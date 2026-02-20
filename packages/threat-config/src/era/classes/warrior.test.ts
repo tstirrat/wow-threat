@@ -8,12 +8,12 @@ import {
   createDamageEvent,
   createMockActorContext,
   createResourceChangeEvent,
-} from '@wcl-threat/shared'
+} from '@wow-threat/shared'
 import type {
   TalentImplicationContext,
   ThreatContext,
-} from '@wcl-threat/shared/src/types'
-import { ResourceTypeCode } from '@wcl-threat/wcl-types'
+} from '@wow-threat/shared/src/types'
+import { ResourceTypeCode } from '@wow-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
 import { SetIds, Spells, exclusiveAuras, warriorConfig } from './warrior'

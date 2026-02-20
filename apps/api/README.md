@@ -1,4 +1,4 @@
-# `@wcl-threat/api` HTTP Contract
+# `@wow-threat/api` HTTP Contract
 
 This document defines the frontend-facing API contract for the Worker in this package.
 

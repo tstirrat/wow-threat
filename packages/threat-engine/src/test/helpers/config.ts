@@ -4,7 +4,7 @@
  * Provides a minimal, self-contained threat configuration for unit tests.
  * Tests can override specific parts without dependencies on real game configs.
  */
-import type { ThreatConfig, ThreatContext } from '@wcl-threat/shared'
+import type { ThreatConfig, ThreatContext } from '@wow-threat/shared'
 
 /**
  * Create a minimal mock threat configuration for testing

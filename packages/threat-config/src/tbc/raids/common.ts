@@ -1,7 +1,7 @@
 /**
  * Shared TBC raid mechanics used across multiple raids.
  */
-import type { Abilities } from '@wcl-threat/shared'
+import type { Abilities } from '@wow-threat/shared'
 
 import { modifyThreatOnHit } from '../../shared/formulas'
 

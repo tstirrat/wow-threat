@@ -8,8 +8,8 @@ import type {
   ThreatConfig,
   ThreatContext,
   ThreatModifier,
-} from '@wcl-threat/shared'
-import type { GearItem } from '@wcl-threat/wcl-types'
+} from '@wow-threat/shared'
+import type { GearItem } from '@wow-threat/wcl-types'
 
 import { eraConfig } from '../era'
 import { baseThreat } from '../era/general'

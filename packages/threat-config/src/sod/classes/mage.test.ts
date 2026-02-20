@@ -1,7 +1,7 @@
 /**
  * Season of Discovery Mage Threat Configuration Tests
  */
-import { checkExists } from '@wcl-threat/shared'
+import { checkExists } from '@wow-threat/shared'
 import { describe, expect, it } from 'vitest'
 
 import { createDamageContext } from '../../test/helpers/context'

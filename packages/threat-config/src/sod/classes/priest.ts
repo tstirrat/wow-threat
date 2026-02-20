@@ -1,8 +1,8 @@
 /**
  * Priest Threat Configuration - Season of Discovery
  */
-import type { ClassThreatConfig } from '@wcl-threat/shared'
-import type { GearItem } from '@wcl-threat/wcl-types'
+import type { ClassThreatConfig } from '@wow-threat/shared'
+import type { GearItem } from '@wow-threat/wcl-types'
 
 import { priestConfig as eraPriestConfig } from '../../era/classes/priest'
 

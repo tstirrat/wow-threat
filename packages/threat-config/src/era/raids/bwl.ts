@@ -7,8 +7,8 @@ import type {
   EventInterceptor,
   SpellId,
   ThreatFormula,
-} from '@wcl-threat/shared'
-import type { EventType, WCLEvent } from '@wcl-threat/wcl-types'
+} from '@wow-threat/shared'
+import type { EventType, WCLEvent } from '@wow-threat/wcl-types'
 
 import { modifyThreat, modifyThreatOnHit } from '../../shared/formulas'
 import { Spells as DruidSpells } from '../classes/druid'

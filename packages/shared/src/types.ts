@@ -13,7 +13,7 @@ import type {
   ResourceType,
   TalentPoints,
   WCLEvent,
-} from '@wcl-threat/wcl-types'
+} from '@wow-threat/wcl-types'
 
 // ============================================================================
 // Core Types

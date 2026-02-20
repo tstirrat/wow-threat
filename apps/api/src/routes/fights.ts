@@ -3,8 +3,8 @@
  *
  * GET /reports/:code/fights/:id - Get fight details
  */
-import { exists } from '@wcl-threat/shared'
-import type { ReportActor } from '@wcl-threat/wcl-types'
+import { exists } from '@wow-threat/shared'
+import type { ReportActor } from '@wow-threat/wcl-types'
 import { Hono } from 'hono'
 
 import {

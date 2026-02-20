@@ -3,8 +3,8 @@
  *
  * Resolves the correct threat config by evaluating each config's own resolver.
  */
-import type { ThreatConfig } from '@wcl-threat/shared'
-import type { ThreatConfigResolutionInput } from '@wcl-threat/shared'
+import type { ThreatConfig } from '@wow-threat/shared'
+import type { ThreatConfigResolutionInput } from '@wow-threat/shared'
 
 import { eraConfig } from './era'
 import { sodConfig } from './sod'

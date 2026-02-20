@@ -10,7 +10,7 @@ import {
   createCombatantInfoEvent,
   createMockThreatConfig,
   createRemoveBuffEvent,
-} from '@wcl-threat/shared'
+} from '@wow-threat/shared'
 import {
   createApplyBuffStackEvent,
   createApplyDebuffEvent,
@@ -23,14 +23,14 @@ import {
   createRemoveBuffStackEvent,
   createRemoveDebuffEvent,
   createRemoveDebuffStackEvent,
-} from '@wcl-threat/shared'
+} from '@wow-threat/shared'
 import type {
   Actor,
   TalentImplicationsFn,
   ThreatConfig,
   ThreatContext,
-} from '@wcl-threat/shared'
-import type { GearItem, WCLEvent } from '@wcl-threat/wcl-types'
+} from '@wow-threat/shared'
+import type { GearItem, WCLEvent } from '@wow-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
 import { FightState } from './fight-state'

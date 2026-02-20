@@ -1,5 +1,5 @@
 {
-  "name": "@wcl-threat/shared",
+  "name": "@wow-threat/shared",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -14,8 +14,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "@wcl-threat/typescript-config": "workspace:*",
-    "@wcl-threat/wcl-types": "workspace:*",
+    "@wow-threat/typescript-config": "workspace:*",
+    "@wow-threat/wcl-types": "workspace:*",
     "eslint": "^9.39.2",
     "globals": "^17.3.0",
     "typescript": "^5.7.0",

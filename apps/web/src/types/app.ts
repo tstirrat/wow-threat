@@ -1,7 +1,7 @@
 /**
  * Shared frontend app-level types.
  */
-import type { PlayerClass } from '@wcl-threat/wcl-types'
+import type { PlayerClass } from '@wow-threat/wcl-types'
 
 export type WarcraftLogsHost =
   | 'fresh.warcraftlogs.com'

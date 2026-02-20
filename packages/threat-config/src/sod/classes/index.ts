@@ -1,7 +1,7 @@
 /**
  * Season of Discovery Class Threat Configs
  */
-import type { ThreatConfig } from '@wcl-threat/shared'
+import type { ThreatConfig } from '@wow-threat/shared'
 
 import { druidConfig } from './druid'
 import { hunterConfig } from './hunter'

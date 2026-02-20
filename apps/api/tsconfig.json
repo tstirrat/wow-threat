@@ -1,5 +1,5 @@
 {
-  "extends": "@wcl-threat/typescript-config/worker.json",
+  "extends": "@wow-threat/typescript-config/worker.json",
   "compilerOptions": {
     "outDir": "./dist",
     "paths": {

@@ -5,7 +5,7 @@ import type {
   EncounterId,
   EncounterThreatConfig,
   ThreatFormula,
-} from '@wcl-threat/shared'
+} from '@wow-threat/shared'
 
 import { zgEncounters as eraZgEncounters } from '../../era/raids/zg'
 import { modifyThreat } from '../../shared/formulas'

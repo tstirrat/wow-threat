@@ -11,7 +11,7 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   webServer: {
-    command: 'pnpm --filter @wcl-threat/web dev --port 9090',
+    command: 'pnpm --filter @wow-threat/web dev --port 9090',
     port: 9090,
     reuseExistingServer: true,
     timeout: 120000,

@@ -3,7 +3,7 @@
  *
  * Entry point for the Cloudflare Workers application.
  */
-import { generateRequestId } from '@wcl-threat/shared'
+import { generateRequestId } from '@wow-threat/shared'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'

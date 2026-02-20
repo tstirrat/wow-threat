@@ -1,7 +1,7 @@
 /**
  * Unit tests for threat aggregation helpers.
  */
-import { ResourceTypeCode } from '@wcl-threat/wcl-types'
+import { ResourceTypeCode } from '@wow-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
 import type { ReportAbilitySummary, ReportActorSummary } from '../types/api'

@@ -11,8 +11,8 @@ import type {
   RuntimeActorView,
   ThreatConfig,
   WowClass,
-} from '@wcl-threat/shared'
-import type { GearItem, WCLEvent } from '@wcl-threat/wcl-types'
+} from '@wow-threat/shared'
+import type { GearItem, WCLEvent } from '@wow-threat/wcl-types'
 
 import { ActorState, positionUpdateActorByEventType } from './actor-state'
 import type {

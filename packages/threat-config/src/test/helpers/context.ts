@@ -6,14 +6,14 @@ import {
   createCastEvent,
   createDamageEvent,
   createMockActorContext,
-} from '@wcl-threat/shared'
-import type { ThreatContext } from '@wcl-threat/shared/src/types'
+} from '@wow-threat/shared'
+import type { ThreatContext } from '@wow-threat/shared/src/types'
 import type {
   ApplyDebuffEvent,
   CastEvent,
   DamageEvent,
   WCLEvent,
-} from '@wcl-threat/wcl-types'
+} from '@wow-threat/wcl-types'
 
 type LegacyFriendlyFlagOverrides = {
   sourceIsFriendly?: boolean

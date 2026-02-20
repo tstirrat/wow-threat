@@ -7,7 +7,7 @@ import {
   type ThreatChange,
   type ThreatFormula,
   exists,
-} from '@wcl-threat/shared'
+} from '@wow-threat/shared'
 
 import { modifyThreat } from '../../shared/formulas'
 

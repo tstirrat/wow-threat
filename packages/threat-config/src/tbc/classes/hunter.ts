@@ -3,7 +3,7 @@
  *
  * Inherits Era hunter behavior and adds Misdirection threat redirection.
  */
-import type { ClassThreatConfig, EventInterceptor } from '@wcl-threat/shared'
+import type { ClassThreatConfig, EventInterceptor } from '@wow-threat/shared'
 
 import {
   Spells as EraSpells,

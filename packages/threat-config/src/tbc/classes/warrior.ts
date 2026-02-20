@@ -8,7 +8,7 @@ import type {
   ClassThreatConfig,
   SpellId,
   TalentImplicationContext,
-} from '@wcl-threat/shared'
+} from '@wow-threat/shared'
 
 import {
   SetIds as EraSetIds,

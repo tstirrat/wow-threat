@@ -1,7 +1,7 @@
 /**
  * Fight-level page with target filter and player-focused chart interactions.
  */
-import { resolveConfigOrNull } from '@wcl-threat/threat-config'
+import { resolveConfigOrNull } from '@wow-threat/config'
 import { ExternalLink } from 'lucide-react'
 import { type FC, useCallback, useMemo } from 'react'
 import { useLocation, useParams } from 'react-router-dom'

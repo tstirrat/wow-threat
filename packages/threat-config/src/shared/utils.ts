@@ -4,7 +4,7 @@
 import type {
   ThreatConfig,
   ThreatConfigResolutionInput,
-} from '@wcl-threat/shared'
+} from '@wow-threat/shared'
 
 export const FRESH_TBC_CUTOVER_TIMESTAMP_MS = Date.UTC(2026, 0, 13)
 export const CLASSIC_GAME_VERSIONS = [2, 3] as const

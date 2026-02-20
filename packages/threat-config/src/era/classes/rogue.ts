@@ -3,7 +3,7 @@
  *
  * Rogues have a base 0.71x threat coefficient for all actions.
  */
-import type { ClassThreatConfig } from '@wcl-threat/shared'
+import type { ClassThreatConfig } from '@wow-threat/shared'
 
 import { modifyThreat, threat } from '../../shared/formulas'
 

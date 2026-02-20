@@ -3,7 +3,7 @@
  *
  * Raid-specific spell sets and encounter rules for Molten Core.
  */
-import type { SpellId } from '@wcl-threat/shared'
+import type { SpellId } from '@wow-threat/shared'
 
 /**
  * Aggro-loss buffs from Molten Core bosses.

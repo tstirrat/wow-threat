@@ -6,8 +6,8 @@
 import type {
   ClassThreatConfig,
   TalentImplicationContext,
-} from '@wcl-threat/shared'
-import { SpellSchool } from '@wcl-threat/shared'
+} from '@wow-threat/shared'
+import { SpellSchool } from '@wow-threat/shared'
 
 import { noThreat, threat } from '../../shared/formulas'
 import { inferTalent } from '../../shared/talents'

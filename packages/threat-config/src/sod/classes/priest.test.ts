@@ -1,8 +1,8 @@
 /**
  * Season of Discovery Priest Threat Configuration Tests
  */
-import { checkExists } from '@wcl-threat/shared'
-import type { GearItem } from '@wcl-threat/wcl-types'
+import { checkExists } from '@wow-threat/shared'
+import type { GearItem } from '@wow-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
 import { createDamageContext } from '../../test/helpers/context'

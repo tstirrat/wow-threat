@@ -21,7 +21,7 @@ jobs:
           cache: pnpm
           node-version-file: .nvmrc
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @wcl-threat/web build
+      - run: pnpm --filter @wow-threat/web build
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}

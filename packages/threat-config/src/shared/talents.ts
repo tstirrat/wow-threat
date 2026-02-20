@@ -4,7 +4,7 @@
  * Utilities in this module normalize and clamp inferred talent ranks so class
  * configs can consistently derive synthetic aura IDs from combatant info data.
  */
-import type { TalentImplicationContext } from '@wcl-threat/shared'
+import type { TalentImplicationContext } from '@wow-threat/shared'
 
 /**
  * Clamp a rank value to the valid interval [0, maxRank].

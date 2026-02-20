@@ -1,7 +1,7 @@
 /**
  * Tests for talent-rank helper utilities
  */
-import type { TalentImplicationContext } from '@wcl-threat/shared'
+import type { TalentImplicationContext } from '@wow-threat/shared'
 import { describe, expect, it } from 'vitest'
 
 import { clampRank, inferTalent } from './talents'

@@ -3,7 +3,7 @@
  * Download a real WCL fight fixture for threat-config integration tests.
  *
  * Usage:
- *   pnpm --filter @wcl-threat/threat-config fixtures:download -- \
+ *   pnpm --filter @wow-threat/config fixtures:download -- \
  *     --report-url "https://fresh.warcraftlogs.com/reports/f9yPamzBxQqhGndZ?fight=26&type=damage-done&source=19" \
  *     --name fresh/naxx \
  *     --focus-actor-id 12
@@ -319,7 +319,7 @@ function printUsage() {
   console.log(
     [
       'Usage:',
-      '  pnpm --filter @wcl-threat/threat-config fixtures:download -- \\',
+      '  pnpm --filter @wow-threat/config fixtures:download -- \\',
       '    --report-url <WCL_REPORT_URL> \\',
       '    [--name <fixture/path>] \\',
       '    [--output <absolute/or/relative/path>] \\',

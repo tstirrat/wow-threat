@@ -6,7 +6,7 @@ import type {
   ThreatContext,
   ThreatFormula,
   ThreatModifier,
-} from '@wcl-threat/shared'
+} from '@wow-threat/shared'
 
 import {
   aq40AggroLossBuffs as eraAq40AggroLossBuffs,

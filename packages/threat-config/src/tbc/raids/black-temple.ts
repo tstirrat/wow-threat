@@ -1,7 +1,7 @@
 /**
  * Black Temple raid mechanics for Anniversary/TBC.
  */
-import type { Abilities, AuraModifiers, SpellId } from '@wcl-threat/shared'
+import type { Abilities, AuraModifiers, SpellId } from '@wow-threat/shared'
 
 import {
   modifyThreat,

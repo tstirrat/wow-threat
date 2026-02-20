@@ -24,8 +24,8 @@ import type {
   ThreatResult,
   ThreatStateKind,
   WowClass,
-} from '@wcl-threat/shared'
-import type { WCLEvent } from '@wcl-threat/wcl-types'
+} from '@wow-threat/shared'
+import type { WCLEvent } from '@wow-threat/wcl-types'
 
 import { FightState } from './fight-state'
 import { InterceptorTracker } from './interceptor-tracker'

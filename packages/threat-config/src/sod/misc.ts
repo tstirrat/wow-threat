@@ -1,4 +1,4 @@
-import type { ThreatFormula } from '@wcl-threat/shared'
+import type { ThreatFormula } from '@wow-threat/shared'
 
 import { miscAbilities as eraMisc } from '../era/misc'
 import { threat } from '../shared/formulas'

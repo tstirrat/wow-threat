@@ -6,7 +6,7 @@
 import type {
   ClassThreatConfig,
   TalentImplicationContext,
-} from '@wcl-threat/shared'
+} from '@wow-threat/shared'
 
 import { threat } from '../../shared/formulas'
 import { inferTalent } from '../../shared/talents'

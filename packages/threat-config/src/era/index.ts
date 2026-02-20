@@ -8,7 +8,7 @@ import type {
   SpellId,
   ThreatConfig,
   ThreatConfigResolutionInput,
-} from '@wcl-threat/shared'
+} from '@wow-threat/shared'
 
 import {
   FRESH_TBC_CUTOVER_TIMESTAMP_MS,

@@ -3,13 +3,10 @@
  *
  * Loads config-scoped fixtures and runs them through the shared threat engine.
  */
-import { type Actor, type AugmentedEvent } from '@wcl-threat/shared'
-import type { ThreatConfig } from '@wcl-threat/shared/src/types'
-import {
-  buildThreatEngineInput,
-  processEvents,
-} from '@wcl-threat/threat-engine'
-import type { WCLEvent, WCLReportResponse } from '@wcl-threat/wcl-types'
+import { buildThreatEngineInput, processEvents } from '@wow-threat/engine'
+import { type Actor, type AugmentedEvent } from '@wow-threat/shared'
+import type { ThreatConfig } from '@wow-threat/shared/src/types'
+import type { WCLEvent, WCLReportResponse } from '@wow-threat/wcl-types'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'

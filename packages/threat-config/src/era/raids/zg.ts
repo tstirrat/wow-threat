@@ -8,7 +8,7 @@ import type {
   EncounterPreprocessorFactory,
   EncounterThreatConfig,
   SpellId,
-} from '@wcl-threat/shared'
+} from '@wow-threat/shared'
 
 /**
  * Aggro-loss buffs from Zul'Gurub bosses.

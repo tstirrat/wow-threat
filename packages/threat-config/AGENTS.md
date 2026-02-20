@@ -71,7 +71,7 @@ Avoid:
 ## Example Pattern
 
 ```ts
-import type { ClassThreatConfig } from '@wcl-threat/shared'
+import type { ClassThreatConfig } from '@wow-threat/shared'
 
 import { Spells as EraSpells, someClassConfig as eraConfig } from '../era/path'
 

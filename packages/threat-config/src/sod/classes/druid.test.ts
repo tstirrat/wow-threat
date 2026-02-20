@@ -1,7 +1,7 @@
 /**
  * Season of Discovery Druid Threat Configuration Tests
  */
-import { SpellSchool, checkExists } from '@wcl-threat/shared'
+import { SpellSchool, checkExists } from '@wow-threat/shared'
 import { describe, expect, it } from 'vitest'
 
 import { createDamageContext } from '../../test/helpers/context'

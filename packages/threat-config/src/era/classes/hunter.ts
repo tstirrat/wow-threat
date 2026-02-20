@@ -3,7 +3,7 @@
  *
  * Feign Death drops threat. Distracting Shot generates fixed threat.
  */
-import type { ClassThreatConfig } from '@wcl-threat/shared'
+import type { ClassThreatConfig } from '@wow-threat/shared'
 
 import { modifyThreat, threat } from '../../shared/formulas'
 

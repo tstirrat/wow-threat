@@ -1,7 +1,7 @@
 /**
  * Utilities for rendering class-colored player labels and chart series.
  */
-import type { PlayerClass } from '@wcl-threat/wcl-types'
+import type { PlayerClass } from '@wow-threat/wcl-types'
 
 import type { ReportActorSummary } from '../types/api'
 

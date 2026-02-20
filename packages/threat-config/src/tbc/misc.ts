@@ -4,7 +4,7 @@
  * Includes consumables, trinkets, engineering bombs, and other non-class,
  * non-raid spell overrides.
  */
-import type { ThreatFormula } from '@wcl-threat/shared'
+import type { ThreatFormula } from '@wow-threat/shared'
 
 import { miscAbilities as eraMisc } from '../era/misc'
 import { noThreat, threat, threatOnSuccessfulHit } from '../shared/formulas'

@@ -1,5 +1,5 @@
 {
-  "name": "@wcl-threat/typescript-config",
+  "name": "@wow-threat/typescript-config",
   "version": "0.0.0",
   "private": true,
   "scripts": {

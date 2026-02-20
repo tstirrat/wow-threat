@@ -1,7 +1,7 @@
 /**
  * Tempest Keep raid mechanics for Anniversary/TBC.
  */
-import type { Abilities } from '@wcl-threat/shared'
+import type { Abilities } from '@wow-threat/shared'
 
 import { modifyThreatOnHit } from '../../shared/formulas'
 

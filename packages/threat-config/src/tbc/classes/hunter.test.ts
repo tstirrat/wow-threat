@@ -6,12 +6,12 @@ import {
   createDamageEvent,
   createHealEvent,
   createMockActorContext,
-} from '@wcl-threat/shared'
+} from '@wow-threat/shared'
 import type {
   EventInterceptor,
   EventInterceptorContext,
   ThreatContext,
-} from '@wcl-threat/shared/src/types'
+} from '@wow-threat/shared/src/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import { createCastContext } from '../../test/helpers/context'

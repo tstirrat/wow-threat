@@ -1,7 +1,7 @@
 /**
  * Serpentshrine Cavern raid mechanics for Anniversary/TBC.
  */
-import type { Abilities } from '@wcl-threat/shared'
+import type { Abilities } from '@wow-threat/shared'
 
 import { modifyThreat } from '../../shared/formulas'
 

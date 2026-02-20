@@ -7,9 +7,9 @@ import {
   createDamageEvent,
   createMockActorContext,
   createRemoveDebuffEvent,
-} from '@wcl-threat/shared'
-import type { EventInterceptorContext, ThreatContext } from '@wcl-threat/shared'
-import type { WCLEvent } from '@wcl-threat/wcl-types'
+} from '@wow-threat/shared'
+import type { EventInterceptorContext, ThreatContext } from '@wow-threat/shared'
+import type { WCLEvent } from '@wow-threat/wcl-types'
 import { describe, expect, it, vi } from 'vitest'
 
 import { Spells as DruidSpells } from '../classes/druid'

@@ -21,7 +21,7 @@ import {
   type RemoveDebuffStackEvent,
   type ResourceChangeEvent,
   ResourceTypeCode,
-} from '@wcl-threat/wcl-types'
+} from '@wow-threat/wcl-types'
 
 type LegacyFriendlyFlagOverrides = {
   sourceIsFriendly?: boolean

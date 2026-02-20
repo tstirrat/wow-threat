@@ -7,7 +7,7 @@ import type {
   ReportAbility,
   ReportActor,
   ReportFight,
-} from '@wcl-threat/wcl-types'
+} from '@wow-threat/wcl-types'
 
 import type {
   ReportAbilitySummary,

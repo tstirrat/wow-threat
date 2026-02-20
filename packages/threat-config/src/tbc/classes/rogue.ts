@@ -1,7 +1,7 @@
 /**
  * Anniversary rogue deltas over Era.
  */
-import type { ClassThreatConfig } from '@wcl-threat/shared'
+import type { ClassThreatConfig } from '@wow-threat/shared'
 
 import {
   Spells as EraSpells,

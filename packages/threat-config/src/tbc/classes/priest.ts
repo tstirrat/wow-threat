@@ -3,8 +3,8 @@
  *
  * TBC removes bonus threat from Mind Blast and adjusts Shadow Affinity ranks.
  */
-import type { ClassThreatConfig } from '@wcl-threat/shared'
-import { SpellSchool } from '@wcl-threat/shared'
+import type { ClassThreatConfig } from '@wow-threat/shared'
+import { SpellSchool } from '@wow-threat/shared'
 
 import {
   Spells as EraSpells,

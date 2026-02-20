@@ -1,7 +1,7 @@
 /**
  * Player-focused navigation grid from report view to boss-kill fight pages.
  */
-import type { PlayerClass } from '@wcl-threat/wcl-types'
+import type { PlayerClass } from '@wow-threat/wcl-types'
 import type { FC } from 'react'
 import { Link } from 'react-router-dom'
 

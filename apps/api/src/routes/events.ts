@@ -6,12 +6,9 @@
 import {
   getSupportedGameVersions,
   resolveConfigOrNull,
-} from '@wcl-threat/threat-config'
-import {
-  buildThreatEngineInput,
-  processEvents,
-} from '@wcl-threat/threat-engine'
-import type { WCLEvent } from '@wcl-threat/wcl-types'
+} from '@wow-threat/config'
+import { buildThreatEngineInput, processEvents } from '@wow-threat/engine'
+import type { WCLEvent } from '@wow-threat/wcl-types'
 import { Hono } from 'hono'
 
 import {

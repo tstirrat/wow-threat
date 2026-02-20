@@ -4,7 +4,7 @@
 import type {
   WCLEventsResponse,
   WCLReportResponse,
-} from '@wcl-threat/wcl-types'
+} from '@wow-threat/wcl-types'
 
 import {
   AppError,

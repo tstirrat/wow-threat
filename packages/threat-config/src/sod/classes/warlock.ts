@@ -1,7 +1,7 @@
 /**
  * Warlock Threat Configuration - Season of Discovery
  */
-import type { ClassThreatConfig } from '@wcl-threat/shared'
+import type { ClassThreatConfig } from '@wow-threat/shared'
 
 import { warlockConfig as eraWarlockConfig } from '../../era/classes/warlock'
 

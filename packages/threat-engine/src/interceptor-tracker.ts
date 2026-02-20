@@ -13,8 +13,8 @@ import type {
   EventInterceptor,
   EventInterceptorContext,
   EventInterceptorResult,
-} from '@wcl-threat/shared'
-import type { WCLEvent } from '@wcl-threat/wcl-types'
+} from '@wow-threat/shared'
+import type { WCLEvent } from '@wow-threat/wcl-types'
 
 interface ActiveInterceptor {
   id: string

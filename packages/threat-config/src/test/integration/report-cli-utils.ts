@@ -162,7 +162,7 @@ export function parseReportCliArgs(argv: string[]): ReportCliArgs {
 export function reportCliUsage(): string {
   return [
     'Usage:',
-    '  pnpm --filter @wcl-threat/threat-config report:debug -- \\',
+    '  pnpm --filter @wow-threat/config report:debug -- \\',
     '    --report <WCL_REPORT_URL> \\',
     '    --enemy-id <ENEMY_ACTOR_ID> \\',
     '    [--target-instance <INSTANCE>] \\',

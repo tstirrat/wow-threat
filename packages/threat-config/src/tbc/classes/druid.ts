@@ -4,8 +4,8 @@
  * Ports TBC-specific druid mechanics and only overrides spells/talents that
  * differ from Era defaults.
  */
-import type { ClassThreatConfig, SpellId } from '@wcl-threat/shared'
-import type { GearItem } from '@wcl-threat/wcl-types'
+import type { ClassThreatConfig, SpellId } from '@wow-threat/shared'
+import type { GearItem } from '@wow-threat/wcl-types'
 
 import {
   Spells as EraSpells,

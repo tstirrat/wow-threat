@@ -26,12 +26,12 @@ metadata (name, school/type, icon) through `report.masterData.abilities`.
 ## Workspace Layout
 
 ```
-apps/api/               @wcl-threat/api          Cloudflare Worker API (Hono v4)
-apps/web/               @wcl-threat/web          Frontend SPA (React + Vite, Firebase Hosting)
-packages/shared/        @wcl-threat/shared       Cross-cutting utilities
-packages/threat-engine/ @wcl-threat/threat-engine Core threat simulation engine
-packages/threat-config/ @wcl-threat/threat-config Per-class threat calculation configs
-packages/wcl-types/     @wcl-threat/wcl-types    WCL API type definitions
+apps/api/               @wow-threat/api          Cloudflare Worker API (Hono v4)
+apps/web/               @wow-threat/web          Frontend SPA (React + Vite, Firebase Hosting)
+packages/shared/        @wow-threat/shared       Cross-cutting utilities
+packages/threat-engine/ @wow-threat/engine Core threat simulation engine
+packages/threat-config/ @wow-threat/config Per-class threat calculation configs
+packages/wcl-types/     @wow-threat/wcl-types    WCL API type definitions
 tooling/typescript-config/                       Shared tsconfig presets
 ```
 
@@ -42,10 +42,10 @@ pnpm install                                  # Install all dependencies
 pnpm build                                    # Build all workspaces (turbo)
 pnpm dev                                      # Run dev scripts via Turborepo
 pnpm clean                                    # Clean all build artifacts + node_modules
-pnpm --filter @wcl-threat/api dev             # Start API dev server (wrangler dev)
-pnpm --filter @wcl-threat/web dev             # Start web dev server (vite)
-pnpm --filter @wcl-threat/api deploy          # Deploy API to production
-pnpm --filter @wcl-threat/api deploy:staging  # Deploy API to staging
+pnpm --filter @wow-threat/api dev             # Start API dev server (wrangler dev)
+pnpm --filter @wow-threat/web dev             # Start web dev server (vite)
+pnpm --filter @wow-threat/api deploy          # Deploy API to production
+pnpm --filter @wow-threat/api deploy:staging  # Deploy API to staging
 ```
 
 ## Worktree & Preview Workflow
@@ -61,7 +61,7 @@ git worktree list                             # All worktrees and their paths
 For web preview testing from the current worktree:
 
 ```bash
-pnpm --filter @wcl-threat/web dev             # Starts Vite on default port 5173
+pnpm --filter @wow-threat/web dev             # Starts Vite on default port 5173
 ```
 
 - Read the Vite startup output and share the `Local` URL (for example `http://localhost:5173/`).
@@ -80,7 +80,7 @@ Framework: Vitest.
 
 - API package uses `@cloudflare/vitest-pool-workers` (tests run inside miniflare).
 - Web package uses Vitest + React Testing Library for component/integration tests.
-- Custom snapshot tests are allowed for `@wcl-threat/threat-engine`, `@wcl-threat/threat-config`, or any tests that assert final augmented events payloads; these are most commonly used in `@wcl-threat/threat-config`.
+- Custom snapshot tests are allowed for `@wow-threat/engine`, `@wow-threat/config`, or any tests that assert final augmented events payloads; these are most commonly used in `@wow-threat/config`.
 - End-to-end tests are in Playwright.
 - Prefer shared event factory helpers (`createDamageEvent`, `createHealEvent`, and other `createXEvent` helpers) when building test events. Use raw event payload objects only when absolutely necessary for a scenario the helpers cannot express.
 
@@ -89,33 +89,33 @@ Framework: Vitest.
 pnpm test
 
 # Tests for a specific workspace
-pnpm --filter @wcl-threat/api test
-pnpm --filter @wcl-threat/web test
-pnpm --filter @wcl-threat/threat-engine test
-pnpm --filter @wcl-threat/threat-config test
-pnpm --filter @wcl-threat/shared test
+pnpm --filter @wow-threat/api test
+pnpm --filter @wow-threat/web test
+pnpm --filter @wow-threat/engine test
+pnpm --filter @wow-threat/config test
+pnpm --filter @wow-threat/shared test
 
 # API single test file
-pnpm --filter @wcl-threat/api exec vitest run src/services/threat.test.ts
+pnpm --filter @wow-threat/api exec vitest run src/services/threat.test.ts
 
 # Web single test file
-pnpm --filter @wcl-threat/web exec vitest run src/lib/threat-aggregation.test.ts
+pnpm --filter @wow-threat/web exec vitest run src/lib/threat-aggregation.test.ts
 
 # Threat engine single test file
-pnpm --filter @wcl-threat/threat-engine exec vitest run src/threat-engine.test.ts
+pnpm --filter @wow-threat/engine exec vitest run src/threat-engine.test.ts
 
 # Single test by name pattern
-pnpm --filter @wcl-threat/api exec vitest run -t "calculates basic damage threat"
-pnpm --filter @wcl-threat/web exec vitest run -t "loads report from pasted url"
+pnpm --filter @wow-threat/api exec vitest run -t "calculates basic damage threat"
+pnpm --filter @wow-threat/web exec vitest run -t "loads report from pasted url"
 
 # Watch mode
 pnpm test:watch
-pnpm --filter @wcl-threat/api test:watch
-pnpm --filter @wcl-threat/web test:watch
-pnpm --filter @wcl-threat/threat-engine test:watch
+pnpm --filter @wow-threat/api test:watch
+pnpm --filter @wow-threat/web test:watch
+pnpm --filter @wow-threat/engine test:watch
 
 # Web end-to-end
-pnpm --filter @wcl-threat/web e2e
+pnpm --filter @wow-threat/web e2e
 ```
 
 Tests are co-located with source (`foo.ts` / `foo.test.ts`).
@@ -127,10 +127,10 @@ Threat engine test helpers live in `packages/threat-engine/src/test/helpers/`.
 ```bash
 pnpm typecheck                            # tsc --noEmit across all workspaces
 pnpm lint                                 # eslint src/ across all workspaces
-pnpm --filter @wcl-threat/api typecheck   # Typecheck API only
-pnpm --filter @wcl-threat/api lint        # Lint API only
-pnpm --filter @wcl-threat/web typecheck   # Typecheck web only
-pnpm --filter @wcl-threat/web lint        # Lint web only
+pnpm --filter @wow-threat/api typecheck   # Typecheck API only
+pnpm --filter @wow-threat/api lint        # Lint API only
+pnpm --filter @wow-threat/web typecheck   # Typecheck web only
+pnpm --filter @wow-threat/web lint        # Lint web only
 ```
 
 ## Web Frontend Conventions
@@ -152,16 +152,13 @@ React/frontend-specific architecture and conventions live in
 Order imports in groups separated by blank lines:
 
 1. External packages (`hono`, `vitest`)
-2. Workspace packages (`@wcl-threat/wcl-types`, `@wcl-threat/threat-config`)
+2. Workspace packages (`@wow-threat/wcl-types`, `@wow-threat/config`)
 3. Relative imports (`./types/bindings`, `../middleware/error`)
 
 Use `import type` for type-only imports. Use inline `type` keyword for mixed imports:
 
 ```typescript
-import {
-  type ThreatConfig,
-  getActiveModifiers,
-} from '@wcl-threat/threat-config'
+import { type ThreatConfig, getActiveModifiers } from '@wow-threat/config'
 
 import type { Bindings, Variables } from './types/bindings'
 ```
@@ -169,7 +166,7 @@ import type { Bindings, Variables } from './types/bindings'
 Use relative paths for local imports (the `@/*` alias exists but is not used in practice).
 Relative imports (`./`, `../`) must stay within the current workspace package only.
 Never use relative paths that cross a package boundary; cross-package imports must use
-workspace package specifiers (e.g. `@wcl-threat/shared`, `@wcl-threat/threat-engine`).
+workspace package specifiers (e.g. `@wow-threat/shared`, `@wow-threat/engine`).
 
 ### Naming Conventions
 
@@ -316,7 +313,7 @@ have concrete context (function signatures, key conditionals, or data shapes).
 - Test descriptions are lowercase, starting with verbs
 - Factory functions for test data with spread overrides: `{ ...defaults, ...overrides }`
 - Integration tests mock `fetch` via `vi.stubGlobal()` and use `app.request()`
-- Use custom snapshots when asserting final augmented events payloads (typically in `@wcl-threat/threat-config` tests)
+- Use custom snapshots when asserting final augmented events payloads (typically in `@wow-threat/config` tests)
 
 **No class inheritance** (except `AppError extends Error`). Prefer composition and
 plain functions. No DI framework -- pass dependencies explicitly.

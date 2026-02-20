@@ -26,16 +26,16 @@ importers:
 
   apps/api:
     dependencies:
-      '@wcl-threat/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
-      '@wcl-threat/threat-config':
+      '@wow-threat/config':
         specifier: workspace:*
         version: link:../../packages/threat-config
-      '@wcl-threat/threat-engine':
+      '@wow-threat/engine':
         specifier: workspace:*
         version: link:../../packages/threat-engine
-      '@wcl-threat/wcl-types':
+      '@wow-threat/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      '@wow-threat/wcl-types':
         specifier: workspace:*
         version: link:../../packages/wcl-types
       hono:
@@ -66,7 +66,7 @@ importers:
       '@vitest/coverage-v8':
         specifier: 2.1.9
         version: 2.1.9(vitest@2.1.9(@types/node@25.2.3)(jsdom@28.0.0(@noble/hashes@1.8.0))(lightningcss@1.30.2)(msw@2.12.10(@types/node@25.2.3)(typescript@5.9.3)))
-      '@wcl-threat/typescript-config':
+      '@wow-threat/typescript-config':
         specifier: workspace:*
         version: link:../../tooling/typescript-config
       eslint:
@@ -105,10 +105,10 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.66.0
         version: 5.90.20(react@19.2.4)
-      '@wcl-threat/threat-config':
+      '@wow-threat/config':
         specifier: workspace:*
         version: link:../../packages/threat-config
-      '@wcl-threat/wcl-types':
+      '@wow-threat/wcl-types':
         specifier: workspace:*
         version: link:../../packages/wcl-types
       class-variance-authority:
@@ -181,7 +181,7 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.3.4
         version: 4.7.0(vite@5.4.21(@types/node@25.2.3)(lightningcss@1.30.2))
-      '@wcl-threat/typescript-config':
+      '@wow-threat/typescript-config':
         specifier: workspace:*
         version: link:../../tooling/typescript-config
       babel-plugin-react-compiler:
@@ -226,10 +226,10 @@ importers:
       '@eslint/js':
         specifier: ^9.39.2
         version: 9.39.2
-      '@wcl-threat/typescript-config':
+      '@wow-threat/typescript-config':
         specifier: workspace:*
         version: link:../../tooling/typescript-config
-      '@wcl-threat/wcl-types':
+      '@wow-threat/wcl-types':
         specifier: workspace:*
         version: link:../wcl-types
       eslint:
@@ -250,7 +250,7 @@ importers:
 
   packages/threat-config:
     dependencies:
-      '@wcl-threat/wcl-types':
+      '@wow-threat/wcl-types':
         specifier: workspace:*
         version: link:../wcl-types
     devDependencies:
@@ -263,13 +263,13 @@ importers:
       '@types/node':
         specifier: ^22.16.5
         version: 22.19.11
-      '@wcl-threat/shared':
-        specifier: workspace:*
-        version: link:../shared
-      '@wcl-threat/threat-engine':
+      '@wow-threat/engine':
         specifier: workspace:*
         version: link:../threat-engine
-      '@wcl-threat/typescript-config':
+      '@wow-threat/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@wow-threat/typescript-config':
         specifier: workspace:*
         version: link:../../tooling/typescript-config
       eslint:
@@ -293,17 +293,17 @@ importers:
 
   packages/threat-engine:
     dependencies:
-      '@wcl-threat/shared':
+      '@wow-threat/shared':
         specifier: workspace:*
         version: link:../shared
-      '@wcl-threat/wcl-types':
+      '@wow-threat/wcl-types':
         specifier: workspace:*
         version: link:../wcl-types
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.2
         version: 9.39.2
-      '@wcl-threat/typescript-config':
+      '@wow-threat/typescript-config':
         specifier: workspace:*
         version: link:../../tooling/typescript-config
       eslint:
@@ -327,7 +327,7 @@ importers:
       '@eslint/js':
         specifier: ^9.39.2
         version: 9.39.2
-      '@wcl-threat/typescript-config':
+      '@wow-threat/typescript-config':
         specifier: workspace:*
         version: link:../../tooling/typescript-config
       eslint:

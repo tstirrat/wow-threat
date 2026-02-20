@@ -3,9 +3,9 @@ import {
   createCastEvent,
   createDamageEvent,
   createMockActorContext,
-} from '@wcl-threat/shared'
-import type { ActorContext, ThreatContext } from '@wcl-threat/shared/src/types'
-import type { DamageEvent } from '@wcl-threat/wcl-types'
+} from '@wow-threat/shared'
+import type { ActorContext, ThreatContext } from '@wow-threat/shared/src/types'
+import type { DamageEvent } from '@wow-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
 import { hatefulStrike, magneticPull, naxxAbilities } from './naxx'

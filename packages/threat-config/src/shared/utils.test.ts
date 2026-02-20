@@ -3,7 +3,7 @@ import {
   type ThreatConfig,
   type ThreatFormula,
   type WowClass,
-} from '@wcl-threat/shared/src/types'
+} from '@wow-threat/shared/src/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { validateAbilities, validateAuraModifiers } from './utils'

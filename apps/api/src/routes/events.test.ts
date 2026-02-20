@@ -7,7 +7,7 @@ import {
   createApplyBuffEvent,
   createDamageEvent,
   createHealEvent,
-} from '@wcl-threat/shared'
+} from '@wow-threat/shared'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import anniversaryReport from '../../test/fixtures/wcl-responses/anniversary-report.json'

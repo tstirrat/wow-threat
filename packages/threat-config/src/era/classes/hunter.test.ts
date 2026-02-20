@@ -1,8 +1,8 @@
 /**
  * Tests for Era Hunter Threat Configuration
  */
-import { createDamageEvent, createMockActorContext } from '@wcl-threat/shared'
-import type { ThreatContext } from '@wcl-threat/shared/src/types'
+import { createDamageEvent, createMockActorContext } from '@wow-threat/shared'
+import type { ThreatContext } from '@wow-threat/shared/src/types'
 import { describe, expect, it } from 'vitest'
 
 import { createCastContext } from '../../test/helpers/context'

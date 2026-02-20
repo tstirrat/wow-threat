@@ -1,7 +1,7 @@
 /**
  * Player filter controls for deep-linkable visibility states.
  */
-import type { PlayerClass } from '@wcl-threat/wcl-types'
+import type { PlayerClass } from '@wow-threat/wcl-types'
 import type { FC } from 'react'
 
 import { getClassColor } from '../lib/class-colors'

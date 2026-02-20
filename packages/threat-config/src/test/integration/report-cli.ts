@@ -4,7 +4,7 @@
  *
  * Generates threat snapshot reports from cached fixtures or downloaded report data.
  */
-import type { ThreatConfig } from '@wcl-threat/shared'
+import type { ThreatConfig } from '@wow-threat/shared'
 import { spawn } from 'node:child_process'
 import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'

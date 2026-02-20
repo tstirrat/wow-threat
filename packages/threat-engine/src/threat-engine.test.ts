@@ -23,7 +23,7 @@ import {
   createRemoveBuffStackEvent,
   createRemoveDebuffEvent,
   createResourceChangeEvent,
-} from '@wcl-threat/shared'
+} from '@wow-threat/shared'
 import {
   type Actor,
   type EncounterId,
@@ -33,14 +33,14 @@ import {
   type ThreatConfig,
   type ThreatContext,
   type ThreatModifier,
-} from '@wcl-threat/shared'
+} from '@wow-threat/shared'
 import {
   type AbsorbedEvent,
   type DamageEvent,
   type GearItem,
   ResourceTypeCode,
   type WCLEvent,
-} from '@wcl-threat/wcl-types'
+} from '@wow-threat/wcl-types'
 import { describe, expect, it, vi } from 'vitest'
 
 import { createMockThreatConfig } from './test/helpers/config'

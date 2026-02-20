@@ -1,8 +1,8 @@
 /**
  * Threat data transformation helpers for report rankings and fight chart series.
  */
-import type { AugmentedEvent, SpellId } from '@wcl-threat/shared'
-import type { CombatantInfoAura, PlayerClass } from '@wcl-threat/wcl-types'
+import type { AugmentedEvent, SpellId } from '@wow-threat/shared'
+import type { CombatantInfoAura, PlayerClass } from '@wow-threat/wcl-types'
 
 import type {
   AugmentedEventsResponse,

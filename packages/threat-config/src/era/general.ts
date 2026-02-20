@@ -3,8 +3,8 @@
  *
  * Base threat calculations and general mechanics for Anniversary Edition.
  */
-import type { BaseThreatConfig } from '@wcl-threat/shared'
-import { ResourceTypeCode } from '@wcl-threat/wcl-types'
+import type { BaseThreatConfig } from '@wow-threat/shared'
+import { ResourceTypeCode } from '@wow-threat/wcl-types'
 
 import { threat } from '../shared/formulas'
 

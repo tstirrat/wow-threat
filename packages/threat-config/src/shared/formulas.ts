@@ -4,8 +4,8 @@
  * These helper functions create threat formula functions that can be used
  * in class configurations.
  */
-import type { ThreatContext, ThreatFormulaResult } from '@wcl-threat/shared'
-import type { EventType, HitType } from '@wcl-threat/wcl-types'
+import type { ThreatContext, ThreatFormulaResult } from '@wow-threat/shared'
+import type { EventType, HitType } from '@wow-threat/wcl-types'
 
 export type FormulaFn = (ctx: ThreatContext) => ThreatFormulaResult | undefined
 

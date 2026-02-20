@@ -1,5 +1,5 @@
 {
-  "extends": "@wcl-threat/typescript-config/base.json",
+  "extends": "@wow-threat/typescript-config/base.json",
   "compilerOptions": {
     "rootDir": "./",
     "outDir": "./dist"

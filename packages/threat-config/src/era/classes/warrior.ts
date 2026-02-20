@@ -7,8 +7,8 @@ import type {
   ClassThreatConfig,
   SpellId,
   TalentImplicationContext,
-} from '@wcl-threat/shared'
-import type { GearItem } from '@wcl-threat/wcl-types'
+} from '@wow-threat/shared'
+import type { GearItem } from '@wow-threat/wcl-types'
 
 import {
   noThreat as noThreatFormula,

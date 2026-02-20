@@ -6,8 +6,8 @@ import {
   type ClassThreatConfig,
   SpellSchool,
   type ThreatContext,
-} from '@wcl-threat/shared'
-import type { GearItem } from '@wcl-threat/wcl-types'
+} from '@wow-threat/shared'
+import type { GearItem } from '@wow-threat/wcl-types'
 
 import {
   Spells as EraSpells,

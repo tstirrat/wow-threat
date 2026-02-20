@@ -1,4 +1,4 @@
-import type { ThreatContext, ThreatModifier } from '@wcl-threat/shared'
+import type { ThreatContext, ThreatModifier } from '@wow-threat/shared'
 
 /**
  * Gets all active modifiers from a list of aura modifier configs

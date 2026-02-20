@@ -5,8 +5,8 @@
  * Includes metadata, aura/gear trackers, lifecycle state, targeting,
  * position, and enemy-owned threat tables.
  */
-import type { Actor, RuntimeActorView } from '@wcl-threat/shared'
-import type { GearItem, WCLEvent } from '@wcl-threat/wcl-types'
+import type { Actor, RuntimeActorView } from '@wow-threat/shared'
+import type { GearItem, WCLEvent } from '@wow-threat/wcl-types'
 
 import { AuraTracker } from './aura-tracker'
 import { GearTracker } from './gear-tracker'

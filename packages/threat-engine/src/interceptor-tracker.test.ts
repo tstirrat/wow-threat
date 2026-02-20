@@ -1,12 +1,12 @@
 /**
  * InterceptorTracker Tests
  */
-import { createMockActorContext } from '@wcl-threat/shared'
-import { createDamageEvent, createHealEvent } from '@wcl-threat/shared'
+import { createMockActorContext } from '@wow-threat/shared'
+import { createDamageEvent, createHealEvent } from '@wow-threat/shared'
 import {
   type EventInterceptor,
   type EventInterceptorContext,
-} from '@wcl-threat/shared'
+} from '@wow-threat/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { InterceptorTracker } from './interceptor-tracker'

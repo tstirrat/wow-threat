@@ -1,12 +1,12 @@
 /**
  * Tests for Priest Threat Configuration
  */
-import { createDamageEvent, createMockActorContext } from '@wcl-threat/shared'
+import { createDamageEvent, createMockActorContext } from '@wow-threat/shared'
 import type {
   TalentImplicationContext,
   ThreatContext,
-} from '@wcl-threat/shared/src/types'
-import { SpellSchool } from '@wcl-threat/shared/src/types'
+} from '@wow-threat/shared/src/types'
+import { SpellSchool } from '@wow-threat/shared/src/types'
 import { describe, expect, it } from 'vitest'
 
 import { Spells, priestConfig } from './priest'

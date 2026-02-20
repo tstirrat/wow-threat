@@ -3,8 +3,8 @@
  *
  * Applies TBC talent coefficients and threat-drop behavior.
  */
-import type { ClassThreatConfig } from '@wcl-threat/shared'
-import { SpellSchool } from '@wcl-threat/shared'
+import type { ClassThreatConfig } from '@wow-threat/shared'
+import { SpellSchool } from '@wow-threat/shared'
 
 import {
   Mods as EraMods,

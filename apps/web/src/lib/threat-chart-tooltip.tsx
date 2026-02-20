@@ -1,7 +1,7 @@
 /**
  * Threat chart tooltip formatter and tooltip-specific helpers.
  */
-import { ResourceTypeCode } from '@wcl-threat/wcl-types'
+import { ResourceTypeCode } from '@wow-threat/wcl-types'
 import { renderToString } from 'react-dom/server'
 
 import type { TooltipPointPayload } from '../hooks/use-threat-chart-pinned-tooltip'

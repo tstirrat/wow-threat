@@ -3,7 +3,7 @@
  *
  * Raid-specific spell sets and encounter rules for AQ40.
  */
-import type { SpellId, ThreatContext, ThreatModifier } from '@wcl-threat/shared'
+import type { SpellId, ThreatContext, ThreatModifier } from '@wow-threat/shared'
 
 export const Spells = {
   YaujFear: 26580,

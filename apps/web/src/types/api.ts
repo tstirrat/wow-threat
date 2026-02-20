@@ -1,8 +1,8 @@
 /**
  * Frontend API response contract types.
  */
-import type { AugmentedEvent } from '@wcl-threat/shared'
-import type { PlayerClass, ReportVisibility, Zone } from '@wcl-threat/wcl-types'
+import type { AugmentedEvent } from '@wow-threat/shared'
+import type { PlayerClass, ReportVisibility, Zone } from '@wow-threat/wcl-types'
 
 export type ReportActorType = 'Player' | 'NPC' | 'Pet'
 export type ReportActorSubType = PlayerClass | 'Boss' | 'NPC'

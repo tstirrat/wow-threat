@@ -3,12 +3,12 @@
  *
  * GET /reports/:code - Get report metadata
  */
-import { resolveConfigOrNull } from '@wcl-threat/threat-config'
+import { resolveConfigOrNull } from '@wow-threat/config'
 import type {
   ReportAbility as WCLReportAbility,
   ReportActor as WCLReportActor,
   ReportFight as WCLReportFight,
-} from '@wcl-threat/wcl-types'
+} from '@wow-threat/wcl-types'
 import { Hono } from 'hono'
 
 import {

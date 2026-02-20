@@ -1,8 +1,8 @@
 /**
  * Shared hateful/hurtful strike raid formulas.
  */
-import type { ThreatChange, ThreatFormula } from '@wcl-threat/shared'
-import type { HitType } from '@wcl-threat/wcl-types'
+import type { ThreatChange, ThreatFormula } from '@wow-threat/shared'
+import type { HitType } from '@wow-threat/wcl-types'
 
 const HITTABLE_HIT_TYPES = new Set<HitType>([
   'hit',

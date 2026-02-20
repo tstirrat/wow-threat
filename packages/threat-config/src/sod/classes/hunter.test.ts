@@ -6,8 +6,8 @@ import {
   createCastEvent,
   createDamageEvent,
   createMockActorContext,
-} from '@wcl-threat/shared'
-import type { ThreatContext } from '@wcl-threat/shared/src/types'
+} from '@wow-threat/shared'
+import type { ThreatContext } from '@wow-threat/shared/src/types'
 import { describe, expect, it } from 'vitest'
 
 import { Spells, hunterConfig } from './hunter'

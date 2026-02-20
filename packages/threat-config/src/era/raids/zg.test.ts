@@ -1,8 +1,8 @@
 /**
  * Zul'Gurub Encounter Hooks Tests
  */
-import { createCastEvent, createMockActorContext } from '@wcl-threat/shared'
-import type { Enemy, ThreatContext } from '@wcl-threat/shared/src/types'
+import { createCastEvent, createMockActorContext } from '@wow-threat/shared'
+import type { Enemy, ThreatContext } from '@wow-threat/shared/src/types'
 import { describe, expect, it } from 'vitest'
 
 import { ZgEncounterIds, zgEncounters } from './zg'

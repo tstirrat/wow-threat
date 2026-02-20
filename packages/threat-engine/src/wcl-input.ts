@@ -4,13 +4,13 @@
  * Utilities for converting report/fight payloads into Threat Engine input
  * structures.
  */
-import type { Actor, Enemy, WowClass } from '@wcl-threat/shared'
+import type { Actor, Enemy, WowClass } from '@wow-threat/shared'
 import type {
   ReportAbility,
   ReportActor,
   ReportFight,
   WCLEvent,
-} from '@wcl-threat/wcl-types'
+} from '@wow-threat/wcl-types'
 
 export interface BuildThreatEngineInput {
   actorMap: Map<number, Actor>

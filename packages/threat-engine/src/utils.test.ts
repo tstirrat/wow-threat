@@ -2,8 +2,8 @@ import {
   SpellSchool,
   type ThreatContext,
   createMockActorContext,
-} from '@wcl-threat/shared'
-import type { DamageEvent, EnergizeEvent } from '@wcl-threat/wcl-types'
+} from '@wow-threat/shared'
+import type { DamageEvent, EnergizeEvent } from '@wow-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
 import { getActiveModifiers } from './utils'
