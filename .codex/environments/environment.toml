@@ -4,6 +4,7 @@ name = "default"
 
 [setup]
 script = '''
-cp ~/dev/newthreat/apps/api/.dev.vars apps/api/
+cp ~/dev/wow-threat/apps/api/.dev.vars apps/api/
+cp ~/dev/wow-threat/apps/web/.env.local apps/web/
 pnpm install
 '''
