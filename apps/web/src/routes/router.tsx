@@ -48,13 +48,13 @@ const withPageSuspense = (element: ReactElement): ReactElement => (
 export const router: ReturnType<typeof createBrowserRouter> =
   createBrowserRouter([
     {
+      path: '/auth/complete',
+      element: withPageSuspense(<AuthCompletePage />),
+    },
+    {
       path: '/',
       element: <RootLayout />,
       children: [
-        {
-          path: 'auth/complete',
-          element: withPageSuspense(<AuthCompletePage />),
-        },
         {
           index: true,
           element: <LandingPage />,

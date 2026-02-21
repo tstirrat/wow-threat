@@ -44,6 +44,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 const popupWidthPx = 520
 const popupHeightPx = 760
 const popupPollIntervalMs = 250
+const popupClosedResultGraceMs = 1000
 const popupTimeoutMs = 3 * 60 * 1000
 
 async function parseErrorMessage(response: Response): Promise<string> {
@@ -98,6 +99,7 @@ function waitForWclPopupResult(
   return new Promise((resolve, reject) => {
     let intervalId = 0
     let timeoutId = 0
+    let popupClosedAtMs: number | null = null
     let completed = false
 
     function complete(callback: () => void): void {
@@ -154,6 +156,24 @@ function waitForWclPopupResult(
       }
 
       if (popupWindow.closed) {
+        const nowMs = Date.now()
+        if (popupClosedAtMs === null) {
+          popupClosedAtMs = nowMs
+          return
+        }
+
+        if (nowMs - popupClosedAtMs < popupClosedResultGraceMs) {
+          return
+        }
+
+        if (
+          maybeResolveResult(
+            window.localStorage.getItem(wclAuthPopupResultStorageKey),
+          )
+        ) {
+          return
+        }
+
         complete(() => {
           reject(
             new Error(
@@ -161,7 +181,10 @@ function waitForWclPopupResult(
             ),
           )
         })
+        return
       }
+
+      popupClosedAtMs = null
     }, popupPollIntervalMs)
 
     timeoutId = window.setTimeout(() => {

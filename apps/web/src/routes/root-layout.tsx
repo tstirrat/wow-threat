@@ -5,11 +5,11 @@ import { useAuth } from '@/auth/auth-provider'
 import { ModeToggle } from '@/components/mode-toggle'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Loader2 } from 'lucide-react'
 import type { FC } from 'react'
-import { Link, Outlet, useLocation } from 'react-router-dom'
+import { Link, Outlet } from 'react-router-dom'
 
 export const RootLayout: FC = () => {
-  const location = useLocation()
   const {
     authEnabled,
     authError,
@@ -19,9 +19,8 @@ export const RootLayout: FC = () => {
     startWclLogin,
     user,
   } = useAuth()
-  const isAuthCompleteRoute = location.pathname === '/auth/complete'
-  const shouldShowAuthGate =
-    authEnabled && !isAuthCompleteRoute && !isInitializing && !user
+  const shouldShowAuthGate = authEnabled && !isInitializing && !user
+  const isSignInInProgress = shouldShowAuthGate && isBusy
 
   return (
     <div className="min-h-screen text-text">
@@ -60,19 +59,19 @@ export const RootLayout: FC = () => {
                 type="button"
                 onClick={startWclLogin}
               >
-                Sign in with Warcraft Logs
+                {isBusy ? 'Finishing sign-in...' : 'Sign in with Warcraft Logs'}
               </Button>
             )}
           </div>
         </div>
       </header>
       <main className="mx-auto w-full max-w-7xl px-4 py-6">
-        {authEnabled && !isAuthCompleteRoute && authError ? (
+        {authEnabled && authError ? (
           <Alert aria-live="assertive" className="mb-4" variant="destructive">
             <AlertDescription>{authError}</AlertDescription>
           </Alert>
         ) : null}
-        {authEnabled && isInitializing && !isAuthCompleteRoute ? (
+        {authEnabled && isInitializing ? (
           <section className="space-y-2">
             <h2 className="text-lg font-semibold">Checking authentication</h2>
             <p className="text-sm text-muted-foreground">
@@ -81,14 +80,28 @@ export const RootLayout: FC = () => {
           </section>
         ) : shouldShowAuthGate ? (
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold">Sign in required</h2>
+            <h2 className="text-lg font-semibold">
+              {isSignInInProgress ? 'Completing sign-in' : 'Sign in required'}
+            </h2>
             <p className="text-sm text-muted-foreground">
-              Use Warcraft Logs OAuth to authenticate before loading report
-              data.
+              {isSignInInProgress
+                ? 'Finalizing Warcraft Logs authentication. This can take a moment after the pop-up closes.'
+                : 'Use Warcraft Logs OAuth to authenticate before loading report data.'}
             </p>
-            <Button disabled={isBusy} type="button" onClick={startWclLogin}>
-              Continue with Warcraft Logs
-            </Button>
+            {isSignInInProgress ? (
+              <p
+                aria-live="polite"
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground"
+                role="status"
+              >
+                <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+                Finishing authentication...
+              </p>
+            ) : (
+              <Button disabled={isBusy} type="button" onClick={startWclLogin}>
+                Continue with Warcraft Logs
+              </Button>
+            )}
           </section>
         ) : (
           <Outlet />
