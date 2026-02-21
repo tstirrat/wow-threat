@@ -100,3 +100,5 @@ export const ReportLayout: FC = () => {
     </div>
   )
 }
+
+export { ReportPage } from '../pages/report-page'
