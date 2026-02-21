@@ -345,30 +345,30 @@ export const warriorConfig: ClassThreatConfig = {
       value: 0.8,
     }),
 
-    [Spells.DefianceRank1]: () => ({
+    [Spells.DefianceRank1]: (ctx) => ({
       source: 'talent',
       name: 'Defiance (Rank 1)',
-      value: 1.03,
+      value: ctx.sourceAuras.has(Spells.DefensiveStance) ? 1.03 : 1,
     }),
-    [Spells.DefianceRank2]: () => ({
+    [Spells.DefianceRank2]: (ctx) => ({
       source: 'talent',
       name: 'Defiance (Rank 2)',
-      value: 1.06,
+      value: ctx.sourceAuras.has(Spells.DefensiveStance) ? 1.06 : 1,
     }),
-    [Spells.DefianceRank3]: () => ({
+    [Spells.DefianceRank3]: (ctx) => ({
       source: 'talent',
       name: 'Defiance (Rank 3)',
-      value: 1.09,
+      value: ctx.sourceAuras.has(Spells.DefensiveStance) ? 1.09 : 1,
     }),
-    [Spells.DefianceRank4]: () => ({
+    [Spells.DefianceRank4]: (ctx) => ({
       source: 'talent',
       name: 'Defiance (Rank 4)',
-      value: 1.12,
+      value: ctx.sourceAuras.has(Spells.DefensiveStance) ? 1.12 : 1,
     }),
-    [Spells.DefianceRank5]: () => ({
+    [Spells.DefianceRank5]: (ctx) => ({
       source: 'talent',
       name: 'Defiance (Rank 5)',
-      value: 1.15,
+      value: ctx.sourceAuras.has(Spells.DefensiveStance) ? 1.15 : 1,
     }),
 
     [Spells.T1_8pc]: () => ({
