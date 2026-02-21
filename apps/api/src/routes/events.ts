@@ -164,9 +164,14 @@ eventsRoutes.get('/', async (c) => {
       duration: fight.endTime - fight.startTime,
     },
   }
+  const serializedResponse = JSON.stringify(response)
 
   // Cache the result
-  await augmentedCache.set(cacheKey, response)
+  if (augmentedCache.type === 'kv') {
+    await c.env.AUGMENTED_CACHE.put(cacheKey, serializedResponse)
+  } else {
+    await augmentedCache.set(cacheKey, response)
+  }
 
   const cacheControl =
     c.env.ENVIRONMENT === 'development'
@@ -175,12 +180,16 @@ eventsRoutes.get('/', async (c) => {
         ? 'public, max-age=31536000, immutable'
         : 'private, no-store'
 
-  return c.json(response, 200, {
-    'Cache-Control': cacheControl,
-    'X-Cache-Status': 'MISS',
-    'X-Game-Version': String(gameVersion),
-    'X-Config-Version': configVersion,
-    ETag: `"${code}-${fightId}-${configVersion}"`,
+  return new Response(serializedResponse, {
+    headers: {
+      'Cache-Control': cacheControl,
+      'Content-Type': 'application/json; charset=UTF-8',
+      'X-Cache-Status': 'MISS',
+      'X-Game-Version': String(gameVersion),
+      'X-Config-Version': configVersion,
+      ETag: `"${code}-${fightId}-${configVersion}"`,
+    },
+    status: 200,
   })
 })
 

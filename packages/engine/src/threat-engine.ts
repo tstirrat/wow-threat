@@ -19,6 +19,7 @@ import type {
   ThreatConfig,
   ThreatContext,
   ThreatEffect,
+  ThreatFormula,
   ThreatFormulaResult,
   ThreatModifier,
   ThreatResult,
@@ -38,6 +39,76 @@ const NO_THREAT_FORMULA_RESULT: ThreatFormulaResult = {
   formula: '0',
   value: 0,
   splitAmongEnemies: false,
+}
+
+const emptyThreatModifiers: ThreatModifier[] = []
+
+interface PreparedThreatConfig {
+  abilitiesByClass: Partial<Record<WowClass, Record<number, ThreatFormula>>>
+  globalAbilities: Record<number, ThreatFormula>
+  mergedAuraModifiers: Record<number, (ctx: ThreatContext) => ThreatModifier>
+  classModifiers: Partial<Record<WowClass, ThreatModifier[]>>
+}
+
+const preparedThreatConfigCache = new WeakMap<
+  ThreatConfig,
+  PreparedThreatConfig
+>()
+
+function capitalizeClassName(wowClass: WowClass): string {
+  return wowClass.charAt(0).toUpperCase() + wowClass.slice(1)
+}
+
+function prepareThreatConfig(config: ThreatConfig): PreparedThreatConfig {
+  const cached = preparedThreatConfigCache.get(config)
+  if (cached) {
+    return cached
+  }
+
+  const globalAbilities = config.abilities ?? {}
+  const abilitiesByClass: PreparedThreatConfig['abilitiesByClass'] = {}
+  const mergedAuraModifiers: PreparedThreatConfig['mergedAuraModifiers'] = {
+    ...config.auraModifiers,
+  }
+  const classModifiers: PreparedThreatConfig['classModifiers'] = {}
+
+  for (const [className, classConfig] of Object.entries(
+    config.classes,
+  ) as Array<[WowClass, ClassThreatConfig | undefined]>) {
+    if (classConfig?.abilities) {
+      abilitiesByClass[className] = {
+        ...globalAbilities,
+        ...classConfig.abilities,
+      }
+    }
+
+    if (classConfig?.auraModifiers) {
+      Object.assign(mergedAuraModifiers, classConfig.auraModifiers)
+    }
+
+    if (
+      classConfig?.baseThreatFactor !== undefined &&
+      classConfig.baseThreatFactor !== 1
+    ) {
+      classModifiers[className] = [
+        {
+          source: 'class',
+          name: capitalizeClassName(className),
+          value: classConfig.baseThreatFactor,
+        },
+      ]
+    }
+  }
+
+  const prepared: PreparedThreatConfig = {
+    abilitiesByClass,
+    globalAbilities,
+    mergedAuraModifiers,
+    classModifiers,
+  }
+  preparedThreatConfigCache.set(config, prepared)
+
+  return prepared
 }
 
 // ============================================================================
@@ -100,6 +171,10 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
   const eventCounts: Record<string, number> = {}
   const encounterId = toEncounterId(inputEncounterId)
   const encounterConfig = getEncounterConfig(config, encounterId)
+  const preparedConfig = prepareThreatConfig(config)
+  const validEnemies = enemies.filter(
+    (enemy) => enemy.id !== ENVIRONMENT_TARGET_ID,
+  )
   const encounterPreprocessor =
     encounterId !== null
       ? encounterConfig?.preprocessor?.({
@@ -210,6 +285,7 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
       event,
       threatOptions,
       config,
+      preparedConfig,
     )
     const encounterEffects =
       encounterPreprocessor?.(threatContext)?.effects ?? []
@@ -232,8 +308,6 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
         interceptorTracker.install(effect.interceptor, event.timestamp)
       }
     }
-
-    const validEnemies = enemies.filter((e) => e.id !== ENVIRONMENT_TARGET_ID)
 
     const changes = applyThreat(
       fightState,
@@ -861,11 +935,12 @@ export function calculateModifiedThreat(
   event: WCLEvent,
   options: CalculateThreatOptions,
   config: ThreatConfig,
+  preparedConfig: PreparedThreatConfig = prepareThreatConfig(config),
 ): ThreatCalculation {
   const ctx = buildThreatContext(event, options)
 
   // Get the threat formula result
-  const formulaResult = getFormulaResult(ctx, config)
+  const formulaResult = getFormulaResult(ctx, config, preparedConfig)
 
   // Ability formulas can explicitly opt in/out of player multipliers.
   // Default keeps existing energize behavior (no multipliers) unless overridden.
@@ -874,8 +949,8 @@ export function calculateModifiedThreat(
     (event.type !== 'energize' && event.type !== 'resourcechange')
   const allModifiers: ThreatModifier[] = shouldApplyPlayerMultipliers
     ? [
-        ...getClassModifiers(options.sourceActor.class, config),
-        ...getAuraModifiers(ctx, config),
+        ...getClassModifiers(options.sourceActor.class, preparedConfig),
+        ...getAuraModifiers(ctx, preparedConfig),
       ]
     : []
 
@@ -950,19 +1025,22 @@ function getEventAmount(event: WCLEvent): number {
 /**
  * Get the formula result for an event
  */
-function getFormulaResult(ctx: ThreatContext, config: ThreatConfig) {
+function getFormulaResult(
+  ctx: ThreatContext,
+  config: ThreatConfig,
+  preparedConfig: PreparedThreatConfig,
+) {
   const event = ctx.event
 
   // Merge abilities: global first, then class.
   // Class abilities override global abilities on duplicate spell IDs.
   if ('abilityGameID' in event && typeof event.abilityGameID === 'number') {
-    const classConfig = getClassConfig(ctx.sourceActor.class, config)
-    const mergedAbilities = {
-      ...(config.abilities ?? {}),
-      ...(classConfig?.abilities ?? {}),
-    }
+    const classAbilities = ctx.sourceActor.class
+      ? (preparedConfig.abilitiesByClass[ctx.sourceActor.class] ??
+        preparedConfig.globalAbilities)
+      : preparedConfig.globalAbilities
 
-    const abilityFormula = mergedAbilities[event.abilityGameID]
+    const abilityFormula = classAbilities[event.abilityGameID]
     if (abilityFormula) {
       // Ability formulas override base formulas; undefined means this phase has no threat.
       return abilityFormula(ctx) ?? NO_THREAT_FORMULA_RESULT
@@ -983,17 +1061,6 @@ function getFormulaResult(ctx: ThreatContext, config: ThreatConfig) {
     default:
       return NO_THREAT_FORMULA_RESULT
   }
-}
-
-/**
- * Get class config for an actor
- */
-function getClassConfig(
-  wowClass: WowClass | null,
-  config: ThreatConfig,
-): ClassThreatConfig | null {
-  if (!wowClass) return null
-  return config.classes[wowClass] ?? null
 }
 
 function getEncounterConfig(
@@ -1020,24 +1087,13 @@ function toEncounterId(
  */
 function getClassModifiers(
   wowClass: WowClass | null,
-  config: ThreatConfig,
+  preparedConfig: PreparedThreatConfig,
 ): ThreatModifier[] {
-  const classConfig = getClassConfig(wowClass, config)
-  if (!classConfig?.baseThreatFactor || classConfig.baseThreatFactor === 1) {
-    return []
+  if (!wowClass) {
+    return emptyThreatModifiers
   }
 
-  const className = wowClass
-    ? wowClass.charAt(0).toUpperCase() + wowClass.slice(1)
-    : 'Class'
-
-  return [
-    {
-      source: 'class',
-      name: className,
-      value: classConfig.baseThreatFactor,
-    },
-  ]
+  return preparedConfig.classModifiers[wowClass] ?? emptyThreatModifiers
 }
 
 /**
@@ -1048,23 +1104,8 @@ function getClassModifiers(
  */
 function getAuraModifiers(
   ctx: ThreatContext,
-  config: ThreatConfig,
+  preparedConfig: PreparedThreatConfig,
 ): ThreatModifier[] {
-  // Merge all aura modifiers into a single structure
-  const mergedAuraModifiers: Record<
-    number,
-    (ctx: ThreatContext) => ThreatModifier
-  > = {
-    ...config.auraModifiers,
-  }
-
-  // Add aura modifiers from all class configs
-  for (const classConfig of Object.values(config.classes)) {
-    if (classConfig?.auraModifiers) {
-      Object.assign(mergedAuraModifiers, classConfig.auraModifiers)
-    }
-  }
-
   // Apply the merged aura modifiers based on active auras
-  return getActiveModifiers(ctx, mergedAuraModifiers)
+  return getActiveModifiers(ctx, preparedConfig.mergedAuraModifiers)
 }
