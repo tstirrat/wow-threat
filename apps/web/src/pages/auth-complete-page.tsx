@@ -1,10 +1,16 @@
 /**
  * OAuth bridge completion page.
  */
-import { type FC, useEffect, useRef, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { type FC, useEffect, useMemo, useRef } from 'react'
+import { useLocation } from 'react-router-dom'
 
 import { useAuth } from '../auth/auth-provider'
+import {
+  type WclAuthPopupResult,
+  createWclAuthPopupErrorResult,
+  createWclAuthPopupSuccessResult,
+  publishWclAuthPopupResult,
+} from '../auth/wcl-popup-bridge'
 import { Alert, AlertDescription } from '../components/ui/alert'
 
 function readBridgeCode(hash: string): string | null {
@@ -15,65 +21,69 @@ function readBridgeCode(hash: string): string | null {
   return bridgeCode && bridgeCode.length > 0 ? bridgeCode : null
 }
 
-export const AuthCompletePage: FC = () => {
-  const location = useLocation()
-  const navigate = useNavigate()
-  const { completeBridgeSignIn, authEnabled } = useAuth()
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const hasStarted = useRef(false)
-  const bridgeCode = readBridgeCode(location.hash)
-
-  useEffect(() => {
-    if (!authEnabled || hasStarted.current || !bridgeCode) {
-      return
-    }
-
-    hasStarted.current = true
-
-    void completeBridgeSignIn(bridgeCode)
-      .then(() => {
-        navigate('/', { replace: true })
-      })
-      .catch((error: unknown) => {
-        const nextMessage =
-          error instanceof Error ? error.message : 'Unable to complete sign-in.'
-        setErrorMessage(nextMessage)
-      })
-  }, [authEnabled, bridgeCode, completeBridgeSignIn, navigate])
-
+function createPopupResult(
+  authEnabled: boolean,
+  bridgeCode: string | null,
+): WclAuthPopupResult {
   if (!authEnabled) {
-    return (
-      <section className="mx-auto max-w-lg space-y-3">
-        <h2 className="text-lg font-semibold">Authentication unavailable</h2>
-        <p className="text-sm text-muted-foreground">
-          Firebase auth configuration is missing for this environment.
-        </p>
-      </section>
+    return createWclAuthPopupErrorResult(
+      'Firebase auth configuration is missing for this environment.',
     )
   }
 
   if (!bridgeCode) {
-    return (
-      <section className="mx-auto max-w-lg space-y-3">
-        <h2 className="text-lg font-semibold">Invalid callback URL</h2>
-        <Alert variant="destructive">
-          <AlertDescription>
-            Missing bridge code in callback URL.
-          </AlertDescription>
-        </Alert>
-      </section>
-    )
+    return createWclAuthPopupErrorResult('Missing bridge code in callback URL.')
   }
+
+  return createWclAuthPopupSuccessResult(bridgeCode)
+}
+
+export const AuthCompletePage: FC = () => {
+  const location = useLocation()
+  const { authEnabled } = useAuth()
+  const hasPublished = useRef(false)
+  const bridgeCode = readBridgeCode(location.hash)
+  const result = useMemo(
+    () => createPopupResult(authEnabled, bridgeCode),
+    [authEnabled, bridgeCode],
+  )
+
+  useEffect(() => {
+    if (!hasPublished.current) {
+      try {
+        publishWclAuthPopupResult(result)
+        hasPublished.current = true
+      } catch {
+        // If storage is unavailable, keep this page visible so users can
+        // manually return to the main window and retry.
+        return
+      }
+    }
+
+    const closeTimer = window.setTimeout(() => {
+      window.close()
+    }, 250)
+
+    return () => {
+      window.clearTimeout(closeTimer)
+    }
+  }, [result])
 
   return (
     <section className="mx-auto max-w-lg space-y-3">
-      <h2 className="text-lg font-semibold">Completing sign-in</h2>
+      <h2 className="text-lg font-semibold">
+        {result.status === 'success'
+          ? 'Sign-in complete'
+          : 'Unable to complete sign-in'}
+      </h2>
       <p className="text-sm text-muted-foreground">
-        Finishing your Warcraft Logs authentication bridge.
+        {result.status === 'success'
+          ? 'Authentication finished. This window should close automatically.'
+          : 'Return to the main app and retry sign-in.'}
       </p>
-      {errorMessage ? (
+      {result.status === 'error' ? (
         <Alert variant="destructive">
-          <AlertDescription>{errorMessage}</AlertDescription>
+          <AlertDescription>{result.message}</AlertDescription>
         </Alert>
       ) : null}
     </section>

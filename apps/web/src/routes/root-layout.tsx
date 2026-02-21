@@ -3,14 +3,22 @@
  */
 import { useAuth } from '@/auth/auth-provider'
 import { ModeToggle } from '@/components/mode-toggle'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import type { FC } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 
 export const RootLayout: FC = () => {
   const location = useLocation()
-  const { authEnabled, isBusy, isInitializing, signOut, startWclLogin, user } =
-    useAuth()
+  const {
+    authEnabled,
+    authError,
+    isBusy,
+    isInitializing,
+    signOut,
+    startWclLogin,
+    user,
+  } = useAuth()
   const isAuthCompleteRoute = location.pathname === '/auth/complete'
   const shouldShowAuthGate =
     authEnabled && !isAuthCompleteRoute && !isInitializing && !user
@@ -59,6 +67,11 @@ export const RootLayout: FC = () => {
         </div>
       </header>
       <main className="mx-auto w-full max-w-7xl px-4 py-6">
+        {authEnabled && !isAuthCompleteRoute && authError ? (
+          <Alert aria-live="assertive" className="mb-4" variant="destructive">
+            <AlertDescription>{authError}</AlertDescription>
+          </Alert>
+        ) : null}
         {authEnabled && isInitializing && !isAuthCompleteRoute ? (
           <section className="space-y-2">
             <h2 className="text-lg font-semibold">Checking authentication</h2>
