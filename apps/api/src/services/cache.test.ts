@@ -4,9 +4,11 @@
 import type { Bindings } from '@/types/bindings'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { createMockKV } from '../../test/setup'
 import {
   CacheKeys,
   createCache,
+  createKVCache,
   createMemoryCache,
   createNoOpCache,
 } from './cache'
@@ -118,6 +120,43 @@ describe('createNoOpCache', () => {
 
     // Should not throw
     await expect(cache.delete('any-key')).resolves.toBeUndefined()
+  })
+})
+
+describe('createKVCache', () => {
+  it('stores small values as plain JSON strings', async () => {
+    const kv = createMockKV()
+    const cache = createKVCache(kv)
+
+    await cache.set('small-key', { ok: true })
+
+    const putCalls = (kv.put as unknown as ReturnType<typeof vi.fn>).mock.calls
+    expect(typeof putCalls[0]?.[1]).toBe('string')
+  })
+
+  it('compresses large values and reads them back transparently', async () => {
+    const kv = createMockKV()
+    const cache = createKVCache(kv)
+    const value = { data: 'threat-event,'.repeat(40_000) }
+
+    await cache.set('large-key', value)
+
+    const putCalls = (kv.put as unknown as ReturnType<typeof vi.fn>).mock.calls
+    expect(typeof putCalls[0]?.[1]).not.toBe('string')
+
+    const result = await cache.get<typeof value>('large-key')
+    expect(result).toEqual(value)
+  })
+
+  it('reads legacy uncompressed JSON values', async () => {
+    const kv = createMockKV()
+    const cache = createKVCache(kv)
+    const value = { legacy: true }
+
+    await kv.put('legacy-key', JSON.stringify(value))
+
+    const result = await cache.get<typeof value>('legacy-key')
+    expect(result).toEqual(value)
   })
 })
 

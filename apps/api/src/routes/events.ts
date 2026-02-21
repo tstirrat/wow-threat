@@ -167,11 +167,7 @@ eventsRoutes.get('/', async (c) => {
   const serializedResponse = JSON.stringify(response)
 
   // Cache the result
-  if (augmentedCache.type === 'kv') {
-    await c.env.AUGMENTED_CACHE.put(cacheKey, serializedResponse)
-  } else {
-    await augmentedCache.set(cacheKey, response)
-  }
+  await augmentedCache.set(cacheKey, response)
 
   const cacheControl =
     c.env.ENVIRONMENT === 'development'

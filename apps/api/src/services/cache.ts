@@ -16,6 +16,11 @@ export interface CacheService {
 
 export type CacheVisibility = 'public' | 'private'
 
+const textEncoder = new TextEncoder()
+const textDecoder = new TextDecoder()
+const gzipValuePrefix = new Uint8Array([0x57, 0x54, 0x4b, 0x56, 0x01]) // WTKV + v1
+const compressionThresholdBytes = 256 * 1024
+
 /** Normalize report visibility; missing/invalid values are treated as private. */
 export function normalizeVisibility(visibility: unknown): CacheVisibility {
   return visibility === 'public' ? 'public' : 'private'
@@ -29,6 +34,60 @@ function resolveVisibilityScope(visibility: unknown, uid?: string): string {
   return `uid:${uid?.trim() || 'anonymous'}`
 }
 
+function hasGzipPrefix(bytes: Uint8Array): boolean {
+  return gzipValuePrefix.every((value, index) => bytes[index] === value)
+}
+
+function prependPrefix(bytes: Uint8Array): Uint8Array {
+  const payload = new Uint8Array(gzipValuePrefix.length + bytes.length)
+  payload.set(gzipValuePrefix, 0)
+  payload.set(bytes, gzipValuePrefix.length)
+  return payload
+}
+
+function stripPrefix(bytes: Uint8Array): Uint8Array {
+  return bytes.subarray(gzipValuePrefix.length)
+}
+
+async function gzipBytes(bytes: Uint8Array): Promise<Uint8Array> {
+  const stream = new CompressionStream('gzip')
+  const writer = stream.writable.getWriter()
+  await writer.write(Uint8Array.from(bytes))
+  await writer.close()
+  return new Uint8Array(await new Response(stream.readable).arrayBuffer())
+}
+
+async function gunzipBytes(bytes: Uint8Array): Promise<Uint8Array> {
+  const stream = new DecompressionStream('gzip')
+  const writer = stream.writable.getWriter()
+  await writer.write(Uint8Array.from(bytes))
+  await writer.close()
+  return new Uint8Array(await new Response(stream.readable).arrayBuffer())
+}
+
+async function serializeForKV(value: unknown): Promise<string | Uint8Array> {
+  const json = JSON.stringify(value)
+  const plainBytes = textEncoder.encode(json)
+  if (plainBytes.length < compressionThresholdBytes) {
+    return json
+  }
+
+  const gzippedBytes = await gzipBytes(plainBytes)
+  if (gzippedBytes.length >= plainBytes.length) {
+    return json
+  }
+
+  return prependPrefix(gzippedBytes)
+}
+
+async function deserializeFromKV<T>(value: ArrayBuffer): Promise<T> {
+  const rawBytes = new Uint8Array(value)
+  const payloadBytes = hasGzipPrefix(rawBytes)
+    ? await gunzipBytes(stripPrefix(rawBytes))
+    : rawBytes
+  return JSON.parse(textDecoder.decode(payloadBytes)) as T
+}
+
 /**
  * Production cache using Cloudflare KV
  */
@@ -36,13 +95,16 @@ export function createKVCache(kv: KVNamespace): CacheService {
   return {
     type: 'kv',
     async get<T>(key: string): Promise<T | null> {
-      const value = await kv.get(key, 'json')
-      return value as T | null
+      const value = await kv.get(key, 'arrayBuffer')
+      if (!value) {
+        return null
+      }
+      return deserializeFromKV<T>(value)
     },
 
     async set<T>(key: string, value: T, ttl?: number): Promise<void> {
       const options = ttl ? { expirationTtl: ttl } : undefined
-      await kv.put(key, JSON.stringify(value), options)
+      await kv.put(key, await serializeForKV(value), options)
     },
 
     async delete(key: string): Promise<void> {

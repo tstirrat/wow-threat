@@ -9,29 +9,58 @@ import { vi } from 'vitest'
  * Create a mock KV namespace for testing
  */
 export function createMockKV(): KVNamespace {
-  const store = new Map<string, string>()
+  const store = new Map<string, Uint8Array>()
+
+  const toBytes = (
+    value: string | ArrayBuffer | ArrayBufferView,
+  ): Uint8Array => {
+    if (typeof value === 'string') {
+      return new TextEncoder().encode(value)
+    }
+    if (ArrayBuffer.isView(value)) {
+      return new Uint8Array(value.buffer, value.byteOffset, value.byteLength)
+    }
+    return new Uint8Array(value)
+  }
 
   return {
     get: vi.fn(async (key: string, typeOrOptions?: unknown) => {
-      const val = store.get(key)
-      if (!val) return null
+      const bytes = store.get(key)
+      if (!bytes) return null
 
       // Handle type parameter
       if (typeof typeOrOptions === 'string' && typeOrOptions === 'json') {
-        return JSON.parse(val)
+        return JSON.parse(new TextDecoder().decode(bytes))
+      }
+      if (
+        typeof typeOrOptions === 'string' &&
+        typeOrOptions === 'arrayBuffer'
+      ) {
+        return bytes.buffer.slice(
+          bytes.byteOffset,
+          bytes.byteOffset + bytes.byteLength,
+        )
       }
       if (typeof typeOrOptions === 'object' && typeOrOptions !== null) {
-        const opts = typeOrOptions as { type?: string }
+        const opts = typeOrOptions as { type?: 'json' | 'arrayBuffer' }
         if (opts.type === 'json') {
-          return JSON.parse(val)
+          return JSON.parse(new TextDecoder().decode(bytes))
+        }
+        if (opts.type === 'arrayBuffer') {
+          return bytes.buffer.slice(
+            bytes.byteOffset,
+            bytes.byteOffset + bytes.byteLength,
+          )
         }
       }
-      return val
+      return new TextDecoder().decode(bytes)
     }),
 
-    put: vi.fn(async (key: string, value: string) => {
-      store.set(key, value)
-    }),
+    put: vi.fn(
+      async (key: string, value: string | ArrayBuffer | ArrayBufferView) => {
+        store.set(key, toBytes(value))
+      },
+    ),
 
     delete: vi.fn(async (key: string) => {
       store.delete(key)
@@ -43,11 +72,14 @@ export function createMockKV(): KVNamespace {
       cacheStatus: null,
     })),
 
-    getWithMetadata: vi.fn(async (key: string) => ({
-      value: store.get(key) ?? null,
-      metadata: null,
-      cacheStatus: null,
-    })),
+    getWithMetadata: vi.fn(async (key: string) => {
+      const bytes = store.get(key)
+      return {
+        value: bytes ? new TextDecoder().decode(bytes) : null,
+        metadata: null,
+        cacheStatus: null,
+      }
+    }),
   } as unknown as KVNamespace
 }
 
