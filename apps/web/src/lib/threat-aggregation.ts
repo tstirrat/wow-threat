@@ -1333,6 +1333,29 @@ function extractTalentPoints(
   return [talents[0].id, talents[1].id, talents[2].id]
 }
 
+function isFixateThreatEvent({
+  event,
+  target,
+  sourceIds,
+}: {
+  event: AugmentedEventsResponse['events'][number]
+  target: FightTarget
+  sourceIds: Set<number>
+}): boolean {
+  return (event.threat?.calculation.effects ?? []).some((effect) => {
+    if (effect.type !== 'state' || effect.state.kind !== 'fixate') {
+      return false
+    }
+
+    return (
+      effect.state.targetId === target.id &&
+      (effect.state.targetInstance ?? defaultTargetInstance) ===
+        target.instance &&
+      sourceIds.has(effect.state.actorId)
+    )
+  })
+}
+
 /** Build per-ability threat breakdown rows for a focused player in the selected chart window. */
 export function buildFocusedPlayerThreatRows({
   events,
@@ -1405,11 +1428,19 @@ export function buildFocusedPlayerThreatRows({
       event.type === 'damage' || event.type === 'heal'
         ? Math.max(0, event.amount ?? 0)
         : 0
+    const isHealEvent = event.type === 'heal'
+    const isFixateEvent = isFixateThreatEvent({
+      event,
+      target,
+      sourceIds,
+    })
 
     const existing = rowsByAbility.get(key)
     if (existing) {
       existing.amount += damageHealingAmount
       existing.threat += matchingThreat
+      existing.isHeal = existing.isHeal || isHealEvent
+      existing.isFixate = existing.isFixate || isFixateEvent
       return
     }
 
@@ -1420,13 +1451,15 @@ export function buildFocusedPlayerThreatRows({
       amount: damageHealingAmount,
       threat: matchingThreat,
       tps: 0,
+      isHeal: isHealEvent,
+      isFixate: isFixateEvent,
     })
   })
 
   return [...rowsByAbility.values()]
     .map((row) => ({
       ...row,
-      tps: row.threat / windowDurationSeconds,
+      tps: row.isFixate ? null : row.threat / windowDurationSeconds,
     }))
     .sort((a, b) => {
       const byThreat = Math.abs(b.threat) - Math.abs(a.threat)

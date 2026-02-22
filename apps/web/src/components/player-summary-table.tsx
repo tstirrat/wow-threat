@@ -1,7 +1,7 @@
 /**
  * Focused player metadata and per-ability threat breakdown table.
  */
-import type { FC } from 'react'
+import type { CSSProperties, FC } from 'react'
 
 import { formatNumber } from '../lib/format'
 import type {
@@ -38,6 +38,28 @@ function formatTps(value: number): string {
     maximumFractionDigits: 1,
     minimumFractionDigits: 1,
   }).format(value)
+}
+
+const healAmountColor = '#22c55e'
+const fixateRowColor = '#ffa500'
+
+function resolveThreatRowColor(row: FocusedPlayerThreatRow): string | null {
+  if (row.isFixate) {
+    return fixateRowColor
+  }
+
+  if (row.isHeal) {
+    return healAmountColor
+  }
+
+  return null
+}
+
+function resolveThreatRowStyle(
+  row: FocusedPlayerThreatRow,
+): CSSProperties | undefined {
+  const color = resolveThreatRowColor(row)
+  return color ? { color } : undefined
 }
 
 export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
@@ -123,7 +145,7 @@ export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
               </TableHeader>
               <TableBody>
                 {rows.map((row) => (
-                  <TableRow key={row.key}>
+                  <TableRow key={row.key} style={resolveThreatRowStyle(row)}>
                     <TableCell>
                       {row.abilityId === null ? (
                         row.abilityName
@@ -138,7 +160,9 @@ export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
                     </TableCell>
                     <TableCell>{formatNumber(row.amount)}</TableCell>
                     <TableCell>{formatNumber(row.threat)}</TableCell>
-                    <TableCell>{formatTps(row.tps)}</TableCell>
+                    <TableCell>
+                      {row.tps === null ? null : formatTps(row.tps)}
+                    </TableCell>
                   </TableRow>
                 ))}
                 <TableRow>

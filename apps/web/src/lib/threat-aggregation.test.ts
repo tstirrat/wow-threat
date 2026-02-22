@@ -1295,6 +1295,8 @@ describe('threat-aggregation', () => {
         amount: 300,
         threat: 150,
         tps: 150,
+        isHeal: false,
+        isFixate: false,
       },
     ])
   })
@@ -1413,6 +1415,144 @@ describe('threat-aggregation', () => {
         amount: 100,
         threat: 50,
         tps: 50,
+        isHeal: false,
+        isFixate: false,
+      },
+    ])
+  })
+
+  it('marks heal and fixate rows and omits tps for fixate entries', () => {
+    const actors: ReportActorSummary[] = [
+      {
+        id: 1,
+        name: 'Warrior',
+        type: 'Player',
+        subType: 'Warrior',
+      },
+    ]
+    const abilities: ReportAbilitySummary[] = [
+      {
+        gameID: 355,
+        icon: null,
+        name: 'Taunt',
+        type: 'ability',
+      },
+      {
+        gameID: 48438,
+        icon: null,
+        name: 'Wild Growth',
+        type: 'ability',
+      },
+    ]
+    const events = [
+      {
+        timestamp: 1000,
+        type: 'cast',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 10,
+        targetIsFriendly: false,
+        abilityGameID: 355,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'set',
+              amount: 100000,
+              total: 100000,
+            },
+          ],
+          calculation: {
+            formula: 'taunt set',
+            amount: 0,
+            baseThreat: 0,
+            modifiedThreat: 100000,
+            isSplit: false,
+            modifiers: [],
+            effects: [
+              {
+                type: 'state',
+                state: {
+                  kind: 'fixate',
+                  phase: 'start',
+                  spellId: 355,
+                  actorId: 1,
+                  targetId: 10,
+                  targetInstance: 0,
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        timestamp: 1200,
+        type: 'heal',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 1,
+        targetIsFriendly: true,
+        abilityGameID: 48438,
+        amount: 200,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 100,
+              total: 100100,
+            },
+          ],
+          calculation: {
+            formula: 'heal',
+            amount: 200,
+            baseThreat: 100,
+            modifiedThreat: 100,
+            isSplit: false,
+            modifiers: [],
+          },
+        },
+      },
+    ]
+
+    const rows = buildFocusedPlayerThreatRows({
+      events: events as never,
+      actors,
+      abilities,
+      fightStartTime: 1000,
+      target: {
+        id: 10,
+        instance: 0,
+      },
+      focusedPlayerId: 1,
+      windowStartMs: 0,
+      windowEndMs: 1000,
+    })
+
+    expect(rows).toEqual([
+      {
+        key: '355',
+        abilityId: 355,
+        abilityName: 'Taunt',
+        amount: 0,
+        threat: 100000,
+        tps: null,
+        isHeal: false,
+        isFixate: true,
+      },
+      {
+        key: '48438',
+        abilityId: 48438,
+        abilityName: 'Wild Growth',
+        amount: 200,
+        threat: 100,
+        tps: 100,
+        isHeal: true,
+        isFixate: false,
       },
     ])
   })

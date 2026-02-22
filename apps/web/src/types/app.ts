@@ -140,7 +140,9 @@ export interface FocusedPlayerThreatRow {
   abilityName: string
   amount: number
   threat: number
-  tps: number
+  tps: number | null
+  isHeal: boolean
+  isFixate: boolean
 }
 
 export interface InitialAuraDisplay {
