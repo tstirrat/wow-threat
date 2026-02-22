@@ -1,24 +1,32 @@
 /**
  * Scrollable legend for threat chart actor visibility and isolation controls.
  */
-import type { FC } from 'react'
+import { type FC, useId } from 'react'
 
 import type { ThreatSeries } from '../types/app'
 import { Button } from './ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from './ui/card'
+import { Checkbox } from './ui/checkbox'
+import { Label } from './ui/label'
 import { ScrollArea } from './ui/scroll-area'
 
 export interface ThreatChartLegendProps {
   series: ThreatSeries[]
   isActorVisible: (actorId: number) => boolean
   onActorClick: (actorId: number) => void
+  showPets: boolean
+  onShowPetsChange: (showPets: boolean) => void
 }
 
 export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
   series,
   isActorVisible,
   onActorClick,
+  showPets,
+  onShowPetsChange,
 }) => {
+  const showPetsId = useId()
+
   return (
     <Card
       aria-label="Threat legend"
@@ -29,6 +37,23 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
         <CardTitle className="text-xs font-medium text-muted-foreground">
           Legend
         </CardTitle>
+        <CardAction>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={showPets}
+              id={showPetsId}
+              onCheckedChange={(checked) => {
+                onShowPetsChange(checked === true)
+              }}
+            />
+            <Label
+              className="text-xs text-muted-foreground"
+              htmlFor={showPetsId}
+            >
+              Show pets
+            </Label>
+          </div>
+        </CardAction>
       </CardHeader>
       <CardContent className="min-h-0 flex-1 p-0">
         <ScrollArea className="h-full">

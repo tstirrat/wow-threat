@@ -90,6 +90,8 @@ export type ThreatChartProps = {
   onWindowChange: (startMs: number | null, endMs: number | null) => void
   onSeriesClick: (actorId: number) => void
   onVisiblePlayerIdsChange?: (playerIds: number[]) => void
+  showPets: boolean
+  onShowPetsChange: (showPets: boolean) => void
 }
 
 export const ThreatChart: FC<ThreatChartProps> = ({
@@ -101,6 +103,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   onWindowChange,
   onSeriesClick,
   onVisiblePlayerIdsChange,
+  showPets,
+  onShowPetsChange,
 }) => {
   const chartRef = useRef<ReactEChartsCore>(null)
   const chartContainerRef = useRef<HTMLDivElement>(null)
@@ -456,6 +460,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
           series={series}
           isActorVisible={isActorVisible}
           onActorClick={handleLegendItemClick}
+          showPets={showPets}
+          onShowPetsChange={onShowPetsChange}
         />
       </div>
     </div>

@@ -11,9 +11,6 @@ import { PlayerSummaryTable } from '../components/player-summary-table'
 import { SectionCard } from '../components/section-card'
 import { TargetSelector } from '../components/target-selector'
 import { ThreatChart } from '../components/threat-chart'
-import { Checkbox } from '../components/ui/checkbox'
-import { Label } from '../components/ui/label'
-import { Separator } from '../components/ui/separator'
 import { useFightData } from '../hooks/use-fight-data'
 import { useFightEvents } from '../hooks/use-fight-events'
 import { useFightQueryState } from '../hooks/use-fight-query-state'
@@ -418,25 +415,12 @@ export const FightPage: FC = () => {
         title={fightTimelineTitle}
         headerRight={
           selectedTarget ? (
-            <div className="flex flex-wrap items-center justify-end gap-3">
-              <div className="flex items-center gap-2 text-xs">
-                <Checkbox
-                  checked={queryState.state.pets}
-                  id="show-pets"
-                  onCheckedChange={(checked) => {
-                    queryState.setPets(checked === true)
-                  }}
-                />
-                <Label htmlFor="show-pets">Show pets</Label>
-              </div>
-              <Separator className="h-6" orientation="vertical" />
-              <div>
-                <TargetSelector
-                  targets={targetOptions}
-                  selectedTarget={selectedTarget}
-                  onChange={handleTargetChange}
-                />
-              </div>
+            <div>
+              <TargetSelector
+                targets={targetOptions}
+                selectedTarget={selectedTarget}
+                onChange={handleTargetChange}
+              />
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
@@ -463,6 +447,8 @@ export const FightPage: FC = () => {
             windowStartMs={queryState.state.startMs}
             onSeriesClick={handleSeriesClick}
             onWindowChange={handleWindowChange}
+            showPets={queryState.state.pets}
+            onShowPetsChange={queryState.setPets}
           />
         )}
       </SectionCard>
