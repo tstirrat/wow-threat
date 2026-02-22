@@ -1,6 +1,7 @@
 /**
  * Reports Routes
  *
+ * GET /reports/recent - Get merged personal + guild recent reports
  * GET /reports/:code - Get report metadata
  */
 import { resolveConfigOrNull } from '@wow-threat/config'
@@ -29,13 +30,44 @@ import { fightsRoutes } from './fights'
 
 // Report code format: alphanumeric + hyphens, typically 16 chars
 const REPORT_CODE_REGEX = /^[a-zA-Z0-9-]+$/
+const defaultRecentReportsLimit = 10
 
 export const reportRoutes = new Hono<{
   Bindings: Bindings
   Variables: Variables
 }>()
 
-export type { ReportResponse } from '../types/api'
+export type { RecentReportsResponse, ReportResponse } from '../types/api'
+
+/**
+ * GET /reports/recent
+ * Returns merged personal + guild recent logs for the authenticated user.
+ */
+reportRoutes.get('/recent', async (c) => {
+  const uid = c.get('uid')
+  if (!uid) {
+    throw unauthorized('Missing authenticated uid context')
+  }
+
+  const requestedLimit = c.req.query('limit')
+  const parsedLimit = requestedLimit ? Number.parseInt(requestedLimit, 10) : NaN
+  const limit = Number.isFinite(parsedLimit)
+    ? parsedLimit
+    : defaultRecentReportsLimit
+
+  const wcl = new WCLClient(c.env, uid)
+  const reports = await wcl.getRecentReports(limit)
+
+  return c.json(
+    {
+      reports,
+    },
+    200,
+    {
+      'Cache-Control': 'private, no-store',
+    },
+  )
+})
 
 /**
  * GET /reports/:code

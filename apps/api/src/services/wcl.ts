@@ -38,12 +38,119 @@ interface WclQueryResult<T> {
   errors?: Array<{ message: string }>
 }
 
+interface WclCurrentUserGuild {
+  id?: number | string | null
+}
+
+interface WclCurrentUserProfileData {
+  userData?: {
+    currentUser?: {
+      id?: number | string | null
+      guilds?: WclCurrentUserGuild[] | null
+    } | null
+  } | null
+}
+
+interface WclRecentReportsData {
+  reportData?: {
+    reports?: {
+      data?: WclRecentReportNode[] | null
+    } | null
+  } | null
+}
+
+interface WclRecentReportNode {
+  code?: string | null
+  title?: string | null
+  startTime?: number | null
+  endTime?: number | null
+  zone?: {
+    name?: string | null
+  } | null
+  guild?: {
+    name?: string | null
+    faction?:
+      | string
+      | {
+          name?: string | null
+        }
+      | null
+  } | null
+}
+
+export type RecentWclReportSource = 'personal' | 'guild'
+
+export interface RecentWclReport {
+  code: string
+  title: string
+  startTime: number
+  endTime: number
+  zoneName: string | null
+  guildName: string | null
+  guildFaction: string | null
+  source: RecentWclReportSource
+}
+
+const maxRecentReportsLimit = 20
+
 function shouldFallbackToUserToken(error: unknown): boolean {
   if (!(error instanceof AppError)) {
     return true
   }
 
   return /access|forbidden|permission|private|unauthorized/i.test(error.message)
+}
+
+function parseNumericId(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.trunc(value)
+  }
+
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  const parsed = Number.parseInt(value, 10)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function parseGuildFaction(value: unknown): string | null {
+  if (typeof value === 'string') {
+    return value
+  }
+
+  if (typeof value === 'object' && value && 'name' in value) {
+    const factionName = value.name
+    return typeof factionName === 'string' ? factionName : null
+  }
+
+  return null
+}
+
+function toRecentWclReport(
+  node: WclRecentReportNode,
+  source: RecentWclReportSource,
+): RecentWclReport | null {
+  if (!node.code || typeof node.code !== 'string') {
+    return null
+  }
+  if (typeof node.startTime !== 'number' || typeof node.endTime !== 'number') {
+    return null
+  }
+
+  return {
+    code: node.code,
+    title:
+      typeof node.title === 'string' && node.title.length > 0
+        ? node.title
+        : node.code,
+    startTime: node.startTime,
+    endTime: node.endTime,
+    zoneName: typeof node.zone?.name === 'string' ? node.zone.name : null,
+    guildName: typeof node.guild?.name === 'string' ? node.guild.name : null,
+    guildFaction: parseGuildFaction(node.guild?.faction),
+    source,
+  }
 }
 
 export class WCLClient {
@@ -309,6 +416,152 @@ export class WCLClient {
 
     await this.cacheReport(code, userData)
     return userData
+  }
+
+  private async getCurrentUserProfile(
+    accessToken: string,
+  ): Promise<{ userId: number; guildIds: number[] }> {
+    const query = `
+      query CurrentUserProfile {
+        userData {
+          currentUser {
+            id
+            guilds {
+              id
+            }
+          }
+        }
+      }
+    `
+    const profile = await this.query<WclCurrentUserProfileData>(
+      query,
+      {},
+      { accessToken },
+    )
+    const userId = parseNumericId(profile.userData?.currentUser?.id)
+    const guildIds = (profile.userData?.currentUser?.guilds ?? [])
+      .map((guild) => parseNumericId(guild.id))
+      .filter((guildId): guildId is number => guildId !== null)
+    const dedupedGuildIds = Array.from(new Set(guildIds))
+
+    if (userId === null) {
+      throw wclApiError('WCL user profile did not include a valid user id')
+    }
+
+    return {
+      userId,
+      guildIds: dedupedGuildIds,
+    }
+  }
+
+  private async getRecentReportsByOwner(
+    accessToken: string,
+    options:
+      | {
+          userId: number
+          source: 'personal'
+        }
+      | {
+          guildId: number
+          source: 'guild'
+        },
+    limit: number,
+  ): Promise<RecentWclReport[]> {
+    const query = `
+      query RecentReports($userID: Int, $guildID: Int, $limit: Int!) {
+        reportData {
+          reports(userID: $userID, guildID: $guildID, limit: $limit) {
+            data {
+              code
+              title
+              startTime
+              endTime
+              zone {
+                name
+              }
+              guild {
+                name
+                faction {
+                  name
+                }
+              }
+            }
+          }
+        }
+      }
+    `
+    const variables =
+      options.source === 'personal'
+        ? {
+            limit,
+            userID: options.userId,
+          }
+        : {
+            guildID: options.guildId,
+            limit,
+          }
+    const response = await this.query<WclRecentReportsData>(query, variables, {
+      accessToken,
+    })
+    const reports = response.reportData?.reports?.data ?? []
+
+    return reports
+      .map((report) => toRecentWclReport(report, options.source))
+      .filter((report): report is RecentWclReport => report !== null)
+  }
+
+  /** Get a merged list of current-user and guild recent reports. */
+  async getRecentReports(limit = 10): Promise<RecentWclReport[]> {
+    const boundedLimit = Math.min(
+      Math.max(Math.trunc(limit), 1),
+      maxRecentReportsLimit,
+    )
+    const accessToken = await this.getUserAccessToken()
+    const { guildIds, userId } = await this.getCurrentUserProfile(accessToken)
+    const personalReports = await this.getRecentReportsByOwner(
+      accessToken,
+      {
+        source: 'personal',
+        userId,
+      },
+      boundedLimit,
+    )
+    const guildReports = (
+      await Promise.all(
+        guildIds.map((guildId) =>
+          this.getRecentReportsByOwner(
+            accessToken,
+            {
+              guildId,
+              source: 'guild',
+            },
+            boundedLimit,
+          ),
+        ),
+      )
+    ).flat()
+    const sortedCombinedReports = [...personalReports, ...guildReports].sort(
+      (left, right) => {
+        if (right.startTime !== left.startTime) {
+          return right.startTime - left.startTime
+        }
+
+        if (left.source === right.source) {
+          return 0
+        }
+
+        return left.source === 'personal' ? -1 : 1
+      },
+    )
+    const deduped = new Map<string, RecentWclReport>()
+
+    sortedCombinedReports.forEach((report) => {
+      if (!deduped.has(report.code)) {
+        deduped.set(report.code, report)
+      }
+    })
+
+    return Array.from(deduped.values()).slice(0, boundedLimit)
   }
 
   /**

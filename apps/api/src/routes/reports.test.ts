@@ -3,16 +3,19 @@
  */
 import type { ApiError } from '@/middleware/error'
 import type { HealthCheckResponse } from '@/types/bindings'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import mockReportData from '../../test/fixtures/wcl-responses/anniversary-report.json'
 import { mockFetch, restoreFetch } from '../../test/helpers/mock-fetch'
 import { createMockBindings } from '../../test/setup'
 import app from '../index'
-import type { ReportResponse } from './reports'
+import { encryptSecret, importAesGcmKey } from '../services/token-utils'
+import type { RecentReportsResponse, ReportResponse } from './reports'
 
 // Extract the actual report object from the nested fixture
 const reportData = mockReportData.data.reportData.report
+const firestorePrefix =
+  'https://firestore.googleapis.com/v1/projects/wow-threat/databases/(default)/documents/'
 
 describe('Reports API', () => {
   beforeEach(() => {
@@ -351,6 +354,162 @@ describe('Reports API', () => {
       )
 
       expect(res.headers.get('Cache-Control')).toContain('immutable')
+    })
+  })
+
+  describe('GET /v1/reports/recent', () => {
+    it('returns merged recent report summaries for the authenticated user', async () => {
+      const encryptionKey = await importAesGcmKey('test-encryption-key')
+      const encryptedAccessToken = await encryptSecret(
+        'user-access-token',
+        encryptionKey,
+      )
+
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          const url = typeof input === 'string' ? input : input.toString()
+
+          if (url.startsWith(firestorePrefix)) {
+            return new Response(
+              JSON.stringify({
+                fields: {
+                  accessToken: { stringValue: encryptedAccessToken },
+                  accessTokenExpiresAtMs: {
+                    integerValue: String(Date.now() + 3_600_000),
+                  },
+                  refreshToken: { nullValue: null },
+                  refreshTokenExpiresAtMs: { nullValue: null },
+                  tokenType: { stringValue: 'Bearer' },
+                  uid: { stringValue: 'wcl-test-user' },
+                  wclUserId: { stringValue: '12345' },
+                  wclUserName: { stringValue: 'TestUser' },
+                },
+              }),
+              { status: 200, headers: { 'Content-Type': 'application/json' } },
+            )
+          }
+
+          if (url.includes('warcraftlogs.com/api/v2/user')) {
+            const body = init?.body ? JSON.parse(String(init.body)) : {}
+            const query = body.query as string
+            const variables = (body.variables ?? {}) as Record<string, unknown>
+
+            if (query.includes('CurrentUserProfile')) {
+              return new Response(
+                JSON.stringify({
+                  data: {
+                    userData: {
+                      currentUser: {
+                        id: 12345,
+                        guilds: [{ id: 777 }],
+                      },
+                    },
+                  },
+                }),
+                {
+                  status: 200,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              )
+            }
+
+            if (query.includes('RecentReports') && variables.userID === 12345) {
+              return new Response(
+                JSON.stringify({
+                  data: {
+                    reportData: {
+                      reports: {
+                        data: [
+                          {
+                            code: 'PERSONAL-LATEST',
+                            title: 'Personal latest',
+                            startTime: 2000,
+                            endTime: 2100,
+                            zone: { name: 'Naxxramas' },
+                            guild: {
+                              name: 'Threat Guild',
+                              faction: { name: 'Alliance' },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  },
+                }),
+                {
+                  status: 200,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              )
+            }
+
+            if (query.includes('RecentReports') && variables.guildID === 777) {
+              return new Response(
+                JSON.stringify({
+                  data: {
+                    reportData: {
+                      reports: {
+                        data: [
+                          {
+                            code: 'GUILD-LATEST',
+                            title: 'Guild latest',
+                            startTime: 1900,
+                            endTime: 1999,
+                            zone: { name: "Ahn'Qiraj" },
+                            guild: {
+                              name: 'Threat Guild',
+                              faction: { name: 'Alliance' },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  },
+                }),
+                {
+                  status: 200,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              )
+            }
+          }
+
+          return new Response(null, { status: 404 })
+        }),
+      )
+
+      const res = await app.request(
+        'http://localhost/v1/reports/recent?limit=10',
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(200)
+
+      const data: RecentReportsResponse = await res.json()
+      expect(data.reports).toEqual([
+        {
+          code: 'PERSONAL-LATEST',
+          title: 'Personal latest',
+          startTime: 2000,
+          endTime: 2100,
+          zoneName: 'Naxxramas',
+          guildName: 'Threat Guild',
+          guildFaction: 'Alliance',
+          source: 'personal',
+        },
+        {
+          code: 'GUILD-LATEST',
+          title: 'Guild latest',
+          startTime: 1900,
+          endTime: 1999,
+          zoneName: "Ahn'Qiraj",
+          guildName: 'Threat Guild',
+          guildFaction: 'Alliance',
+          source: 'guild',
+        },
+      ])
     })
   })
 })

@@ -5,7 +5,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { defaultApiBaseUrl } from '../lib/constants'
 import { requestJson } from './client'
-import { fightEventsQueryKey, getFightEvents } from './reports'
+import {
+  fightEventsQueryKey,
+  getFightEvents,
+  getRecentReports,
+  recentReportsQueryKey,
+} from './reports'
 
 vi.mock('./client', () => ({
   requestJson: vi.fn(),
@@ -40,5 +45,17 @@ describe('reports api helpers', () => {
       12,
       '1.3.1',
     ])
+  })
+
+  it('requests recent reports with a configurable limit', async () => {
+    await getRecentReports(10)
+
+    expect(requestJson).toHaveBeenCalledWith(
+      `${defaultApiBaseUrl}/v1/reports/recent?limit=10`,
+    )
+  })
+
+  it('includes limit in recent reports query keys', () => {
+    expect(recentReportsQueryKey(10)).toEqual(['recent-reports', 10])
   })
 })

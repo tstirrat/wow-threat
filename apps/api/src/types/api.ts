@@ -76,6 +76,23 @@ export interface ReportResponse {
   abilities: ReportAbilitySummary[]
 }
 
+export type RecentReportSource = 'personal' | 'guild'
+
+export interface RecentReportSummary {
+  code: string
+  title: string
+  startTime: number
+  endTime: number
+  zoneName: string | null
+  guildName: string | null
+  guildFaction: string | null
+  source: RecentReportSource
+}
+
+export interface RecentReportsResponse {
+  reports: RecentReportSummary[]
+}
+
 export interface FightsResponse {
   id: number
   reportCode: string

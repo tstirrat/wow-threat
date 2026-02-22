@@ -237,3 +237,238 @@ describe('WCLClient.getEvents', () => {
     expect(firestoreCalls).toHaveLength(0)
   })
 })
+
+describe('WCLClient.getRecentReports', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-01-15T00:00:00Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('returns merged personal and guild reports sorted by newest', async () => {
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString()
+
+        if (url.startsWith(firestorePrefix)) {
+          return new Response(
+            JSON.stringify(await createEncryptedTokenDocument()),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          )
+        }
+
+        if (url.includes('warcraftlogs.com/api/v2/user')) {
+          const body = init?.body ? JSON.parse(init.body.toString()) : {}
+          const query = body.query as string
+
+          if (query.includes('CurrentUserProfile')) {
+            return new Response(
+              JSON.stringify({
+                data: {
+                  userData: {
+                    currentUser: {
+                      id: 12345,
+                      guilds: [{ id: 77 }],
+                    },
+                  },
+                },
+              }),
+              { status: 200, headers: { 'Content-Type': 'application/json' } },
+            )
+          }
+
+          if (query.includes('RecentReports')) {
+            const variables = body.variables as Record<string, unknown>
+            if (variables.userID === 12345) {
+              return new Response(
+                JSON.stringify({
+                  data: {
+                    reportData: {
+                      reports: {
+                        data: [
+                          {
+                            code: 'PERSONAL1',
+                            title: 'Personal #1',
+                            startTime: 2000,
+                            endTime: 2100,
+                            zone: { name: 'Naxxramas' },
+                            guild: {
+                              name: 'Threat Guild',
+                              faction: { name: 'Alliance' },
+                            },
+                          },
+                          {
+                            code: 'DUPLICATE',
+                            title: 'Shared',
+                            startTime: 1800,
+                            endTime: 1900,
+                            zone: { name: 'Karazhan' },
+                            guild: {
+                              name: 'Threat Guild',
+                              faction: { name: 'Alliance' },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  },
+                }),
+                {
+                  status: 200,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              )
+            }
+
+            if (variables.guildID === 77) {
+              return new Response(
+                JSON.stringify({
+                  data: {
+                    reportData: {
+                      reports: {
+                        data: [
+                          {
+                            code: 'GUILD1',
+                            title: 'Guild #1',
+                            startTime: 1900,
+                            endTime: 1999,
+                            zone: { name: 'Blackwing Lair' },
+                            guild: {
+                              name: 'Threat Guild',
+                              faction: { name: 'Alliance' },
+                            },
+                          },
+                          {
+                            code: 'DUPLICATE',
+                            title: 'Shared',
+                            startTime: 1800,
+                            endTime: 1900,
+                            zone: { name: 'Karazhan' },
+                            guild: {
+                              name: 'Threat Guild',
+                              faction: { name: 'Alliance' },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  },
+                }),
+                {
+                  status: 200,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              )
+            }
+          }
+        }
+
+        return new Response(null, { status: 404 })
+      },
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const client = new WCLClient(createMockBindings(), 'wcl:12345')
+    const reports = await client.getRecentReports(10)
+
+    expect(reports).toHaveLength(3)
+    expect(reports.map((report) => report.code)).toEqual([
+      'PERSONAL1',
+      'GUILD1',
+      'DUPLICATE',
+    ])
+    expect(reports[0]).toMatchObject({
+      source: 'personal',
+      zoneName: 'Naxxramas',
+    })
+    expect(reports[1]).toMatchObject({
+      source: 'guild',
+      zoneName: 'Blackwing Lair',
+    })
+    expect(reports[2]).toMatchObject({
+      source: 'personal',
+      zoneName: 'Karazhan',
+    })
+  })
+
+  it('applies the requested limit after merge and dedupe', async () => {
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString()
+
+        if (url.startsWith(firestorePrefix)) {
+          return new Response(
+            JSON.stringify(await createEncryptedTokenDocument()),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          )
+        }
+
+        if (url.includes('warcraftlogs.com/api/v2/user')) {
+          const body = init?.body ? JSON.parse(init.body.toString()) : {}
+          const query = body.query as string
+
+          if (query.includes('CurrentUserProfile')) {
+            return new Response(
+              JSON.stringify({
+                data: {
+                  userData: {
+                    currentUser: {
+                      id: 12345,
+                      guilds: [],
+                    },
+                  },
+                },
+              }),
+              { status: 200, headers: { 'Content-Type': 'application/json' } },
+            )
+          }
+
+          if (query.includes('RecentReports')) {
+            return new Response(
+              JSON.stringify({
+                data: {
+                  reportData: {
+                    reports: {
+                      data: [
+                        {
+                          code: 'RECENT-2',
+                          title: 'Recent 2',
+                          startTime: 2000,
+                          endTime: 2100,
+                          zone: { name: 'Naxxramas' },
+                          guild: null,
+                        },
+                        {
+                          code: 'RECENT-1',
+                          title: 'Recent 1',
+                          startTime: 1000,
+                          endTime: 1100,
+                          zone: { name: 'Molten Core' },
+                          guild: null,
+                        },
+                      ],
+                    },
+                  },
+                },
+              }),
+              { status: 200, headers: { 'Content-Type': 'application/json' } },
+            )
+          }
+        }
+
+        return new Response(null, { status: 404 })
+      },
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const client = new WCLClient(createMockBindings(), 'wcl:12345')
+    const reports = await client.getRecentReports(1)
+
+    expect(reports).toHaveLength(1)
+    expect(reports[0]?.code).toBe('RECENT-2')
+  })
+})

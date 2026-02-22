@@ -5,6 +5,7 @@ import { defaultApiBaseUrl } from '../lib/constants'
 import type {
   AugmentedEventsResponse,
   FightsResponse,
+  RecentReportsResponse,
   ReportResponse,
 } from '../types/api'
 import { requestJson } from './client'
@@ -43,9 +44,24 @@ export function getFightEvents(
   )
 }
 
+/** Fetch merged personal and guild recent reports for the signed-in user. */
+export function getRecentReports(limit = 10): Promise<RecentReportsResponse> {
+  const searchParams = new URLSearchParams({
+    limit: String(limit),
+  })
+
+  return requestJson<RecentReportsResponse>(
+    `${defaultApiBaseUrl}/v1/reports/recent?${searchParams.toString()}`,
+  )
+}
+
 export const reportQueryKey = (
   reportId: string,
 ): readonly ['report', string] => ['report', reportId]
+
+export const recentReportsQueryKey = (
+  limit: number,
+): readonly ['recent-reports', number] => ['recent-reports', limit]
 
 export const fightQueryKey = (
   reportId: string,

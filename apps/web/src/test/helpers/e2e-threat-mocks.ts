@@ -6,6 +6,7 @@ import type { Page } from '@playwright/test'
 import type {
   AugmentedEventsResponse,
   FightsResponse,
+  RecentReportsResponse,
   ReportActorSummary,
   ReportFightParticipant,
   ReportResponse,
@@ -247,6 +248,21 @@ export const e2eReportResponse: ReportResponse = {
     id: 1001,
     name: 'Naxxramas',
   },
+}
+
+const e2eRecentReportsResponse: RecentReportsResponse = {
+  reports: [
+    {
+      code: e2eReportId,
+      title: e2eReportTitle,
+      startTime: e2eReportResponse.startTime,
+      endTime: e2eReportResponse.endTime,
+      zoneName: e2eReportResponse.zone?.name ?? null,
+      guildName: e2eReportResponse.guild?.name ?? null,
+      guildFaction: e2eReportResponse.guild?.faction ?? null,
+      source: 'personal',
+    },
+  ],
 }
 
 const fightsById: Record<number, FightsResponse> = {
@@ -751,6 +767,22 @@ export async function setupThreatApiMocks(
 
   await page.route('http://localhost:8787/v1/reports/**', async (route) => {
     const url = new URL(route.request().url())
+    if (url.pathname === '/v1/reports/recent') {
+      const limitParam = Number.parseInt(
+        url.searchParams.get('limit') ?? '',
+        10,
+      )
+      const limit = Number.isFinite(limitParam)
+        ? Math.max(limitParam, 0)
+        : e2eRecentReportsResponse.reports.length
+      await route.fulfill(
+        jsonResponse({
+          reports: e2eRecentReportsResponse.reports.slice(0, limit),
+        }),
+      )
+      return
+    }
+
     const reportMatch = url.pathname.match(/^\/v1\/reports\/([^/]+)$/)
     if (reportMatch) {
       const requestedReportId = reportMatch[1]
