@@ -1645,6 +1645,36 @@ describe('calculateThreatModification', () => {
 })
 
 describe('combatantinfo processing', () => {
+  it('applies pre-seeded initial auras before the first event', () => {
+    const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
+
+    const events: WCLEvent[] = [
+      createDamageEvent({
+        sourceID: warriorActor.id,
+        targetID: bossEnemy.id,
+        amount: 100,
+      }),
+    ]
+
+    const result = processEvents({
+      rawEvents: events,
+      initialAurasByActor: new Map([
+        [warriorActor.id, [SPELLS.MOCK_AURA_THREAT_UP]],
+      ]),
+      actorMap,
+      enemies,
+      config: mockConfig,
+    })
+
+    const damageEvent = result.augmentedEvents[0]
+    const threatUpModifier = damageEvent?.threat?.calculation.modifiers.find(
+      (m: ThreatModifier) => m.name === 'Test Threat Up',
+    )
+
+    expect(threatUpModifier).toBeDefined()
+    expect(result.eventCounts.combatantinfo).toBeUndefined()
+  })
+
   it('seeds auras from combatantinfo and applies them to subsequent damage events', () => {
     const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
 

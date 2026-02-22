@@ -308,8 +308,18 @@ export const FightPage: FC = () => {
         eventsData?.events ?? [],
         focusedPlayerId,
         threatConfig,
+        {
+          initialAurasByActor: eventsData?.initialAurasByActor,
+          abilities: reportData.abilities,
+        },
       ),
-    [eventsData?.events, focusedPlayerId, threatConfig],
+    [
+      eventsData?.events,
+      eventsData?.initialAurasByActor,
+      focusedPlayerId,
+      reportData.abilities,
+      threatConfig,
+    ],
   )
   const wowheadLinksConfig = threatConfig?.wowhead ?? defaultWowheadLinksConfig
   const handleTargetChange = useCallback(

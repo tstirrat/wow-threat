@@ -91,6 +91,7 @@ export interface MockWCLResponses {
     data: unknown[]
     nextPageTimestamp: number | null
   }>
+  friendlyBuffBandsByActor?: unknown
 }
 
 const defaultTokenResponse = {
@@ -122,6 +123,23 @@ export function createMockFetch(responses: MockWCLResponses = {}) {
       if (url.includes('warcraftlogs.com/api/v2')) {
         const body = init?.body ? JSON.parse(init.body as string) : {}
         const query = body.query as string
+
+        // Friendly buff actor-batch query
+        if (query?.includes('GetFriendlyBuffBandsByActor')) {
+          return new Response(
+            JSON.stringify({
+              data: {
+                reportData: {
+                  report: responses.friendlyBuffBandsByActor ?? {},
+                },
+              },
+            }),
+            {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          )
+        }
 
         // Report query - wrap in proper GraphQL structure
         if (

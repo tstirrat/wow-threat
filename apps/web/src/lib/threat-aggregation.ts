@@ -245,6 +245,27 @@ function getAuraSpellId(aura: CombatantInfoAura): number | null {
   return null
 }
 
+function buildAbilityNameMap(
+  abilities: ReportAbilitySummary[] | undefined,
+): Map<number, string> {
+  if (!abilities || abilities.length === 0) {
+    return new Map()
+  }
+
+  return abilities.reduce((result, ability) => {
+    if (
+      typeof ability.gameID === 'number' &&
+      ability.gameID > 0 &&
+      typeof ability.name === 'string' &&
+      ability.name.trim().length > 0
+    ) {
+      result.set(ability.gameID, ability.name)
+    }
+
+    return result
+  }, new Map<number, string>())
+}
+
 function resolveActorClass(
   actor: ReportActorSummary,
   actorsById: Map<number, ReportActorSummary>,
@@ -1626,32 +1647,53 @@ export function buildInitialAurasDisplay(
       }
     >
   } | null,
+  options?: {
+    initialAurasByActor?: Record<string, number[]>
+    abilities?: ReportAbilitySummary[]
+  },
 ): InitialAuraDisplay[] {
   if (focusedPlayerId === null) {
     return []
   }
 
+  const abilityNameById = buildAbilityNameMap(options?.abilities)
   const notableAuraIds = threatConfig
     ? getNotableAuraIds(threatConfig)
     : new Set<SpellId>()
   const initialAuras = getInitialAuras(events, focusedPlayerId)
+  const aurasBySpellId = initialAuras.reduce((result, aura) => {
+    const spellId = getAuraSpellId(aura)
+    if (spellId === null) {
+      return result
+    }
 
-  return initialAuras
-    .map((aura) => {
-      const spellId = getAuraSpellId(aura)
-      if (spellId === null) {
-        return null
-      }
-
-      const fallbackName = `Spell ${spellId}`
-
-      return {
-        spellId,
-        name: aura.name?.trim() ? aura.name : fallbackName,
-        stacks: aura.stacks > 0 ? aura.stacks : 1,
-        isNotable: notableAuraIds.has(spellId),
-      }
+    const fallbackName = `Spell ${spellId}`
+    result.set(spellId, {
+      isNotable: notableAuraIds.has(spellId),
+      name: aura.name?.trim() ? aura.name : fallbackName,
+      spellId,
+      stacks: aura.stacks > 0 ? aura.stacks : 1,
     })
-    .filter((aura): aura is InitialAuraDisplay => aura !== null)
-    .sort((left, right) => Number(right.isNotable) - Number(left.isNotable))
+
+    return result
+  }, new Map<number, InitialAuraDisplay>())
+  const seededSpellIds =
+    options?.initialAurasByActor?.[String(focusedPlayerId)] ?? []
+  seededSpellIds.forEach((spellId) => {
+    if (aurasBySpellId.has(spellId)) {
+      return
+    }
+
+    const abilityName = abilityNameById.get(spellId)
+    aurasBySpellId.set(spellId, {
+      isNotable: notableAuraIds.has(spellId),
+      name: abilityName ?? `Spell ${spellId}`,
+      spellId,
+      stacks: 1,
+    })
+  })
+
+  return [...aurasBySpellId.values()].sort(
+    (left, right) => Number(right.isNotable) - Number(left.isNotable),
+  )
 }

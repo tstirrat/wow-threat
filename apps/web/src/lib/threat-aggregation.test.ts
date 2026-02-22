@@ -1806,5 +1806,69 @@ describe('threat-aggregation', () => {
         { ability: 12303, name: 'Defiance', stacks: 5 },
       ])
     })
+
+    it('merges seeded initial aura ids from events payload', () => {
+      const events = [
+        {
+          timestamp: 1000,
+          type: 'combatantinfo',
+          sourceID: 1,
+          sourceIsFriendly: true,
+          targetID: 0,
+          targetIsFriendly: false,
+          auras: [{ abilityGameID: 71, name: 'Defensive Stance', stacks: 1 }],
+          threat: {
+            changes: [],
+            calculation: {
+              formula: 'none',
+              amount: 0,
+              baseThreat: 0,
+              modifiedThreat: 0,
+              isSplit: false,
+              modifiers: [],
+            },
+          },
+        },
+      ] as never
+
+      const config = {
+        auraModifiers: {
+          25895: () => ({
+            source: 'buff',
+            name: 'Greater Blessing of Salvation',
+            value: 0.7,
+          }),
+        },
+      }
+
+      const result = buildInitialAurasDisplay(events, 1, config, {
+        initialAurasByActor: {
+          '1': [71, 25895],
+        },
+        abilities: [
+          {
+            gameID: 25895,
+            icon: null,
+            name: 'Greater Blessing of Salvation',
+            type: null,
+          },
+        ],
+      })
+
+      expect(result).toEqual([
+        {
+          spellId: 25895,
+          name: 'Greater Blessing of Salvation',
+          stacks: 1,
+          isNotable: true,
+        },
+        {
+          spellId: 71,
+          name: 'Defensive Stance',
+          stacks: 1,
+          isNotable: false,
+        },
+      ])
+    })
   })
 })

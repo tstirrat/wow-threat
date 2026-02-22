@@ -117,6 +117,7 @@ export interface AugmentedEventsResponse {
   gameVersion: number
   configVersion: string
   events: AugmentedEvent[]
+  initialAurasByActor?: Record<string, number[]>
   summary: {
     totalEvents: number
     eventCounts: Record<string, number>

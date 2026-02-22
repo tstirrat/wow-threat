@@ -98,6 +98,7 @@ describe('Events API', () => {
       expect(data.fightName).toBe('Patchwerk')
       expect(data.gameVersion).toBe(2)
       expect(data.events).toBeDefined()
+      expect(data.initialAurasByActor).toBeDefined()
       expect(data.summary).toBeDefined()
     })
 

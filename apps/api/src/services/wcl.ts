@@ -98,6 +98,44 @@ export interface RecentWclReport {
 }
 
 const maxRecentReportsLimit = 20
+const friendlyBuffTableAbilityIdKeys = [
+  'abilityGameID',
+  'abilityID',
+  'abilityId',
+  'gameID',
+  'gameId',
+] as const
+
+type UnknownRecord = Record<string, unknown>
+
+interface WclFriendlyBuffBandsData {
+  reportData?: {
+    report?: UnknownRecord | null
+  } | null
+}
+
+interface FriendlyBuffBand {
+  startTime: number
+  endTime: number | null
+}
+
+interface FriendlyBuffBandEntry {
+  actorId: number
+  abilityId: number
+  bands: FriendlyBuffBand[]
+}
+
+type FriendlyBuffBandsResolutionSource = 'actor-scoped-batch' | 'legacy'
+
+interface CachedFriendlyBuffBands {
+  entries: FriendlyBuffBandEntry[]
+  source: FriendlyBuffBandsResolutionSource
+}
+
+interface ActorScopedFriendlyBuffQuery {
+  aliasToActorId: Map<string, number>
+  query: string
+}
 
 function shouldFallbackToUserToken(error: unknown): boolean {
   if (!(error instanceof AppError)) {
@@ -131,6 +169,197 @@ function parseGuildFaction(value: unknown): string | null {
   }
 
   return null
+}
+
+function asRecord(value: unknown): UnknownRecord | null {
+  return typeof value === 'object' && value !== null
+    ? (value as UnknownRecord)
+    : null
+}
+
+function readNumericField(
+  record: UnknownRecord,
+  keys: readonly string[],
+): number | null {
+  for (const key of keys) {
+    const parsed = parseNumericId(record[key])
+    if (parsed !== null) {
+      return parsed
+    }
+  }
+
+  return null
+}
+
+function parseFriendlyBuffBands(value: unknown): FriendlyBuffBand[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value.flatMap((entry) => {
+    const record = asRecord(entry)
+    if (!record) {
+      return []
+    }
+
+    const startTime = parseNumericId(record.startTime)
+    const endTime = parseNumericId(record.endTime)
+    if (startTime === null) {
+      return []
+    }
+    if (endTime !== null && endTime <= startTime) {
+      return []
+    }
+
+    return [
+      {
+        startTime,
+        endTime,
+      },
+    ]
+  })
+}
+
+function collectFriendlyBuffBandEntries(
+  value: unknown,
+  entries: FriendlyBuffBandEntry[],
+  actorId: number,
+): void {
+  if (Array.isArray(value)) {
+    value.forEach((nested) =>
+      collectFriendlyBuffBandEntries(nested, entries, actorId),
+    )
+    return
+  }
+
+  const record = asRecord(value)
+  if (!record) {
+    return
+  }
+
+  const abilityId = readNumericField(record, friendlyBuffTableAbilityIdKeys)
+  const bands = parseFriendlyBuffBands(record.bands)
+  if (abilityId !== null && bands.length > 0) {
+    entries.push({
+      actorId,
+      abilityId,
+      bands,
+    })
+  }
+
+  Object.values(record).forEach((nested) =>
+    collectFriendlyBuffBandEntries(nested, entries, actorId),
+  )
+}
+
+function parseFriendlyBuffTablePayload(payload: unknown): unknown {
+  if (typeof payload !== 'string') {
+    return payload
+  }
+
+  try {
+    return JSON.parse(payload) as unknown
+  } catch {
+    return null
+  }
+}
+
+function parseCachedFriendlyBuffBands(
+  value: FriendlyBuffBandEntry[] | CachedFriendlyBuffBands,
+): CachedFriendlyBuffBands {
+  if (Array.isArray(value)) {
+    return {
+      entries: value,
+      source: 'legacy',
+    }
+  }
+
+  return value
+}
+
+function extractBuffBandEntriesForActor(
+  tablePayload: unknown,
+  actorId: number,
+): FriendlyBuffBandEntry[] {
+  const parsedPayload = parseFriendlyBuffTablePayload(tablePayload)
+  const buffEntries: FriendlyBuffBandEntry[] = []
+  collectFriendlyBuffBandEntries(parsedPayload, buffEntries, actorId)
+
+  return buffEntries.filter((entry) => entry.actorId === actorId)
+}
+
+function filterFightStartAurasByFriendlies(
+  buffBandEntries: FriendlyBuffBandEntry[],
+  fightStartTime: number,
+  friendlyActorIds: Set<number>,
+): Map<number, number[]> {
+  const auraIdsByActor = buffBandEntries.reduce((result, entry) => {
+    if (!friendlyActorIds.has(entry.actorId)) {
+      return result
+    }
+
+    const hasBandAtFightStart = entry.bands.some(
+      (band) =>
+        band.startTime <= fightStartTime &&
+        (band.endTime === null || band.endTime > fightStartTime),
+    )
+    if (!hasBandAtFightStart) {
+      return result
+    }
+
+    const auraIds = result.get(entry.actorId) ?? new Set<number>()
+    auraIds.add(entry.abilityId)
+    result.set(entry.actorId, auraIds)
+
+    return result
+  }, new Map<number, Set<number>>())
+
+  return [...auraIdsByActor.entries()].reduce((result, [actorId, auraIds]) => {
+    result.set(
+      actorId,
+      [...auraIds].sort((left, right) => left - right),
+    )
+    return result
+  }, new Map<number, number[]>())
+}
+
+function buildActorScopedFriendlyBuffQuery(
+  fightIds: readonly number[],
+  friendlyActorIds: Set<number>,
+): ActorScopedFriendlyBuffQuery | null {
+  if (fightIds.length === 0) {
+    return null
+  }
+
+  const sortedFriendlyActorIds = [...friendlyActorIds].sort(
+    (left, right) => left - right,
+  )
+  if (sortedFriendlyActorIds.length === 0) {
+    return null
+  }
+
+  const aliasToActorId = sortedFriendlyActorIds.reduce((result, actorId) => {
+    result.set(`friendly_${actorId}`, actorId)
+    return result
+  }, new Map<string, number>())
+
+  const fields = [...aliasToActorId.entries()].map(
+    ([alias, actorId]) =>
+      `${alias}: table(fightIDs: $fightIDs, dataType: Buffs, hostilityType: Friendlies, sourceID: ${actorId})`,
+  )
+
+  return {
+    aliasToActorId,
+    query: `
+      query GetFriendlyBuffBandsByActor($code: String!, $fightIDs: [Int!]!) {
+        reportData {
+          report(code: $code) {
+            ${fields.join('\n            ')}
+          }
+        }
+      }
+    `,
+  }
 }
 
 function toRecentWclReport(
@@ -589,6 +818,155 @@ export class WCLClient {
     })
 
     return Array.from(deduped.values()).slice(0, boundedLimit)
+  }
+
+  /**
+   * Resolve active buff aura IDs on friendlies at the exact start of a fight.
+   */
+  async getFriendlyBuffAurasAtFightStart(
+    code: string,
+    fightId: number,
+    visibility: unknown,
+    fightStartTime: number,
+    friendlyActorIds: Set<number>,
+    options: {
+      bypassCache?: boolean
+      queryFightIds?: number[]
+      queryFriendlyActorIds?: Set<number>
+    } = {},
+  ): Promise<Map<number, number[]>> {
+    if (friendlyActorIds.size === 0) {
+      return new Map()
+    }
+
+    const { bypassCache = false } = options
+    const queryFightIds = [...new Set(options.queryFightIds ?? [fightId])]
+      .map((queryFightId) => Math.trunc(queryFightId))
+      .filter(Number.isFinite)
+    const queryFriendlyActorIds =
+      options.queryFriendlyActorIds ?? friendlyActorIds
+    if (queryFightIds.length === 0 || queryFriendlyActorIds.size === 0) {
+      return new Map()
+    }
+
+    const normalizedVisibility = normalizeVisibility(visibility)
+    const cacheKey = CacheKeys.friendlyBuffBandsByReport(
+      code,
+      normalizedVisibility,
+      normalizedVisibility === 'private' ? this.uid : undefined,
+    )
+
+    if (!bypassCache) {
+      const cached = await this.cache.get<
+        FriendlyBuffBandEntry[] | CachedFriendlyBuffBands
+      >(cacheKey)
+      if (cached) {
+        const normalizedCache = parseCachedFriendlyBuffBands(cached)
+        console.info('[WCL] Friendly buff bands cache hit', {
+          code,
+          fightId,
+          source: normalizedCache.source,
+          auraBandEntries: normalizedCache.entries.length,
+        })
+        return filterFightStartAurasByFriendlies(
+          normalizedCache.entries,
+          fightStartTime,
+          friendlyActorIds,
+        )
+      }
+    }
+
+    const accessToken =
+      normalizedVisibility === 'private'
+        ? await this.getUserAccessToken()
+        : undefined
+
+    try {
+      console.info(
+        '[WCL] Friendly buff bands resolving via actor-scoped batch query',
+        {
+          code,
+          fightId,
+          queryFightCount: queryFightIds.length,
+          queryFriendlyActors: queryFriendlyActorIds.size,
+        },
+      )
+      const resolvedBuffBands = await this.getActorScopedBuffBands({
+        code,
+        fightIds: queryFightIds,
+        accessToken,
+        friendlyActorIds: queryFriendlyActorIds,
+      })
+      const cachedPayload: CachedFriendlyBuffBands = {
+        entries: resolvedBuffBands,
+        source: 'actor-scoped-batch',
+      }
+      await this.cache.set(cacheKey, cachedPayload)
+      return filterFightStartAurasByFriendlies(
+        resolvedBuffBands,
+        fightStartTime,
+        friendlyActorIds,
+      )
+    } catch (error) {
+      console.warn('[WCL] Failed to load friendly buff bands', {
+        code,
+        fightId,
+        error,
+      })
+      return new Map()
+    }
+  }
+
+  private async getActorScopedBuffBands({
+    code,
+    fightIds,
+    accessToken,
+    friendlyActorIds,
+  }: {
+    code: string
+    fightIds: number[]
+    accessToken?: string
+    friendlyActorIds: Set<number>
+  }): Promise<FriendlyBuffBandEntry[]> {
+    const actorScopedQuery = buildActorScopedFriendlyBuffQuery(
+      fightIds,
+      friendlyActorIds,
+    )
+    if (!actorScopedQuery) {
+      return []
+    }
+
+    const data = await this.query<WclFriendlyBuffBandsData>(
+      actorScopedQuery.query,
+      {
+        code,
+        fightIDs: fightIds,
+      },
+      {
+        accessToken,
+      },
+    )
+
+    const reportRecord = asRecord(data.reportData?.report)
+    if (!reportRecord) {
+      return []
+    }
+    const resolvedEntries = [
+      ...actorScopedQuery.aliasToActorId.entries(),
+    ].flatMap(([alias, actorId]) => {
+      const buffEntries = extractBuffBandEntriesForActor(
+        reportRecord[alias],
+        actorId,
+      )
+      return buffEntries
+    })
+    console.info('[WCL] Friendly buff bands actor-scoped batch resolved', {
+      code,
+      queryFightCount: fightIds.length,
+      actorQueries: actorScopedQuery.aliasToActorId.size,
+      auraBandEntries: resolvedEntries.length,
+    })
+    return resolvedEntries
   }
 
   /**

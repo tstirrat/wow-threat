@@ -123,17 +123,35 @@ eventsRoutes.get('/', async (c) => {
     })
   }
 
-  // Fetch raw events from WCL
-  const rawEvents = (await wcl.getEvents(
-    code,
-    fightId,
-    visibility,
-    fight.startTime,
-    fight.endTime,
-    {
+  const fightFriendlyActorIds = new Set<number>([
+    ...(fight.friendlyPlayers ?? []),
+    ...(fight.friendlyPets ?? []).map((pet) => pet.id),
+  ])
+  const reportFightIds = report.fights.map((reportFight) => reportFight.id)
+  const reportFriendlyActorIds = new Set<number>(
+    report.fights.flatMap((reportFight) => [
+      ...(reportFight.friendlyPlayers ?? []),
+      ...(reportFight.friendlyPets ?? []).map((pet) => pet.id),
+    ]),
+  )
+
+  const [rawEvents, initialAurasByActor] = await Promise.all([
+    wcl.getEvents(code, fightId, visibility, fight.startTime, fight.endTime, {
       bypassCache: bypassAugmentedCache,
-    },
-  )) as WCLEvent[]
+    }) as Promise<WCLEvent[]>,
+    wcl.getFriendlyBuffAurasAtFightStart(
+      code,
+      fightId,
+      visibility,
+      fight.startTime,
+      fightFriendlyActorIds,
+      {
+        bypassCache: bypassAugmentedCache,
+        queryFightIds: reportFightIds,
+        queryFriendlyActorIds: reportFriendlyActorIds,
+      },
+    ),
+  ])
 
   const { actorMap, friendlyActorIds, enemies, abilitySchoolMap } =
     buildThreatEngineInput({
@@ -146,6 +164,7 @@ eventsRoutes.get('/', async (c) => {
   // Process events and calculate threat using the threat engine
   const { augmentedEvents, eventCounts } = processEvents({
     rawEvents,
+    initialAurasByActor,
     actorMap,
     friendlyActorIds,
     abilitySchoolMap,
@@ -153,6 +172,14 @@ eventsRoutes.get('/', async (c) => {
     encounterId: fight.encounterID ?? null,
     config,
   })
+  const serializedInitialAurasByActor = Object.fromEntries(
+    [...initialAurasByActor.entries()]
+      .filter(([, auraIds]) => auraIds.length > 0)
+      .map(([actorId, auraIds]) => [
+        String(actorId),
+        [...new Set(auraIds)].sort((left, right) => left - right),
+      ]),
+  )
 
   const response: AugmentedEventsResponse = {
     reportCode: code,
@@ -161,6 +188,7 @@ eventsRoutes.get('/', async (c) => {
     gameVersion,
     configVersion,
     events: augmentedEvents,
+    initialAurasByActor: serializedInitialAurasByActor,
     summary: {
       totalEvents: augmentedEvents.length,
       eventCounts,

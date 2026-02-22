@@ -280,6 +280,202 @@ describe('WCLClient.getEvents', () => {
   })
 })
 
+describe('WCLClient.getFriendlyBuffAurasAtFightStart', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-01-15T00:00:00Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('extracts active fight-start aura IDs from actor-scoped batch query', async () => {
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString()
+
+        if (url.includes('warcraftlogs.com/oauth/token')) {
+          return new Response(
+            JSON.stringify({
+              access_token: 'client-token',
+              expires_in: 3600,
+              token_type: 'Bearer',
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          )
+        }
+
+        if (url.includes('warcraftlogs.com/api/v2/client')) {
+          const body = init?.body ? JSON.parse(init.body.toString()) : {}
+          const query = body.query as string
+
+          if (query.includes('GetFriendlyBuffBandsByActor')) {
+            return new Response(
+              JSON.stringify({
+                data: {
+                  reportData: {
+                    report: {
+                      friendly_1: {
+                        entries: [
+                          {
+                            bands: [{ startTime: 500, endTime: 1800 }],
+                            abilityGameID: 1038,
+                          },
+                          {
+                            bands: [{ startTime: 1800, endTime: 2800 }],
+                            abilityGameID: 25895,
+                          },
+                        ],
+                      },
+                      friendly_2: {
+                        entries: [
+                          {
+                            bands: [{ startTime: 0, endTime: 900 }],
+                            abilityGameID: 1038,
+                          },
+                        ],
+                      },
+                    },
+                  },
+                },
+              }),
+              { status: 200, headers: { 'Content-Type': 'application/json' } },
+            )
+          }
+        }
+
+        return new Response(null, { status: 404 })
+      },
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const client = new WCLClient(createMockBindings(), 'wcl:12345')
+    const result = await client.getFriendlyBuffAurasAtFightStart(
+      'BUFFMAP1',
+      3,
+      'public',
+      1000,
+      new Set([1, 2]),
+      {
+        queryFightIds: [3, 4],
+        queryFriendlyActorIds: new Set([1, 2]),
+      },
+    )
+
+    expect(result.get(1)).toEqual([1038])
+    expect(result.has(2)).toBe(false)
+
+    const actorBatchCall = fetchMock.mock.calls.find((call) => {
+      const body = call[1]?.body
+      if (!body) {
+        return false
+      }
+
+      const query = JSON.parse(body.toString()).query as string
+      return query.includes('GetFriendlyBuffBandsByActor')
+    })
+    expect(actorBatchCall).toBeDefined()
+    const actorBatchVariables = JSON.parse(actorBatchCall![1]!.body!.toString())
+      .variables as {
+      fightIDs: number[]
+    }
+    expect(actorBatchVariables.fightIDs).toEqual([3, 4])
+  })
+
+  it('reuses report-scoped band cache across different fights', async () => {
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString()
+
+        if (url.includes('warcraftlogs.com/oauth/token')) {
+          return new Response(
+            JSON.stringify({
+              access_token: 'client-token',
+              expires_in: 3600,
+              token_type: 'Bearer',
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          )
+        }
+
+        if (url.includes('warcraftlogs.com/api/v2/client')) {
+          const body = init?.body ? JSON.parse(init.body.toString()) : {}
+          const query = body.query as string
+
+          if (query.includes('GetFriendlyBuffBandsByActor')) {
+            return new Response(
+              JSON.stringify({
+                data: {
+                  reportData: {
+                    report: {
+                      friendly_1: {
+                        entries: [
+                          {
+                            bands: [{ startTime: 100, endTime: 2000 }],
+                            abilityGameID: 1038,
+                          },
+                          {
+                            bands: [{ startTime: 2050, endTime: 4000 }],
+                            abilityGameID: 25895,
+                          },
+                        ],
+                      },
+                    },
+                  },
+                },
+              }),
+              { status: 200, headers: { 'Content-Type': 'application/json' } },
+            )
+          }
+        }
+
+        return new Response(null, { status: 404 })
+      },
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const client = new WCLClient(createMockBindings(), 'wcl:12345')
+    const friendlyIds = new Set([1])
+    const queryOptions = {
+      queryFightIds: [3, 4],
+      queryFriendlyActorIds: new Set([1]),
+    }
+
+    const first = await client.getFriendlyBuffAurasAtFightStart(
+      'BUFFCACHE1',
+      3,
+      'public',
+      1000,
+      friendlyIds,
+      queryOptions,
+    )
+    const second = await client.getFriendlyBuffAurasAtFightStart(
+      'BUFFCACHE1',
+      4,
+      'public',
+      2500,
+      friendlyIds,
+      queryOptions,
+    )
+
+    expect(first.get(1)).toEqual([1038])
+    expect(second.get(1)).toEqual([25895])
+
+    const tableCalls = fetchMock.mock.calls.filter((call) => {
+      const body = call[1]?.body
+      if (!body) {
+        return false
+      }
+
+      const query = JSON.parse(body.toString()).query as string
+      return query.includes('GetFriendlyBuffBandsByActor')
+    })
+    expect(tableCalls).toHaveLength(1)
+  })
+})
+
 describe('WCLClient.getRecentReports', () => {
   beforeEach(() => {
     vi.useFakeTimers()

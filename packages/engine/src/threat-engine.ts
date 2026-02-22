@@ -118,6 +118,8 @@ function prepareThreatConfig(config: ThreatConfig): PreparedThreatConfig {
 export interface ProcessEventsInput {
   /** Raw WCL events from the API */
   rawEvents: WCLEvent[]
+  /** Optional pre-seeded aura IDs keyed by friendly actor ID. */
+  initialAurasByActor?: Map<number, readonly number[]>
   /** Map of actor IDs to actor metadata */
   actorMap: Map<number, Actor>
   /** Friendly actor IDs in the current fight (players + pets) */
@@ -156,6 +158,7 @@ type FriendlyResolvedEvent = WCLEvent & {
 export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
   const {
     rawEvents,
+    initialAurasByActor,
     actorMap,
     friendlyActorIds,
     abilitySchoolMap,
@@ -165,6 +168,7 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
   } = input
 
   const fightState = new FightState(actorMap, config, enemies)
+  seedInitialAuras(fightState, initialAurasByActor)
   const interceptorTracker = new InterceptorTracker()
   const stateSpellSets = buildStateSpellSets(config)
   const augmentedEvents: AugmentedEvent[] = []
@@ -329,6 +333,21 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
   return {
     augmentedEvents,
     eventCounts,
+  }
+}
+
+function seedInitialAuras(
+  fightState: FightState,
+  initialAurasByActor: Map<number, readonly number[]> | undefined,
+): void {
+  if (!initialAurasByActor || initialAurasByActor.size === 0) {
+    return
+  }
+
+  for (const [actorId, auraIds] of initialAurasByActor.entries()) {
+    for (const auraId of new Set(auraIds)) {
+      fightState.setAura(actorId, auraId)
+    }
   }
 }
 
