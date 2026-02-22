@@ -2,8 +2,8 @@
  * Cache Service
  *
  * Abstraction over Cloudflare KV for caching.
- * Uses no-op cache for development (to allow immediate code changes).
- * Uses in-memory cache for test environments.
+ * Uses Cloudflare KV in production/staging and local wrangler dev (KV emulation).
+ * Uses in-memory cache for tests and as a dev fallback when KV bindings are absent.
  */
 import type { Bindings } from '../types/bindings'
 
@@ -20,6 +20,19 @@ const textEncoder = new TextEncoder()
 const textDecoder = new TextDecoder()
 const gzipValuePrefix = new Uint8Array([0x57, 0x54, 0x4b, 0x56, 0x01]) // WTKV + v1
 const compressionThresholdBytes = 256 * 1024
+
+function isKVNamespace(value: unknown): value is KVNamespace {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const candidate = value as Partial<KVNamespace>
+  return (
+    typeof candidate.get === 'function' &&
+    typeof candidate.put === 'function' &&
+    typeof candidate.delete === 'function'
+  )
+}
 
 /** Normalize report visibility; missing/invalid values are treated as private. */
 export function normalizeVisibility(visibility: unknown): CacheVisibility {
@@ -170,7 +183,7 @@ export function createNoOpCache(): CacheService {
   }
 }
 
-// Singleton memory cache for tests
+// Singleton memory cache for tests and development fallback
 let memoryCache: CacheService | null = null
 
 /**
@@ -180,23 +193,31 @@ export function createCache(
   env: Bindings,
   namespace: 'wcl' | 'augmented',
 ): CacheService {
-  // Use no-op cache for augmented data in development for immediate code change testing
-  if (env.ENVIRONMENT === 'development' && namespace === 'augmented') {
-    console.warn('[Cache] Using No-Op cache for augmented data')
-    return createNoOpCache()
+  // Tests always use in-memory cache to keep fixtures self-contained.
+  if (env.ENVIRONMENT === 'test') {
+    if (!memoryCache) {
+      memoryCache = createMemoryCache()
+    }
+    return memoryCache
   }
 
-  // Use memory cache for:
-  // 1. Tests (all namespaces)
-  // 2. Development (WCL data only - to avoid re-fetching static data)
-  if (env.ENVIRONMENT === 'test' || env.ENVIRONMENT === 'development') {
+  if (env.ENVIRONMENT === 'development') {
+    const kv = namespace === 'wcl' ? env.WCL_CACHE : env.AUGMENTED_CACHE
+    if (isKVNamespace(kv)) {
+      console.warn(
+        `[Cache] Using KV cache for ${namespace} data in development`,
+      )
+      return createKVCache(kv)
+    }
+
+    // Fallback for local setups without KV binding.
     if (!memoryCache) {
       console.warn('[Cache] Initializing Memory cache')
       memoryCache = createMemoryCache()
     }
-    if (env.ENVIRONMENT === 'development') {
-      console.warn(`[Cache] Using Memory cache for ${namespace} data`)
-    }
+    console.warn(
+      `[Cache] ${namespace.toUpperCase()}_CACHE binding missing; using Memory cache for ${namespace} data`,
+    )
     return memoryCache
   }
 

@@ -42,4 +42,6 @@ vars = { ENVIRONMENT = "staging", WCL_OAUTH_REDIRECT_URI = "https://staging-wow-
 [env.development]
 name = "wow-threat-api-dev"
 vars = { ENVIRONMENT = "development", WCL_OAUTH_REDIRECT_URI = "http://localhost:8787/auth/wcl/callback", FIREBASE_PROJECT_ID = "wow-threat", FIRESTORE_PROJECT_ID = "wow-threat", ALLOWED_ORIGINS = "http://localhost:5173,http://localhost:5174" }
-# KV bindings are optional in development - memory cache used instead
+# Development behavior:
+# - WCL and augmented caches prefer KV (durable across worker reloads)
+# - Memory fallback is used only if a KV binding is unavailable

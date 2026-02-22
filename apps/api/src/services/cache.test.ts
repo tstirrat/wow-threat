@@ -168,17 +168,53 @@ describe('createCache', () => {
     expect(cache.type).toBe('memory')
   })
 
-  it('returns no-op cache for augmented data in development', async () => {
-    const env = { ENVIRONMENT: 'development' } as Bindings
+  it('returns kv cache for augmented data in development when binding is present', async () => {
+    const env = {
+      ENVIRONMENT: 'development',
+      AUGMENTED_CACHE: createMockKV(),
+    } as Bindings
     const cache = createCache(env, 'augmented')
 
+    expect(cache.type).toBe('kv')
+
     await cache.set('test', 'value')
-    expect(await cache.get('test')).toBeNull()
+    expect(await cache.get('test')).toBe('value')
   })
 
-  it('returns memory cache for wcl data in development', async () => {
-    const env = { ENVIRONMENT: 'development' } as Bindings
+  it('falls back to memory cache for augmented data in development without kv binding', async () => {
+    const env = {
+      ENVIRONMENT: 'development',
+      AUGMENTED_CACHE: undefined,
+    } as unknown as Bindings
+    const cache = createCache(env, 'augmented')
+
+    expect(cache.type).toBe('memory')
+
+    await cache.set('test', 'value')
+    expect(await cache.get('test')).toBe('value')
+  })
+
+  it('returns kv cache for wcl data in development when binding is present', async () => {
+    const env = {
+      ENVIRONMENT: 'development',
+      WCL_CACHE: createMockKV(),
+    } as Bindings
     const cache = createCache(env, 'wcl')
+
+    expect(cache.type).toBe('kv')
+
+    await cache.set('test', 'value')
+    expect(await cache.get('test')).toBe('value')
+  })
+
+  it('falls back to memory cache for wcl data in development without kv binding', async () => {
+    const env = {
+      ENVIRONMENT: 'development',
+      WCL_CACHE: undefined,
+    } as unknown as Bindings
+    const cache = createCache(env, 'wcl')
+
+    expect(cache.type).toBe('memory')
 
     await cache.set('test', 'value')
     expect(await cache.get('test')).toBe('value')
