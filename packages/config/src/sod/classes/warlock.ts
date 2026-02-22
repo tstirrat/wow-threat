@@ -7,6 +7,7 @@ import {
   Spells as EraSpells,
   warlockConfig as eraWarlockConfig,
 } from '../../era/classes/warlock'
+import { tauntTarget } from '../../shared/formulas'
 
 export const Spells = {
   ...EraSpells,
@@ -97,6 +98,11 @@ export const warlockConfig: ClassThreatConfig = {
           ? Mods.MasterDemonologist * 5
           : -Mods.MasterDemonologist * 5,
     }),
+  },
+
+  abilities: {
+    ...eraWarlockConfig.abilities,
+    [Spells.Menace]: tauntTarget({ eventTypes: ['cast'] }),
   },
 
   fixateBuffs: new Set([

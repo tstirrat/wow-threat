@@ -7,7 +7,7 @@ import type { GearItem } from '@wow-threat/wcl-types'
 import { priestConfig as eraPriestConfig } from '../../era/classes/priest'
 
 export const Buffs = {
-  SE_DPS_4pc: 1226591,
+  SE_DPS_4pc: 1226591, // https://www.wowhead.com/classic/spell=1226591/s03-item-scarlet-enclave-priest-shadow-4p-bonus
 } as const
 
 const SetIds = {
