@@ -19,9 +19,9 @@ import { inferTalent } from '../../shared/talents'
 
 export const Spells = {
   ...EraSpells,
-  Soulshatter: 29858,
-  DestructiveReachRank1: 910201,
-  DestructiveReachRank2: 910202,
+  Soulshatter: 29858, // https://www.wowhead.com/tbc/spell=29858/
+  DestructiveReachRank1: 910201, // https://www.wowhead.com/tbc/spell=910201/
+  DestructiveReachRank2: 910202, // https://www.wowhead.com/tbc/spell=910202/
 } as const
 
 const Mods = {

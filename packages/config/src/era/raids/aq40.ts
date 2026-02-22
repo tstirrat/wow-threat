@@ -6,8 +6,8 @@
 import type { SpellId, ThreatContext, ThreatModifier } from '@wow-threat/shared'
 
 export const Spells = {
-  YaujFear: 26580,
-  FetishOfTheSandReaver: 26400,
+  YaujFear: 26580, // https://www.wowhead.com/classic/spell=26580/
+  FetishOfTheSandReaver: 26400, // https://www.wowhead.com/classic/spell=26400/
 }
 
 /**

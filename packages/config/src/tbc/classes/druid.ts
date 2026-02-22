@@ -21,20 +21,20 @@ import {
 
 export const Spells = {
   ...EraSpells,
-  MaulR8: 26996,
-  SwipeR6: 26997,
-  DemoRoarR6: 26998,
-  FaerieFireFeralR5: 27011,
-  FaerieFireR5: 26993,
-  CowerR4: 31709,
-  CowerR5: 27004,
-  Lacerate: 33745,
-  MangleBearR1: 33878,
-  MangleBearR2: 33986,
-  MangleBearR3: 33987,
-  PrimalFury: 16959,
-  ImprovedLeaderOfThePack: 34299,
-  T6_2pcBuff: 38447,
+  MaulR8: 26996, // https://www.wowhead.com/tbc/spell=26996/
+  SwipeR6: 26997, // https://www.wowhead.com/tbc/spell=26997/
+  DemoRoarR6: 26998, // https://www.wowhead.com/tbc/spell=26998/
+  FaerieFireFeralR5: 27011, // https://www.wowhead.com/tbc/spell=27011/
+  FaerieFireR5: 26993, // https://www.wowhead.com/tbc/spell=26993/
+  CowerR4: 31709, // https://www.wowhead.com/tbc/spell=31709/
+  CowerR5: 27004, // https://www.wowhead.com/tbc/spell=27004/
+  Lacerate: 33745, // https://www.wowhead.com/tbc/spell=33745/
+  MangleBearR1: 33878, // https://www.wowhead.com/tbc/spell=33878/
+  MangleBearR2: 33986, // https://www.wowhead.com/tbc/spell=33986/
+  MangleBearR3: 33987, // https://www.wowhead.com/tbc/spell=33987/
+  PrimalFury: 16959, // https://www.wowhead.com/tbc/spell=16959/
+  ImprovedLeaderOfThePack: 34299, // https://www.wowhead.com/tbc/spell=34299/
+  T6_2pcBuff: 38447, // https://www.wowhead.com/tbc/spell=38447/
 } as const
 
 const SetIds = {

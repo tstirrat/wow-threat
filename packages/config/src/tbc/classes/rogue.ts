@@ -11,7 +11,7 @@ import { modifyThreat } from '../../shared/formulas'
 
 export const Spells = {
   ...EraSpells,
-  VanishR3: 26889,
+  VanishR3: 26889, // https://www.wowhead.com/tbc/spell=26889/
 } as const
 
 export const rogueConfig: ClassThreatConfig = {

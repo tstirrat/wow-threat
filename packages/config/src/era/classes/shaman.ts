@@ -16,17 +16,17 @@ import { inferTalent } from '../../shared/talents'
 // ============================================================================
 
 export const Spells = {
-  TranquilAirTotem: 25909,
-  HealingGraceRank1: 29187,
-  HealingGraceRank2: 29189,
-  HealingGraceRank3: 29191,
-  EarthShockR1: 8042,
-  EarthShockR2: 8044,
-  EarthShockR3: 8045,
-  EarthShockR4: 8046,
-  EarthShockR5: 10412,
-  EarthShockR6: 10413,
-  EarthShockR7: 10414,
+  TranquilAirTotem: 25909, // https://www.wowhead.com/classic/spell=25909/
+  HealingGraceRank1: 29187, // https://www.wowhead.com/classic/spell=29187/
+  HealingGraceRank2: 29189, // https://www.wowhead.com/classic/spell=29189/
+  HealingGraceRank3: 29191, // https://www.wowhead.com/classic/spell=29191/
+  EarthShockR1: 8042, // https://www.wowhead.com/classic/spell=8042/
+  EarthShockR2: 8044, // https://www.wowhead.com/classic/spell=8044/
+  EarthShockR3: 8045, // https://www.wowhead.com/classic/spell=8045/
+  EarthShockR4: 8046, // https://www.wowhead.com/classic/spell=8046/
+  EarthShockR5: 10412, // https://www.wowhead.com/classic/spell=10412/
+  EarthShockR6: 10413, // https://www.wowhead.com/classic/spell=10413/
+  EarthShockR7: 10414, // https://www.wowhead.com/classic/spell=10414/
 } as const
 
 // ============================================================================

@@ -28,35 +28,35 @@ import { inferTalent } from '../../shared/talents'
 export const Spells = {
   ...EraSpells,
 
-  HeroicStrikeR10: 29707,
-  HeroicStrikeR11: 30324,
+  HeroicStrikeR10: 29707, // https://www.wowhead.com/tbc/spell=29707/
+  HeroicStrikeR11: 30324, // https://www.wowhead.com/tbc/spell=30324/
 
-  ShieldSlamR5: 25258,
-  ShieldSlamR6: 30356,
+  ShieldSlamR5: 25258, // https://www.wowhead.com/tbc/spell=25258/
+  ShieldSlamR6: 30356, // https://www.wowhead.com/tbc/spell=30356/
 
-  ShieldBashR4: 29704,
+  ShieldBashR4: 29704, // https://www.wowhead.com/tbc/spell=29704/
 
-  RevengeR7: 25269,
-  RevengeR8: 30357,
+  RevengeR7: 25269, // https://www.wowhead.com/tbc/spell=25269/
+  RevengeR8: 30357, // https://www.wowhead.com/tbc/spell=30357/
 
-  DevastateR1: 20243,
-  DevastateR2: 30016,
-  DevastateR3: 30022,
+  DevastateR1: 20243, // https://www.wowhead.com/tbc/spell=20243/
+  DevastateR2: 30016, // https://www.wowhead.com/tbc/spell=30016/
+  DevastateR3: 30022, // https://www.wowhead.com/tbc/spell=30022/
 
-  BattleShoutR8: 2048,
-  CommandingShout: 469,
-  SpellReflect: 23920,
-  SunderArmorR6: 25225,
+  BattleShoutR8: 2048, // https://www.wowhead.com/tbc/spell=2048/
+  CommandingShout: 469, // https://www.wowhead.com/tbc/spell=469/
+  SpellReflect: 23920, // https://www.wowhead.com/tbc/spell=23920/
+  SunderArmorR6: 25225, // https://www.wowhead.com/tbc/spell=25225/
 
-  ImprovedBerserkerStanceRank1: 910001,
-  ImprovedBerserkerStanceRank2: 910002,
-  ImprovedBerserkerStanceRank3: 910003,
-  ImprovedBerserkerStanceRank4: 910004,
-  ImprovedBerserkerStanceRank5: 910005,
+  ImprovedBerserkerStanceRank1: 910001, // https://www.wowhead.com/tbc/spell=910001/
+  ImprovedBerserkerStanceRank2: 910002, // https://www.wowhead.com/tbc/spell=910002/
+  ImprovedBerserkerStanceRank3: 910003, // https://www.wowhead.com/tbc/spell=910003/
+  ImprovedBerserkerStanceRank4: 910004, // https://www.wowhead.com/tbc/spell=910004/
+  ImprovedBerserkerStanceRank5: 910005, // https://www.wowhead.com/tbc/spell=910005/
 
-  TacticalMasteryRank1: 910011,
-  TacticalMasteryRank2: 910012,
-  TacticalMasteryRank3: 910013,
+  TacticalMasteryRank1: 910011, // https://www.wowhead.com/tbc/spell=910011/
+  TacticalMasteryRank2: 910012, // https://www.wowhead.com/tbc/spell=910012/
+  TacticalMasteryRank3: 910013, // https://www.wowhead.com/tbc/spell=910013/
 } as const
 
 export const SetIds = {

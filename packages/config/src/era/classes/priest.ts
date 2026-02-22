@@ -18,42 +18,42 @@ import { inferTalent } from '../../shared/talents'
 
 export const Spells = {
   // Mind Blast (extra threat per rank)
-  MindBlastR1: 8092,
-  MindBlastR2: 8102,
-  MindBlastR3: 8103,
-  MindBlastR4: 8104,
-  MindBlastR5: 8105,
-  MindBlastR6: 8106,
-  MindBlastR7: 10945,
-  MindBlastR8: 10946,
-  MindBlastR9: 10947,
+  MindBlastR1: 8092, // https://www.wowhead.com/classic/spell=8092/
+  MindBlastR2: 8102, // https://www.wowhead.com/classic/spell=8102/
+  MindBlastR3: 8103, // https://www.wowhead.com/classic/spell=8103/
+  MindBlastR4: 8104, // https://www.wowhead.com/classic/spell=8104/
+  MindBlastR5: 8105, // https://www.wowhead.com/classic/spell=8105/
+  MindBlastR6: 8106, // https://www.wowhead.com/classic/spell=8106/
+  MindBlastR7: 10945, // https://www.wowhead.com/classic/spell=10945/
+  MindBlastR8: 10946, // https://www.wowhead.com/classic/spell=10946/
+  MindBlastR9: 10947, // https://www.wowhead.com/classic/spell=10947/
 
   // Holy Nova - zero threat
-  HolyNovaDmgR1: 15237,
-  HolyNovaDmgR2: 15430,
-  HolyNovaDmgR3: 15431,
-  HolyNovaDmgR4: 27799,
-  HolyNovaDmgR5: 27800,
-  HolyNovaDmgR6: 27801,
-  HolyNovaHealR1: 23455,
-  HolyNovaHealR2: 23458,
-  HolyNovaHealR3: 23459,
-  HolyNovaHealR4: 27803,
-  HolyNovaHealR5: 27804,
-  HolyNovaHealR6: 27805,
+  HolyNovaDmgR1: 15237, // https://www.wowhead.com/classic/spell=15237/
+  HolyNovaDmgR2: 15430, // https://www.wowhead.com/classic/spell=15430/
+  HolyNovaDmgR3: 15431, // https://www.wowhead.com/classic/spell=15431/
+  HolyNovaDmgR4: 27799, // https://www.wowhead.com/classic/spell=27799/
+  HolyNovaDmgR5: 27800, // https://www.wowhead.com/classic/spell=27800/
+  HolyNovaDmgR6: 27801, // https://www.wowhead.com/classic/spell=27801/
+  HolyNovaHealR1: 23455, // https://www.wowhead.com/classic/spell=23455/
+  HolyNovaHealR2: 23458, // https://www.wowhead.com/classic/spell=23458/
+  HolyNovaHealR3: 23459, // https://www.wowhead.com/classic/spell=23459/
+  HolyNovaHealR4: 27803, // https://www.wowhead.com/classic/spell=27803/
+  HolyNovaHealR5: 27804, // https://www.wowhead.com/classic/spell=27804/
+  HolyNovaHealR6: 27805, // https://www.wowhead.com/classic/spell=27805/
 
   // Weakened Soul - zero threat
-  WeakenedSoul: 6788,
+  WeakenedSoul: 6788, // https://www.wowhead.com/classic/spell=6788/
 
   // Talents (synthetic aura IDs inferred from combatantinfo)
-  SilentResolveRank1: 14523,
-  SilentResolveRank2: 14784,
-  SilentResolveRank3: 14785,
-  SilentResolveRank4: 14786,
-  SilentResolveRank5: 14787,
-  ShadowAffinityRank1: 15318,
-  ShadowAffinityRank2: 15319,
-  ShadowAffinityRank3: 15320,
+  SilentResolveRank1: 14523, // https://www.wowhead.com/classic/spell=14523/
+  SilentResolveRank2: 14784, // https://www.wowhead.com/classic/spell=14784/
+  SilentResolveRank3: 14785, // https://www.wowhead.com/classic/spell=14785/
+  SilentResolveRank4: 14786, // https://www.wowhead.com/classic/spell=14786/
+  SilentResolveRank5: 14787, // https://www.wowhead.com/classic/spell=14787/
+  ShadowAffinityRank1: 15318, // https://www.wowhead.com/classic/spell=15318/
+  ShadowAffinityRank2: 15319, // https://www.wowhead.com/classic/spell=15319/
+  ShadowAffinityRank3: 15320, // https://www.wowhead.com/classic/spell=15320/
 } as const
 
 const Mods = {

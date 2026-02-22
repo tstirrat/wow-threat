@@ -18,7 +18,7 @@ import {
 
 export const Spells = {
   // Synthetic aura inferred from summon/pet spell evidence
-  ImpActive: 910210,
+  ImpActive: 910210, // https://www.wowhead.com/classic/spell=910210/
 
   // Pet summon/ability signals
   SummonImp: 688, // https://www.wowhead.com/classic/spell=688/summon-imp
@@ -32,72 +32,72 @@ export const Spells = {
   FireboltR8: 27267, // https://www.wowhead.com/classic/spell=27267/firebolt
 
   // Searing Pain - 2x threat
-  SearingPainR1: 5676,
-  SearingPainR2: 17919,
-  SearingPainR3: 17920,
-  SearingPainR4: 17921,
-  SearingPainR5: 17922,
-  SearingPainR6: 17923,
+  SearingPainR1: 5676, // https://www.wowhead.com/classic/spell=5676/
+  SearingPainR2: 17919, // https://www.wowhead.com/classic/spell=17919/
+  SearingPainR3: 17920, // https://www.wowhead.com/classic/spell=17920/
+  SearingPainR4: 17921, // https://www.wowhead.com/classic/spell=17921/
+  SearingPainR5: 17922, // https://www.wowhead.com/classic/spell=17922/
+  SearingPainR6: 17923, // https://www.wowhead.com/classic/spell=17923/
 
   // Curses
-  CurseOfRecklessnessR1: 704,
-  CurseOfRecklessnessR2: 7658,
-  CurseOfRecklessnessR3: 7659,
-  CurseOfRecklessnessR4: 11717,
-  CurseOfTonguesR1: 1714,
-  CurseOfTonguesR2: 11719,
-  CurseOfWeaknessR1: 702,
-  CurseOfWeaknessR2: 1108,
-  CurseOfWeaknessR3: 6205,
-  CurseOfWeaknessR4: 7646,
-  CurseOfWeaknessR5: 11707,
-  CurseOfWeaknessR6: 11708,
-  CurseOfTheElementsR1: 1490,
-  CurseOfTheElementsR2: 11721,
-  CurseOfTheElementsR3: 11722,
-  CurseOfShadowR1: 17862,
-  CurseOfShadowR2: 17937,
-  CurseOfExhaustion: 18223,
-  CurseOfDoom: 603,
-  AmCurse: 18288,
+  CurseOfRecklessnessR1: 704, // https://www.wowhead.com/classic/spell=704/
+  CurseOfRecklessnessR2: 7658, // https://www.wowhead.com/classic/spell=7658/
+  CurseOfRecklessnessR3: 7659, // https://www.wowhead.com/classic/spell=7659/
+  CurseOfRecklessnessR4: 11717, // https://www.wowhead.com/classic/spell=11717/
+  CurseOfTonguesR1: 1714, // https://www.wowhead.com/classic/spell=1714/
+  CurseOfTonguesR2: 11719, // https://www.wowhead.com/classic/spell=11719/
+  CurseOfWeaknessR1: 702, // https://www.wowhead.com/classic/spell=702/
+  CurseOfWeaknessR2: 1108, // https://www.wowhead.com/classic/spell=1108/
+  CurseOfWeaknessR3: 6205, // https://www.wowhead.com/classic/spell=6205/
+  CurseOfWeaknessR4: 7646, // https://www.wowhead.com/classic/spell=7646/
+  CurseOfWeaknessR5: 11707, // https://www.wowhead.com/classic/spell=11707/
+  CurseOfWeaknessR6: 11708, // https://www.wowhead.com/classic/spell=11708/
+  CurseOfTheElementsR1: 1490, // https://www.wowhead.com/classic/spell=1490/
+  CurseOfTheElementsR2: 11721, // https://www.wowhead.com/classic/spell=11721/
+  CurseOfTheElementsR3: 11722, // https://www.wowhead.com/classic/spell=11722/
+  CurseOfShadowR1: 17862, // https://www.wowhead.com/classic/spell=17862/
+  CurseOfShadowR2: 17937, // https://www.wowhead.com/classic/spell=17937/
+  CurseOfExhaustion: 18223, // https://www.wowhead.com/classic/spell=18223/
+  CurseOfDoom: 603, // https://www.wowhead.com/classic/spell=603/
+  AmCurse: 18288, // https://www.wowhead.com/classic/spell=18288/
 
   // Fear
-  FearR1: 5782,
-  FearR2: 6213,
-  FearR3: 6215,
-  HowlOfTerrorR1: 5484,
-  HowlOfTerrorR2: 17928,
+  FearR1: 5782, // https://www.wowhead.com/classic/spell=5782/
+  FearR2: 6213, // https://www.wowhead.com/classic/spell=6213/
+  FearR3: 6215, // https://www.wowhead.com/classic/spell=6215/
+  HowlOfTerrorR1: 5484, // https://www.wowhead.com/classic/spell=5484/
+  HowlOfTerrorR2: 17928, // https://www.wowhead.com/classic/spell=17928/
 
   // Banish
-  BanishR1: 710,
-  BanishR2: 18647,
+  BanishR1: 710, // https://www.wowhead.com/classic/spell=710/
+  BanishR2: 18647, // https://www.wowhead.com/classic/spell=18647/
 
   // Siphon Life
-  SiphonLifeR1: 18265,
-  SiphonLifeR2: 18879,
-  SiphonLifeR3: 18880,
-  SiphonLifeR4: 18881,
+  SiphonLifeR1: 18265, // https://www.wowhead.com/classic/spell=18265/
+  SiphonLifeR2: 18879, // https://www.wowhead.com/classic/spell=18879/
+  SiphonLifeR3: 18880, // https://www.wowhead.com/classic/spell=18880/
+  SiphonLifeR4: 18881, // https://www.wowhead.com/classic/spell=18881/
 
   // Life Tap - zero threat
-  LifeTapR1: 1454,
-  LifeTapR2: 1455,
-  LifeTapR3: 1456,
-  LifeTapR4: 11687,
-  LifeTapR5: 11688,
-  LifeTapR6: 11689,
-  LifeTapScript: 31818,
+  LifeTapR1: 1454, // https://www.wowhead.com/classic/spell=1454/
+  LifeTapR2: 1455, // https://www.wowhead.com/classic/spell=1455/
+  LifeTapR3: 1456, // https://www.wowhead.com/classic/spell=1456/
+  LifeTapR4: 11687, // https://www.wowhead.com/classic/spell=11687/
+  LifeTapR5: 11688, // https://www.wowhead.com/classic/spell=11688/
+  LifeTapR6: 11689, // https://www.wowhead.com/classic/spell=11689/
+  LifeTapScript: 31818, // https://www.wowhead.com/classic/spell=31818/
 
   // Drain Mana - zero threat
-  DrainManaR1: 5138,
-  DrainManaR2: 6226,
-  DrainManaR3: 11703,
-  DrainManaR4: 11704,
+  DrainManaR1: 5138, // https://www.wowhead.com/classic/spell=5138/
+  DrainManaR2: 6226, // https://www.wowhead.com/classic/spell=6226/
+  DrainManaR3: 11703, // https://www.wowhead.com/classic/spell=11703/
+  DrainManaR4: 11704, // https://www.wowhead.com/classic/spell=11704/
 
-  MasterDemonologistR1: 23759,
-  MasterDemonologistR2: 23826,
-  MasterDemonologistR3: 23827,
-  MasterDemonologistR4: 23828,
-  MasterDemonologistR5: 23829,
+  MasterDemonologistR1: 23759, // https://www.wowhead.com/classic/spell=23759/
+  MasterDemonologistR2: 23826, // https://www.wowhead.com/classic/spell=23826/
+  MasterDemonologistR3: 23827, // https://www.wowhead.com/classic/spell=23827/
+  MasterDemonologistR4: 23828, // https://www.wowhead.com/classic/spell=23828/
+  MasterDemonologistR5: 23829, // https://www.wowhead.com/classic/spell=23829/
 } as const
 
 // ============================================================================

@@ -17,24 +17,24 @@ import { inferTalent } from '../../shared/talents'
 // ============================================================================
 
 export const Spells = {
-  IceBlock: 11958,
+  IceBlock: 11958, // https://www.wowhead.com/classic/spell=11958/
 
   // Talents (synthetic aura IDs inferred from combatantinfo)
-  ArcaneSubtletyRank1: 11210,
-  ArcaneSubtletyRank2: 12592,
-  BurningSoulRank1: 11083,
-  BurningSoulRank2: 12351,
-  FrostChannelingRank1: 11160,
-  FrostChannelingRank2: 12518,
-  FrostChannelingRank3: 12519,
+  ArcaneSubtletyRank1: 11210, // https://www.wowhead.com/classic/spell=11210/
+  ArcaneSubtletyRank2: 12592, // https://www.wowhead.com/classic/spell=12592/
+  BurningSoulRank1: 11083, // https://www.wowhead.com/classic/spell=11083/
+  BurningSoulRank2: 12351, // https://www.wowhead.com/classic/spell=12351/
+  FrostChannelingRank1: 11160, // https://www.wowhead.com/classic/spell=11160/
+  FrostChannelingRank2: 12518, // https://www.wowhead.com/classic/spell=12518/
+  FrostChannelingRank3: 12519, // https://www.wowhead.com/classic/spell=12519/
 
   // Polymorph (various forms) - causes aggro loss
-  PolymorphR1: 118,
-  PolymorphR2: 12824,
-  PolymorphR3: 12825,
-  PolymorphPig: 28272,
-  PolymorphTurtle: 28271,
-  PolymorphR4: 12826,
+  PolymorphR1: 118, // https://www.wowhead.com/classic/spell=118/
+  PolymorphR2: 12824, // https://www.wowhead.com/classic/spell=12824/
+  PolymorphR3: 12825, // https://www.wowhead.com/classic/spell=12825/
+  PolymorphPig: 28272, // https://www.wowhead.com/classic/spell=28272/
+  PolymorphTurtle: 28271, // https://www.wowhead.com/classic/spell=28271/
+  PolymorphR4: 12826, // https://www.wowhead.com/classic/spell=12826/
 } as const
 
 // ============================================================================

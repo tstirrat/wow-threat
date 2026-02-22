@@ -11,19 +11,19 @@ import { tauntTarget, threat } from '../../shared/formulas'
 
 export const Spells = {
   ...EraSpells,
-  SinisterStrikeR7: 11293,
-  SinisterStrikeR8: 11294,
-  PoisonedKnife: 425012,
-  CrimsonTempest: 412096,
-  Blunderbuss: 436564,
-  FanOfKnives: 409240,
-  Tease: 410412,
-  UnfairAdvantage: 432274,
-  MainGauche: 424919,
-  JustAFleshWound: 400014,
-  MainGaucheBuff: 462752,
-  BladeDance: 400012,
-  T1_Tank_2pc: 457349,
+  SinisterStrikeR7: 11293, // https://www.wowhead.com/classic/spell=11293/
+  SinisterStrikeR8: 11294, // https://www.wowhead.com/classic/spell=11294/
+  PoisonedKnife: 425012, // https://www.wowhead.com/classic/spell=425012/
+  CrimsonTempest: 412096, // https://www.wowhead.com/classic/spell=412096/
+  Blunderbuss: 436564, // https://www.wowhead.com/classic/spell=436564/
+  FanOfKnives: 409240, // https://www.wowhead.com/classic/spell=409240/
+  Tease: 410412, // https://www.wowhead.com/classic/spell=410412/
+  UnfairAdvantage: 432274, // https://www.wowhead.com/classic/spell=432274/
+  MainGauche: 424919, // https://www.wowhead.com/classic/spell=424919/
+  JustAFleshWound: 400014, // https://www.wowhead.com/classic/spell=400014/
+  MainGaucheBuff: 462752, // https://www.wowhead.com/classic/spell=462752/
+  BladeDance: 400012, // https://www.wowhead.com/classic/spell=400012/
+  T1_Tank_2pc: 457349, // https://www.wowhead.com/classic/spell=457349/
 } as const
 
 const Mods = {

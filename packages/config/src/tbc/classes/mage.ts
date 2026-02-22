@@ -15,7 +15,7 @@ import { modifyThreat } from '../../shared/formulas'
 
 export const Spells = {
   ...EraSpells,
-  Invisibility: 66,
+  Invisibility: 66, // https://www.wowhead.com/tbc/spell=66/
 } as const
 
 export const Mods = {

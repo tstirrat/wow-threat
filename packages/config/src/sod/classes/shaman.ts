@@ -12,13 +12,13 @@ import { tauntTarget, threat } from '../../shared/formulas'
 
 export const Spells = {
   ...EraSpells,
-  WayOfEarth: 408531,
-  SpiritOfTheAlpha: 408696,
-  LoyalBeta: 443320,
-  TAQ_Tank_4pc: 1213937,
-  ActivateWayOfEarth: 461635,
-  EarthShockTaunt: 408690,
-  MoltenBlast: 425339,
+  WayOfEarth: 408531, // https://www.wowhead.com/classic/spell=408531/
+  SpiritOfTheAlpha: 408696, // https://www.wowhead.com/classic/spell=408696/
+  LoyalBeta: 443320, // https://www.wowhead.com/classic/spell=443320/
+  TAQ_Tank_4pc: 1213937, // https://www.wowhead.com/classic/spell=1213937/
+  ActivateWayOfEarth: 461635, // https://www.wowhead.com/classic/spell=461635/
+  EarthShockTaunt: 408690, // https://www.wowhead.com/classic/spell=408690/
+  MoltenBlast: 425339, // https://www.wowhead.com/classic/spell=425339/
 } as const
 
 const SetIds = {

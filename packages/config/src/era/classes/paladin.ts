@@ -19,42 +19,42 @@ import { inferTalent } from '../../shared/talents'
 
 export const Spells = {
   // Core abilities
-  RighteousFury: 25780,
-  SealOfRighteousness: 25742,
-  JudgementOfLight: 20271,
-  JudgementOfWisdom: 20186,
-  JudgementOfRighteousness: 25713,
-  Consecration: 27173,
-  HolyShield: 27179,
-  AvengersShield: 27180, // TBC but included for completeness
-  Exorcism: 27138,
+  RighteousFury: 25780, // https://www.wowhead.com/classic/spell=25780/
+  SealOfRighteousness: 25742, // https://www.wowhead.com/classic/spell=25742/
+  JudgementOfLight: 20271, // https://www.wowhead.com/classic/spell=20271/
+  JudgementOfWisdom: 20186, // https://www.wowhead.com/classic/spell=20186/
+  JudgementOfRighteousness: 25713, // https://www.wowhead.com/classic/spell=25713/
+  Consecration: 27173, // https://www.wowhead.com/classic/spell=27173/
+  HolyShield: 27179, // https://www.wowhead.com/classic/spell=27179/
+  AvengersShield: 27180, // TBC but included for completeness | https://www.wowhead.com/classic/spell=27180/
+  Exorcism: 27138, // https://www.wowhead.com/classic/spell=27138/
 
   // Blessings (generate threat when cast)
-  BlessingOfKings: 20217,
-  BlessingOfSalvation: 1038,
-  BlessingOfMightR7: 25291,
-  BlessingOfWisdomR6: 25290,
-  BlessingOfSanctuaryR4: 20914,
-  BlessingOfLightR3: 19979,
-  GreaterBlessingOfKings: 25894,
-  GreaterBlessingOfMight: 25896, // 25782 ??
-  GreaterBlessingOfWisdom: 25918,
-  GreaterBlessingOfSanctuary: 25899,
-  GreaterBlessingOfLight: 25890,
-  GreaterBlessingOfSalvation: 25895,
+  BlessingOfKings: 20217, // https://www.wowhead.com/classic/spell=20217/
+  BlessingOfSalvation: 1038, // https://www.wowhead.com/classic/spell=1038/
+  BlessingOfMightR7: 25291, // https://www.wowhead.com/classic/spell=25291/
+  BlessingOfWisdomR6: 25290, // https://www.wowhead.com/classic/spell=25290/
+  BlessingOfSanctuaryR4: 20914, // https://www.wowhead.com/classic/spell=20914/
+  BlessingOfLightR3: 19979, // https://www.wowhead.com/classic/spell=19979/
+  GreaterBlessingOfKings: 25894, // https://www.wowhead.com/classic/spell=25894/
+  GreaterBlessingOfMight: 25896, // 25782 ?? | https://www.wowhead.com/classic/spell=25896/
+  GreaterBlessingOfWisdom: 25918, // https://www.wowhead.com/classic/spell=25918/
+  GreaterBlessingOfSanctuary: 25899, // https://www.wowhead.com/classic/spell=25899/
+  GreaterBlessingOfLight: 25890, // https://www.wowhead.com/classic/spell=25890/
+  GreaterBlessingOfSalvation: 25895, // https://www.wowhead.com/classic/spell=25895/
 
   // Defensive
-  Sanct4pc: 23302, // Placeholder for set bonus
+  Sanct4pc: 23302, // Placeholder for set bonus | https://www.wowhead.com/classic/spell=23302/
 
   // Talents (synthetic aura IDs inferred from combatantinfo)
-  ImprovedRighteousFuryR1: 20468,
-  ImprovedRighteousFuryR2: 20469,
-  ImprovedRighteousFuryR3: 20470,
-  VengeanceR1: 20210,
-  VengeanceR2: 20212,
-  VengeanceR3: 20213,
-  VengeanceR4: 20214,
-  VengeanceR5: 20215,
+  ImprovedRighteousFuryR1: 20468, // https://www.wowhead.com/classic/spell=20468/
+  ImprovedRighteousFuryR2: 20469, // https://www.wowhead.com/classic/spell=20469/
+  ImprovedRighteousFuryR3: 20470, // https://www.wowhead.com/classic/spell=20470/
+  VengeanceR1: 20210, // https://www.wowhead.com/classic/spell=20210/
+  VengeanceR2: 20212, // https://www.wowhead.com/classic/spell=20212/
+  VengeanceR3: 20213, // https://www.wowhead.com/classic/spell=20213/
+  VengeanceR4: 20214, // https://www.wowhead.com/classic/spell=20214/
+  VengeanceR5: 20215, // https://www.wowhead.com/classic/spell=20215/
 } as const
 
 const Mods = {

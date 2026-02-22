@@ -14,9 +14,9 @@ import { threat } from '../../shared/formulas'
 
 export const Spells = {
   ...EraSpells,
-  MindBlastR10: 25372,
-  MindBlastR11: 25375,
-  PrayerOfMending: 33110,
+  MindBlastR10: 25372, // https://www.wowhead.com/tbc/spell=25372/
+  MindBlastR11: 25375, // https://www.wowhead.com/tbc/spell=25375/
+  PrayerOfMending: 33110, // https://www.wowhead.com/tbc/spell=33110/
 } as const
 
 export const priestConfig: ClassThreatConfig = {

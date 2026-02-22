@@ -12,11 +12,11 @@ import { threat } from '../../shared/formulas'
 
 export const Spells = {
   ...EraSpells,
-  T1_Tank_6pc: 456332,
-  Starsurge: 417157,
-  Starfall: 439753,
-  LacerateInitial: 414644,
-  LacerateDot: 414647,
+  T1_Tank_6pc: 456332, // https://www.wowhead.com/classic/spell=456332/
+  Starsurge: 417157, // https://www.wowhead.com/classic/spell=417157/
+  Starfall: 439753, // https://www.wowhead.com/classic/spell=439753/
+  LacerateInitial: 414644, // https://www.wowhead.com/classic/spell=414644/
+  LacerateDot: 414647, // https://www.wowhead.com/classic/spell=414647/
 } as const
 
 const Mods = {

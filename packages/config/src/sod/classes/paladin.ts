@@ -18,9 +18,9 @@ import { tauntTarget } from '../../shared/formulas'
 
 export const Spells = {
   ...EraSpells,
-  HandOfReckoning: 407631,
-  EngraveHandOfReckoning: 410001,
-  RighteousFurySoD: 407627, // SoD override
+  HandOfReckoning: 407631, // https://www.wowhead.com/classic/spell=407631/
+  EngraveHandOfReckoning: 410001, // https://www.wowhead.com/classic/spell=410001/
+  RighteousFurySoD: 407627, // SoD override | https://www.wowhead.com/classic/spell=407627/
 } as const
 
 const Runes = {

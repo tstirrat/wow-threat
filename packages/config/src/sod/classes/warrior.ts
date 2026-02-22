@@ -12,24 +12,24 @@ import { noThreat, threat } from '../../shared/formulas'
 
 export const Spells = {
   ...EraSpells,
-  ShieldSlamR1: 23922,
-  ShieldSlamR2: 23923,
-  ShieldSlamR3: 23924,
-  ShieldSlamR4: 23925,
-  Devastate: 20243,
-  DevastateSoD: 403196,
-  ThunderClapR1: 6343,
-  ThunderClapR2: 8198,
-  ThunderClapR3: 8204,
-  ThunderClapR4: 8205,
-  ThunderClapR5: 11580,
-  ThunderClapR6: 11581,
-  GladiatorStance: 412513,
-  T1_Tank_6pc: 457651,
-  TAQ_Tank_4pc: 1214162,
-  SE_Tank_6pc: 1227245,
-  RuneOfDevastate: 403195,
-  RuneOfFuriousThunder: 403219,
+  ShieldSlamR1: 23922, // https://www.wowhead.com/classic/spell=23922/
+  ShieldSlamR2: 23923, // https://www.wowhead.com/classic/spell=23923/
+  ShieldSlamR3: 23924, // https://www.wowhead.com/classic/spell=23924/
+  ShieldSlamR4: 23925, // https://www.wowhead.com/classic/spell=23925/
+  Devastate: 20243, // https://www.wowhead.com/classic/spell=20243/
+  DevastateSoD: 403196, // https://www.wowhead.com/classic/spell=403196/
+  ThunderClapR1: 6343, // https://www.wowhead.com/classic/spell=6343/
+  ThunderClapR2: 8198, // https://www.wowhead.com/classic/spell=8198/
+  ThunderClapR3: 8204, // https://www.wowhead.com/classic/spell=8204/
+  ThunderClapR4: 8205, // https://www.wowhead.com/classic/spell=8205/
+  ThunderClapR5: 11580, // https://www.wowhead.com/classic/spell=11580/
+  ThunderClapR6: 11581, // https://www.wowhead.com/classic/spell=11581/
+  GladiatorStance: 412513, // https://www.wowhead.com/classic/spell=412513/
+  T1_Tank_6pc: 457651, // https://www.wowhead.com/classic/spell=457651/
+  TAQ_Tank_4pc: 1214162, // https://www.wowhead.com/classic/spell=1214162/
+  SE_Tank_6pc: 1227245, // https://www.wowhead.com/classic/spell=1227245/
+  RuneOfDevastate: 403195, // https://www.wowhead.com/classic/spell=403195/
+  RuneOfFuriousThunder: 403219, // https://www.wowhead.com/classic/spell=403219/
 } as const
 
 const SetIds = {

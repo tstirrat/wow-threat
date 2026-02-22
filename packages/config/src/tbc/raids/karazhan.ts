@@ -93,8 +93,8 @@ const nightbaneRainOfBones: ThreatFormula = (ctx) => {
 }
 
 const Spells = {
-  RainOfBones: 37098,
-  Disarm: 30013,
+  RainOfBones: 37098, // https://www.wowhead.com/tbc/spell=37098/
+  Disarm: 30013, // https://www.wowhead.com/tbc/spell=30013/
 } as const
 
 export const karazhanAbilities: Abilities = {

@@ -10,7 +10,7 @@ import {
 
 export const Spells = {
   ...EraSpells,
-  FrostfireBolt: 401502,
+  FrostfireBolt: 401502, // https://www.wowhead.com/classic/spell=401502/
 } as const
 
 // TODO: verify frost fire bolt is reduced by Burning Soul talent and the ice one

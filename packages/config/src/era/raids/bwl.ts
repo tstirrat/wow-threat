@@ -17,16 +17,16 @@ import { Spells as WarriorSpells } from '../classes/warrior'
 const CLASS_CALL_START_EVENT_TYPES: EventType[] = ['applydebuff']
 
 export const Spells = {
-  BroodlordKnockAway: 18670,
-  WingBuffet: 23339,
-  NefarianWarriorClassCall: 23397,
-  NefarianDruidClassCall: 23398,
-  TimeLapse1: 23310,
-  TimeLapse2: 23311,
-  TimeLapse3: 23312,
-  RazorgoreConflagrate: 23023,
-  BroodPowerGreen: 22289,
-  NefarianWildPolymorph: 23603,
+  BroodlordKnockAway: 18670, // https://www.wowhead.com/classic/spell=18670/
+  WingBuffet: 23339, // https://www.wowhead.com/classic/spell=23339/
+  NefarianWarriorClassCall: 23397, // https://www.wowhead.com/classic/spell=23397/
+  NefarianDruidClassCall: 23398, // https://www.wowhead.com/classic/spell=23398/
+  TimeLapse1: 23310, // https://www.wowhead.com/classic/spell=23310/
+  TimeLapse2: 23311, // https://www.wowhead.com/classic/spell=23311/
+  TimeLapse3: 23312, // https://www.wowhead.com/classic/spell=23312/
+  RazorgoreConflagrate: 23023, // https://www.wowhead.com/classic/spell=23023/
+  BroodPowerGreen: 22289, // https://www.wowhead.com/classic/spell=22289/
+  NefarianWildPolymorph: 23603, // https://www.wowhead.com/classic/spell=23603/
 } as const
 
 /**

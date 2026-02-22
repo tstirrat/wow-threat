@@ -27,72 +27,72 @@ import { inferTalent } from '../../shared/talents'
 
 export const Spells = {
   // Heroic Strike
-  HeroicStrikeR1: 78,
-  HeroicStrikeR2: 284,
-  HeroicStrikeR3: 285,
-  HeroicStrikeR4: 1608,
-  HeroicStrikeR5: 11564,
-  HeroicStrikeR6: 11565,
-  HeroicStrikeR7: 11566,
-  HeroicStrikeR8: 11567,
-  HeroicStrikeR9: 25286,
+  HeroicStrikeR1: 78, // https://www.wowhead.com/classic/spell=78/
+  HeroicStrikeR2: 284, // https://www.wowhead.com/classic/spell=284/
+  HeroicStrikeR3: 285, // https://www.wowhead.com/classic/spell=285/
+  HeroicStrikeR4: 1608, // https://www.wowhead.com/classic/spell=1608/
+  HeroicStrikeR5: 11564, // https://www.wowhead.com/classic/spell=11564/
+  HeroicStrikeR6: 11565, // https://www.wowhead.com/classic/spell=11565/
+  HeroicStrikeR7: 11566, // https://www.wowhead.com/classic/spell=11566/
+  HeroicStrikeR8: 11567, // https://www.wowhead.com/classic/spell=11567/
+  HeroicStrikeR9: 25286, // https://www.wowhead.com/classic/spell=25286/
 
   // Shield Slam
-  ShieldSlamR1: 23922,
-  ShieldSlamR2: 23923,
-  ShieldSlamR3: 23924,
-  ShieldSlamR4: 23925,
+  ShieldSlamR1: 23922, // https://www.wowhead.com/classic/spell=23922/
+  ShieldSlamR2: 23923, // https://www.wowhead.com/classic/spell=23923/
+  ShieldSlamR3: 23924, // https://www.wowhead.com/classic/spell=23924/
+  ShieldSlamR4: 23925, // https://www.wowhead.com/classic/spell=23925/
 
   // Shield Bash
-  ShieldBashR1: 72,
-  ShieldBashR2: 1671,
-  ShieldBashR3: 1672,
+  ShieldBashR1: 72, // https://www.wowhead.com/classic/spell=72/
+  ShieldBashR2: 1671, // https://www.wowhead.com/classic/spell=1671/
+  ShieldBashR3: 1672, // https://www.wowhead.com/classic/spell=1672/
 
   // Revenge
-  RevengeR1: 6572,
-  RevengeR2: 6574,
-  RevengeR3: 7379,
-  RevengeR4: 11600,
-  RevengeR5: 11601,
-  RevengeR6: 25288,
-  RevengeStun: 12798,
+  RevengeR1: 6572, // https://www.wowhead.com/classic/spell=6572/
+  RevengeR2: 6574, // https://www.wowhead.com/classic/spell=6574/
+  RevengeR3: 7379, // https://www.wowhead.com/classic/spell=7379/
+  RevengeR4: 11600, // https://www.wowhead.com/classic/spell=11600/
+  RevengeR5: 11601, // https://www.wowhead.com/classic/spell=11601/
+  RevengeR6: 25288, // https://www.wowhead.com/classic/spell=25288/
+  RevengeStun: 12798, // https://www.wowhead.com/classic/spell=12798/
 
   // Cleave
-  CleaveR1: 845,
-  CleaveR2: 7369,
-  CleaveR3: 11608,
-  CleaveR4: 11609,
-  CleaveR5: 20569,
-  CleaveR6: 25231,
+  CleaveR1: 845, // https://www.wowhead.com/classic/spell=845/
+  CleaveR2: 7369, // https://www.wowhead.com/classic/spell=7369/
+  CleaveR3: 11608, // https://www.wowhead.com/classic/spell=11608/
+  CleaveR4: 11609, // https://www.wowhead.com/classic/spell=11609/
+  CleaveR5: 20569, // https://www.wowhead.com/classic/spell=20569/
+  CleaveR6: 25231, // https://www.wowhead.com/classic/spell=25231/
 
   // Whirlwind / Execute
-  WhirlwindR1: 1680,
-  MortalStrike: 25248,
-  ExecuteR6: 20647,
-  ExecuteR7: 25236,
+  WhirlwindR1: 1680, // https://www.wowhead.com/classic/spell=1680/
+  MortalStrike: 25248, // https://www.wowhead.com/classic/spell=25248/
+  ExecuteR6: 20647, // https://www.wowhead.com/classic/spell=20647/
+  ExecuteR7: 25236, // https://www.wowhead.com/classic/spell=25236/
 
   // Thunder Clap
-  ThunderClapR1: 6343,
-  ThunderClapR2: 8198,
-  ThunderClapR3: 8204,
-  ThunderClapR4: 8205,
-  ThunderClapR5: 11580,
-  ThunderClapR6: 11581,
-  ThunderClapR7: 23931,
+  ThunderClapR1: 6343, // https://www.wowhead.com/classic/spell=6343/
+  ThunderClapR2: 8198, // https://www.wowhead.com/classic/spell=8198/
+  ThunderClapR3: 8204, // https://www.wowhead.com/classic/spell=8204/
+  ThunderClapR4: 8205, // https://www.wowhead.com/classic/spell=8205/
+  ThunderClapR5: 11580, // https://www.wowhead.com/classic/spell=11580/
+  ThunderClapR6: 11581, // https://www.wowhead.com/classic/spell=11581/
+  ThunderClapR7: 23931, // https://www.wowhead.com/classic/spell=23931/
 
   // Hamstring
-  HamstringR1: 1715,
-  HamstringR2: 7372,
-  HamstringR3: 7373,
-  HamstringR4: 25212,
+  HamstringR1: 1715, // https://www.wowhead.com/classic/spell=1715/
+  HamstringR2: 7372, // https://www.wowhead.com/classic/spell=7372/
+  HamstringR3: 7373, // https://www.wowhead.com/classic/spell=7373/
+  HamstringR4: 25212, // https://www.wowhead.com/classic/spell=25212/
 
   // Intercept
-  InterceptR1: 20252,
-  InterceptStunR1: 20253,
-  InterceptR2: 20616,
-  InterceptStunR2: 20614,
-  InterceptR3: 20617,
-  InterceptStunR3: 20615,
+  InterceptR1: 20252, // https://www.wowhead.com/classic/spell=20252/
+  InterceptStunR1: 20253, // https://www.wowhead.com/classic/spell=20253/
+  InterceptR2: 20616, // https://www.wowhead.com/classic/spell=20616/
+  InterceptStunR2: 20614, // https://www.wowhead.com/classic/spell=20614/
+  InterceptR3: 20617, // https://www.wowhead.com/classic/spell=20617/
+  InterceptStunR3: 20615, // https://www.wowhead.com/classic/spell=20615/
 
   // Sunder Armor
   SunderArmorR1: 7386, // https://wowhead.com/classic/spell=7386/
@@ -102,106 +102,106 @@ export const Spells = {
   SunderArmorR5: 11597, // https://wowhead.com/classic/spell=11597/
 
   // Battle / Demo Shout
-  BattleShoutR1: 6673,
-  BattleShoutR2: 5242,
-  BattleShoutR3: 6192,
-  BattleShoutR4: 11549,
-  BattleShoutR5: 11550,
-  BattleShoutR6: 11551,
-  BattleShoutR7: 25289,
-  DemoShoutR5: 11556,
-  DemoShoutR7: 25203,
+  BattleShoutR1: 6673, // https://www.wowhead.com/classic/spell=6673/
+  BattleShoutR2: 5242, // https://www.wowhead.com/classic/spell=5242/
+  BattleShoutR3: 6192, // https://www.wowhead.com/classic/spell=6192/
+  BattleShoutR4: 11549, // https://www.wowhead.com/classic/spell=11549/
+  BattleShoutR5: 11550, // https://www.wowhead.com/classic/spell=11550/
+  BattleShoutR6: 11551, // https://www.wowhead.com/classic/spell=11551/
+  BattleShoutR7: 25289, // https://www.wowhead.com/classic/spell=25289/
+  DemoShoutR5: 11556, // https://www.wowhead.com/classic/spell=11556/
+  DemoShoutR7: 25203, // https://www.wowhead.com/classic/spell=25203/
 
   // Mocking Blow
-  MockingBlowR1: 694,
-  MockingBlowR2: 7400,
-  MockingBlowR3: 7402,
-  MockingBlowR4: 20559,
-  MockingBlowR5: 20560,
+  MockingBlowR1: 694, // https://www.wowhead.com/classic/spell=694/
+  MockingBlowR2: 7400, // https://www.wowhead.com/classic/spell=7400/
+  MockingBlowR3: 7402, // https://www.wowhead.com/classic/spell=7402/
+  MockingBlowR4: 20559, // https://www.wowhead.com/classic/spell=20559/
+  MockingBlowR5: 20560, // https://www.wowhead.com/classic/spell=20560/
 
   // Core utility
-  Taunt: 355,
-  ChallengingShout: 1161,
-  Disarm: 676,
+  Taunt: 355, // https://www.wowhead.com/classic/spell=355/
+  ChallengingShout: 1161, // https://www.wowhead.com/classic/spell=1161/
+  Disarm: 676, // https://www.wowhead.com/classic/spell=676/
 
   // Overpower / Charge / stance implications
-  OverpowerR1: 7384,
-  OverpowerR2: 7887,
-  OverpowerR3: 11584,
-  OverpowerR4: 11585,
-  ChargeR1: 100,
-  ChargeR2: 6178,
-  ChargeR3: 11578,
-  ChargeStun: 7922,
-  Retaliation: 20230,
-  SweepingStrikes: 12292,
+  OverpowerR1: 7384, // https://www.wowhead.com/classic/spell=7384/
+  OverpowerR2: 7887, // https://www.wowhead.com/classic/spell=7887/
+  OverpowerR3: 11584, // https://www.wowhead.com/classic/spell=11584/
+  OverpowerR4: 11585, // https://www.wowhead.com/classic/spell=11585/
+  ChargeR1: 100, // https://www.wowhead.com/classic/spell=100/
+  ChargeR2: 6178, // https://www.wowhead.com/classic/spell=6178/
+  ChargeR3: 11578, // https://www.wowhead.com/classic/spell=11578/
+  ChargeStun: 7922, // https://www.wowhead.com/classic/spell=7922/
+  Retaliation: 20230, // https://www.wowhead.com/classic/spell=20230/
+  SweepingStrikes: 12292, // https://www.wowhead.com/classic/spell=12292/
 
   // Misc utility and talents/procs
-  BerserkerRage: 18499,
-  Recklessness: 1719,
-  ShieldWall: 871,
-  ShieldBlock: 2565,
-  DeathWish: 12328,
-  PiercingHowl: 12323,
-  Enrage: 14204,
-  LastStandCast: 12975,
-  LastStandBuff: 12976,
-  FlurryR1: 12966,
-  FlurryR2: 12967,
-  FlurryR3: 12968,
-  FlurryR4: 12969,
-  FlurryR5: 12970,
-  BattlegearOfMightProc: 29478,
-  ShieldSpecialization: 23602,
+  BerserkerRage: 18499, // https://www.wowhead.com/classic/spell=18499/
+  Recklessness: 1719, // https://www.wowhead.com/classic/spell=1719/
+  ShieldWall: 871, // https://www.wowhead.com/classic/spell=871/
+  ShieldBlock: 2565, // https://www.wowhead.com/classic/spell=2565/
+  DeathWish: 12328, // https://www.wowhead.com/classic/spell=12328/
+  PiercingHowl: 12323, // https://www.wowhead.com/classic/spell=12323/
+  Enrage: 14204, // https://www.wowhead.com/classic/spell=14204/
+  LastStandCast: 12975, // https://www.wowhead.com/classic/spell=12975/
+  LastStandBuff: 12976, // https://www.wowhead.com/classic/spell=12976/
+  FlurryR1: 12966, // https://www.wowhead.com/classic/spell=12966/
+  FlurryR2: 12967, // https://www.wowhead.com/classic/spell=12967/
+  FlurryR3: 12968, // https://www.wowhead.com/classic/spell=12968/
+  FlurryR4: 12969, // https://www.wowhead.com/classic/spell=12969/
+  FlurryR5: 12970, // https://www.wowhead.com/classic/spell=12970/
+  BattlegearOfMightProc: 29478, // https://www.wowhead.com/classic/spell=29478/
+  ShieldSpecialization: 23602, // https://www.wowhead.com/classic/spell=23602/
 
   // Resource gain abilities
-  BloodrageCast: 2687,
-  BloodrageRageGain: 29131,
-  UnbridledWrath: 12964,
+  BloodrageCast: 2687, // https://www.wowhead.com/classic/spell=2687/
+  BloodrageRageGain: 29131, // https://www.wowhead.com/classic/spell=29131/
+  UnbridledWrath: 12964, // https://www.wowhead.com/classic/spell=12964/
 
   // Direct damage / heal abilities
-  RendR6: 11574,
-  DeepWounds: 12721,
-  PummelR1: 6552,
-  PummelR2: 6554,
-  BloodthirstR1: 23881,
-  BloodthirstR2: 23892,
-  BloodthirstR3: 23893,
-  BloodthirstR4: 23894,
-  BloodthirstBuffR1: 23888,
-  BloodthirstBuffR2: 23885,
-  BloodthirstHeal: 23891,
+  RendR6: 11574, // https://www.wowhead.com/classic/spell=11574/
+  DeepWounds: 12721, // https://www.wowhead.com/classic/spell=12721/
+  PummelR1: 6552, // https://www.wowhead.com/classic/spell=6552/
+  PummelR2: 6554, // https://www.wowhead.com/classic/spell=6554/
+  BloodthirstR1: 23881, // https://www.wowhead.com/classic/spell=23881/
+  BloodthirstR2: 23892, // https://www.wowhead.com/classic/spell=23892/
+  BloodthirstR3: 23893, // https://www.wowhead.com/classic/spell=23893/
+  BloodthirstR4: 23894, // https://www.wowhead.com/classic/spell=23894/
+  BloodthirstBuffR1: 23888, // https://www.wowhead.com/classic/spell=23888/
+  BloodthirstBuffR2: 23885, // https://www.wowhead.com/classic/spell=23885/
+  BloodthirstHeal: 23891, // https://www.wowhead.com/classic/spell=23891/
 
   // Stances
-  DefensiveStance: 71,
-  BattleStance: 2457,
-  BerserkerStance: 2458,
+  DefensiveStance: 71, // https://www.wowhead.com/classic/spell=71/
+  BattleStance: 2457, // https://www.wowhead.com/classic/spell=2457/
+  BerserkerStance: 2458, // https://www.wowhead.com/classic/spell=2458/
 
   // Buffs/Set Bonuses
-  T1_8pc: 23561, // Might 8pc - Sunder Armor threat +15%
-  T25_4pc: 23302, // AQ40 Conqueror 4pc
+  T1_8pc: 23561, // Might 8pc - Sunder Armor threat +15% | https://www.wowhead.com/classic/spell=23561/
+  T25_4pc: 23302, // AQ40 Conqueror 4pc | https://www.wowhead.com/classic/spell=23302/
 
   // Talents (detected via auras)
-  Defiance: 12303, // Legacy Defiance spell ID alias
-  DefianceRank1: 12301,
-  DefianceRank2: 12302,
-  DefianceRank3: 12303,
-  DefianceRank4: 12304,
-  DefianceRank5: 12305,
+  Defiance: 12303, // Legacy Defiance spell ID alias | https://www.wowhead.com/classic/spell=12303/
+  DefianceRank1: 12301, // https://www.wowhead.com/classic/spell=12301/
+  DefianceRank2: 12302, // https://www.wowhead.com/classic/spell=12302/
+  DefianceRank3: 12303, // https://www.wowhead.com/classic/spell=12303/
+  DefianceRank4: 12304, // https://www.wowhead.com/classic/spell=12304/
+  DefianceRank5: 12305, // https://www.wowhead.com/classic/spell=12305/
 
   // Legacy aliases kept for compatibility/readability in tests
-  HeroicStrike: 25286,
-  Cleave: 25231,
-  Execute: 25236,
-  Whirlwind: 25248,
-  Thunderclap: 23931,
-  Hamstring: 25212,
-  BattleShout: 25289,
-  DemoShout: 25203,
-  MockingBlow: 20560,
-  ShieldBash: 1672,
-  Overpower: 11585,
-  Bloodthirst: 23894,
+  HeroicStrike: 25286, // https://www.wowhead.com/classic/spell=25286/
+  Cleave: 25231, // https://www.wowhead.com/classic/spell=25231/
+  Execute: 25236, // https://www.wowhead.com/classic/spell=25236/
+  Whirlwind: 25248, // https://www.wowhead.com/classic/spell=25248/
+  Thunderclap: 23931, // https://www.wowhead.com/classic/spell=23931/
+  Hamstring: 25212, // https://www.wowhead.com/classic/spell=25212/
+  BattleShout: 25289, // https://www.wowhead.com/classic/spell=25289/
+  DemoShout: 25203, // https://www.wowhead.com/classic/spell=25203/
+  MockingBlow: 20560, // https://www.wowhead.com/classic/spell=20560/
+  ShieldBash: 1672, // https://www.wowhead.com/classic/spell=1672/
+  Overpower: 11585, // https://www.wowhead.com/classic/spell=11585/
+  Bloodthirst: 23894, // https://www.wowhead.com/classic/spell=23894/
 } as const
 
 // ============================================================================

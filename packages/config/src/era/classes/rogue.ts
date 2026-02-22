@@ -12,13 +12,13 @@ import { modifyThreat, threat } from '../../shared/formulas'
 // ============================================================================
 
 export const Spells = {
-  VanishR1: 1856,
-  VanishR2: 1857,
-  FeintR1: 1966,
-  FeintR2: 6768,
-  FeintR3: 8637,
-  FeintR4: 11303,
-  FeintR5: 25302,
+  VanishR1: 1856, // https://www.wowhead.com/classic/spell=1856/
+  VanishR2: 1857, // https://www.wowhead.com/classic/spell=1857/
+  FeintR1: 1966, // https://www.wowhead.com/classic/spell=1966/
+  FeintR2: 6768, // https://www.wowhead.com/classic/spell=6768/
+  FeintR3: 8637, // https://www.wowhead.com/classic/spell=8637/
+  FeintR4: 11303, // https://www.wowhead.com/classic/spell=11303/
+  FeintR5: 25302, // https://www.wowhead.com/classic/spell=25302/
 } as const
 
 // ============================================================================

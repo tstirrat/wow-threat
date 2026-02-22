@@ -6,8 +6,8 @@
 import { modifyThreat, modifyThreatOnHit } from '../../shared/formulas'
 
 export const Spells = {
-  KnockAway: 19633,
-  Fireball: 18392,
+  KnockAway: 19633, // https://www.wowhead.com/classic/spell=19633/
+  Fireball: 18392, // https://www.wowhead.com/classic/spell=18392/
 } as const
 
 /**

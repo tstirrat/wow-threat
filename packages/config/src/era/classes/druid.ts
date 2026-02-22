@@ -24,80 +24,80 @@ import { inferTalent } from '../../shared/talents'
 
 export const Spells = {
   // Forms
-  BearForm: 5487,
-  DireBearForm: 9634,
-  CatForm: 768,
-  MoonkinForm: 24858,
+  BearForm: 5487, // https://www.wowhead.com/classic/spell=5487/
+  DireBearForm: 9634, // https://www.wowhead.com/classic/spell=9634/
+  CatForm: 768, // https://www.wowhead.com/classic/spell=768/
+  MoonkinForm: 24858, // https://www.wowhead.com/classic/spell=24858/
 
   // Bear abilities
-  MaulR1: 6807,
-  MaulR2: 6808,
-  MaulR3: 6809,
-  MaulR4: 8972,
-  MaulR5: 9745,
-  MaulR6: 9880,
-  MaulR7: 9881,
-  SwipeR1: 779,
-  SwipeR2: 780,
-  SwipeR3: 769,
-  SwipeR4: 9754,
-  SwipeR5: 9908,
-  DemoRoarR1: 99,
-  DemoRoarR2: 1735,
-  DemoRoarR3: 9490,
-  DemoRoarR4: 9747,
-  DemoRoarR5: 9898,
-  Growl: 6795,
-  ChallengingRoar: 5209,
-  Bash: 8983,
-  Enrage: 5229,
-  Furor: 17057,
+  MaulR1: 6807, // https://www.wowhead.com/classic/spell=6807/
+  MaulR2: 6808, // https://www.wowhead.com/classic/spell=6808/
+  MaulR3: 6809, // https://www.wowhead.com/classic/spell=6809/
+  MaulR4: 8972, // https://www.wowhead.com/classic/spell=8972/
+  MaulR5: 9745, // https://www.wowhead.com/classic/spell=9745/
+  MaulR6: 9880, // https://www.wowhead.com/classic/spell=9880/
+  MaulR7: 9881, // https://www.wowhead.com/classic/spell=9881/
+  SwipeR1: 779, // https://www.wowhead.com/classic/spell=779/
+  SwipeR2: 780, // https://www.wowhead.com/classic/spell=780/
+  SwipeR3: 769, // https://www.wowhead.com/classic/spell=769/
+  SwipeR4: 9754, // https://www.wowhead.com/classic/spell=9754/
+  SwipeR5: 9908, // https://www.wowhead.com/classic/spell=9908/
+  DemoRoarR1: 99, // https://www.wowhead.com/classic/spell=99/
+  DemoRoarR2: 1735, // https://www.wowhead.com/classic/spell=1735/
+  DemoRoarR3: 9490, // https://www.wowhead.com/classic/spell=9490/
+  DemoRoarR4: 9747, // https://www.wowhead.com/classic/spell=9747/
+  DemoRoarR5: 9898, // https://www.wowhead.com/classic/spell=9898/
+  Growl: 6795, // https://www.wowhead.com/classic/spell=6795/
+  ChallengingRoar: 5209, // https://www.wowhead.com/classic/spell=5209/
+  Bash: 8983, // https://www.wowhead.com/classic/spell=8983/
+  Enrage: 5229, // https://www.wowhead.com/classic/spell=5229/
+  Furor: 17057, // https://www.wowhead.com/classic/spell=17057/
 
   // Cat abilities
-  Claw: 9850,
-  Shred: 9830,
-  Rake: 9904,
-  FerociousBite: 22829,
-  Ravage: 9867,
-  Rip: 9896,
-  Pounce: 9827,
-  Prowl: 9913,
-  TigersFury: 9846,
-  DashR1: 1850,
-  DashR2: 9821,
-  CowerR1: 8998,
-  CowerR2: 9000,
-  CowerR3: 9892,
+  Claw: 9850, // https://www.wowhead.com/classic/spell=9850/
+  Shred: 9830, // https://www.wowhead.com/classic/spell=9830/
+  Rake: 9904, // https://www.wowhead.com/classic/spell=9904/
+  FerociousBite: 22829, // https://www.wowhead.com/classic/spell=22829/
+  Ravage: 9867, // https://www.wowhead.com/classic/spell=9867/
+  Rip: 9896, // https://www.wowhead.com/classic/spell=9896/
+  Pounce: 9827, // https://www.wowhead.com/classic/spell=9827/
+  Prowl: 9913, // https://www.wowhead.com/classic/spell=9913/
+  TigersFury: 9846, // https://www.wowhead.com/classic/spell=9846/
+  DashR1: 1850, // https://www.wowhead.com/classic/spell=1850/
+  DashR2: 9821, // https://www.wowhead.com/classic/spell=9821/
+  CowerR1: 8998, // https://www.wowhead.com/classic/spell=8998/
+  CowerR2: 9000, // https://www.wowhead.com/classic/spell=9000/
+  CowerR3: 9892, // https://www.wowhead.com/classic/spell=9892/
 
   // Faerie Fire
-  FaerieFireFeralR1: 16857,
-  FaerieFireFeralR2: 17390,
-  FaerieFireFeralR3: 17391,
-  FaerieFireFeralR4: 17392,
-  FaerieFireR1: 770,
-  FaerieFireR2: 778,
-  FaerieFireR3: 9749,
-  FaerieFireR4: 9907,
+  FaerieFireFeralR1: 16857, // https://www.wowhead.com/classic/spell=16857/
+  FaerieFireFeralR2: 17390, // https://www.wowhead.com/classic/spell=17390/
+  FaerieFireFeralR3: 17391, // https://www.wowhead.com/classic/spell=17391/
+  FaerieFireFeralR4: 17392, // https://www.wowhead.com/classic/spell=17392/
+  FaerieFireR1: 770, // https://www.wowhead.com/classic/spell=770/
+  FaerieFireR2: 778, // https://www.wowhead.com/classic/spell=778/
+  FaerieFireR3: 9749, // https://www.wowhead.com/classic/spell=9749/
+  FaerieFireR4: 9907, // https://www.wowhead.com/classic/spell=9907/
 
   // Misc
-  Clearcasting: 16870,
-  Innervate: 29166,
-  FrenziedRegenR1: 22842,
-  FrenziedRegenR2: 22895,
-  FrenziedRegenR3: 22896,
-  LeaderOfThePack: 24932,
+  Clearcasting: 16870, // https://www.wowhead.com/classic/spell=16870/
+  Innervate: 29166, // https://www.wowhead.com/classic/spell=29166/
+  FrenziedRegenR1: 22842, // https://www.wowhead.com/classic/spell=22842/
+  FrenziedRegenR2: 22895, // https://www.wowhead.com/classic/spell=22895/
+  FrenziedRegenR3: 22896, // https://www.wowhead.com/classic/spell=22896/
+  LeaderOfThePack: 24932, // https://www.wowhead.com/classic/spell=24932/
 
   // Talents (synthetic aura IDs inferred from combatantinfo)
-  FeralInstinctRank1: 16947,
-  FeralInstinctRank2: 16948,
-  FeralInstinctRank3: 16949,
-  FeralInstinctRank4: 16950,
-  FeralInstinctRank5: 16951,
-  SubtletyRank1: 17118,
-  SubtletyRank2: 17119,
-  SubtletyRank3: 17120,
-  SubtletyRank4: 17121,
-  SubtletyRank5: 17122,
+  FeralInstinctRank1: 16947, // https://www.wowhead.com/classic/spell=16947/
+  FeralInstinctRank2: 16948, // https://www.wowhead.com/classic/spell=16948/
+  FeralInstinctRank3: 16949, // https://www.wowhead.com/classic/spell=16949/
+  FeralInstinctRank4: 16950, // https://www.wowhead.com/classic/spell=16950/
+  FeralInstinctRank5: 16951, // https://www.wowhead.com/classic/spell=16951/
+  SubtletyRank1: 17118, // https://www.wowhead.com/classic/spell=17118/
+  SubtletyRank2: 17119, // https://www.wowhead.com/classic/spell=17119/
+  SubtletyRank3: 17120, // https://www.wowhead.com/classic/spell=17120/
+  SubtletyRank4: 17121, // https://www.wowhead.com/classic/spell=17121/
+  SubtletyRank5: 17122, // https://www.wowhead.com/classic/spell=17122/
 } as const
 
 // ============================================================================

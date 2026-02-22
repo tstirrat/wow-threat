@@ -11,8 +11,8 @@ import { tauntTarget } from '../../shared/formulas'
 
 export const Spells = {
   ...EraSpells,
-  Menace: 403828,
-  DemonicHowl: 412789,
+  Menace: 403828, // https://www.wowhead.com/classic/spell=403828/
+  DemonicHowl: 412789, // https://www.wowhead.com/classic/spell=412789/
 } as const
 
 export const Buffs = {
