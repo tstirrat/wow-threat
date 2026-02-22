@@ -53,6 +53,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 const popupWidthPx = 520
 const popupHeightPx = 760
 const popupPollIntervalMs = 250
+const popupClosedCoopProbeMs = 2000
 const popupClosedResultGraceMs = 5000
 const popupResultStaleToleranceMs = 30 * 1000
 const popupTimeoutMs = 3 * 60 * 1000
@@ -117,6 +118,14 @@ function openWclLoginPopup(loginUrl: string): Window | null {
   return window.open(loginUrl, 'wow-threat-wcl-auth', buildPopupFeatures())
 }
 
+function readPopupClosedState(popupWindow: Window): boolean {
+  try {
+    return popupWindow.closed
+  } catch {
+    return false
+  }
+}
+
 function waitForWclPopupResult(
   popupWindow: Window,
   flowStartMs: number,
@@ -125,6 +134,7 @@ function waitForWclPopupResult(
     let intervalId = 0
     let timeoutId = 0
     let popupClosedAtMs: number | null = null
+    let isPopupClosedStateUnreliable = false
     let completed = false
 
     function complete(callback: () => void): void {
@@ -201,10 +211,19 @@ function waitForWclPopupResult(
         return
       }
 
-      if (popupWindow.closed) {
+      if (readPopupClosedState(popupWindow)) {
         const nowMs = Date.now()
         if (popupClosedAtMs === null) {
           popupClosedAtMs = nowMs
+          if (nowMs - flowStartMs <= popupClosedCoopProbeMs) {
+            // OAuth providers using COOP can sever the opener proxy, causing
+            // popupWindow.closed to appear true while the popup is still open.
+            isPopupClosedStateUnreliable = true
+          }
+          return
+        }
+
+        if (isPopupClosedStateUnreliable) {
           return
         }
 

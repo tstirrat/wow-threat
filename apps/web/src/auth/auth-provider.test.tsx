@@ -213,6 +213,60 @@ describe('AuthProvider', () => {
     expect(screen.getByTestId('auth-error')).toHaveTextContent('')
   })
 
+  it('accepts callback success after prolonged closed state from opener isolation', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        customToken: 'firebase-custom-token',
+      }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const popupWindow = {
+      close: vi.fn(),
+      get closed(): boolean {
+        return true
+      },
+    } as unknown as Window
+    vi.spyOn(window, 'open').mockReturnValue(popupWindow)
+    const user = userEvent.setup()
+
+    render(
+      <AuthProvider>
+        <AuthHarness />
+      </AuthProvider>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'start login' }))
+
+    window.setTimeout(() => {
+      const successPayload = JSON.stringify({
+        bridgeCode: 'bridge-code-after-isolation',
+        createdAtMs: Date.now() + 1,
+        status: 'success',
+      })
+      window.dispatchEvent(
+        new StorageEvent('storage', {
+          key: wclAuthPopupResultStorageKey,
+          newValue: successPayload,
+        }),
+      )
+    }, 5500)
+
+    await waitFor(
+      () => {
+        expect(signInWithCustomTokenMock).toHaveBeenCalledWith(
+          fakeAuth,
+          'firebase-custom-token',
+        )
+      },
+      {
+        timeout: 9000,
+      },
+    )
+    expect(screen.getByTestId('auth-error')).toHaveTextContent('')
+  }, 10000)
+
   it('accepts callback success payload with slight pre-start timestamp skew', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
