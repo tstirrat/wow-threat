@@ -300,6 +300,11 @@ describe('WCLClient.getRecentReports', () => {
                               name: 'Threat Guild',
                               faction: { name: 'Alliance' },
                             },
+                            archiveStatus: {
+                              isArchived: false,
+                              isAccessible: true,
+                              archiveDate: null,
+                            },
                           },
                           {
                             code: 'DUPLICATE',
@@ -310,6 +315,27 @@ describe('WCLClient.getRecentReports', () => {
                             guild: {
                               name: 'Threat Guild',
                               faction: { name: 'Alliance' },
+                            },
+                            archiveStatus: {
+                              isArchived: false,
+                              isAccessible: true,
+                              archiveDate: null,
+                            },
+                          },
+                          {
+                            code: 'ARCHIVED-PRIVATE',
+                            title: 'Archived',
+                            startTime: 1750,
+                            endTime: 1850,
+                            zone: { name: "Temple of Ahn'Qiraj" },
+                            guild: {
+                              name: 'Threat Guild',
+                              faction: { name: 'Alliance' },
+                            },
+                            archiveStatus: {
+                              isArchived: true,
+                              isAccessible: false,
+                              archiveDate: 1700,
                             },
                           },
                         ],
@@ -341,6 +367,11 @@ describe('WCLClient.getRecentReports', () => {
                               name: 'Threat Guild',
                               faction: { name: 'Alliance' },
                             },
+                            archiveStatus: {
+                              isArchived: false,
+                              isAccessible: true,
+                              archiveDate: null,
+                            },
                           },
                           {
                             code: 'DUPLICATE',
@@ -351,6 +382,27 @@ describe('WCLClient.getRecentReports', () => {
                             guild: {
                               name: 'Threat Guild',
                               faction: { name: 'Alliance' },
+                            },
+                            archiveStatus: {
+                              isArchived: false,
+                              isAccessible: true,
+                              archiveDate: null,
+                            },
+                          },
+                          {
+                            code: 'INACCESSIBLE',
+                            title: 'Inaccessible',
+                            startTime: 1700,
+                            endTime: 1799,
+                            zone: { name: 'Black Temple' },
+                            guild: {
+                              name: 'Threat Guild',
+                              faction: { name: 'Alliance' },
+                            },
+                            archiveStatus: {
+                              isArchived: false,
+                              isAccessible: false,
+                              archiveDate: null,
                             },
                           },
                         ],
@@ -381,6 +433,10 @@ describe('WCLClient.getRecentReports', () => {
       'GUILD1',
       'DUPLICATE',
     ])
+    expect(reports.some((report) => report.code === 'ARCHIVED-PRIVATE')).toBe(
+      false,
+    )
+    expect(reports.some((report) => report.code === 'INACCESSIBLE')).toBe(false)
     expect(reports[0]).toMatchObject({
       source: 'personal',
       zoneName: 'Naxxramas',

@@ -122,6 +122,13 @@ reportRoutes.get('/:code', async (c) => {
                 : report.guild.faction.name,
           }
         : null,
+      archiveStatus: report.archiveStatus
+        ? {
+            isArchived: report.archiveStatus.isArchived ?? false,
+            isAccessible: report.archiveStatus.isAccessible ?? true,
+            archiveDate: report.archiveStatus.archiveDate ?? null,
+          }
+        : null,
       startTime: report.startTime,
       endTime: report.endTime,
       gameVersion: masterData.gameVersion,

@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom'
 import { formatReportHeaderDate } from '../lib/format'
 import { cn } from '../lib/utils'
 import type { RecentReportEntry } from '../types/app'
+import { Badge } from './ui/badge'
 import { Card, CardContent } from './ui/card'
 
 export type RecentReportsListProps = {
@@ -73,6 +74,9 @@ export const RecentReportsList: FC<RecentReportsListProps> = ({
   return (
     <ul aria-label="Recent reports" className="space-y-2">
       {reports.map((report) => {
+        const isArchived = report.isArchived === true
+        const isInaccessible = report.isAccessible === false
+        const isDisabled = isArchived || isInaccessible
         const guildName = report.guildName ? `<${report.guildName}>` : null
         const sourceLabel = resolveSourceLabel(report)
         const titleParts = [report.title || report.reportId, guildName]
@@ -88,6 +92,7 @@ export const RecentReportsList: FC<RecentReportsListProps> = ({
           typeof report.bossKillCount === 'number'
             ? `${report.bossKillCount} ${report.bossKillCount === 1 ? 'boss' : 'bosses'}`
             : 'unknown bosses'
+        const statusLabel = isArchived ? 'archived' : 'inaccessible'
         const titleRowClass = resolveTitleRowClass(
           normalizeGuildFaction(report.guildFaction),
         )
@@ -97,16 +102,26 @@ export const RecentReportsList: FC<RecentReportsListProps> = ({
             <Card className="bg-panel" size="sm">
               <CardContent className="space-y-1">
                 <div className="flex items-start justify-between gap-3">
-                  <Link
-                    className={cn(
-                      'min-w-0 truncate font-medium underline',
-                      titleRowClass,
-                    )}
-                    state={{ host: report.sourceHost }}
-                    to={`/report/${report.reportId}`}
-                  >
-                    {firstLine}
-                  </Link>
+                  {isDisabled ? (
+                    <span
+                      className={cn(
+                        'min-w-0 truncate font-medium text-muted-foreground',
+                      )}
+                    >
+                      {firstLine}
+                    </span>
+                  ) : (
+                    <Link
+                      className={cn(
+                        'min-w-0 truncate font-medium underline',
+                        titleRowClass,
+                      )}
+                      state={{ host: report.sourceHost }}
+                      to={`/report/${report.reportId}`}
+                    >
+                      {firstLine}
+                    </Link>
+                  )}
                   <button
                     aria-label={`Remove recent report ${report.title || report.reportId}`}
                     className="cursor-pointer text-xs leading-none text-muted-foreground hover:text-foreground"
@@ -121,6 +136,11 @@ export const RecentReportsList: FC<RecentReportsListProps> = ({
                 <p className="text-xs text-muted-foreground">
                   {zoneLabel} - {startLabel} - {bossesLabel}
                 </p>
+                {isDisabled ? (
+                  <Badge className="mt-1" variant="secondary">
+                    {statusLabel}
+                  </Badge>
+                ) : null}
               </CardContent>
             </Card>
           </li>

@@ -18,6 +18,9 @@ export interface RecentReportEntry {
   bossKillCount?: number | null
   guildName?: string | null
   guildFaction?: string | null
+  isArchived?: boolean | null
+  isAccessible?: boolean | null
+  archiveDate?: number | null
 }
 
 export interface ExampleReportLink {

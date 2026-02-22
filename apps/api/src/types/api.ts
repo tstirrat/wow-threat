@@ -60,12 +60,19 @@ export interface ReportGuildSummary {
   faction: string
 }
 
+export interface ReportArchiveStatusSummary {
+  isArchived: boolean
+  isAccessible: boolean
+  archiveDate: number | null
+}
+
 export interface ReportResponse {
   code: string
   title: string
   visibility: ReportVisibility
   owner: string
   guild: ReportGuildSummary | null
+  archiveStatus: ReportArchiveStatusSummary | null
   startTime: number
   endTime: number
   gameVersion: number

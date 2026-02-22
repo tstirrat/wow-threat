@@ -48,6 +48,9 @@ export const ReportLayout: FC = () => {
       bossKillCount: buildBossKillNavigationFights(data.fights).length,
       guildName: data.guild?.name ?? null,
       guildFaction: data.guild?.faction ?? null,
+      isArchived: data.archiveStatus?.isArchived ?? false,
+      isAccessible: data.archiveStatus?.isAccessible ?? true,
+      archiveDate: data.archiveStatus?.archiveDate ?? null,
     })
   }, [addRecentReport, data, reportHost, reportId])
 

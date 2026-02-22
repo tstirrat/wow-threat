@@ -5,6 +5,7 @@ import { useAuth } from '@/auth/auth-provider'
 import { type FC, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { getReport } from '../api/reports'
 import { AccountRecentReportsList } from '../components/account-recent-reports-list'
 import { ExampleReportList } from '../components/example-report-list'
 import { RecentReportsList } from '../components/recent-reports-list'
@@ -14,6 +15,7 @@ import { Alert, AlertDescription } from '../components/ui/alert'
 import { useRecentReports } from '../hooks/use-recent-reports'
 import { useUserRecentReports } from '../hooks/use-user-recent-reports'
 import { defaultHost, exampleReports } from '../lib/constants'
+import { buildBossKillNavigationFights } from '../lib/fight-navigation'
 import { parseReportInput } from '../lib/wcl-url'
 
 export const LandingPage: FC = () => {
@@ -26,8 +28,62 @@ export const LandingPage: FC = () => {
     isLoading: isLoadingAccountReports,
     error: accountRecentReportsError,
   } = useUserRecentReports(10)
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const shouldShowAccountReports = authEnabled && Boolean(user)
+  const handleReportSubmit = async (input: string): Promise<void> => {
+    const parsed = parseReportInput(input, defaultHost)
+    if (!parsed) {
+      setErrorMessage(
+        'Unable to parse report input. Use a fresh/sod/vanilla report URL or a report code.',
+      )
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const report = await getReport(parsed.reportId)
+      const isArchived = report.archiveStatus?.isArchived ?? false
+      const isAccessible = report.archiveStatus?.isAccessible ?? true
+
+      addRecentReport({
+        reportId: parsed.reportId,
+        title: report.title,
+        sourceHost: parsed.host,
+        lastOpenedAt: Date.now(),
+        zoneName: report.zone?.name,
+        startTime: report.startTime,
+        bossKillCount: buildBossKillNavigationFights(report.fights).length,
+        guildName: report.guild?.name ?? null,
+        guildFaction: report.guild?.faction ?? null,
+        isArchived,
+        isAccessible,
+        archiveDate: report.archiveStatus?.archiveDate ?? null,
+      })
+
+      if (isArchived || !isAccessible) {
+        setErrorMessage(
+          'This report is archived or inaccessible, so it cannot be opened here.',
+        )
+        return
+      }
+
+      setErrorMessage(null)
+      navigate(`/report/${parsed.reportId}`, {
+        state: {
+          host: parsed.host,
+        },
+      })
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Unable to load report metadata.'
+      setErrorMessage(message)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -36,28 +92,9 @@ export const LandingPage: FC = () => {
         subtitle="Paste a Warcraft Logs report URL or report ID to open threat views."
       >
         <ReportUrlForm
+          isSubmitting={isSubmitting}
           onSubmit={(input) => {
-            const parsed = parseReportInput(input, defaultHost)
-            if (!parsed) {
-              setErrorMessage(
-                'Unable to parse report input. Use a fresh/sod/vanilla report URL or a report code.',
-              )
-              return
-            }
-
-            setErrorMessage(null)
-            addRecentReport({
-              reportId: parsed.reportId,
-              title: parsed.reportId,
-              sourceHost: parsed.host,
-              lastOpenedAt: Date.now(),
-            })
-
-            navigate(`/report/${parsed.reportId}`, {
-              state: {
-                host: parsed.host,
-              },
-            })
+            void handleReportSubmit(input)
           }}
         />
         {errorMessage ? (

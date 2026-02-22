@@ -76,6 +76,11 @@ interface WclRecentReportNode {
         }
       | null
   } | null
+  archiveStatus?: {
+    isArchived?: boolean | null
+    isAccessible?: boolean | null
+    archiveDate?: number | null
+  } | null
 }
 
 export type RecentWclReportSource = 'personal' | 'guild'
@@ -151,6 +156,13 @@ function toRecentWclReport(
     guildFaction: parseGuildFaction(node.guild?.faction),
     source,
   }
+}
+
+function canAccessReportEvents(node: WclRecentReportNode): boolean {
+  const isArchived = node.archiveStatus?.isArchived === true
+  const isInaccessible = node.archiveStatus?.isAccessible === false
+
+  return !isArchived && !isInaccessible
 }
 
 export class WCLClient {
@@ -319,12 +331,17 @@ export class WCLClient {
             visibility
             owner { name }
             guild {
-              name
-              faction {
-                id
                 name
+                faction {
+                  id
+                  name
+                }
               }
-            }
+              archiveStatus {
+                isArchived
+                isAccessible
+                archiveDate
+              }
             startTime
             endTime
             zone {
@@ -485,6 +502,11 @@ export class WCLClient {
                   name
                 }
               }
+              archiveStatus {
+                isArchived
+                isAccessible
+                archiveDate
+              }
             }
           }
         }
@@ -506,6 +528,7 @@ export class WCLClient {
     const reports = response.reportData?.reports?.data ?? []
 
     return reports
+      .filter((report) => canAccessReportEvents(report))
       .map((report) => toRecentWclReport(report, options.source))
       .filter((report): report is RecentWclReport => report !== null)
   }

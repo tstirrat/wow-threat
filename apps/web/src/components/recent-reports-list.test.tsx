@@ -104,4 +104,29 @@ describe('RecentReportsList', () => {
 
     expect(onRemoveReport).toHaveBeenCalledWith(baseEntry.reportId)
   })
+
+  it('renders archived entries as disabled with an archived badge', () => {
+    const onRemoveReport = vi.fn()
+
+    render(
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <RecentReportsList
+          onRemoveReport={onRemoveReport}
+          reports={[
+            {
+              ...baseEntry,
+              isArchived: true,
+            },
+          ]}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(
+      screen.queryByRole('link', { name: /Threat Regression Raid/ }),
+    ).toBeNull()
+    expect(screen.getByText('archived')).toBeVisible()
+  })
 })

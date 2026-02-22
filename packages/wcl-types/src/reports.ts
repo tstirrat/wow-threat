@@ -118,6 +118,12 @@ export interface ReportGuild {
   faction: GameFaction
 }
 
+export interface ReportArchiveStatus {
+  isArchived: boolean
+  isAccessible: boolean
+  archiveDate: number | null
+}
+
 export interface ReportAbility {
   gameID: number | null
   icon: string | null
@@ -135,6 +141,11 @@ export interface WCLReportResponse {
         visibility?: ReportVisibility | null
         owner: { name: string }
         guild: ReportGuild | null
+        archiveStatus?: {
+          isArchived?: boolean | null
+          isAccessible?: boolean | null
+          archiveDate?: number | null
+        } | null
         startTime: number
         endTime: number
         zone: Zone

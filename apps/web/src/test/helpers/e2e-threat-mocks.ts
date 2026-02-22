@@ -237,6 +237,7 @@ export const e2eReportResponse: ReportResponse = {
     name: 'Threat Officer Guild',
     faction: 'Alliance',
   },
+  archiveStatus: null,
   owner: 'ThreatOfficer',
   startTime: 1000000,
   threatConfig: {
