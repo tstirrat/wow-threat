@@ -1301,6 +1301,172 @@ describe('threat-aggregation', () => {
     ])
   })
 
+  it('labels resource rows and keeps them separate from non-resource rows', () => {
+    const actors: ReportActorSummary[] = [
+      {
+        id: 1,
+        name: 'Warrior',
+        type: 'Player',
+        subType: 'Warrior',
+      },
+    ]
+    const abilities: ReportAbilitySummary[] = [
+      {
+        gameID: 100,
+        icon: null,
+        name: 'Shield Slam',
+        type: 'ability',
+      },
+      {
+        gameID: 2687,
+        icon: null,
+        name: 'Bloodrage',
+        type: 'ability',
+      },
+    ]
+    const events = [
+      {
+        timestamp: 1000,
+        type: 'damage',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 10,
+        targetIsFriendly: false,
+        abilityGameID: 100,
+        amount: 400,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 200,
+              total: 200,
+            },
+          ],
+          calculation: {
+            formula: 'damage',
+            amount: 400,
+            baseThreat: 400,
+            modifiedThreat: 200,
+            isSplit: false,
+            modifiers: [],
+          },
+        },
+      },
+      {
+        timestamp: 1250,
+        type: 'resourcechange',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 1,
+        targetIsFriendly: true,
+        abilityGameID: 100,
+        resourceChangeType: 1,
+        amount: 15,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 60,
+              total: 260,
+            },
+          ],
+          calculation: {
+            formula: 'resource',
+            amount: 15,
+            baseThreat: 15,
+            modifiedThreat: 60,
+            isSplit: false,
+            modifiers: [],
+          },
+        },
+      },
+      {
+        timestamp: 1500,
+        type: 'energize',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 1,
+        targetIsFriendly: true,
+        abilityGameID: 2687,
+        resourceChangeType: 1,
+        amount: 10,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 40,
+              total: 300,
+            },
+          ],
+          calculation: {
+            formula: 'energize',
+            amount: 10,
+            baseThreat: 10,
+            modifiedThreat: 40,
+            isSplit: false,
+            modifiers: [],
+          },
+        },
+      },
+    ]
+
+    const rows = buildFocusedPlayerThreatRows({
+      events: events as never,
+      actors,
+      abilities,
+      fightStartTime: 1000,
+      target: {
+        id: 10,
+        instance: 0,
+      },
+      focusedPlayerId: 1,
+      windowStartMs: 0,
+      windowEndMs: 1000,
+    })
+
+    expect(rows).toEqual([
+      {
+        key: '100',
+        abilityId: 100,
+        abilityName: 'Shield Slam',
+        amount: 400,
+        threat: 200,
+        tps: 200,
+        isHeal: false,
+        isFixate: false,
+      },
+      {
+        key: '100:resourcechange',
+        abilityId: 100,
+        abilityName: 'Shield Slam (resourcechange)',
+        amount: 0,
+        threat: 60,
+        tps: 60,
+        isHeal: false,
+        isFixate: false,
+      },
+      {
+        key: '2687:energize',
+        abilityId: 2687,
+        abilityName: 'Bloodrage (energize)',
+        amount: 0,
+        threat: 40,
+        tps: 40,
+        isHeal: false,
+        isFixate: false,
+      },
+    ])
+  })
+
   it('builds focused pet threat rows for the selected window', () => {
     const actors: ReportActorSummary[] = [
       {

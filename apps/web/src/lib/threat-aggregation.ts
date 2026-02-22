@@ -1229,6 +1229,18 @@ function resolveAbilityName(
   return abilityById.get(abilityId)?.name ?? `Ability #${abilityId}`
 }
 
+function resolveFocusedThreatEventSuffix(eventType: string): string | null {
+  if (eventType === 'resourcechange') {
+    return 'resourcechange'
+  }
+
+  if (eventType === 'energize') {
+    return 'energize'
+  }
+
+  return null
+}
+
 /** Build totals/class metadata for the currently focused player. */
 export function buildFocusedPlayerSummary({
   events,
@@ -1445,10 +1457,16 @@ export function buildFocusedPlayerThreatRows({
       return
     }
 
+    const eventType = event.type.toLowerCase()
     const abilityId = event.abilityGameID ?? null
     const abilityName = resolveAbilityName(abilityId, abilityById)
-    const key =
+    const eventSuffix = resolveFocusedThreatEventSuffix(eventType)
+    const rowAbilityName = eventSuffix
+      ? `${abilityName} (${eventSuffix})`
+      : abilityName
+    const keyBase =
       abilityId === null ? `unknown:${abilityName}` : String(abilityId)
+    const key = eventSuffix ? `${keyBase}:${eventType}` : keyBase
     const damageHealingAmount =
       event.type === 'damage' || event.type === 'heal'
         ? Math.max(0, event.amount ?? 0)
@@ -1472,7 +1490,7 @@ export function buildFocusedPlayerThreatRows({
     rowsByAbility.set(key, {
       key,
       abilityId,
-      abilityName,
+      abilityName: rowAbilityName,
       amount: damageHealingAmount,
       threat: matchingThreat,
       tps: 0,

@@ -24,6 +24,7 @@ import {
 import { useThreatChartThemeColors } from '../hooks/use-threat-chart-theme-colors'
 import { formatTimelineTime } from '../lib/format'
 import { resolveSeriesWindowBounds } from '../lib/threat-aggregation'
+import { resolvePointSize } from '../lib/threat-chart-point-size'
 import {
   bossMeleeMarkerColor,
   createThreatChartTooltipFormatter,
@@ -71,14 +72,6 @@ function resolvePointColor(
   }
 
   return seriesColor
-}
-
-function resolvePointSize(point: SeriesChartPoint | undefined): number {
-  if (point?.markerKind) {
-    return 8
-  }
-
-  return 6
 }
 
 export type ThreatChartProps = {
@@ -321,8 +314,10 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         smooth: false,
         symbol: 'circle',
         showSymbol: true,
-        symbolSize: (params: { data?: SeriesChartPoint }) =>
-          resolvePointSize(params.data as SeriesChartPoint),
+        symbolSize: (
+          _value: unknown,
+          params: { data?: SeriesChartPoint } | undefined,
+        ) => resolvePointSize(params?.data),
         triggerLineEvent: true,
         animation: false,
         itemStyle: {

@@ -116,4 +116,36 @@ describe('PlayerSummaryTable', () => {
     const fixateCells = within(fixateRow).getAllByRole('cell')
     expect(fixateCells[3]).toBeEmptyDOMElement()
   })
+
+  it('renders resource-labeled ability rows as wowhead links', () => {
+    render(
+      <PlayerSummaryTable
+        summary={summary}
+        rows={[
+          {
+            key: 'ability-2687-resourcechange',
+            abilityId: 2687,
+            abilityName: 'Bloodrage (resource change)',
+            amount: 0,
+            threat: 40,
+            tps: 0.4,
+            isHeal: false,
+            isFixate: false,
+          },
+        ]}
+        initialAuras={[]}
+        wowhead={{
+          domain: 'tbc',
+        }}
+      />,
+    )
+
+    const abilityLink = screen.getByRole('link', {
+      name: 'Bloodrage (resource change)',
+    })
+    expect(abilityLink).toHaveAttribute(
+      'href',
+      'https://www.wowhead.com/tbc/spell=2687',
+    )
+  })
 })
