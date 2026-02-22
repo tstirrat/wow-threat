@@ -1,0 +1,70 @@
+/**
+ * Unit tests for Firebase runtime auth configuration flags.
+ */
+import { afterEach, describe, expect, it, vi } from 'vitest'
+
+const initializeAppMock = vi.fn(() => ({
+  name: 'firebase-app',
+}))
+const getAuthMock = vi.fn(() => ({
+  name: 'firebase-auth',
+}))
+
+vi.mock('firebase/app', () => ({
+  initializeApp: (...args: unknown[]) => initializeAppMock(...args),
+}))
+
+vi.mock('firebase/auth', () => ({
+  getAuth: (...args: unknown[]) => getAuthMock(...args),
+}))
+
+function setDefaultFirebaseEnv(): void {
+  vi.stubEnv('VITE_FIREBASE_API_KEY', 'firebase-api-key')
+  vi.stubEnv('VITE_FIREBASE_PROJECT_ID', 'wow-threat')
+  vi.stubEnv('VITE_FIREBASE_AUTH_DOMAIN', 'wow-threat.firebaseapp.com')
+  vi.stubEnv('VITE_FIREBASE_APP_ID', 'firebase-app-id')
+  vi.stubEnv('VITE_DISABLE_AUTH', 'false')
+}
+
+async function loadFirebaseModule(): Promise<typeof import('./firebase')> {
+  vi.resetModules()
+  return import('./firebase')
+}
+
+describe('firebase runtime config', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.clearAllMocks()
+  })
+
+  it('disables auth when VITE_DISABLE_AUTH is enabled', async () => {
+    setDefaultFirebaseEnv()
+    vi.stubEnv('VITE_DISABLE_AUTH', 'true')
+
+    const firebaseModule = await loadFirebaseModule()
+
+    expect(firebaseModule.isFirebaseAuthEnabled).toBe(false)
+    expect(firebaseModule.getFirebaseAuth()).toBeNull()
+    expect(initializeAppMock).not.toHaveBeenCalled()
+    expect(getAuthMock).not.toHaveBeenCalled()
+  })
+
+  it('initializes firebase auth once when enabled', async () => {
+    setDefaultFirebaseEnv()
+
+    const firebaseModule = await loadFirebaseModule()
+
+    expect(firebaseModule.isFirebaseAuthEnabled).toBe(true)
+    const firstAuth = firebaseModule.getFirebaseAuth()
+    const secondAuth = firebaseModule.getFirebaseAuth()
+
+    expect(firstAuth).toEqual({
+      name: 'firebase-auth',
+    })
+    expect(secondAuth).toEqual({
+      name: 'firebase-auth',
+    })
+    expect(initializeAppMock).toHaveBeenCalledTimes(1)
+    expect(getAuthMock).toHaveBeenCalledTimes(1)
+  })
+})

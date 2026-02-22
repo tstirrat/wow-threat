@@ -196,26 +196,26 @@ test.describe('fight page', () => {
       fightPage.summary.totalRow().getByRole('cell').nth(2),
     ).toHaveText('550')
   })
-})
 
-test('shows chart and legend placeholders while loading fight data', async ({
-  page,
-}) => {
-  const fightPage = new FightPageObject(page)
+  test('shows chart and legend placeholders while loading fight data', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
 
-  await setupThreatApiMocks(page, {
-    fightResponseDelayMs: 400,
-    eventsResponseDelayMs: 400,
+    await setupThreatApiMocks(page, {
+      fightResponseDelayMs: 400,
+      eventsResponseDelayMs: 400,
+    })
+    await fightPage.goto(svgFightUrl)
+
+    await expect(
+      page.getByRole('status', { name: 'Loading fight data' }),
+    ).toBeVisible()
+    await expect(page.getByTestId('fight-chart-skeleton')).toBeVisible()
+    await expect(page.getByTestId('fight-legend-skeleton')).toBeVisible()
+    await expect.poll(() => fightPage.chart.renderer()).toBe('svg')
+    await expect(
+      page.getByRole('status', { name: 'Loading fight data' }),
+    ).toHaveCount(0)
   })
-  await fightPage.goto(svgFightUrl)
-
-  await expect(
-    page.getByRole('status', { name: 'Loading fight data' }),
-  ).toBeVisible()
-  await expect(page.getByTestId('fight-chart-skeleton')).toBeVisible()
-  await expect(page.getByTestId('fight-legend-skeleton')).toBeVisible()
-  await expect.poll(() => fightPage.chart.renderer()).toBe('svg')
-  await expect(
-    page.getByRole('status', { name: 'Loading fight data' }),
-  ).toHaveCount(0)
 })

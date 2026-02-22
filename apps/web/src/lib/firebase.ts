@@ -14,6 +14,20 @@ interface FirebaseRuntimeConfig {
   storageBucket?: string
 }
 
+function readBooleanEnv(value: string | undefined): boolean {
+  if (!value) {
+    return false
+  }
+
+  const normalized = value.trim().toLowerCase()
+  return (
+    normalized === '1' ||
+    normalized === 'true' ||
+    normalized === 'yes' ||
+    normalized === 'on'
+  )
+}
+
 function readRequiredEnv(value: string | undefined): string | null {
   if (!value || value.trim().length === 0) {
     return null
@@ -22,7 +36,15 @@ function readRequiredEnv(value: string | undefined): string | null {
   return value
 }
 
+const isFirebaseAuthForceDisabled = readBooleanEnv(
+  import.meta.env.VITE_DISABLE_AUTH,
+)
+
 function getFirebaseRuntimeConfig(): FirebaseRuntimeConfig | null {
+  if (isFirebaseAuthForceDisabled) {
+    return null
+  }
+
   const apiKey = readRequiredEnv(import.meta.env.VITE_FIREBASE_API_KEY)
   const projectId = readRequiredEnv(import.meta.env.VITE_FIREBASE_PROJECT_ID)
   const authDomainEnv = readRequiredEnv(

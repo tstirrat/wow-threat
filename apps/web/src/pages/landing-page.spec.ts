@@ -67,6 +67,9 @@ test.describe('landing page', () => {
     await page.getByRole('button', { name: 'Load report' }).click()
 
     await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}`))
+    await expect(
+      page.getByRole('region', { name: 'Report header' }),
+    ).toContainText(e2eReportResponse.title)
 
     await page.goBack()
     await expect(page).toHaveURL('/')
@@ -83,6 +86,9 @@ test.describe('landing page', () => {
     await page.getByLabel('Report URL or ID').fill(e2eValidFreshReportUrl)
     await page.getByRole('button', { name: 'Load report' }).click()
     await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}`))
+    await expect(
+      page.getByRole('region', { name: 'Report header' }),
+    ).toContainText(e2eReportResponse.title)
 
     await page.goBack()
     await expect(page).toHaveURL('/')

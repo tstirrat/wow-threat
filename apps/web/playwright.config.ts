@@ -12,6 +12,10 @@ export default defineConfig({
   },
   webServer: {
     command: 'pnpm --filter @wow-threat/web dev --port 9090',
+    env: {
+      ...process.env,
+      VITE_DISABLE_AUTH: 'true',
+    },
     port: 9090,
     reuseExistingServer: true,
     timeout: 120000,
