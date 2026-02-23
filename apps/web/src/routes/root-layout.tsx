@@ -13,13 +13,35 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ChevronDown, Loader2 } from 'lucide-react'
-import type { FC } from 'react'
+import { useWclRateLimit } from '@/hooks/use-wcl-rate-limit'
+import { ChevronDown, Loader2, RefreshCw } from 'lucide-react'
+import { type FC, useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
 
 const warcraftLogsHomeUrl = 'https://www.warcraftlogs.com'
 
+function formatResetDuration(totalSeconds: number): string {
+  const safeSeconds = Math.max(0, Math.floor(totalSeconds))
+  const hours = Math.floor(safeSeconds / 3600)
+  const minutes = Math.floor((safeSeconds % 3600) / 60)
+  const seconds = safeSeconds % 60
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`
+  }
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`
+  }
+
+  return `${seconds}s`
+}
+
+function formatSpentPoints(pointsSpentThisHour: number): string {
+  return String(Math.max(0, Math.floor(pointsSpentThisHour)))
+}
+
 export const RootLayout: FC = () => {
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
   const {
     authEnabled,
     authError,
@@ -31,10 +53,23 @@ export const RootLayout: FC = () => {
     wclUserId,
     wclUserName,
   } = useAuth()
+  const {
+    rateLimit,
+    isLoading: isRateLimitLoading,
+    isRefreshing: isRateLimitRefreshing,
+    error: rateLimitError,
+    refresh: refreshRateLimit,
+  } = useWclRateLimit()
   const shouldShowAuthGate = authEnabled && !isInitializing && !user
   const isSignInInProgress = shouldShowAuthGate && isBusy
   const displayUserName =
     wclUserName ?? user?.displayName ?? user?.uid ?? 'Warcraft Logs user'
+  const handleAccountMenuOpenChange = (nextOpen: boolean): void => {
+    setIsAccountMenuOpen(nextOpen)
+    if (nextOpen) {
+      void refreshRateLimit()
+    }
+  }
 
   return (
     <div className="min-h-screen text-text">
@@ -50,18 +85,68 @@ export const RootLayout: FC = () => {
                 Auth disabled
               </span>
             ) : user ? (
-              <DropdownMenu>
+              <DropdownMenu
+                open={isAccountMenuOpen}
+                onOpenChange={handleAccountMenuOpenChange}
+              >
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" type="button" variant="outline">
                     {displayUserName}
                     <ChevronDown aria-hidden="true" className="size-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-64">
                   <DropdownMenuLabel>{displayUserName}</DropdownMenuLabel>
                   {wclUserId ? (
                     <DropdownMenuLabel className="pt-0">
                       WCL ID: {wclUserId}
+                    </DropdownMenuLabel>
+                  ) : null}
+                  {rateLimit ? (
+                    <>
+                      <DropdownMenuLabel className="pt-0 text-xs font-normal text-muted-foreground">
+                        <span className="flex items-center justify-between gap-2">
+                          <span>
+                            Spent:{' '}
+                            {formatSpentPoints(rateLimit.pointsSpentThisHour)}/
+                            {rateLimit.limitPerHour}
+                          </span>
+                          <Button
+                            aria-label="Refresh WCL rate limit"
+                            disabled={
+                              isRateLimitLoading || isRateLimitRefreshing
+                            }
+                            size="icon-xs"
+                            type="button"
+                            variant="ghost"
+                            onClick={(event) => {
+                              event.preventDefault()
+                              event.stopPropagation()
+                              void refreshRateLimit()
+                            }}
+                          >
+                            <RefreshCw
+                              aria-hidden="true"
+                              className={
+                                isRateLimitRefreshing ? 'animate-spin' : ''
+                              }
+                            />
+                          </Button>
+                        </span>
+                      </DropdownMenuLabel>
+                      <DropdownMenuLabel className="pt-0 text-xs font-normal text-muted-foreground">
+                        Reset: {formatResetDuration(rateLimit.pointsResetIn)}
+                      </DropdownMenuLabel>
+                    </>
+                  ) : null}
+                  {!rateLimit && isRateLimitLoading ? (
+                    <DropdownMenuLabel className="pt-0 text-xs font-normal text-muted-foreground">
+                      Loading API usage...
+                    </DropdownMenuLabel>
+                  ) : null}
+                  {!rateLimit && !isRateLimitLoading && rateLimitError ? (
+                    <DropdownMenuLabel className="pt-0 text-xs font-normal text-muted-foreground">
+                      API usage unavailable
                     </DropdownMenuLabel>
                   ) : null}
                   <DropdownMenuSeparator />

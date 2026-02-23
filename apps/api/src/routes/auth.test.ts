@@ -59,6 +59,26 @@ function createAuthFetchMock() {
       )
     }
 
+    if (url.toString().includes('warcraftlogs.com/api/v2/client')) {
+      return new Response(
+        JSON.stringify({
+          data: {
+            rateLimitData: {
+              limitPerHour: 12000,
+              pointsSpentThisHour: 4184.5,
+              pointsResetIn: 1740,
+            },
+          },
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      )
+    }
+
     if (url.toString().startsWith(firestorePrefix)) {
       const relativePath = decodeURIComponent(
         url.toString().slice(firestorePrefix.length).split('?')[0] ?? '',
@@ -293,6 +313,36 @@ describe('Auth Routes', () => {
       String(input).includes('warcraftlogs.com/api/v2/user'),
     )
     expect(userCalls).toHaveLength(1)
+  })
+
+  it('returns current wcl api rate limit data for an authenticated user', async () => {
+    const res = await app.request(
+      'http://localhost/auth/wcl/rate-limit',
+      {
+        headers: {
+          Authorization: 'Bearer test-firebase-id-token:wcl:12345',
+        },
+      },
+      createMockBindings(),
+    )
+
+    expect(res.status).toBe(200)
+    expect(res.headers.get('Cache-Control')).toBe('private, no-store')
+    expect(await res.json()).toEqual({
+      limitPerHour: 12000,
+      pointsSpentThisHour: 4184.5,
+      pointsResetIn: 1740,
+    })
+  })
+
+  it('rejects unauthenticated wcl rate limit requests', async () => {
+    const res = await app.request(
+      'http://localhost/auth/wcl/rate-limit',
+      {},
+      createMockBindings(),
+    )
+
+    expect(res.status).toBe(401)
   })
 
   it('exchanges bridge code once and rejects reuse', async () => {

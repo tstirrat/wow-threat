@@ -101,6 +101,12 @@ export interface RecentReportsResponse {
   reports: RecentReportSummary[]
 }
 
+export interface WclRateLimitResponse {
+  limitPerHour: number
+  pointsSpentThisHour: number
+  pointsResetIn: number
+}
+
 export interface FightsResponse {
   id: number
   reportCode: string

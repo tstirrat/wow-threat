@@ -2,16 +2,22 @@
  * Unit tests for auth gate state rendering in RootLayout.
  */
 import type { AuthContextValue } from '@/auth/auth-provider'
+import type { UseWclRateLimitResult } from '@/hooks/use-wcl-rate-limit'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
 import { RootLayout } from './root-layout'
 
 const useAuthMock = vi.fn()
+const useWclRateLimitMock = vi.fn()
 
 vi.mock('@/auth/auth-provider', () => ({
   useAuth: () => useAuthMock(),
+}))
+vi.mock('@/hooks/use-wcl-rate-limit', () => ({
+  useWclRateLimit: () => useWclRateLimitMock(),
 }))
 
 function createMockAuthValue(
@@ -28,6 +34,19 @@ function createMockAuthValue(
     user: null,
     wclUserId: null,
     wclUserName: null,
+    ...overrides,
+  }
+}
+
+function createMockWclRateLimitValue(
+  overrides: Partial<UseWclRateLimitResult> = {},
+): UseWclRateLimitResult {
+  return {
+    rateLimit: null,
+    isLoading: false,
+    isRefreshing: false,
+    error: null,
+    refresh: vi.fn(async () => {}),
     ...overrides,
   }
 }
@@ -49,6 +68,7 @@ function renderLayout(pathname = '/'): void {
 
 describe('RootLayout', () => {
   it('shows sign-in required state when idle and signed out', () => {
+    useWclRateLimitMock.mockReturnValue(createMockWclRateLimitValue())
     useAuthMock.mockReturnValue(createMockAuthValue({ isBusy: false }))
 
     renderLayout('/')
@@ -63,6 +83,7 @@ describe('RootLayout', () => {
   })
 
   it('shows completing sign-in loader state while popup flow is finalizing', () => {
+    useWclRateLimitMock.mockReturnValue(createMockWclRateLimitValue())
     useAuthMock.mockReturnValue(createMockAuthValue({ isBusy: true }))
 
     renderLayout('/')
@@ -84,6 +105,7 @@ describe('RootLayout', () => {
   })
 
   it('shows signed-in username in account dropdown trigger', () => {
+    useWclRateLimitMock.mockReturnValue(createMockWclRateLimitValue())
     useAuthMock.mockReturnValue(
       createMockAuthValue({
         user: {
@@ -96,5 +118,42 @@ describe('RootLayout', () => {
     renderLayout('/')
 
     expect(screen.getByRole('button', { name: /TestUser/i })).toBeTruthy()
+  })
+
+  it('shows wcl api rate limit details inside the account dropdown', async () => {
+    const refreshMock = vi.fn(async () => {})
+    useWclRateLimitMock.mockReturnValue(
+      createMockWclRateLimitValue({
+        rateLimit: {
+          limitPerHour: 12000,
+          pointsSpentThisHour: 4184.5,
+          pointsResetIn: 1740,
+        },
+        refresh: refreshMock,
+      }),
+    )
+    useAuthMock.mockReturnValue(
+      createMockAuthValue({
+        user: {
+          uid: 'wcl:12345',
+        } as AuthContextValue['user'],
+        wclUserName: 'TestUser',
+      }),
+    )
+
+    renderLayout('/')
+
+    await userEvent.click(screen.getByRole('button', { name: /TestUser/i }))
+
+    expect(screen.getByText('Spent: 4184/12000')).toBeTruthy()
+    expect(screen.getByText('Reset: 29m 0s')).toBeTruthy()
+    expect(refreshMock).toHaveBeenCalledTimes(1)
+
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: 'Refresh WCL rate limit',
+      }),
+    )
+    expect(refreshMock).toHaveBeenCalledTimes(2)
   })
 })

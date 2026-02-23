@@ -12,6 +12,7 @@ import {
   wclApiError,
   wclRateLimited,
 } from '../middleware/error'
+import type { WclRateLimitResponse } from '../types/api'
 import type { Bindings } from '../types/bindings'
 import { AuthStore } from './auth-store'
 import {
@@ -57,6 +58,14 @@ interface WclRecentReportsData {
     reports?: {
       data?: WclRecentReportNode[] | null
     } | null
+  } | null
+}
+
+interface WclRateLimitData {
+  rateLimitData?: {
+    limitPerHour?: number | null
+    pointsSpentThisHour?: number | null
+    pointsResetIn?: number | null
   } | null
 }
 
@@ -360,6 +369,29 @@ function canAccessReportEvents(node: WclRecentReportNode): boolean {
   return !isArchived && !isInaccessible
 }
 
+function parseWclRateLimitData(data: WclRateLimitData): WclRateLimitResponse {
+  const limitPerHour = data.rateLimitData?.limitPerHour
+  const pointsSpentThisHour = data.rateLimitData?.pointsSpentThisHour
+  const pointsResetIn = data.rateLimitData?.pointsResetIn
+
+  if (
+    typeof limitPerHour !== 'number' ||
+    !Number.isFinite(limitPerHour) ||
+    typeof pointsSpentThisHour !== 'number' ||
+    !Number.isFinite(pointsSpentThisHour) ||
+    typeof pointsResetIn !== 'number' ||
+    !Number.isFinite(pointsResetIn)
+  ) {
+    throw wclApiError('WCL rate limit payload was missing expected fields')
+  }
+
+  return {
+    limitPerHour,
+    pointsSpentThisHour,
+    pointsResetIn,
+  }
+}
+
 export class WCLClient {
   private readonly authStore: AuthStore
   private readonly cache: CacheService
@@ -631,6 +663,27 @@ export class WCLClient {
 
     await this.cacheReport(code, userData)
     return userData
+  }
+
+  /** Get WCL GraphQL key usage details for the current hour. */
+  async getRateLimitData(): Promise<WclRateLimitResponse> {
+    const data = await this.query<WclRateLimitData>(
+      `
+        query GetRateLimitData {
+          rateLimitData {
+            limitPerHour
+            pointsSpentThisHour
+            pointsResetIn
+          }
+        }
+      `,
+      {},
+      {
+        scope: 'client',
+      },
+    )
+
+    return parseWclRateLimitData(data)
   }
 
   private async getCurrentUserProfile(

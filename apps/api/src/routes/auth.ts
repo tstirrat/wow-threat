@@ -12,11 +12,13 @@ import {
 } from '../services/firebase-auth'
 import { isOriginAllowed, parseAllowedOrigins } from '../services/origins'
 import { createRandomBase64Url } from '../services/token-utils'
+import { WCLClient } from '../services/wcl'
 import {
   buildWclLoginUrl,
   exchangeWclAuthorizationCode,
   fetchCurrentWclUser,
 } from '../services/wcl-oauth'
+import type { WclRateLimitResponse } from '../types/api'
 import type { Bindings, Variables } from '../types/bindings'
 
 const OAUTH_STATE_TTL_SECONDS = 600
@@ -238,4 +240,19 @@ authRoutes.post('/logout', async (c) => {
   await authStore.deleteWclTokens(verifiedToken.uid)
 
   return c.body(null, 204)
+})
+
+/**
+ * GET /auth/wcl/rate-limit
+ * Returns WCL GraphQL API key usage for the current hour.
+ */
+authRoutes.get('/wcl/rate-limit', async (c) => {
+  const idToken = parseBearerToken(c.req.header('authorization'))
+  const verifiedToken = await verifyFirebaseIdToken(idToken, c.env)
+  const wcl = new WCLClient(c.env, verifiedToken.uid)
+  const rateLimitData = await wcl.getRateLimitData()
+
+  return c.json<WclRateLimitResponse>(rateLimitData, 200, {
+    'Cache-Control': 'private, no-store',
+  })
 })

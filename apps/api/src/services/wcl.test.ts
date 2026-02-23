@@ -218,6 +218,66 @@ describe('WCLClient.getReport', () => {
   })
 })
 
+describe('WCLClient.getRateLimitData', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-01-15T00:00:00Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('returns rate limit data from the client graphql endpoint', async () => {
+    const mockFetch = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString()
+
+        if (url.includes('warcraftlogs.com/oauth/token')) {
+          return new Response(
+            JSON.stringify({
+              access_token: 'client-token',
+              expires_in: 3600,
+              token_type: 'Bearer',
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          )
+        }
+
+        if (url.includes('warcraftlogs.com/api/v2/client')) {
+          const body = init?.body ? JSON.parse(init.body.toString()) : {}
+          expect(body.query as string).toContain('rateLimitData')
+          return new Response(
+            JSON.stringify({
+              data: {
+                rateLimitData: {
+                  limitPerHour: 12000,
+                  pointsSpentThisHour: 2375.5,
+                  pointsResetIn: 901,
+                },
+              },
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          )
+        }
+
+        return new Response(null, { status: 404 })
+      },
+    )
+    vi.stubGlobal('fetch', mockFetch)
+
+    const client = new WCLClient(createMockBindings(), 'wcl:12345')
+    const result = await client.getRateLimitData()
+
+    expect(result).toEqual({
+      limitPerHour: 12000,
+      pointsSpentThisHour: 2375.5,
+      pointsResetIn: 901,
+    })
+  })
+})
+
 describe('WCLClient.getEvents', () => {
   beforeEach(() => {
     vi.useFakeTimers()
