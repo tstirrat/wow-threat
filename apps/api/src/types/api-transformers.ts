@@ -56,7 +56,6 @@ export function toReportFightParticipant(
   return {
     id: participant.id,
     gameID: participant.gameID,
-    name: participant.name,
     instanceCount: participant.instanceCount,
     groupCount: participant.groupCount,
     petOwner: participant.petOwner ?? null,

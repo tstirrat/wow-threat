@@ -1,7 +1,17 @@
 import type { WCLEvent } from './events'
 
 /**
- * WCL Report and Fight Types
+ * WCL query-shape report payload types used by this app.
+ *
+ * These types model the GraphQL response fields our API actually selects today
+ * (for example `WCLClient.getReport` and `WCLClient.getEvents`), not the full
+ * Warcraft Logs schema surface.
+ *
+ * Keep this file aligned with selection sets in
+ * `apps/api/src/services/wcl.ts`.
+ *
+ * For an introspection-derived schema snapshot of everything reachable from
+ * `Report`, see `report-schema.ts`.
  */
 export interface Zone {
   id: number
@@ -19,33 +29,27 @@ export interface Zone {
 export interface ReportFightNPC {
   id: number
   gameID: number
-  /** Present when requested in GraphQL selection set */
-  name?: string
   instanceCount: number // Multiple of same enemy
   groupCount: number
   petOwner?: number | null
 }
 
-export type ReportVisibility = 'public' | 'private'
+/**
+ * WCL `Report.visibility` is a GraphQL `String!`; the app normalizes values to
+ * public/private but unknown future values should remain type-safe.
+ */
+export type ReportVisibility = 'public' | 'private' | (string & {})
 
 export interface PhaseMetadata {
   id: number
   name: string
-  startTime: number
-  endTime: number
+  isIntermission?: boolean | null
 }
 
-export interface Report {
-  code: string
-  title: string
-  owner: string
-  visibility?: ReportVisibility | null
-  guild: ReportGuild | null
-  startTime: number // Unix timestamp ms
-  endTime: number
-  gameVersion: number // WCL gameVersion integer (determines threat config)
-  zone: Zone
-  fights: ReportFight[]
+export interface ReportEncounterPhases {
+  encounterID: number
+  separatesWipes?: boolean | null
+  phases: PhaseMetadata[]
 }
 
 export interface ReportFight {
@@ -61,9 +65,28 @@ export interface ReportFight {
   fightPercentage: number | null
   enemyNPCs: ReportFightNPC[]
   enemyPets: ReportFightNPC[]
+  enemyPlayers?: number[]
   friendlyPlayers: number[]
   friendlyPets: ReportFightNPC[]
-  // friendlyNPCs: ReportFightNPC[] // unused
+  friendlyNPCs?: ReportFightNPC[]
+
+  // ReportFight fields available in schema but not currently selected by API
+  averageItemLevel?: number | null
+  completeRaid?: boolean
+  hardModeLevel?: number | null
+  inProgress?: boolean | null
+  keystoneAffixes?: number[]
+  keystoneBonus?: number | null
+  keystoneLevel?: number | null
+  keystoneTime?: number | null
+  lastPhase?: number | null
+  lastPhaseAsAbsoluteIndex?: number | null
+  lastPhaseIsIntermission?: boolean | null
+  layer?: number | null
+  originalEncounterID?: number | null
+  rating?: number | null
+  size?: number | null
+  wipeCalledTime?: number | null
 }
 
 export type PlayerClass =
@@ -118,6 +141,10 @@ export interface ReportGuild {
   faction: GameFaction
 }
 
+export interface ReportOwner {
+  name: string
+}
+
 export interface ReportArchiveStatus {
   isArchived: boolean
   isAccessible: boolean
@@ -131,31 +158,65 @@ export interface ReportAbility {
   type: string | null
 }
 
+export interface ReportMasterData {
+  gameVersion: number
+  actors: ReportActor[]
+  abilities?: ReportAbility[]
+  logVersion?: number
+  lang?: string | null
+}
+
+export interface ReportRankedCharacterServer {
+  id: number
+  name: string
+  normalizedName?: string
+  slug?: string
+}
+
+export interface ReportRankedCharacter {
+  canonicalID: number
+  claimed?: boolean | null
+  classID: number
+  faction: GameFaction
+  guildRank: number
+  hidden: boolean
+  id: number
+  level: number
+  name: string
+  server: ReportRankedCharacterServer
+  encounterRankings?: unknown
+  zoneRankings?: unknown
+}
+
+export type ReportRankingCompareType = 'Rankings' | 'Parses'
+export type ReportRankingTimeframeType = 'Today' | 'Historical'
+export type ReportRoleType = 'Any' | 'DPS' | 'Healer' | 'Tank'
+
+export interface Report {
+  code: string
+  title: string
+  owner: ReportOwner
+  visibility?: ReportVisibility | null
+  guild: ReportGuild | null
+  startTime: number // Unix timestamp ms
+  endTime: number
+  zone: Zone
+  fights: ReportFight[]
+  masterData: ReportMasterData
+  archiveStatus?: ReportArchiveStatus | null
+
+  // Report-root fields available by selection when needed
+  rankedCharacters?: ReportRankedCharacter[] | null
+  rankings?: unknown
+  playerDetails?: unknown
+  phases?: ReportEncounterPhases[] | null
+}
+
 /** WCL GraphQL response wrapper for report data */
 export interface WCLReportResponse {
   data: {
     reportData: {
-      report: {
-        code: string
-        title: string
-        visibility?: ReportVisibility | null
-        owner: { name: string }
-        guild: ReportGuild | null
-        archiveStatus?: {
-          isArchived?: boolean | null
-          isAccessible?: boolean | null
-          archiveDate?: number | null
-        } | null
-        startTime: number
-        endTime: number
-        zone: Zone
-        fights: ReportFight[]
-        masterData: {
-          gameVersion: number
-          actors: ReportActor[]
-          abilities?: ReportAbility[]
-        }
-      }
+      report: Report
     }
   }
 }
