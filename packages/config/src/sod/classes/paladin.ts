@@ -37,12 +37,15 @@ const Mods = {
   RighteousFury: 1.6,
   /** While RF is up, increases the base from 1.6 to 1.8 */
   HandOfReckoning: 1.5,
+
+  VengeanceR1: -0.06,
+  VengeanceR2: -0.12,
+  VengeanceR3: -0.18,
+  VengeanceR4: -0.24,
+  VengeanceR5: -0.3,
 } as const
 
-const RIGHTEOUS_FURY_AURA_IDS = [
-  EraSpells.RighteousFury,
-  Spells.RighteousFurySoD,
-] as const
+const RIGHTEOUS_FURY_AURA_IDS = [Spells.RighteousFurySoD] as const
 
 function buildImprovedRighteousFuryModifier(
   multiplier: number,
@@ -99,12 +102,51 @@ export const paladinConfig: ClassThreatConfig = {
         ? Mods.HandOfReckoning
         : 1,
     }),
+    [Spells.VengeanceR1]: (ctx) => ({
+      source: 'talent',
+      name: 'Vengeance (Rank 1)',
+      value: ctx.sourceAuras.has(Spells.RighteousFurySoD)
+        ? 1
+        : 1 + Mods.VengeanceR1,
+    }),
+
+    [Spells.VengeanceR2]: (ctx) => ({
+      source: 'talent',
+      name: 'Vengeance (Rank 2)',
+      value: ctx.sourceAuras.has(Spells.RighteousFurySoD)
+        ? 1
+        : 1 + Mods.VengeanceR2,
+    }),
+    [Spells.VengeanceR3]: (ctx) => ({
+      source: 'talent',
+      name: 'Vengeance (Rank 3)',
+      value: ctx.sourceAuras.has(Spells.RighteousFurySoD)
+        ? 1
+        : 1 + Mods.VengeanceR3,
+    }),
+    [Spells.VengeanceR4]: (ctx) => ({
+      source: 'talent',
+      name: 'Vengeance (Rank 4)',
+      value: ctx.sourceAuras.has(Spells.RighteousFurySoD)
+        ? 1
+        : 1 + Mods.VengeanceR4,
+    }),
+    [Spells.VengeanceR5]: (ctx) => ({
+      source: 'talent',
+      name: 'Vengeance (Rank 5)',
+      value: ctx.sourceAuras.has(Spells.RighteousFurySoD)
+        ? 1
+        : 1 + Mods.VengeanceR5,
+    }),
   },
 
   abilities: {
     ...eraPaladinConfig.abilities,
     [Spells.HandOfReckoning]: tauntTarget({ bonus: 0, eventTypes: ['cast'] }),
   },
+
+  auraImplications: eraPaladinConfig.auraImplications,
+  talentImplications: eraPaladinConfig.talentImplications,
 
   fixateBuffs: new Set([
     ...(eraPaladinConfig.fixateBuffs ?? []),

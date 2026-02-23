@@ -9,6 +9,7 @@ import type {
   TalentImplicationContext,
 } from '@wow-threat/shared'
 
+import { eraConfig } from '../../era'
 import {
   Spells as EraSpells,
   paladinConfig as eraPaladinConfig,
@@ -54,25 +55,29 @@ export const Spells = {
   HolyLightR10: 27135, // https://www.wowhead.com/tbc/spell=27135/
   HolyLightR11: 27136, // https://www.wowhead.com/tbc/spell=27136/
   FlashOfLightR7: 27137, // https://www.wowhead.com/tbc/spell=27137/
+
+  FanaticismR1: 31879, // https://www.wowhead.com/tbc/spell=31879/
+  FanaticismR2: 31880, // https://www.wowhead.com/tbc/spell=31880/
+  FanaticismR3: 31881, // https://www.wowhead.com/tbc/spell=31881/
+  FanaticismR4: 31882, // https://www.wowhead.com/tbc/spell=31882/
+  FanaticismR5: 31883, // https://www.wowhead.com/tbc/spell=31883/
 } as const
 
-const IMPROVED_RF_RANKS = [
-  Spells.ImprovedRighteousFuryR1,
-  Spells.ImprovedRighteousFuryR2,
-  Spells.ImprovedRighteousFuryR3,
-] as const
+const Mods = {
+  Fanaticism: -0.06,
+} as const
 
 const FANATICISM_RANKS = [
-  Spells.VengeanceR1,
-  Spells.VengeanceR2,
-  Spells.VengeanceR3,
-  Spells.VengeanceR4,
-  Spells.VengeanceR5,
+  Spells.FanaticismR1,
+  Spells.FanaticismR2,
+  Spells.FanaticismR3,
+  Spells.FanaticismR4,
+  Spells.FanaticismR5,
 ] as const
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const PROT = 1
 const RET = 2
-const IMP_RF_THRESHOLD = 13
 const FANATICISM_THRESHOLD = 40
 
 function buildAuraImplications(): Map<SpellId, ReadonlySet<SpellId>> {
@@ -94,30 +99,40 @@ export const paladinConfig: ClassThreatConfig = {
   auraModifiers: {
     ...eraPaladinConfig.auraModifiers,
 
-    [Spells.VengeanceR1]: (ctx) => ({
+    [Spells.FanaticismR1]: (ctx) => ({
       source: 'talent',
       name: 'Fanaticism (Rank 1)',
-      value: hasRighteousFuryAura(ctx.sourceAuras) ? 1 : 0.94,
+      value: hasRighteousFuryAura(ctx.sourceAuras)
+        ? 1
+        : 1 + Mods.Fanaticism * 1,
     }),
-    [Spells.VengeanceR2]: (ctx) => ({
+    [Spells.FanaticismR2]: (ctx) => ({
       source: 'talent',
       name: 'Fanaticism (Rank 2)',
-      value: hasRighteousFuryAura(ctx.sourceAuras) ? 1 : 0.88,
+      value: hasRighteousFuryAura(ctx.sourceAuras)
+        ? 1
+        : 1 + Mods.Fanaticism * 2,
     }),
-    [Spells.VengeanceR3]: (ctx) => ({
+    [Spells.FanaticismR3]: (ctx) => ({
       source: 'talent',
       name: 'Fanaticism (Rank 3)',
-      value: hasRighteousFuryAura(ctx.sourceAuras) ? 1 : 0.82,
+      value: hasRighteousFuryAura(ctx.sourceAuras)
+        ? 1
+        : 1 + Mods.Fanaticism * 3,
     }),
-    [Spells.VengeanceR4]: (ctx) => ({
+    [Spells.FanaticismR4]: (ctx) => ({
       source: 'talent',
       name: 'Fanaticism (Rank 4)',
-      value: hasRighteousFuryAura(ctx.sourceAuras) ? 1 : 0.76,
+      value: hasRighteousFuryAura(ctx.sourceAuras)
+        ? 1
+        : 1 + Mods.Fanaticism * 4,
     }),
-    [Spells.VengeanceR5]: (ctx) => ({
+    [Spells.FanaticismR5]: (ctx) => ({
       source: 'talent',
       name: 'Fanaticism (Rank 5)',
-      value: hasRighteousFuryAura(ctx.sourceAuras) ? 1 : 0.7,
+      value: hasRighteousFuryAura(ctx.sourceAuras)
+        ? 1
+        : 1 + Mods.Fanaticism * 5,
     }),
   },
 
@@ -169,14 +184,7 @@ export const paladinConfig: ClassThreatConfig = {
   },
 
   talentImplications: (ctx: TalentImplicationContext): SpellId[] => {
-    const inferredAuras: SpellId[] = []
-
-    const impRf = inferTalent(ctx, IMPROVED_RF_RANKS, (points) =>
-      points[PROT] >= IMP_RF_THRESHOLD ? IMPROVED_RF_RANKS.length : 0,
-    )
-    if (impRf) {
-      inferredAuras.push(impRf as SpellId)
-    }
+    const inferredAuras = eraPaladinConfig.talentImplications?.(ctx) ?? []
 
     const fanaticism = inferTalent(ctx, FANATICISM_RANKS, (points) =>
       points[RET] >= FANATICISM_THRESHOLD ? FANATICISM_RANKS.length : 0,

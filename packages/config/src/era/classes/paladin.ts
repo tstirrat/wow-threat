@@ -50,11 +50,11 @@ export const Spells = {
   ImprovedRighteousFuryR1: 20468, // https://www.wowhead.com/classic/spell=20468/
   ImprovedRighteousFuryR2: 20469, // https://www.wowhead.com/classic/spell=20469/
   ImprovedRighteousFuryR3: 20470, // https://www.wowhead.com/classic/spell=20470/
-  VengeanceR1: 20210, // https://www.wowhead.com/classic/spell=20210/
-  VengeanceR2: 20212, // https://www.wowhead.com/classic/spell=20212/
-  VengeanceR3: 20213, // https://www.wowhead.com/classic/spell=20213/
-  VengeanceR4: 20214, // https://www.wowhead.com/classic/spell=20214/
-  VengeanceR5: 20215, // https://www.wowhead.com/classic/spell=20215/
+  VengeanceR1: 20049, // https://www.wowhead.com/classic/spell=20049/
+  VengeanceR2: 20056, // https://www.wowhead.com/classic/spell=20056/
+  VengeanceR3: 20057, // https://www.wowhead.com/classic/spell=20057/
+  VengeanceR4: 20058, // https://www.wowhead.com/classic/spell=20058/
+  VengeanceR5: 20059, // https://www.wowhead.com/classic/spell=20059/
 } as const
 
 const Mods = {
@@ -62,11 +62,6 @@ const Mods = {
   ImprovedRighteousFuryR1: 1.696,
   ImprovedRighteousFuryR2: 1.798,
   ImprovedRighteousFuryR3: 1.9,
-  VengeanceR1: -0.06,
-  VengeanceR2: -0.12,
-  VengeanceR3: -0.18,
-  VengeanceR4: -0.24,
-  VengeanceR5: -0.3,
 } as const
 
 const IMP_RF_RANKS = [
@@ -149,32 +144,6 @@ export const paladinConfig: ClassThreatConfig = {
         ? Mods.ImprovedRighteousFuryR3 / Mods.RighteousFury
         : 1,
       schoolMask: SpellSchool.Holy,
-    }),
-
-    [Spells.VengeanceR1]: () => ({
-      source: 'talent',
-      name: 'Vengeance (Rank 1)',
-      value: 1 + Mods.VengeanceR1,
-    }),
-    [Spells.VengeanceR2]: () => ({
-      source: 'talent',
-      name: 'Vengeance (Rank 2)',
-      value: 1 + Mods.VengeanceR2,
-    }),
-    [Spells.VengeanceR3]: () => ({
-      source: 'talent',
-      name: 'Vengeance (Rank 3)',
-      value: 1 + Mods.VengeanceR3,
-    }),
-    [Spells.VengeanceR4]: () => ({
-      source: 'talent',
-      name: 'Vengeance (Rank 4)',
-      value: 1 + Mods.VengeanceR4,
-    }),
-    [Spells.VengeanceR5]: () => ({
-      source: 'talent',
-      name: 'Vengeance (Rank 5)',
-      value: 1 + Mods.VengeanceR5,
     }),
 
     // Blessing of Salvation - 0.7x threat
