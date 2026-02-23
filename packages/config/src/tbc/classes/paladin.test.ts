@@ -38,6 +38,17 @@ function createMockContext(
 }
 
 describe('tbc paladin config', () => {
+  it('returns Fanaticism rank 5 threat reduction', () => {
+    const modifierFn = paladinConfig.auraModifiers[Spells.FanaticismR5]
+    expect(modifierFn).toBeDefined()
+
+    const modifier = modifierFn!(createMockContext())
+
+    expect(modifier.name).toBe('Fanaticism (Rank 5)')
+    expect(modifier.value).toBe(0.7)
+    expect(modifier.source).toBe('talent')
+  })
+
   it('uses seal of righteousness rank 9 buff-or-damage threat behavior', () => {
     const formula = paladinConfig.abilities[Spells.SealOfRighteousnessR9]
     expect(formula).toBeDefined()

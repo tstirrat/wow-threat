@@ -9,7 +9,6 @@ import type {
   TalentImplicationContext,
 } from '@wow-threat/shared'
 
-import { eraConfig } from '../../era'
 import {
   Spells as EraSpells,
   paladinConfig as eraPaladinConfig,

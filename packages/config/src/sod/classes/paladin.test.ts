@@ -25,6 +25,17 @@ describe('sod paladin config', () => {
     expect(auras).toContain(Spells.EngraveHandOfReckoning)
   })
 
+  it('returns Vengeance rank 5 threat reduction', () => {
+    const modifierFn = paladinConfig.auraModifiers[Spells.VengeanceR5]
+    expect(modifierFn).toBeDefined()
+
+    const modifier = modifierFn!(createCastContext())
+
+    expect(modifier.name).toBe('Vengeance (Rank 5)')
+    expect(modifier.value).toBe(0.7)
+    expect(modifier.source).toBe('talent')
+  })
+
   it('applies hand of reckoning conditional aura modifier and taunt fixate', () => {
     const engraveModifier =
       paladinConfig.auraModifiers[Spells.EngraveHandOfReckoning]

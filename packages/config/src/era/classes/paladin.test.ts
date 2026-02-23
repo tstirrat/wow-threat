@@ -151,17 +151,6 @@ describe('Paladin Config', () => {
       expect(withRighteousFury.value).toBeCloseTo(1.1875, 6)
       expect(withRighteousFury.schoolMask).toBe(SpellSchool.Holy)
     })
-
-    it('returns Vengeance rank 5 threat reduction', () => {
-      const modifierFn = paladinConfig.auraModifiers[Spells.VengeanceR5]
-      expect(modifierFn).toBeDefined()
-
-      const modifier = modifierFn!(createMockContext())
-
-      expect(modifier.name).toBe('Vengeance (Rank 5)')
-      expect(modifier.value).toBe(0.7)
-      expect(modifier.source).toBe('talent')
-    })
   })
 
   describe('talentImplications', () => {
