@@ -4,8 +4,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createMockBindings } from '../../test/setup'
-import { AuthStore } from '../services/auth-store'
 import app from '../index'
+import { AuthStore } from '../services/auth-store'
 
 interface FirestoreDocument {
   fields: Record<string, unknown>
@@ -430,7 +430,7 @@ describe('Auth Routes', () => {
     expect(reuseRes.status).toBe(401)
   })
 
-  it('revokes stored WCL refresh token during logout before deleting local tokens', async () => {
+  it('deletes stored WCL tokens during logout', async () => {
     const bindings = createMockBindings()
     const authStore = new AuthStore(bindings)
     await authStore.saveWclTokens({
@@ -456,21 +456,6 @@ describe('Auth Routes', () => {
     )
     expect(logoutRes.status).toBe(204)
 
-    const revokeCalls = fetchMock.mock.calls.filter(([input]) =>
-      String(input).includes('warcraftlogs.com/oauth/revoke'),
-    )
-    expect(revokeCalls).toHaveLength(1)
-    const revokeCall = revokeCalls[0]
-    expect(revokeCall?.[1]?.method).toBe('POST')
-
-    const revokeBody = revokeCall?.[1]?.body
-    const revokeParams =
-      revokeBody instanceof URLSearchParams
-        ? revokeBody
-        : new URLSearchParams(String(revokeBody))
-    expect(revokeParams.get('token')).toBe('wcl-refresh-token')
-    expect(revokeParams.get('token_type_hint')).toBe('refresh_token')
-
     const deleteCalls = fetchMock.mock.calls.filter(([input, init]) => {
       return (
         String(input).includes('documents/wcl_auth_tokens/wcl') &&
@@ -478,5 +463,10 @@ describe('Auth Routes', () => {
       )
     })
     expect(deleteCalls).toHaveLength(1)
+
+    const revokeCalls = fetchMock.mock.calls.filter(([input]) =>
+      String(input).includes('warcraftlogs.com/oauth/revoke'),
+    )
+    expect(revokeCalls).toHaveLength(0)
   })
 })
