@@ -163,6 +163,7 @@ export interface Enemy {
   instance: number
 }
 
+/** A modifier that can be applied to threat calculations */
 export interface ThreatModifier {
   source: ModifierSource
   name: string
@@ -172,6 +173,12 @@ export interface ThreatModifier {
   value: number
   /** If specified, restricts modifier to events whose school intersects this bitmask. */
   schoolMask?: number
+}
+
+/** A threat modifier that has been applied to an event (with sourceId) */
+export interface AppliedThreatModifier extends ThreatModifier {
+  /** The spell ID that applied this modifier. */
+  sourceId: SpellId | undefined
 }
 
 // ============================================================================
@@ -386,7 +393,7 @@ export interface ThreatConfig {
    * Merged with all class aura modifiers at runtime and applied based on which
    * auras the source actor has active.
    */
-  auraModifiers: Record<number, (ctx: ThreatContext) => ThreatModifier>
+  auraModifiers: Record<number, AuraModifierFn>
   /** Called for all classes when combatantInfo is received to detect gear-based modifiers */
   gearImplications?: (gear: GearItem[]) => number[]
   /** Buffs that indicate fixate (taunt) state */
@@ -428,7 +435,7 @@ export interface ThreatCalculation {
   /** Whether threat was split among multiple enemies */
   isSplit: boolean
   /** Modifiers applied (multiplicative with each other) */
-  modifiers: ThreatModifier[]
+  modifiers: AppliedThreatModifier[]
   /** Event effects (taunt, threat drop, custom threat, etc.) */
   effects?: ThreatEffect[]
 }

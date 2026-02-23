@@ -245,6 +245,8 @@ export const FightPage: FC = () => {
     return buildFocusedPlayerSummary({
       events: eventsData?.events ?? [],
       actors: fightData?.actors ?? [],
+      abilities: reportData.abilities,
+      threatConfig,
       fightStartTime: fightData?.startTime ?? 0,
       target: selectedTarget,
       focusedPlayerId,
@@ -256,9 +258,11 @@ export const FightPage: FC = () => {
     fightData?.actors,
     fightData?.startTime,
     focusedPlayerId,
+    reportData.abilities,
     selectedTarget,
     selectedWindowEndMs,
     selectedWindowStartMs,
+    threatConfig,
   ])
 
   const focusedPlayerRows = useMemo(() => {

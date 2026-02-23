@@ -135,17 +135,29 @@ export interface FocusedPlayerSummary {
   totalDamage: number
   totalHealing: number
   color: string
+  modifiers: FocusedPlayerModifier[]
+}
+
+export interface FocusedPlayerModifier {
+  key: string
+  spellId?: number
+  name: string
+  schoolLabels: string[]
+  value: number
 }
 
 export interface FocusedPlayerThreatRow {
   key: string
   abilityId: number | null
   abilityName: string
+  spellSchool?: string | null
   amount: number
   threat: number
   tps: number | null
   isHeal: boolean
   isFixate: boolean
+  modifierTotal: number
+  modifierBreakdown: ThreatPointModifier[]
 }
 
 export interface InitialAuraDisplay {

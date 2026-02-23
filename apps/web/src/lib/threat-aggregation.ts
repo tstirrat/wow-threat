@@ -1,7 +1,7 @@
 /**
  * Threat data transformation helpers for report rankings and fight chart series.
  */
-import type { AugmentedEvent, SpellId } from '@wow-threat/shared'
+import type { AugmentedEvent, SpellId, ThreatConfig } from '@wow-threat/shared'
 import type { CombatantInfoAura, PlayerClass } from '@wow-threat/wcl-types'
 
 import type {
@@ -93,6 +93,11 @@ interface ActorStateVisuals {
   stateVisualSegments: ThreatStateVisualSegment[]
   fixateWindows: ThreatStateWindow[]
   invulnerabilityWindows: ThreatStateWindow[]
+}
+
+interface ModifierVariantAccumulator {
+  modifiers: ThreatPointModifier[]
+  totalThreat: number
 }
 
 const defaultTargetInstance = 0
@@ -426,6 +431,105 @@ function resolveSchoolLabelsFromMask(mask: number): string[] {
       (schoolMask) =>
         spellSchoolByMask[schoolMask as keyof typeof spellSchoolByMask],
     )
+}
+
+function isVisibleModifierValue(value: number): boolean {
+  return Number.isFinite(value) && Math.abs(value - 1) > 0.0005
+}
+
+function createModifierSignature(modifier: ThreatPointModifier): string {
+  const schoolsKey = [...modifier.schoolLabels].sort().join('/')
+  return `${modifier.name}|${schoolsKey}|${modifier.value.toFixed(6)}`
+}
+
+function createModifierVariantKey(modifiers: ThreatPointModifier[]): string {
+  if (modifiers.length === 0) {
+    return 'none'
+  }
+
+  return modifiers
+    .map((modifier) => createModifierSignature(modifier))
+    .sort()
+    .join('||')
+}
+
+function buildAppliedModifiersForFocusedActor({
+  events,
+  sourceIds,
+}: {
+  events: AugmentedEventsResponse['events']
+  sourceIds: Set<number>
+}): FocusedPlayerSummary['modifiers'] {
+  const modifierCountsByKey = new Map<
+    string,
+    FocusedPlayerSummary['modifiers'][number] & {
+      count: number
+    }
+  >()
+
+  events.forEach((event) => {
+    const hasMatchingSource = (event.threat?.changes ?? []).some((change) =>
+      sourceIds.has(change.sourceId),
+    )
+    if (!hasMatchingSource) {
+      return
+    }
+
+    ;(event.threat?.calculation.modifiers ?? []).forEach((rawModifier) => {
+      const modifier = normalizeThreatModifiers([rawModifier])[0]
+      if (!modifier || !isVisibleModifierValue(modifier.value)) {
+        return
+      }
+
+      const key = createModifierSignature(modifier)
+      const existing = modifierCountsByKey.get(key)
+
+      if (existing) {
+        existing.count += 1
+        if (
+          !existing.spellId &&
+          typeof rawModifier.sourceId === 'number' &&
+          rawModifier.sourceId > 0
+        ) {
+          existing.spellId = rawModifier.sourceId
+        }
+        return
+      }
+
+      modifierCountsByKey.set(key, {
+        key,
+        name: modifier.name,
+        ...(typeof rawModifier.sourceId === 'number' && rawModifier.sourceId > 0
+          ? { spellId: rawModifier.sourceId }
+          : {}),
+        schoolLabels: modifier.schoolLabels,
+        value: modifier.value,
+        count: 1,
+      })
+    })
+  })
+
+  return [...modifierCountsByKey.values()]
+    .sort((left, right) => {
+      const byCount = right.count - left.count
+      if (byCount !== 0) {
+        return byCount
+      }
+
+      const byDistance = Math.abs(right.value - 1) - Math.abs(left.value - 1)
+      if (byDistance !== 0) {
+        return byDistance
+      }
+
+      return left.name.localeCompare(right.name)
+    })
+    .map((modifier) => ({
+      key: modifier.key,
+      ...(modifier.spellId ? { spellId: modifier.spellId } : {}),
+      name: modifier.name,
+      schoolLabels: modifier.schoolLabels,
+      value: modifier.value,
+    }))
 }
 
 function resolveRelativeTimeMs(
@@ -1229,6 +1333,29 @@ function resolveAbilityName(
   return abilityById.get(abilityId)?.name ?? `Ability #${abilityId}`
 }
 
+function resolveFocusedThreatRowSpellSchool(
+  abilityId: number | null,
+  abilityById: Map<number, ReportAbilitySummary>,
+): string | null {
+  if (abilityId === null) {
+    return null
+  }
+
+  const abilitySchoolMask = parseAbilitySchoolMask(
+    abilityById.get(abilityId)?.type ?? null,
+  )
+  if (abilitySchoolMask <= 0) {
+    return null
+  }
+
+  const labels = resolveSchoolLabelsFromMask(abilitySchoolMask)
+  if (labels.length === 0) {
+    return null
+  }
+
+  return labels.join('/')
+}
+
 function resolveFocusedThreatEventSuffix(eventType: string): string | null {
   if (eventType === 'resourcechange') {
     return 'resourcechange'
@@ -1253,6 +1380,8 @@ export function buildFocusedPlayerSummary({
 }: {
   events: AugmentedEventsResponse['events']
   actors: ReportActorSummary[]
+  abilities?: ReportAbilitySummary[]
+  threatConfig?: ThreatConfig | null
   fightStartTime: number
   target: FightTarget
   focusedPlayerId: number | null
@@ -1277,6 +1406,11 @@ export function buildFocusedPlayerSummary({
   const sortedEvents = [...events].sort((a, b) => a.timestamp - b.timestamp)
   const firstTimestamp = sortedEvents[0]?.timestamp ?? fightStartTime
   const windowDurationSeconds = Math.max(1, windowEndMs - windowStartMs) / 1000
+  const actorClass = resolveActorClass(focusedPlayer, actorsById)
+  const modifiers = buildAppliedModifiersForFocusedActor({
+    events: sortedEvents,
+    sourceIds,
+  })
 
   const totals = sortedEvents.reduce(
     (acc, event) => {
@@ -1336,13 +1470,14 @@ export function buildFocusedPlayerSummary({
   return {
     actorId: focusedPlayerId,
     label: buildActorLabel(focusedPlayer, actorsById),
-    actorClass: resolveActorClass(focusedPlayer, actorsById),
+    actorClass,
     talentPoints,
     totalThreat: totals.totalThreat,
     totalTps: totals.totalThreat / windowDurationSeconds,
     totalDamage: totals.totalDamage,
     totalHealing: totals.totalHealing,
     color: getActorColor(focusedPlayer, actorsById),
+    modifiers,
   }
 }
 
@@ -1433,6 +1568,10 @@ export function buildFocusedPlayerThreatRows({
   const firstTimestamp = sortedEvents[0]?.timestamp ?? fightStartTime
   const windowDurationSeconds = Math.max(1, windowEndMs - windowStartMs) / 1000
   const rowsByAbility = new Map<string, FocusedPlayerThreatRow>()
+  const modifierVariantsByRowKey = new Map<
+    string,
+    Map<string, ModifierVariantAccumulator>
+  >()
 
   sortedEvents.forEach((event) => {
     const timeMs = resolveRelativeTimeMs(
@@ -1467,6 +1606,10 @@ export function buildFocusedPlayerThreatRows({
     const keyBase =
       abilityId === null ? `unknown:${abilityName}` : String(abilityId)
     const key = eventSuffix ? `${keyBase}:${eventType}` : keyBase
+    const spellSchool = resolveFocusedThreatRowSpellSchool(
+      abilityId,
+      abilityById,
+    )
     const damageHealingAmount =
       event.type === 'damage' || event.type === 'heal'
         ? Math.max(0, event.amount ?? 0)
@@ -1477,6 +1620,23 @@ export function buildFocusedPlayerThreatRows({
       target,
       sourceIds,
     })
+    const visibleModifiers = normalizeThreatModifiers(
+      event.threat?.calculation.modifiers,
+    ).filter((modifier) => isVisibleModifierValue(modifier.value))
+    if (visibleModifiers.length > 0) {
+      const variantKey = createModifierVariantKey(visibleModifiers)
+      const rowVariants = modifierVariantsByRowKey.get(key) ?? new Map()
+      const existingVariant = rowVariants.get(variantKey)
+      if (existingVariant) {
+        existingVariant.totalThreat += Math.abs(matchingThreat)
+      } else {
+        rowVariants.set(variantKey, {
+          modifiers: visibleModifiers,
+          totalThreat: Math.abs(matchingThreat),
+        })
+      }
+      modifierVariantsByRowKey.set(key, rowVariants)
+    }
 
     const existing = rowsByAbility.get(key)
     if (existing) {
@@ -1496,14 +1656,33 @@ export function buildFocusedPlayerThreatRows({
       tps: 0,
       isHeal: isHealEvent,
       isFixate: isFixateEvent,
+      ...(spellSchool ? { spellSchool } : {}),
+      modifierTotal: 1,
+      modifierBreakdown: [],
     })
   })
 
   return [...rowsByAbility.values()]
-    .map((row) => ({
-      ...row,
-      tps: row.isFixate ? null : row.threat / windowDurationSeconds,
-    }))
+    .map((row) => {
+      const dominantVariant = [
+        ...(modifierVariantsByRowKey.get(row.key)?.values() ?? []),
+      ].sort((left, right) => right.totalThreat - left.totalThreat)[0]
+      const modifierBreakdown = dominantVariant?.modifiers ?? []
+      const modifierTotal = modifierBreakdown.reduce((total, modifier) => {
+        if (!isVisibleModifierValue(modifier.value)) {
+          return total
+        }
+
+        return total * modifier.value
+      }, 1)
+
+      return {
+        ...row,
+        tps: row.isFixate ? null : row.threat / windowDurationSeconds,
+        modifierTotal,
+        modifierBreakdown,
+      }
+    })
     .sort((a, b) => {
       const byThreat = Math.abs(b.threat) - Math.abs(a.threat)
       if (byThreat !== 0) {

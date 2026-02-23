@@ -1,4 +1,8 @@
-import type { ThreatContext, ThreatModifier } from '@wow-threat/shared'
+import type {
+  AppliedThreatModifier,
+  ThreatContext,
+  ThreatModifier,
+} from '@wow-threat/shared'
 
 /**
  * Gets all active modifiers from a list of aura modifier configs
@@ -6,8 +10,8 @@ import type { ThreatContext, ThreatModifier } from '@wow-threat/shared'
 export function getActiveModifiers(
   ctx: ThreatContext,
   auraModifiers: Record<number, (ctx: ThreatContext) => ThreatModifier>,
-): ThreatModifier[] {
-  const modifiers: ThreatModifier[] = []
+): AppliedThreatModifier[] {
+  const modifiers: AppliedThreatModifier[] = []
 
   for (const [spellIdStr, modifierFn] of Object.entries(auraModifiers)) {
     const spellId = parseInt(spellIdStr, 10)
@@ -31,7 +35,10 @@ export function getActiveModifiers(
         continue
       }
 
-      modifiers.push(modifier)
+      modifiers.push({
+        ...modifier,
+        sourceId: spellId,
+      })
     }
   }
 

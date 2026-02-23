@@ -8,6 +8,7 @@
 import type {
   Actor,
   ActorContext,
+  AppliedThreatModifier,
   AugmentedEvent,
   ClassThreatConfig,
   EncounterId,
@@ -41,13 +42,11 @@ const NO_THREAT_FORMULA_RESULT: ThreatFormulaResult = {
   splitAmongEnemies: false,
 }
 
-const emptyThreatModifiers: ThreatModifier[] = []
-
 interface PreparedThreatConfig {
   abilitiesByClass: Partial<Record<WowClass, Record<number, ThreatFormula>>>
   globalAbilities: Record<number, ThreatFormula>
   mergedAuraModifiers: Record<number, (ctx: ThreatContext) => ThreatModifier>
-  classModifiers: Partial<Record<WowClass, ThreatModifier[]>>
+  classModifiers: Partial<Record<WowClass, ThreatModifier>>
 }
 
 const preparedThreatConfigCache = new WeakMap<
@@ -90,13 +89,11 @@ function prepareThreatConfig(config: ThreatConfig): PreparedThreatConfig {
       classConfig?.baseThreatFactor !== undefined &&
       classConfig.baseThreatFactor !== 1
     ) {
-      classModifiers[className] = [
-        {
-          source: 'class',
-          name: capitalizeClassName(className),
-          value: classConfig.baseThreatFactor,
-        },
-      ]
+      classModifiers[className] = {
+        source: 'class',
+        name: capitalizeClassName(className),
+        value: classConfig.baseThreatFactor,
+      }
     }
   }
 
@@ -966,11 +963,12 @@ export function calculateModifiedThreat(
   const shouldApplyPlayerMultipliers =
     formulaResult.applyPlayerMultipliers ??
     (event.type !== 'energize' && event.type !== 'resourcechange')
-  const allModifiers: ThreatModifier[] = shouldApplyPlayerMultipliers
-    ? [
-        ...getClassModifiers(options.sourceActor.class, preparedConfig),
-        ...getAuraModifiers(ctx, preparedConfig),
-      ]
+  const classModifiers = getAppliedClassModifier(
+    options.sourceActor.class,
+    preparedConfig,
+  )
+  const allModifiers: AppliedThreatModifier[] = shouldApplyPlayerMultipliers
+    ? [...classModifiers, ...getAuraModifiers(ctx, preparedConfig)]
     : []
 
   // Calculate total multiplier
@@ -1104,15 +1102,17 @@ function toEncounterId(
 /**
  * Get class-specific base threat factor modifier
  */
-function getClassModifiers(
+function getAppliedClassModifier(
   wowClass: WowClass | null,
   preparedConfig: PreparedThreatConfig,
-): ThreatModifier[] {
+): AppliedThreatModifier[] {
   if (!wowClass) {
-    return emptyThreatModifiers
+    return []
   }
 
-  return preparedConfig.classModifiers[wowClass] ?? emptyThreatModifiers
+  return preparedConfig.classModifiers[wowClass]
+    ? [{ ...preparedConfig.classModifiers[wowClass], sourceId: undefined }]
+    : []
 }
 
 /**
@@ -1124,7 +1124,7 @@ function getClassModifiers(
 function getAuraModifiers(
   ctx: ThreatContext,
   preparedConfig: PreparedThreatConfig,
-): ThreatModifier[] {
+): AppliedThreatModifier[] {
   // Apply the merged aura modifiers based on active auras
   return getActiveModifiers(ctx, preparedConfig.mergedAuraModifiers)
 }

@@ -8,6 +8,10 @@ import type { TooltipPointPayload } from '../hooks/use-threat-chart-pinned-toolt
 import type { ThreatChartThemeColors } from '../hooks/use-threat-chart-theme-colors'
 import type { ThreatSeries } from '../types/app'
 import { formatTimelineTime } from './format'
+import {
+  resolveSpellSchoolColor,
+  resolveSpellSchoolColorFromLabels,
+} from './spell-school-colors'
 import { resolveThreatStateStatus } from './threat-chart-visuals'
 
 export const bossMeleeMarkerColor = '#ef4444'
@@ -26,23 +30,6 @@ function formatTooltipNumber(value: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value)
-}
-
-function resolveSchoolColor(school: string | null): string | null {
-  if (!school || school === 'physical' || school.includes('/')) {
-    return null
-  }
-
-  const bySchool: Record<string, string> = {
-    holy: '#f2e699',
-    fire: '#ef4444',
-    nature: '#22c55e',
-    frost: '#38bdf8',
-    shadow: '#a78bfa',
-    arcane: '#06b6d4',
-  }
-
-  return bySchool[school] ?? null
 }
 
 function formatResourceTypeLabel(resourceType: number | null): string | null {
@@ -204,14 +191,10 @@ function tooltipContent({ data }: { data: TooltipRenderData }): JSX.Element {
           </div>
           <div style={{ paddingLeft: '2ch' }}>
             {data.visibleModifiers.map((modifier, index) => {
-              const schoolsLabel = modifier.schoolLabels
-                .filter((school) => school !== 'physical')
-                .join('/')
-              const rowSchool =
-                modifier.schoolLabels.length === 1
-                  ? (modifier.schoolLabels[0] ?? null)
-                  : null
-              const rowColor = resolveSchoolColor(rowSchool)
+              const schoolsLabel = modifier.schoolLabels.join('/')
+              const rowColor = resolveSpellSchoolColorFromLabels(
+                modifier.schoolLabels,
+              )
               const value = Number.isFinite(modifier.value)
                 ? formatTooltipNumber(modifier.value)
                 : '-'
@@ -349,7 +332,7 @@ export function createThreatChartTooltipFormatter({
       rawEventType === 'heal'
         ? '#22c55e'
         : rawEventType === 'damage'
-          ? resolveSchoolColor(spellSchool)
+          ? resolveSpellSchoolColor(spellSchool)
           : null
     const amountLabel = isResourceEvent
       ? (formatResourceTypeLabel(rawResourceType) ?? 'Amt')

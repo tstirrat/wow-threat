@@ -1028,6 +1028,8 @@ describe('threat-aggregation', () => {
       buildFocusedPlayerSummary({
         events: events as never,
         actors,
+        abilities: [],
+        threatConfig: null,
         fightStartTime: 1000,
         target: {
           id: 10,
@@ -1046,6 +1048,7 @@ describe('threat-aggregation', () => {
       totalDamage: 300,
       totalHealing: 0,
       color: getClassColor('Warrior'),
+      modifiers: [],
     })
   })
 
@@ -1129,6 +1132,8 @@ describe('threat-aggregation', () => {
       buildFocusedPlayerSummary({
         events: events as never,
         actors,
+        abilities: [],
+        threatConfig: null,
         fightStartTime: 1000,
         target: {
           id: 10,
@@ -1148,7 +1153,328 @@ describe('threat-aggregation', () => {
       totalDamage: 100,
       totalHealing: 0,
       color: getClassColor('Warrior'),
+      modifiers: [],
     })
+  })
+
+  it('collects applied modifiers for focused player summary across the full fight', () => {
+    const actors: ReportActorSummary[] = [
+      {
+        id: 1,
+        name: 'Warrior',
+        type: 'Player',
+        subType: 'Warrior',
+      },
+    ]
+    const events = [
+      {
+        timestamp: 1000,
+        type: 'damage',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 10,
+        targetIsFriendly: false,
+        amount: 300,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 150,
+              total: 150,
+            },
+          ],
+          calculation: {
+            formula: 'damage',
+            amount: 300,
+            baseThreat: 300,
+            modifiedThreat: 450,
+            isSplit: false,
+            modifiers: [
+              {
+                name: 'Defensive Stance',
+                sourceId: 71,
+                value: 1.3,
+              },
+              {
+                name: 'Defiance',
+                sourceId: 12305,
+                value: 1.15,
+              },
+            ],
+          },
+        },
+      },
+      {
+        timestamp: 4500,
+        type: 'damage',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 11,
+        targetIsFriendly: false,
+        amount: 100,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 11,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 100,
+              total: 100,
+            },
+          ],
+          calculation: {
+            formula: 'damage',
+            amount: 100,
+            baseThreat: 100,
+            modifiedThreat: 100,
+            isSplit: false,
+            modifiers: [
+              {
+                name: 'Improved Righteous Fury',
+                sourceId: 20470,
+                value: 1.19,
+                schoolMask: 2,
+              },
+            ],
+          },
+        },
+      },
+    ]
+
+    const summary = buildFocusedPlayerSummary({
+      events: events as never,
+      actors,
+      abilities: [
+        {
+          gameID: 71,
+          icon: null,
+          name: 'Defensive Stance',
+          type: '1',
+        },
+        {
+          gameID: 12305,
+          icon: null,
+          name: 'Defiance',
+          type: '1',
+        },
+        {
+          gameID: 20470,
+          icon: null,
+          name: 'Improved Righteous Fury',
+          type: '2',
+        },
+      ],
+      threatConfig: null,
+      fightStartTime: 1000,
+      target: {
+        id: 10,
+        instance: 0,
+      },
+      focusedPlayerId: 1,
+      windowStartMs: 0,
+      windowEndMs: 1000,
+    })
+
+    expect(
+      summary?.modifiers.map((modifier) => ({
+        spellId: modifier.spellId,
+        name: modifier.name,
+        schoolLabels: modifier.schoolLabels,
+        value: modifier.value,
+      })),
+    ).toEqual([
+      {
+        spellId: 71,
+        name: 'Defensive Stance',
+        schoolLabels: [],
+        value: 1.3,
+      },
+      {
+        spellId: 20470,
+        name: 'Improved Righteous Fury',
+        schoolLabels: ['holy'],
+        value: 1.19,
+      },
+      {
+        spellId: 12305,
+        name: 'Defiance',
+        schoolLabels: [],
+        value: 1.15,
+      },
+    ])
+  })
+
+  it('resolves modifier spell ids when ability names are ambiguous', () => {
+    const actors: ReportActorSummary[] = [
+      {
+        id: 1,
+        name: 'Warrior',
+        type: 'Player',
+        subType: 'Warrior',
+      },
+    ]
+    const events = [
+      {
+        timestamp: 1000,
+        type: 'damage',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 10,
+        targetIsFriendly: false,
+        amount: 300,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 150,
+              total: 150,
+            },
+          ],
+          calculation: {
+            formula: 'damage',
+            amount: 300,
+            baseThreat: 300,
+            modifiedThreat: 345,
+            isSplit: false,
+            modifiers: [
+              {
+                name: 'Defiance',
+                sourceId: 12305,
+                value: 1.15,
+              },
+            ],
+          },
+        },
+      },
+    ]
+
+    const summary = buildFocusedPlayerSummary({
+      events: events as never,
+      actors,
+      abilities: [
+        {
+          gameID: 12303,
+          icon: null,
+          name: 'Defiance',
+          type: '1',
+        },
+        {
+          gameID: 12305,
+          icon: null,
+          name: 'Defiance',
+          type: '1',
+        },
+      ],
+      threatConfig: null,
+      fightStartTime: 1000,
+      target: {
+        id: 10,
+        instance: 0,
+      },
+      focusedPlayerId: 1,
+      windowStartMs: 0,
+      windowEndMs: 1000,
+    })
+
+    expect(summary?.modifiers).toEqual([
+      {
+        key: 'Defiance||1.150000',
+        spellId: 12305,
+        name: 'Defiance',
+        schoolLabels: [],
+        value: 1.15,
+      },
+    ])
+  })
+
+  it('resolves modifier spell ids from threat config when abilities are missing', () => {
+    const actors: ReportActorSummary[] = [
+      {
+        id: 1,
+        name: 'Mage',
+        type: 'Player',
+        subType: 'Mage',
+      },
+    ]
+    const events = [
+      {
+        timestamp: 1000,
+        type: 'damage',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 10,
+        targetIsFriendly: false,
+        amount: 300,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 210,
+              total: 210,
+            },
+          ],
+          calculation: {
+            formula: 'damage',
+            amount: 300,
+            baseThreat: 300,
+            modifiedThreat: 210,
+            isSplit: false,
+            modifiers: [
+              {
+                name: 'Burning Soul (Rank 2)',
+                sourceId: 11095,
+                value: 0.7,
+                schoolMask: 4,
+              },
+            ],
+          },
+        },
+      },
+    ]
+
+    const summary = buildFocusedPlayerSummary({
+      events: events as never,
+      actors,
+      abilities: [],
+      threatConfig: {
+        auraModifiers: {
+          11095: () => ({
+            source: 'talent',
+            name: 'Burning Soul (Rank 2)',
+            value: 0.7,
+          }),
+        },
+        classes: {},
+      } as never,
+      fightStartTime: 1000,
+      target: {
+        id: 10,
+        instance: 0,
+      },
+      focusedPlayerId: 1,
+      windowStartMs: 0,
+      windowEndMs: 1000,
+    })
+
+    expect(summary?.modifiers).toEqual([
+      {
+        key: 'Burning Soul (Rank 2)|fire|0.700000',
+        spellId: 11095,
+        name: 'Burning Soul (Rank 2)',
+        schoolLabels: ['fire'],
+        value: 0.7,
+      },
+    ])
   })
 
   it('builds focused player threat rows for the selected window', () => {
@@ -1297,8 +1623,236 @@ describe('threat-aggregation', () => {
         tps: 150,
         isHeal: false,
         isFixate: false,
+        modifierTotal: 1,
+        modifierBreakdown: [],
       },
     ])
+  })
+
+  it('builds focused player threat rows with modifier totals and breakdown', () => {
+    const actors: ReportActorSummary[] = [
+      {
+        id: 1,
+        name: 'Warrior',
+        type: 'Player',
+        subType: 'Warrior',
+      },
+    ]
+    const abilities: ReportAbilitySummary[] = [
+      {
+        gameID: 100,
+        icon: null,
+        name: 'Shield Slam',
+        type: '1',
+      },
+    ]
+    const events = [
+      {
+        timestamp: 1000,
+        type: 'damage',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 10,
+        targetIsFriendly: false,
+        abilityGameID: 100,
+        amount: 300,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 450,
+              total: 450,
+            },
+          ],
+          calculation: {
+            formula: 'damage',
+            amount: 300,
+            baseThreat: 300,
+            modifiedThreat: 450,
+            isSplit: false,
+            modifiers: [
+              {
+                name: 'Defensive Stance',
+                value: 1.3,
+              },
+              {
+                name: 'Defiance (physical)',
+                value: 1.15,
+              },
+              {
+                name: 'No-op',
+                value: 1,
+              },
+            ],
+          },
+        },
+      },
+    ]
+
+    const rows = buildFocusedPlayerThreatRows({
+      events: events as never,
+      actors,
+      abilities,
+      fightStartTime: 1000,
+      target: {
+        id: 10,
+        instance: 0,
+      },
+      focusedPlayerId: 1,
+      windowStartMs: 0,
+      windowEndMs: 1000,
+    })
+
+    expect(rows[0]?.modifierTotal).toBeCloseTo(1.495)
+    expect(rows[0]?.modifierBreakdown).toEqual([
+      {
+        name: 'Defensive Stance',
+        schoolLabels: [],
+        value: 1.3,
+      },
+      {
+        name: 'Defiance',
+        schoolLabels: ['physical'],
+        value: 1.15,
+      },
+    ])
+  })
+
+  it('sets spell school on focused threat rows for single-school abilities', () => {
+    const actors: ReportActorSummary[] = [
+      {
+        id: 1,
+        name: 'Paladin',
+        type: 'Player',
+        subType: 'Paladin',
+      },
+    ]
+    const abilities: ReportAbilitySummary[] = [
+      {
+        gameID: 27179,
+        icon: null,
+        name: 'Holy Shield',
+        type: '2',
+      },
+    ]
+    const events = [
+      {
+        timestamp: 1000,
+        type: 'damage',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 10,
+        targetIsFriendly: false,
+        abilityGameID: 27179,
+        amount: 200,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 200,
+              total: 200,
+            },
+          ],
+          calculation: {
+            formula: 'damage',
+            amount: 200,
+            baseThreat: 200,
+            modifiedThreat: 200,
+            isSplit: false,
+            modifiers: [],
+          },
+        },
+      },
+    ]
+
+    const rows = buildFocusedPlayerThreatRows({
+      events: events as never,
+      actors,
+      abilities,
+      fightStartTime: 1000,
+      target: {
+        id: 10,
+        instance: 0,
+      },
+      focusedPlayerId: 1,
+      windowStartMs: 0,
+      windowEndMs: 1000,
+    })
+
+    expect(rows[0]?.spellSchool).toBe('holy')
+  })
+
+  it('sets spell school on focused threat rows for combo-school abilities', () => {
+    const actors: ReportActorSummary[] = [
+      {
+        id: 1,
+        name: 'Death Knight',
+        type: 'Player',
+        subType: 'Warrior',
+      },
+    ]
+    const abilities: ReportAbilitySummary[] = [
+      {
+        gameID: 49184,
+        icon: null,
+        name: 'Howling Blast',
+        type: '48',
+      },
+    ]
+    const events = [
+      {
+        timestamp: 1000,
+        type: 'damage',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 10,
+        targetIsFriendly: false,
+        abilityGameID: 49184,
+        amount: 200,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 200,
+              total: 200,
+            },
+          ],
+          calculation: {
+            formula: 'damage',
+            amount: 200,
+            baseThreat: 200,
+            modifiedThreat: 200,
+            isSplit: false,
+            modifiers: [],
+          },
+        },
+      },
+    ]
+
+    const rows = buildFocusedPlayerThreatRows({
+      events: events as never,
+      actors,
+      abilities,
+      fightStartTime: 1000,
+      target: {
+        id: 10,
+        instance: 0,
+      },
+      focusedPlayerId: 1,
+      windowStartMs: 0,
+      windowEndMs: 1000,
+    })
+
+    expect(rows[0]?.spellSchool).toBe('frost/shadow')
   })
 
   it('labels resource rows and keeps them separate from non-resource rows', () => {
@@ -1443,6 +1997,8 @@ describe('threat-aggregation', () => {
         tps: 200,
         isHeal: false,
         isFixate: false,
+        modifierTotal: 1,
+        modifierBreakdown: [],
       },
       {
         key: '100:resourcechange',
@@ -1453,6 +2009,8 @@ describe('threat-aggregation', () => {
         tps: 60,
         isHeal: false,
         isFixate: false,
+        modifierTotal: 1,
+        modifierBreakdown: [],
       },
       {
         key: '2687:energize',
@@ -1463,6 +2021,8 @@ describe('threat-aggregation', () => {
         tps: 40,
         isHeal: false,
         isFixate: false,
+        modifierTotal: 1,
+        modifierBreakdown: [],
       },
     ])
   })
@@ -1583,6 +2143,8 @@ describe('threat-aggregation', () => {
         tps: 50,
         isHeal: false,
         isFixate: false,
+        modifierTotal: 1,
+        modifierBreakdown: [],
       },
     ])
   })
@@ -1709,6 +2271,8 @@ describe('threat-aggregation', () => {
         tps: null,
         isHeal: false,
         isFixate: true,
+        modifierTotal: 1,
+        modifierBreakdown: [],
       },
       {
         key: '48438',
@@ -1719,6 +2283,8 @@ describe('threat-aggregation', () => {
         tps: 100,
         isHeal: true,
         isFixate: false,
+        modifierTotal: 1,
+        modifierBreakdown: [],
       },
     ])
   })
