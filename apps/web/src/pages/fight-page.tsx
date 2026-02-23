@@ -14,6 +14,7 @@ import { useFightData } from '../hooks/use-fight-data'
 import { useFightEvents } from '../hooks/use-fight-events'
 import { useFightQueryState } from '../hooks/use-fight-query-state'
 import { useUserSettings } from '../hooks/use-user-settings'
+import { buildVisibleSeriesForLegend } from '../lib/fight-page-series'
 import { formatClockDuration } from '../lib/format'
 import {
   buildFightTargetOptions,
@@ -27,14 +28,10 @@ import {
 import { resolveCurrentThreatConfig } from '../lib/threat-config'
 import { buildFightRankingsUrl } from '../lib/wcl-url'
 import { useReportRouteContext } from '../routes/report-layout-context'
-import type { ThreatSeries, WowheadLinksConfig } from '../types/app'
+import type { WowheadLinksConfig } from '../types/app'
 
 const defaultWowheadLinksConfig: WowheadLinksConfig = {
   domain: 'classic',
-}
-
-function isTotemPetSeries(series: ThreatSeries): boolean {
-  return series.actorType === 'Pet' && /\btotem\b/i.test(series.actorName)
 }
 
 function areEqualIdLists(left: number[], right: number[]): boolean {
@@ -206,14 +203,7 @@ export const FightPage: FC = () => {
   }, [eventsData, fightData, reportData, selectedTarget])
 
   const visibleSeries = useMemo(
-    () =>
-      allSeries
-        .filter(
-          (series) =>
-            series.actorType === 'Player' ||
-            (userSettings.showPets && !isTotemPetSeries(series)),
-        )
-        .sort((a, b) => b.totalThreat - a.totalThreat),
+    () => buildVisibleSeriesForLegend(allSeries, userSettings.showPets),
     [allSeries, userSettings.showPets],
   )
 
