@@ -48,6 +48,12 @@ pnpm --filter @wow-threat/api deploy          # Deploy API to production
 pnpm --filter @wow-threat/api deploy:staging  # Deploy API to staging
 ```
 
+### Sandbox / Turborepo Note
+
+- In this Codex environment, top-level pnpm commands that invoke Turborepo must be run with elevated privileges.
+- This includes commands like `pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm fmt`, `pnpm build`, and `pnpm dev`.
+- When running these top-level commands from Codex, request escalation first instead of running them in the default sandbox.
+
 ## Worktree & Preview Workflow
 
 When working in a git worktree, verify context before running app previews:
