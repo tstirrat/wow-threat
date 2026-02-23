@@ -3,8 +3,8 @@
  */
 import { describe, expect, it } from 'vitest'
 
-import type { SeriesChartPoint } from '../hooks/use-threat-chart-pinned-tooltip'
 import { resolvePointSize } from './threat-chart-point-size'
+import type { SeriesChartPoint } from './threat-chart-types'
 
 function createPoint(overrides: Partial<SeriesChartPoint>): SeriesChartPoint {
   return {

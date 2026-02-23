@@ -2,25 +2,19 @@
  * ECharts threat timeline with deep-linkable zoom and a custom legend panel.
  */
 import type { EChartsOption } from 'echarts'
+import * as echarts from 'echarts'
 import ReactEChartsCore from 'echarts-for-react/lib/core'
-import { LineChart } from 'echarts/charts'
 import {
-  DataZoomComponent,
-  GridComponent,
-  MarkAreaComponent,
-  MarkPointComponent,
-  TooltipComponent,
-  VisualMapComponent,
-} from 'echarts/components'
-import * as echarts from 'echarts/core'
-import { CanvasRenderer, SVGRenderer } from 'echarts/renderers'
-import { type FC, useCallback, useEffect, useMemo, useRef } from 'react'
+  type FC,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 
+import { useThreatChartFisheye } from '../hooks/use-threat-chart-fisheye'
 import { useThreatChartLegendState } from '../hooks/use-threat-chart-legend-state'
-import {
-  type SeriesChartPoint,
-  useThreatChartPinnedTooltip,
-} from '../hooks/use-threat-chart-pinned-tooltip'
 import { useThreatChartThemeColors } from '../hooks/use-threat-chart-theme-colors'
 import { formatTimelineTime } from '../lib/format'
 import { resolveSeriesWindowBounds } from '../lib/threat-aggregation'
@@ -31,30 +25,14 @@ import {
   createThreatChartTooltipFormatter,
   deathMarkerColor,
 } from '../lib/threat-chart-tooltip'
+import type { SeriesChartPoint } from '../lib/threat-chart-types'
 import {
   buildAuraMarkArea,
   buildThreatStateVisualMaps,
 } from '../lib/threat-chart-visuals'
-import {
-  type DataZoomWindowPayload,
-  isFullWindowRange,
-  resolveDataZoomWindowRange,
-} from '../lib/threat-chart-window'
 import type { ThreatSeries } from '../types/app'
 import { ThreatChartControls } from './threat-chart-controls'
 import { ThreatChartLegend } from './threat-chart-legend'
-
-echarts.use([
-  LineChart,
-  GridComponent,
-  TooltipComponent,
-  DataZoomComponent,
-  VisualMapComponent,
-  MarkAreaComponent,
-  MarkPointComponent,
-  CanvasRenderer,
-  SVGRenderer,
-])
 
 function resolvePointColor(
   point: SeriesChartPoint | undefined,
@@ -94,8 +72,6 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   series,
   selectedPlayerIds = [],
   renderer = 'canvas',
-  windowStartMs,
-  windowEndMs,
   onWindowChange,
   onSeriesClick,
   onVisiblePlayerIdsChange,
@@ -105,7 +81,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   onShowEnergizeEventsChange,
 }) => {
   const chartRef = useRef<ReactEChartsCore>(null)
-  const chartContainerRef = useRef<HTMLDivElement>(null)
+  const [isChartReady, setIsChartReady] = useState(false)
   const themeColors = useThreatChartThemeColors()
   const {
     visibleSeries,
@@ -116,33 +92,20 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   } = useThreatChartLegendState(series, selectedPlayerIds)
 
   const bounds = resolveSeriesWindowBounds(series)
+  const { axisBreaks, consumeSuppressedSeriesClick, resetZoom } =
+    useThreatChartFisheye({
+      bounds,
+      borderColor: themeColors.border,
+      chartRef,
+      isChartReady,
+      onWindowChange,
+      renderer,
+    })
 
   const actorIdByLabel = new Map(
     series.map((item) => [item.label, item.actorId]),
   )
 
-  useEffect(() => {
-    const container = chartContainerRef.current
-    if (!container) {
-      return
-    }
-
-    const handleWheelCapture = (event: WheelEvent): void => {
-      if (event.shiftKey) {
-        return
-      }
-
-      event.stopPropagation()
-    }
-
-    container.addEventListener('wheel', handleWheelCapture, true)
-    return () => {
-      container.removeEventListener('wheel', handleWheelCapture, true)
-    }
-  }, [])
-
-  const startValue = windowStartMs ?? bounds.min
-  const endValue = windowEndMs ?? bounds.max
   const threatStateVisualMaps = buildThreatStateVisualMaps(visibleSeries)
   const chartSeries = useMemo(
     () =>
@@ -172,23 +135,6 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     [showEnergizeEvents, visibleSeries],
   )
 
-  const resetZoom = useCallback((): void => {
-    const chart = chartRef.current?.getEchartsInstance()
-    if (!chart) {
-      return
-    }
-
-    chart.dispatchAction({
-      type: 'dataZoom',
-      startValue: bounds.min,
-      endValue: bounds.max,
-    })
-    onWindowChange(null, null)
-  }, [bounds.max, bounds.min, onWindowChange])
-  const pinnedTooltip = useThreatChartPinnedTooltip({
-    chartRef,
-    chartSeries,
-  })
   const visiblePlayerIds = useMemo(
     () =>
       series
@@ -229,7 +175,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
       top: 30,
       left: 60,
       right: 20,
-      bottom: 84,
+      bottom: 36,
     },
     tooltip: {
       trigger: 'item',
@@ -248,6 +194,18 @@ export const ThreatChart: FC<ThreatChartProps> = ({
       type: 'value',
       min: bounds.min,
       max: bounds.max,
+      breaks: axisBreaks,
+      breakArea: {
+        expandOnClick: false,
+        zigzagAmplitude: 0,
+        zigzagZ: 200,
+        itemStyle: {
+          color: themeColors.border,
+          borderColor: themeColors.border,
+          borderWidth: 1,
+          opacity: 0.12,
+        },
+      },
       axisLabel: {
         color: themeColors.muted,
         formatter: (value: number) => formatTimelineTime(value),
@@ -285,36 +243,9 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         },
       },
     },
-    dataZoom: [
-      {
-        type: 'inside',
-        xAxisIndex: 0,
-        filterMode: 'none',
-        zoomOnMouseWheel: 'shift',
-        moveOnMouseWheel: false,
-        startValue,
-        endValue,
-        labelFormatter: (value: number) => formatTimelineTime(value),
-      },
-      {
-        type: 'slider',
-        xAxisIndex: 0,
-        filterMode: 'none',
-        height: 20,
-        bottom: 24,
-        startValue,
-        endValue,
-        labelFormatter: (value: number) => formatTimelineTime(value),
-      },
-    ],
     visualMap:
       threatStateVisualMaps.length > 0 ? threatStateVisualMaps : undefined,
     series: chartSeries.map((item, seriesIndex) => {
-      const pinnedPoint =
-        pinnedTooltip?.actorId === item.actorId
-          ? item.data[pinnedTooltip.dataIndex]
-          : null
-
       return {
         name: item.name,
         type: 'line',
@@ -350,27 +281,6 @@ export const ThreatChart: FC<ThreatChartProps> = ({
           fixateWindows: visibleSeries[seriesIndex]?.fixateWindows ?? [],
           invulnerabilityWindows: [],
         }),
-        markPoint: pinnedPoint
-          ? {
-              symbol: 'circle',
-              symbolSize: 8,
-              silent: true,
-              z: 20,
-              zlevel: 2,
-              animation: false,
-              data: [{ coord: pinnedPoint.value }],
-              label: {
-                show: false,
-              },
-              itemStyle: {
-                color: item.color,
-                borderColor: '#ffffff',
-                borderWidth: 1,
-                shadowBlur: 10,
-                shadowColor: item.color,
-              },
-            }
-          : undefined,
         data: item.data,
       }
     }),
@@ -386,7 +296,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         onShowEnergizeEventsChange={onShowEnergizeEventsChange}
       />
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_14rem]">
-        <div ref={chartContainerRef}>
+        <div>
           <ReactEChartsCore
             echarts={echarts}
             ref={chartRef}
@@ -394,47 +304,20 @@ export const ThreatChart: FC<ThreatChartProps> = ({
             opts={{ renderer }}
             option={option}
             style={{ height: 560, width: '100%' }}
+            onChartReady={() => {
+              setIsChartReady(true)
+            }}
             onEvents={{
-              datazoom: (params: {
-                batch?: DataZoomWindowPayload[]
-                start?: number
-                end?: number
-                startValue?: number
-                endValue?: number
-              }) => {
-                const chart = chartRef.current?.getEchartsInstance()
-                const optionDataZoom = chart?.getOption().dataZoom
-                const optionPayload = Array.isArray(optionDataZoom)
-                  ? (optionDataZoom[0] as DataZoomWindowPayload | undefined)
-                  : undefined
-                const resolvedRange = resolveDataZoomWindowRange({
-                  bounds,
-                  payloads: [params.batch?.[0], params, optionPayload],
-                })
-
-                if (!resolvedRange) {
-                  onWindowChange(null, null)
-                  return
-                }
-
-                if (
-                  isFullWindowRange({
-                    bounds,
-                    range: resolvedRange,
-                  })
-                ) {
-                  onWindowChange(null, null)
-                  return
-                }
-
-                onWindowChange(resolvedRange.startMs, resolvedRange.endMs)
-              },
               click: (params: {
                 componentType?: string
                 seriesName?: string
                 data?: Record<string, unknown>
                 seriesType?: string
               }) => {
+                if (consumeSuppressedSeriesClick()) {
+                  return
+                }
+
                 if (
                   params.componentType !== 'series' ||
                   params.seriesType !== 'line'

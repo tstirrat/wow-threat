@@ -4,7 +4,6 @@
 import { ResourceTypeCode } from '@wow-threat/wcl-types'
 import { renderToString } from 'react-dom/server'
 
-import type { TooltipPointPayload } from '../hooks/use-threat-chart-pinned-tooltip'
 import type { ThreatChartThemeColors } from '../hooks/use-threat-chart-theme-colors'
 import type { ThreatSeries } from '../types/app'
 import { formatTimelineTime } from './format'
@@ -12,6 +11,7 @@ import {
   resolveSpellSchoolColor,
   resolveSpellSchoolColorFromLabels,
 } from './spell-school-colors'
+import type { TooltipPointPayload } from './threat-chart-types'
 import { resolveThreatStateStatus } from './threat-chart-visuals'
 
 export const bossMeleeMarkerColor = '#ef4444'

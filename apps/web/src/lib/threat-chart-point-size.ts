@@ -1,7 +1,7 @@
 /**
  * Point-size rules for threat chart dots and markers.
  */
-import type { SeriesChartPoint } from '../hooks/use-threat-chart-pinned-tooltip'
+import type { SeriesChartPoint } from './threat-chart-types'
 
 /** Resolve symbol size for a single point on the threat chart. */
 export function resolvePointSize(point: SeriesChartPoint | undefined): number {

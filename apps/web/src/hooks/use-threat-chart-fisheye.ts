@@ -1,0 +1,351 @@
+/**
+ * Drag-to-zoom fisheye interaction for the threat chart using x-axis breaks.
+ */
+import * as echarts from 'echarts'
+import type ReactEChartsCore from 'echarts-for-react/lib/core'
+import type { MutableRefObject } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
+const fisheyeDragMinWidthPx = 8
+const fisheyeCollapsedGap = '80%'
+
+interface AxisBreakRange {
+  end: number
+  start: number
+}
+
+interface AxisBreakConfig extends AxisBreakRange {
+  gap: string
+  isExpanded: false
+}
+
+interface PointerEventLike {
+  offsetX?: number
+  offsetY?: number
+  zrX?: number
+  zrY?: number
+}
+
+const createAxisBreak = (start: number, end: number): AxisBreakConfig => ({
+  start,
+  end,
+  gap: fisheyeCollapsedGap,
+  isExpanded: false,
+})
+
+/** Attach drag and double-click handlers that control threat chart fisheye zoom. */
+export function useThreatChartFisheye({
+  bounds,
+  borderColor,
+  chartRef,
+  isChartReady,
+  onWindowChange,
+  renderer,
+}: {
+  bounds: { max: number; min: number }
+  borderColor: string
+  chartRef: MutableRefObject<ReactEChartsCore | null>
+  isChartReady: boolean
+  onWindowChange: (startMs: number | null, endMs: number | null) => void
+  renderer: 'canvas' | 'svg'
+}): {
+  axisBreaks: AxisBreakConfig[]
+  consumeSuppressedSeriesClick: () => boolean
+  resetZoom: () => void
+} {
+  const [xAxisBreakRange, setXAxisBreakRange] = useState<AxisBreakRange | null>(
+    null,
+  )
+  const suppressNextSeriesClickRef = useRef(false)
+
+  const resetZoom = useCallback((): void => {
+    const chart = chartRef.current?.getEchartsInstance()
+    if (!chart) {
+      return
+    }
+
+    chart.setOption({
+      xAxis: {
+        breaks: [],
+      },
+    })
+    setXAxisBreakRange(null)
+    onWindowChange(null, null)
+  }, [chartRef, onWindowChange])
+
+  const consumeSuppressedSeriesClick = useCallback((): boolean => {
+    if (!suppressNextSeriesClickRef.current) {
+      return false
+    }
+
+    suppressNextSeriesClickRef.current = false
+    return true
+  }, [])
+
+  const resolvedXAxisBreakRange = useMemo(() => {
+    if (!xAxisBreakRange) {
+      return null
+    }
+
+    const start = Math.max(
+      bounds.min,
+      Math.min(xAxisBreakRange.start, bounds.max),
+    )
+    const end = Math.max(bounds.min, Math.min(xAxisBreakRange.end, bounds.max))
+    if (end - start < 1) {
+      return null
+    }
+
+    return {
+      start,
+      end,
+    }
+  }, [bounds.max, bounds.min, xAxisBreakRange])
+
+  const axisBreaks = useMemo(() => {
+    if (!resolvedXAxisBreakRange) {
+      return []
+    }
+
+    return [
+      createAxisBreak(
+        resolvedXAxisBreakRange.start,
+        resolvedXAxisBreakRange.end,
+      ),
+    ]
+  }, [resolvedXAxisBreakRange])
+
+  useEffect(() => {
+    if (!isChartReady) {
+      return
+    }
+
+    const chart = chartRef.current?.getEchartsInstance()
+    if (!chart) {
+      return
+    }
+
+    const zr = chart.getZr()
+    let brushRect: echarts.graphic.Rect | null = null
+    let dragStartPoint: [number, number] | null = null
+    let lastPointer: [number, number] | null = null
+
+    const clamp = (value: number, min: number, max: number): number =>
+      Math.min(max, Math.max(min, value))
+
+    const resolvePointer = (
+      event: PointerEventLike,
+    ): [number, number] | null => {
+      const x = event.offsetX ?? event.zrX
+      const y = event.offsetY ?? event.zrY
+      if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        return null
+      }
+
+      return [x, y]
+    }
+
+    const resolveDocumentPointer = (event: MouseEvent): [number, number] => {
+      const rect = chart.getDom().getBoundingClientRect()
+      const x = clamp(event.clientX - rect.left, 0, chart.getWidth())
+      const y = clamp(event.clientY - rect.top, 0, chart.getHeight())
+      return [x, y]
+    }
+
+    const clearBrushRect = (): void => {
+      if (!brushRect) {
+        return
+      }
+
+      zr.remove(brushRect)
+      brushRect = null
+    }
+
+    const renderBrushRect = (
+      startPoint: [number, number],
+      endPoint: [number, number],
+    ): void => {
+      const x = Math.min(startPoint[0], endPoint[0])
+      const y = Math.min(startPoint[1], endPoint[1])
+      const width = Math.abs(endPoint[0] - startPoint[0])
+      const height = Math.abs(endPoint[1] - startPoint[1])
+      if (!brushRect) {
+        brushRect = new echarts.graphic.Rect({
+          shape: {
+            x,
+            y,
+            width,
+            height,
+          },
+          style: {
+            fill: 'rgba(148, 163, 184, 0.2)',
+            stroke: borderColor,
+            lineWidth: 1,
+          },
+          silent: true,
+          z: 1000,
+        })
+        zr.add(brushRect)
+        return
+      }
+
+      brushRect.setShape({
+        x,
+        y,
+        width,
+        height,
+      })
+    }
+
+    const finalizeDragZoom = (pointer: [number, number] | null): void => {
+      const startPoint = dragStartPoint
+      if (!startPoint) {
+        clearBrushRect()
+        return
+      }
+
+      const endPoint = pointer ?? lastPointer ?? startPoint
+      dragStartPoint = null
+      lastPointer = null
+      clearBrushRect()
+
+      if (Math.abs(endPoint[0] - startPoint[0]) < fisheyeDragMinWidthPx) {
+        return
+      }
+
+      const minPixel = Number(
+        chart.convertToPixel({ xAxisIndex: 0 }, bounds.min),
+      )
+      const maxPixel = Number(
+        chart.convertToPixel({ xAxisIndex: 0 }, bounds.max),
+      )
+      const hasAxisPixelRange =
+        Number.isFinite(minPixel) && Number.isFinite(maxPixel)
+      const axisMinPixel = hasAxisPixelRange
+        ? Math.min(minPixel, maxPixel)
+        : Math.min(startPoint[0], endPoint[0])
+      const axisMaxPixel = hasAxisPixelRange
+        ? Math.max(minPixel, maxPixel)
+        : Math.max(startPoint[0], endPoint[0])
+      const clampedStartX = clamp(startPoint[0], axisMinPixel, axisMaxPixel)
+      const clampedEndX = clamp(endPoint[0], axisMinPixel, axisMaxPixel)
+
+      const startValue = Number(
+        chart.convertFromPixel({ xAxisIndex: 0 }, clampedStartX),
+      )
+      const endValue = Number(
+        chart.convertFromPixel({ xAxisIndex: 0 }, clampedEndX),
+      )
+      if (!Number.isFinite(startValue) || !Number.isFinite(endValue)) {
+        return
+      }
+
+      const clampedStart = clamp(
+        Math.min(startValue, endValue),
+        bounds.min,
+        bounds.max,
+      )
+      const clampedEnd = clamp(
+        Math.max(startValue, endValue),
+        bounds.min,
+        bounds.max,
+      )
+      if (clampedEnd - clampedStart < 1) {
+        return
+      }
+
+      chart.setOption({
+        xAxis: {
+          breaks: [createAxisBreak(clampedStart, clampedEnd)],
+        },
+      })
+      setXAxisBreakRange({
+        start: clampedStart,
+        end: clampedEnd,
+      })
+      suppressNextSeriesClickRef.current = true
+    }
+
+    const handleMouseDown = (event: PointerEventLike): void => {
+      const pointer = resolvePointer(event)
+      const isInGrid = pointer
+        ? chart.containPixel({ gridIndex: 0 }, pointer)
+        : false
+      if (!pointer || !isInGrid) {
+        return
+      }
+
+      dragStartPoint = pointer
+      lastPointer = pointer
+      renderBrushRect(pointer, pointer)
+    }
+
+    const handleMouseMove = (event: PointerEventLike): void => {
+      const startPoint = dragStartPoint
+      if (!startPoint) {
+        return
+      }
+
+      const pointer = resolvePointer(event)
+      if (!pointer) {
+        return
+      }
+
+      lastPointer = pointer
+      renderBrushRect(startPoint, pointer)
+    }
+
+    const handleMouseUp = (event: PointerEventLike): void => {
+      finalizeDragZoom(resolvePointer(event))
+    }
+
+    const handleDocumentMouseUp = (event: MouseEvent): void => {
+      finalizeDragZoom(resolveDocumentPointer(event))
+    }
+
+    const handleDoubleClick = (event: PointerEventLike): void => {
+      const pointer = resolvePointer(event)
+      const isInGrid = pointer
+        ? chart.containPixel({ gridIndex: 0 }, pointer)
+        : false
+      if (!isInGrid) {
+        return
+      }
+
+      dragStartPoint = null
+      lastPointer = null
+      clearBrushRect()
+      suppressNextSeriesClickRef.current = true
+      resetZoom()
+    }
+
+    zr.on('mousedown', handleMouseDown)
+    zr.on('mousemove', handleMouseMove)
+    zr.on('mouseup', handleMouseUp)
+    zr.on('dblclick', handleDoubleClick)
+    window.addEventListener('mouseup', handleDocumentMouseUp)
+
+    return () => {
+      zr.off('mousedown', handleMouseDown)
+      zr.off('mousemove', handleMouseMove)
+      zr.off('mouseup', handleMouseUp)
+      zr.off('dblclick', handleDoubleClick)
+      window.removeEventListener('mouseup', handleDocumentMouseUp)
+      clearBrushRect()
+    }
+  }, [
+    borderColor,
+    bounds.max,
+    bounds.min,
+    chartRef,
+    isChartReady,
+    renderer,
+    resetZoom,
+  ])
+
+  return {
+    axisBreaks,
+    consumeSuppressedSeriesClick,
+    resetZoom,
+  }
+}
