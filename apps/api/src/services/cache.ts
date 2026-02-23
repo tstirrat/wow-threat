@@ -251,7 +251,7 @@ export const CacheKeys = {
     uid?: string,
   ) =>
     `wcl:friendly-buff-bands-by-report:${CacheKeys.friendlyBuffBandsSchemaVersion}:${code}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
-  augmentedSchemaVersion: 'v8',
+  augmentedSchemaVersion: 'v9',
   augmentedEvents: (
     code: string,
     fightId: number,

@@ -259,7 +259,7 @@ describe('CacheKeys', () => {
   it('generates correct augmented events key', () => {
     expect(
       CacheKeys.augmentedEvents('ABC123', 5, 'v1.2.0', 'private', 'uid-1'),
-    ).toBe('augmented:v8:ABC123:5:v1.2.0:visibility:private:scope:uid:uid-1')
+    ).toBe('augmented:v9:ABC123:5:v1.2.0:visibility:private:scope:uid:uid-1')
   })
 
   it('does not collide public and private cache keys', () => {
