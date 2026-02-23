@@ -9,6 +9,9 @@ const initializeAppMock = vi.fn(() => ({
 const getAuthMock = vi.fn(() => ({
   name: 'firebase-auth',
 }))
+const getFirestoreMock = vi.fn(() => ({
+  name: 'firebase-firestore',
+}))
 
 vi.mock('firebase/app', () => ({
   initializeApp: (...args: unknown[]) => initializeAppMock(...args),
@@ -16,6 +19,10 @@ vi.mock('firebase/app', () => ({
 
 vi.mock('firebase/auth', () => ({
   getAuth: (...args: unknown[]) => getAuthMock(...args),
+}))
+
+vi.mock('firebase/firestore', () => ({
+  getFirestore: (...args: unknown[]) => getFirestoreMock(...args),
 }))
 
 function setDefaultFirebaseEnv(): void {
@@ -45,8 +52,10 @@ describe('firebase runtime config', () => {
 
     expect(firebaseModule.isFirebaseAuthEnabled).toBe(false)
     expect(firebaseModule.getFirebaseAuth()).toBeNull()
+    expect(firebaseModule.getFirebaseFirestore()).toBeNull()
     expect(initializeAppMock).not.toHaveBeenCalled()
     expect(getAuthMock).not.toHaveBeenCalled()
+    expect(getFirestoreMock).not.toHaveBeenCalled()
   })
 
   it('initializes firebase auth once when enabled', async () => {
@@ -66,5 +75,23 @@ describe('firebase runtime config', () => {
     })
     expect(initializeAppMock).toHaveBeenCalledTimes(1)
     expect(getAuthMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('initializes firestore once when enabled', async () => {
+    setDefaultFirebaseEnv()
+
+    const firebaseModule = await loadFirebaseModule()
+
+    const firstFirestore = firebaseModule.getFirebaseFirestore()
+    const secondFirestore = firebaseModule.getFirebaseFirestore()
+
+    expect(firstFirestore).toEqual({
+      name: 'firebase-firestore',
+    })
+    expect(secondFirestore).toEqual({
+      name: 'firebase-firestore',
+    })
+    expect(initializeAppMock).toHaveBeenCalledTimes(1)
+    expect(getFirestoreMock).toHaveBeenCalledTimes(1)
   })
 })

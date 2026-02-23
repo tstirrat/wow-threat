@@ -32,6 +32,10 @@ export class ThreatChartObject {
     return this.section.getByRole('checkbox', { name: 'Show pets' })
   }
 
+  showEnergizeEventsCheckbox(): Locator {
+    return this.section.getByRole('checkbox', { name: 'Show energize events' })
+  }
+
   chartContainer(): Locator {
     return this.section.locator('.echarts-for-react')
   }
@@ -97,6 +101,17 @@ export class ThreatChartObject {
     }
 
     await showPetsCheckbox.click()
+  }
+
+  async setShowEnergizeEvents(checked: boolean): Promise<void> {
+    const showEnergizeEventsCheckbox = this.showEnergizeEventsCheckbox()
+    const isChecked = await showEnergizeEventsCheckbox.isChecked()
+
+    if (isChecked === checked) {
+      return
+    }
+
+    await showEnergizeEventsCheckbox.click()
   }
 
   async seriesClickPointByStroke(strokeColor: string): Promise<Point | null> {

@@ -50,7 +50,6 @@ describe('search-params', () => {
   it('resolves fight query state with fallback behavior', () => {
     const params = new URLSearchParams({
       players: '1,2,999',
-      pets: 'true',
       focusId: '2',
       targetId: '20',
       startMs: '100',
@@ -67,7 +66,6 @@ describe('search-params', () => {
       }),
     ).toEqual({
       players: [1, 2],
-      pets: true,
       focusId: 2,
       targetId: 20,
       targetInstance: 0,
@@ -92,7 +90,6 @@ describe('search-params', () => {
       }),
     ).toEqual({
       players: [1],
-      pets: false,
       focusId: 5,
       targetId: null,
       targetInstance: null,
@@ -104,7 +101,6 @@ describe('search-params', () => {
   it('applies fight query state updates', () => {
     const next = applyFightQueryState(new URLSearchParams(), {
       players: [1, 2],
-      pets: true,
       focusId: 1,
       targetId: 99,
       targetInstance: 2,
@@ -113,7 +109,6 @@ describe('search-params', () => {
     })
 
     expect(next.toString()).toContain('players=1%2C2')
-    expect(next.toString()).toContain('pets=true')
     expect(next.toString()).toContain('focusId=1')
     expect(next.toString()).toContain('targetId=99')
     expect(next.toString()).toContain('targetInstance=2')

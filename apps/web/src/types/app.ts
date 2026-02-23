@@ -36,7 +36,6 @@ export interface WowheadLinksConfig {
 
 export interface FightQueryState {
   players: number[]
-  pets: boolean
   focusId: number | null
   targetId: number | null
   targetInstance: number | null

@@ -57,9 +57,9 @@ test.describe('fight page', () => {
       0,
     )
 
+    await expect(fightPage.chart.showEnergizeEventsCheckbox()).not.toBeChecked()
     await expect(fightPage.chart.showPetsCheckbox()).not.toBeChecked()
     await fightPage.chart.setShowPets(true)
-    await expect.poll(() => fightPage.searchParam('pets')).toBe('true')
     await expect(fightPage.chart.legendToggle('Wolfie (Arrowyn)')).toBeVisible()
     await expect(
       fightPage.chart.legendToggle('Searing Totem (Arrowyn)'),
@@ -144,22 +144,11 @@ test.describe('fight page', () => {
     await expect.poll(() => fightPage.searchParam('players')).toBeNull()
   })
 
-  test('applies pets query param as initial checkbox state', async ({
-    page,
-  }) => {
-    const fightPage = new FightPageObject(page)
-
-    await fightPage.goto(`${svgFightUrl}&pets=true`)
-
-    await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
-    await expect(fightPage.chart.legendToggle('Wolfie (Arrowyn)')).toBeVisible()
-  })
-
   test('quick switch links reset fight query params', async ({ page }) => {
     const fightPage = new FightPageObject(page)
 
     await fightPage.goto(
-      `${svgFightUrl}&players=1&focusId=1&pets=true&targetId=102&startMs=1000&endMs=2000`,
+      `${svgFightUrl}&players=1&focusId=1&targetId=102&startMs=1000&endMs=2000`,
     )
 
     await expect(fightPage.quickSwitch.fightLink('Grobbulus')).toHaveAttribute(
@@ -170,6 +159,31 @@ test.describe('fight page', () => {
 
     await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}/fight/30$`))
     await expect.poll(() => fightPage.searchString()).toBe('')
+  })
+
+  test('persists show pets and show energize toggles across fight switches', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(svgFightUrl)
+    await expect(fightPage.chart.showEnergizeEventsCheckbox()).not.toBeChecked()
+    await expect(fightPage.chart.showPetsCheckbox()).not.toBeChecked()
+
+    await fightPage.chart.setShowEnergizeEvents(true)
+    await fightPage.chart.setShowPets(true)
+    await expect(fightPage.chart.showEnergizeEventsCheckbox()).toBeChecked()
+    await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
+
+    await fightPage.quickSwitch.clickFight('Grobbulus')
+    await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}/fight/30$`))
+    await expect(fightPage.chart.showEnergizeEventsCheckbox()).toBeChecked()
+    await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
+
+    await fightPage.quickSwitch.clickFight('Patchwerk')
+    await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}/fight/26$`))
+    await expect(fightPage.chart.showEnergizeEventsCheckbox()).toBeChecked()
+    await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
   })
 
   test('clicking a chart point focuses a player and shows total threat values', async ({

@@ -12,10 +12,6 @@ function parseInteger(value: string | null): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
-function parseBoolean(value: string | null): boolean {
-  return value === 'true'
-}
-
 /** Parse comma-separated player IDs from query params. */
 export function parsePlayersParam(raw: string | null): number[] {
   if (!raw) {
@@ -102,7 +98,6 @@ export function resolveFightQueryState({
   const players = parsePlayersParam(searchParams.get('players')).filter((id) =>
     validPlayerIds.has(id),
   )
-  const pets = parseBoolean(searchParams.get('pets'))
   const parsedFocusId = parseInteger(searchParams.get('focusId'))
   const focusId =
     parsedFocusId !== null && validActorIds.has(parsedFocusId)
@@ -121,7 +116,6 @@ export function resolveFightQueryState({
 
   return {
     players,
-    pets,
     focusId,
     targetId: parsedTargetSelection?.targetId ?? null,
     targetInstance: parsedTargetSelection?.targetInstance ?? null,
@@ -142,14 +136,6 @@ export function applyFightQueryState(
       next.delete('players')
     } else {
       next.set('players', state.players.join(','))
-    }
-  }
-
-  if (state.pets !== undefined) {
-    if (state.pets) {
-      next.set('pets', 'true')
-    } else {
-      next.delete('pets')
     }
   }
 

@@ -24,6 +24,7 @@ import {
 import { useThreatChartThemeColors } from '../hooks/use-threat-chart-theme-colors'
 import { formatTimelineTime } from '../lib/format'
 import { resolveSeriesWindowBounds } from '../lib/threat-aggregation'
+import { shouldRenderThreatPoint } from '../lib/threat-chart-event-visibility'
 import { resolvePointSize } from '../lib/threat-chart-point-size'
 import {
   bossMeleeMarkerColor,
@@ -85,6 +86,8 @@ export type ThreatChartProps = {
   onVisiblePlayerIdsChange?: (playerIds: number[]) => void
   showPets: boolean
   onShowPetsChange: (showPets: boolean) => void
+  showEnergizeEvents: boolean
+  onShowEnergizeEventsChange: (showEnergizeEvents: boolean) => void
 }
 
 export const ThreatChart: FC<ThreatChartProps> = ({
@@ -98,6 +101,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   onVisiblePlayerIdsChange,
   showPets,
   onShowPetsChange,
+  showEnergizeEvents,
+  onShowEnergizeEventsChange,
 }) => {
   const chartRef = useRef<ReactEChartsCore>(null)
   const chartContainerRef = useRef<HTMLDivElement>(null)
@@ -156,11 +161,15 @@ export const ThreatChart: FC<ThreatChartProps> = ({
           actorId: item.actorId,
           actorType: item.actorType,
           color: item.color,
-          data: item.points.map(toDataPoint),
+          data: item.points
+            .filter((point) =>
+              shouldRenderThreatPoint({ point, showEnergizeEvents }),
+            )
+            .map(toDataPoint),
           name: item.label,
         }
       }),
-    [visibleSeries],
+    [showEnergizeEvents, visibleSeries],
   )
 
   const resetZoom = useCallback((): void => {
@@ -373,6 +382,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         showClearIsolate={visibleIsolatedActorId !== null || hasHiddenActors}
         onResetZoom={resetZoom}
         onClearIsolate={handleClearIsolate}
+        showEnergizeEvents={showEnergizeEvents}
+        onShowEnergizeEventsChange={onShowEnergizeEventsChange}
       />
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_14rem]">
         <div ref={chartContainerRef}>

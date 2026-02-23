@@ -3,6 +3,7 @@
  */
 import { type FirebaseApp, initializeApp } from 'firebase/app'
 import { type Auth, getAuth } from 'firebase/auth'
+import { type Firestore, getFirestore } from 'firebase/firestore'
 
 interface FirebaseRuntimeConfig {
   apiKey: string
@@ -68,11 +69,12 @@ function getFirebaseRuntimeConfig(): FirebaseRuntimeConfig | null {
 
 let firebaseApp: FirebaseApp | null = null
 let firebaseAuth: Auth | null = null
+let firebaseFirestore: Firestore | null = null
 
 export const isFirebaseAuthEnabled: boolean = getFirebaseRuntimeConfig() != null
 
-/** Get the singleton Firebase Auth instance when configured. */
-export function getFirebaseAuth(): Auth | null {
+/** Get the singleton Firebase app instance when configured. */
+export function getFirebaseApp(): FirebaseApp | null {
   const config = getFirebaseRuntimeConfig()
   if (!config) {
     return null
@@ -82,9 +84,33 @@ export function getFirebaseAuth(): Auth | null {
     firebaseApp = initializeApp(config)
   }
 
+  return firebaseApp
+}
+
+/** Get the singleton Firebase Auth instance when configured. */
+export function getFirebaseAuth(): Auth | null {
+  const app = getFirebaseApp()
+  if (!app) {
+    return null
+  }
+
   if (!firebaseAuth) {
-    firebaseAuth = getAuth(firebaseApp)
+    firebaseAuth = getAuth(app)
   }
 
   return firebaseAuth
+}
+
+/** Get the singleton Firestore instance when configured. */
+export function getFirebaseFirestore(): Firestore | null {
+  const app = getFirebaseApp()
+  if (!app) {
+    return null
+  }
+
+  if (!firebaseFirestore) {
+    firebaseFirestore = getFirestore(app)
+  }
+
+  return firebaseFirestore
 }

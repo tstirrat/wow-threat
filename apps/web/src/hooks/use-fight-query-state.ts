@@ -13,7 +13,6 @@ import type { FightQueryState, FightTarget } from '../types/app'
 export interface UseFightQueryStateResult {
   state: FightQueryState
   setPlayers: (players: number[]) => void
-  setPets: (pets: boolean) => void
   setFocusId: (focusId: number | null) => void
   setTarget: (target: FightTarget | null) => void
   setWindow: (startMs: number | null, endMs: number | null) => void
@@ -73,15 +72,6 @@ export function useFightQueryState({
     [setSearchParams],
   )
 
-  const setPets = useCallback(
-    (pets: boolean): void => {
-      setSearchParams((currentSearchParams) =>
-        applyFightQueryState(currentSearchParams, { pets }),
-      )
-    },
-    [setSearchParams],
-  )
-
   const setFocusId = useCallback(
     (focusId: number | null): void => {
       setSearchParams((currentSearchParams) =>
@@ -104,11 +94,10 @@ export function useFightQueryState({
     () => ({
       state,
       setPlayers,
-      setPets,
       setFocusId,
       setTarget,
       setWindow,
     }),
-    [setFocusId, setPets, setPlayers, setTarget, setWindow, state],
+    [setFocusId, setPlayers, setTarget, setWindow, state],
   )
 }

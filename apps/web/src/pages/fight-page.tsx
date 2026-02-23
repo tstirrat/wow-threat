@@ -13,6 +13,7 @@ import { ThreatChart } from '../components/threat-chart'
 import { useFightData } from '../hooks/use-fight-data'
 import { useFightEvents } from '../hooks/use-fight-events'
 import { useFightQueryState } from '../hooks/use-fight-query-state'
+import { useUserSettings } from '../hooks/use-user-settings'
 import { formatClockDuration } from '../lib/format'
 import {
   buildFightTargetOptions,
@@ -95,6 +96,8 @@ export const FightPage: FC = () => {
     new URLSearchParams(location.search).get('renderer') === 'svg'
       ? 'svg'
       : 'canvas'
+  const { settings: userSettings, updateSettings: updateUserSettings } =
+    useUserSettings()
 
   const threatConfig = useMemo(
     () => resolveCurrentThreatConfig(reportData),
@@ -208,10 +211,10 @@ export const FightPage: FC = () => {
         .filter(
           (series) =>
             series.actorType === 'Player' ||
-            (queryState.state.pets && !isTotemPetSeries(series)),
+            (userSettings.showPets && !isTotemPetSeries(series)),
         )
         .sort((a, b) => b.totalThreat - a.totalThreat),
-    [allSeries, queryState.state.pets],
+    [allSeries, userSettings.showPets],
   )
 
   const windowBounds = useMemo(
@@ -340,6 +343,22 @@ export const FightPage: FC = () => {
     },
     [queryState],
   )
+  const handleShowPetsChange = useCallback(
+    (showPets: boolean) => {
+      void updateUserSettings({
+        showPets,
+      })
+    },
+    [updateUserSettings],
+  )
+  const handleShowEnergizeEventsChange = useCallback(
+    (showEnergizeEvents: boolean) => {
+      void updateUserSettings({
+        showEnergizeEvents,
+      })
+    },
+    [updateUserSettings],
+  )
 
   if (!reportId || Number.isNaN(fightId)) {
     return (
@@ -432,8 +451,10 @@ export const FightPage: FC = () => {
             windowStartMs={queryState.state.startMs}
             onSeriesClick={handleSeriesClick}
             onWindowChange={handleWindowChange}
-            showPets={queryState.state.pets}
-            onShowPetsChange={queryState.setPets}
+            showPets={userSettings.showPets}
+            onShowPetsChange={handleShowPetsChange}
+            showEnergizeEvents={userSettings.showEnergizeEvents}
+            onShowEnergizeEventsChange={handleShowEnergizeEventsChange}
           />
         )}
       </SectionCard>
