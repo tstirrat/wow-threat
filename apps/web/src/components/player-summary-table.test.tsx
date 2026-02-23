@@ -275,6 +275,160 @@ describe('PlayerSummaryTable', () => {
     })
   })
 
+  it('keeps physical heal modifiers neutral', () => {
+    render(
+      <PlayerSummaryTable
+        summary={summary}
+        rows={[
+          {
+            key: 'ability-49924',
+            abilityId: 49924,
+            abilityName: 'Death Strike',
+            spellSchool: 'physical',
+            amount: 700,
+            threat: 350,
+            tps: 3.5,
+            isHeal: true,
+            isFixate: false,
+            modifierTotal: 1.2,
+            modifierBreakdown: [
+              {
+                name: 'Physical Bonus',
+                schoolLabels: ['physical'],
+                value: 1.2,
+              },
+            ],
+          },
+        ]}
+        initialAuras={[]}
+        wowhead={{
+          domain: 'tbc',
+        }}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'x1.20' })).not.toHaveStyle({
+      color: '#FFFF00',
+    })
+    expect(screen.getByRole('button', { name: 'x1.20' })).toHaveClass(
+      'text-foreground',
+    )
+  })
+
+  it('keeps physical and non-specific modifiers neutral while coloring specific schools', () => {
+    render(
+      <PlayerSummaryTable
+        summary={{
+          ...summary,
+          modifiers: [
+            {
+              key: 'generic-bonus',
+              name: 'Generic Bonus',
+              schoolLabels: [],
+              value: 1.1,
+            },
+            {
+              key: 'physical-bonus',
+              name: 'Physical Bonus',
+              schoolLabels: ['physical'],
+              value: 1.2,
+            },
+            {
+              key: 'holy-bonus',
+              name: 'Holy Bonus',
+              schoolLabels: ['holy'],
+              value: 1.1,
+            },
+          ],
+        }}
+        rows={[
+          {
+            key: 'ability-23922',
+            abilityId: 23922,
+            abilityName: 'Shield Slam',
+            spellSchool: 'holy',
+            amount: 600,
+            threat: 300,
+            tps: 2.5,
+            isHeal: false,
+            isFixate: false,
+            modifierTotal: 1.37,
+            modifierBreakdown: [
+              {
+                name: 'Generic Breakdown',
+                schoolLabels: [],
+                value: 1.1,
+              },
+              {
+                name: 'Physical Breakdown',
+                schoolLabels: ['physical'],
+                value: 1.2,
+              },
+              {
+                name: 'Holy Breakdown',
+                schoolLabels: ['holy'],
+                value: 1.04,
+              },
+            ],
+          },
+        ]}
+        initialAuras={[]}
+        wowhead={{
+          domain: 'tbc',
+        }}
+      />,
+    )
+
+    const genericSummaryModifier = screen
+      .getByText('Generic Bonus')
+      .closest('li')
+    const physicalSummaryModifier = screen
+      .getByText('Physical Bonus (physical)')
+      .closest('li')
+    const holySummaryModifier = screen
+      .getByText('Holy Bonus (holy)')
+      .closest('li')
+
+    expect(genericSummaryModifier).not.toBeNull()
+    expect(physicalSummaryModifier).not.toBeNull()
+    expect(holySummaryModifier).not.toBeNull()
+
+    expect(genericSummaryModifier).not.toHaveStyle({
+      color: '#FFFF00',
+    })
+    expect(physicalSummaryModifier).not.toHaveStyle({
+      color: '#FFFF00',
+    })
+    expect(holySummaryModifier).toHaveStyle({
+      color: '#FFE680',
+    })
+
+    const tooltip = screen.getByRole('tooltip')
+    const genericBreakdownModifier = within(tooltip)
+      .getByText('Generic Breakdown')
+      .closest('div')
+    const physicalBreakdownModifier = within(tooltip)
+      .getByText('Physical Breakdown (physical)')
+      .closest('div')
+    const holyBreakdownModifier = within(tooltip)
+      .getByText('Holy Breakdown (holy)')
+      .closest('div')
+
+    expect(genericBreakdownModifier).not.toBeNull()
+    expect(physicalBreakdownModifier).not.toBeNull()
+    expect(holyBreakdownModifier).not.toBeNull()
+
+    expect(genericBreakdownModifier).not.toHaveStyle({
+      color: '#FFFF00',
+    })
+    expect(physicalBreakdownModifier).not.toHaveStyle({
+      color: '#FFFF00',
+    })
+    expect(holyBreakdownModifier).toHaveStyle({
+      color: '#FFE680',
+    })
+  })
+
   it('applies combo spell school colors to non-heal rows', () => {
     render(
       <PlayerSummaryTable
@@ -353,5 +507,69 @@ describe('PlayerSummaryTable', () => {
     ).not.toHaveStyle({
       color: '#FF8000',
     })
+  })
+
+  it('formats table numbers with decimal threat, decimal tps, and whole-number amount', () => {
+    render(
+      <PlayerSummaryTable
+        summary={{
+          ...summary,
+          totalThreat: 1200.123,
+          totalTps: 10,
+          totalDamage: 900.7,
+          totalHealing: 20.2,
+        }}
+        rows={[
+          {
+            key: 'ability-23922',
+            abilityId: 23922,
+            abilityName: 'Shield Slam',
+            spellSchool: 'holy',
+            amount: 1234.56,
+            threat: 789.126,
+            tps: 3.5,
+            isHeal: false,
+            isFixate: false,
+            modifierTotal: 1.2,
+            modifierBreakdown: [
+              {
+                name: 'Holy Bonus',
+                schoolLabels: ['holy'],
+                value: 1.2,
+              },
+            ],
+          },
+        ]}
+        initialAuras={[]}
+        wowhead={{
+          domain: 'tbc',
+        }}
+      />,
+    )
+
+    const abilityRow = screen.getByRole('row', { name: /Shield Slam/ })
+    const abilityCells = within(abilityRow).getAllByRole('cell')
+    expect(abilityCells[1]).toHaveTextContent('1,235')
+    expect(abilityCells[2]).toHaveTextContent('789.13')
+    expect(abilityCells[3]).toHaveTextContent('x1.20')
+    expect(abilityCells[4]).toHaveTextContent('3.50')
+    expect(abilityCells[1]).toHaveClass('text-right', 'tabular-nums')
+    expect(abilityCells[2]).toHaveClass('text-right', 'tabular-nums')
+    expect(abilityCells[3]).toHaveClass('text-right', 'tabular-nums')
+    expect(abilityCells[4]).toHaveClass('text-right', 'tabular-nums')
+
+    const totalRow = screen.getByRole('row', {
+      name: /Total 921 1,200.12 - 10.00/,
+    })
+    const totalCells = within(totalRow).getAllByRole('cell')
+    expect(totalCells[1]).toHaveTextContent('921')
+    expect(totalCells[2]).toHaveTextContent('1,200.12')
+    expect(totalCells[4]).toHaveTextContent('10.00')
+
+    const columnHeaders = screen.getAllByRole('columnheader')
+    expect(columnHeaders[1]).toHaveClass('text-right')
+    expect(columnHeaders[2]).toHaveClass('text-right')
+    expect(columnHeaders[3]).toHaveClass('text-right')
+    expect(columnHeaders[4]).toHaveClass('text-right')
   })
 })

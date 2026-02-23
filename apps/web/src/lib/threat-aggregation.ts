@@ -1610,10 +1610,12 @@ export function buildFocusedPlayerThreatRows({
       abilityId,
       abilityById,
     )
-    const damageHealingAmount =
-      event.type === 'damage' || event.type === 'heal'
+    const rowAmount =
+      eventType === 'damage' || eventType === 'heal'
         ? Math.max(0, event.amount ?? 0)
-        : 0
+        : eventType === 'resourcechange' || eventType === 'energize'
+          ? (event.threat?.calculation.amount ?? 0)
+          : 0
     const isHealEvent = event.type === 'heal'
     const isFixateEvent = isFixateThreatEvent({
       event,
@@ -1640,7 +1642,7 @@ export function buildFocusedPlayerThreatRows({
 
     const existing = rowsByAbility.get(key)
     if (existing) {
-      existing.amount += damageHealingAmount
+      existing.amount += rowAmount
       existing.threat += matchingThreat
       existing.isHeal = existing.isHeal || isHealEvent
       existing.isFixate = existing.isFixate || isFixateEvent
@@ -1651,7 +1653,7 @@ export function buildFocusedPlayerThreatRows({
       key,
       abilityId,
       abilityName: rowAbilityName,
-      amount: damageHealingAmount,
+      amount: rowAmount,
       threat: matchingThreat,
       tps: 0,
       isHeal: isHealEvent,

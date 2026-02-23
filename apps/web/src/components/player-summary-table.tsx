@@ -45,8 +45,15 @@ function buildWowheadSpellUrl(wowheadDomain: string, spellId: number): string {
 
 function formatTps(value: number): string {
   return new Intl.NumberFormat('en-US', {
-    maximumFractionDigits: 1,
-    minimumFractionDigits: 1,
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
+  }).format(value)
+}
+
+function formatThreatValue(value: number): string {
+  return new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
   }).format(value)
 }
 
@@ -74,6 +81,37 @@ function resolveSchoolColor(school: string | null): string | null {
 
 function resolvePrimarySchoolColor(schoolLabels: string[]): string | null {
   return resolveSpellSchoolColorFromLabels(schoolLabels)
+}
+
+function resolveModifierSchoolColor(schoolLabels: string[]): string | null {
+  const normalizedLabels = schoolLabels
+    .map((label) => label.trim().toLowerCase())
+    .filter(Boolean)
+
+  if (normalizedLabels.length === 0) {
+    return null
+  }
+
+  if (normalizedLabels.length === 1 && normalizedLabels[0] === 'physical') {
+    return null
+  }
+
+  return resolvePrimarySchoolColor(normalizedLabels)
+}
+
+function resolveModifierTotalColor(
+  spellSchool: string | null | undefined,
+): string | null {
+  if (!spellSchool) {
+    return null
+  }
+
+  const normalizedSchool = spellSchool.trim().toLowerCase()
+  if (!normalizedSchool || normalizedSchool === 'physical') {
+    return null
+  }
+
+  return resolveSchoolColor(normalizedSchool)
 }
 
 function isResourceRow(row: FocusedPlayerThreatRow): boolean {
@@ -197,10 +235,12 @@ export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
               <TableHeader>
                 <TableRow>
                   <TableHead>Ability / Debuff</TableHead>
-                  <TableHead>Damage/Heal (Amount)</TableHead>
-                  <TableHead>Threat</TableHead>
-                  <TableHead>Modifier</TableHead>
-                  <TableHead>TPS</TableHead>
+                  <TableHead className="text-right">
+                    Damage/Heal (Amount)
+                  </TableHead>
+                  <TableHead className="text-right">Threat</TableHead>
+                  <TableHead className="text-right">Modifier</TableHead>
+                  <TableHead className="text-right">TPS</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -218,22 +258,34 @@ export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
                         </WowHeadLink>
                       )}
                     </TableCell>
-                    <TableCell>{formatNumber(row.amount)}</TableCell>
-                    <TableCell>{formatNumber(row.threat)}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatNumber(row.amount)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatThreatValue(row.threat)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
                       <ModifierCell row={row} />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-right tabular-nums">
                       {row.tps === null ? null : formatTps(row.tps)}
                     </TableCell>
                   </TableRow>
                 ))}
                 <TableRow>
                   <TableCell>Total</TableCell>
-                  <TableCell>{formatNumber(totalAmount)}</TableCell>
-                  <TableCell>{formatNumber(summary.totalThreat)}</TableCell>
-                  <TableCell className="text-muted-foreground">-</TableCell>
-                  <TableCell>{formatTps(summary.totalTps)}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatNumber(totalAmount)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatThreatValue(summary.totalThreat)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums text-muted-foreground">
+                    -
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatTps(summary.totalTps)}
+                  </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
@@ -266,7 +318,9 @@ function FocusedActorModifiers({
             const schoolsLabel = resolveModifierSchoolsLabel(
               modifier.schoolLabels,
             )
-            const schoolColor = resolvePrimarySchoolColor(modifier.schoolLabels)
+            const schoolColor = resolveModifierSchoolColor(
+              modifier.schoolLabels,
+            )
             const modifierLabel = `${modifier.name}${schoolsLabel ? ` (${schoolsLabel})` : ''}`
 
             return (
@@ -298,7 +352,7 @@ function ModifierCell({ row }: { row: FocusedPlayerThreatRow }) {
     isVisibleModifier(modifier),
   )
   const healModifierColor = row.isHeal
-    ? resolveSchoolColor(row.spellSchool ?? null)
+    ? resolveModifierTotalColor(row.spellSchool ?? null)
     : null
 
   if (
@@ -313,7 +367,9 @@ function ModifierCell({ row }: { row: FocusedPlayerThreatRow }) {
   return (
     <div className="group relative inline-flex">
       <button
-        className="cursor-help underline decoration-dotted underline-offset-2"
+        className={`cursor-help underline decoration-dotted underline-offset-2 ${
+          row.isHeal && !healModifierColor ? 'text-foreground' : ''
+        }`}
         style={healModifierColor ? { color: healModifierColor } : undefined}
         type="button"
       >
@@ -334,7 +390,9 @@ function ModifierCell({ row }: { row: FocusedPlayerThreatRow }) {
             const modifierSchoolsLabel = resolveModifierSchoolsLabel(
               modifier.schoolLabels,
             )
-            const schoolColor = resolvePrimarySchoolColor(modifier.schoolLabels)
+            const schoolColor = resolveModifierSchoolColor(
+              modifier.schoolLabels,
+            )
 
             return (
               <div
