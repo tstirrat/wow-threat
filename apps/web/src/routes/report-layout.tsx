@@ -94,6 +94,7 @@ export const ReportLayout: FC = () => {
         report={data}
         reportHost={reportHost}
         reportId={reportId}
+        selectedFightId={selectedFightId}
         threatConfigLabel={threatConfigLabel}
       />
       <FightQuickSwitcher

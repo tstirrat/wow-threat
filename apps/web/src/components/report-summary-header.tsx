@@ -18,6 +18,7 @@ export type ReportSummaryHeaderProps = {
   reportId: string
   reportHost: WarcraftLogsHost
   threatConfigLabel: string
+  selectedFightId?: number | null
 }
 
 function normalizeGuildFaction(
@@ -55,10 +56,21 @@ export const ReportSummaryHeader: FC<ReportSummaryHeaderProps> = ({
   reportId,
   reportHost,
   threatConfigLabel,
+  selectedFightId = null,
 }) => {
-  const playerCount = report.actors.filter(
-    (actor) => actor.type === 'Player',
-  ).length
+  const reportPlayers = report.actors.filter((actor) => actor.type === 'Player')
+  const reportPlayerIds = new Set(reportPlayers.map((actor) => actor.id))
+  const selectedFight =
+    selectedFightId === null
+      ? null
+      : (report.fights.find((fight) => fight.id === selectedFightId) ?? null)
+  const playerCount = selectedFight
+    ? new Set(
+        selectedFight.friendlyPlayers.filter((playerId) =>
+          reportPlayerIds.has(playerId),
+        ),
+      ).size
+    : reportPlayers.length
   const bossKillCount = buildBossKillNavigationFights(report.fights).length
   const guildName = report.guild?.name ?? null
   const guildFaction = normalizeGuildFaction(report.guild?.faction)
