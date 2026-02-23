@@ -466,6 +466,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
           series={series}
           isActorVisible={isActorVisible}
           onActorClick={handleLegendItemClick}
+          onActorFocus={onSeriesClick}
           showPets={showPets}
           onShowPetsChange={onShowPetsChange}
         />

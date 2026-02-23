@@ -53,17 +53,22 @@ test.describe('fight page', () => {
     await expect(fightPage.chart.legendToggle('Aegistank')).toBeVisible()
     await expect(fightPage.chart.legendToggle('Bladefury')).toBeVisible()
     await expect(fightPage.chart.legendToggle('Arrowyn')).toBeVisible()
-    await expect(fightPage.chart.legendToggle('Wolfie (Arrowyn)')).toHaveCount(
-      0,
-    )
+    await expect(fightPage.chart.legendFocus('Aegistank')).toBeVisible()
+    await expect(fightPage.chart.legendToggle('Wolfie')).toHaveCount(0)
 
     await expect(fightPage.chart.showEnergizeEventsCheckbox()).not.toBeChecked()
     await expect(fightPage.chart.showPetsCheckbox()).not.toBeChecked()
     await fightPage.chart.setShowPets(true)
-    await expect(fightPage.chart.legendToggle('Wolfie (Arrowyn)')).toBeVisible()
-    await expect(
-      fightPage.chart.legendToggle('Searing Totem (Arrowyn)'),
-    ).toHaveCount(0)
+    await expect(fightPage.chart.legendToggle('Wolfie')).toBeVisible()
+    await expect(fightPage.chart.legendFocus('Wolfie')).toHaveCount(0)
+    await expect(fightPage.chart.legendListItem('Arrowyn')).toHaveClass(/pl-1/)
+    await expect(fightPage.chart.legendListItem('Wolfie')).toHaveClass(/pl-4/)
+    const labels = await fightPage.chart.legendToggleLabels()
+    const ownerIndex = labels.indexOf('Arrowyn')
+    const petIndex = labels.indexOf('Wolfie')
+    expect(ownerIndex).toBeGreaterThanOrEqual(0)
+    expect(petIndex).toBe(ownerIndex + 1)
+    await expect(fightPage.chart.legendToggle('Searing Totem')).toHaveCount(0)
   })
 
   test('supports legend toggling, isolate on double click, and target switching', async ({
@@ -209,6 +214,16 @@ test.describe('fight page', () => {
     await expect(
       fightPage.summary.totalRow().getByRole('cell').nth(2),
     ).toHaveText('550')
+  })
+
+  test('focuses a player from the legend focus button', async ({ page }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(svgFightUrl)
+    await fightPage.chart.focusLegend('Bladefury')
+
+    await expect(page).toHaveURL(/focusId=2/)
+    await expect(fightPage.summary.focusedActorText('Bladefury')).toBeVisible()
   })
 
   test('shows chart and legend placeholders while loading fight data', async ({

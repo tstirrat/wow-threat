@@ -82,4 +82,29 @@ describe('fight-page visible series', () => {
 
     expect(visible.map((series) => series.actorId)).toEqual([1, 2])
   })
+
+  it('groups pets directly under owners when pets are shown', () => {
+    const tank = createSeries({
+      actorId: 1,
+      label: 'Tank',
+      maxThreat: 1000,
+    })
+    const mage = createSeries({
+      actorId: 2,
+      label: 'Mage',
+      maxThreat: 900,
+    })
+    const magePet = createSeries({
+      actorId: 3,
+      label: 'Water Elemental (Mage)',
+      actorName: 'Water Elemental',
+      actorType: 'Pet',
+      ownerId: 2,
+      maxThreat: 2000,
+    })
+
+    const visible = buildVisibleSeriesForLegend([tank, magePet, mage], true)
+
+    expect(visible.map((series) => series.actorId)).toEqual([1, 2, 3])
+  })
 })

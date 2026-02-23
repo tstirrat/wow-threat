@@ -47,6 +47,17 @@ export class ThreatChartObject {
     })
   }
 
+  legendFocus(name: string): Locator {
+    return this.legendRoot().getByRole('button', {
+      name: `Focus ${name}`,
+      exact: true,
+    })
+  }
+
+  legendListItem(name: string): Locator {
+    return this.legendToggle(name).locator('xpath=ancestor::li[1]')
+  }
+
   clearIsolateButton(): Locator {
     return this.section.getByRole('button', { name: 'Clear isolate' })
   }
@@ -86,6 +97,21 @@ export class ThreatChartObject {
 
   async isolateLegend(name: string): Promise<void> {
     await this.legendToggle(name).dblclick()
+  }
+
+  async focusLegend(name: string): Promise<void> {
+    await this.legendFocus(name).click()
+  }
+
+  async legendToggleLabels(): Promise<string[]> {
+    return this.legendRoot()
+      .locator('button[aria-label^="Toggle "]')
+      .evaluateAll((elements) =>
+        elements
+          .map((element) => element.getAttribute('aria-label') ?? '')
+          .filter((label) => label.startsWith('Toggle '))
+          .map((label) => label.replace('Toggle ', '')),
+      )
   }
 
   async clearIsolate(): Promise<void> {
