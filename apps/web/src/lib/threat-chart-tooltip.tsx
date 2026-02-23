@@ -13,9 +13,12 @@ import { resolveThreatStateStatus } from './threat-chart-visuals'
 export const bossMeleeMarkerColor = '#ef4444'
 export const deathMarkerColor = '#dc2626'
 
-function formatSignedThreat(value: number): string {
-  const prefix = value >= 0 ? '+' : '-'
-  return `${prefix}${formatTooltipNumber(Math.abs(value))}`
+function formatThreatNumber(value: number): string {
+  if (value < 0) {
+    return `-${formatTooltipNumber(Math.abs(value))}`
+  }
+
+  return formatTooltipNumber(value)
 }
 
 function formatTooltipNumber(value: number): string {
@@ -128,6 +131,7 @@ interface TooltipRenderData {
   auraStatusColor: string | null
   markerKind: TooltipPointPayload['markerKind'] | null
   modifiersTotal: number
+  modifiedThreat: number
   splitCount: number
   threatDelta: number
   timeMs: number
@@ -137,6 +141,14 @@ interface TooltipRenderData {
   formula: string
   mutedColor: string
   spellId: number | null
+}
+
+function formatThreatValue(data: TooltipRenderData): string {
+  if (data.splitCount <= 1) {
+    return formatThreatNumber(data.threatDelta)
+  }
+
+  return `${formatThreatNumber(data.modifiedThreat)} / ${data.splitCount} = ${formatThreatNumber(data.threatDelta)}`
 }
 
 function tooltipContent({ data }: { data: TooltipRenderData }): JSX.Element {
@@ -224,10 +236,7 @@ function tooltipContent({ data }: { data: TooltipRenderData }): JSX.Element {
         </>
       ) : null}
       <div style={rowStyle}>
-        <span>
-          Threat: {formatSignedThreat(data.threatDelta)}
-          {data.splitCount > 1 ? ` / ${data.splitCount}` : ''}
-        </span>
+        <span>Threat: {formatThreatValue(data)}</span>
         <span>&sum; {formatTooltipNumber(data.totalThreat)}</span>
       </div>
       {data.auraLabel && data.auraStatusColor ? (
@@ -368,6 +377,7 @@ export function createThreatChartTooltipFormatter({
           auraStatusColor: auraStatus.color ?? themeColors.muted,
           markerKind,
           modifiersTotal,
+          modifiedThreat,
           splitCount,
           threatDelta,
           timeMs,
