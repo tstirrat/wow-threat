@@ -16,6 +16,7 @@ import {
 
 const WCL_TOKENS_COLLECTION = 'wcl_auth_tokens'
 const BRIDGE_CODES_COLLECTION = 'wcl_bridge_codes'
+const BRIDGE_CODE_CLEANUP_BATCH_SIZE = 25
 
 export interface StoredWclTokenRecord {
   accessToken: string
@@ -267,6 +268,8 @@ export class AuthStore {
 
   /** Validate and consume a bridge code exactly once. */
   async consumeBridgeCode(code: string): Promise<BridgeCodePayload | null> {
+    await this.cleanupExpiredBridgeCodes()
+
     const existing = await this.firestoreClient.getDocument(
       BRIDGE_CODES_COLLECTION,
       code,
@@ -304,6 +307,31 @@ export class AuthStore {
       uid: readStringField(existing.fields, 'uid'),
       wclUserId: readStringField(existing.fields, 'wclUserId'),
       wclUserName: readStringField(existing.fields, 'wclUserName'),
+    }
+  }
+
+  private async cleanupExpiredBridgeCodes(): Promise<void> {
+    try {
+      const expiredCodes =
+        await this.firestoreClient.queryDocumentIdsByIntegerField(
+          BRIDGE_CODES_COLLECTION,
+          'expiresAtMs',
+          Date.now(),
+          BRIDGE_CODE_CLEANUP_BATCH_SIZE,
+        )
+
+      await Promise.all(
+        expiredCodes.map((expiredCode) =>
+          this.firestoreClient.deleteDocument(
+            BRIDGE_CODES_COLLECTION,
+            expiredCode,
+          ),
+        ),
+      )
+    } catch (error) {
+      console.warn('[AuthStore] Failed to cleanup expired bridge codes', {
+        error,
+      })
     }
   }
 

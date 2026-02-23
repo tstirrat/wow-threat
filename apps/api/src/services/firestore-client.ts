@@ -36,6 +36,12 @@ export interface FirestorePatchOptions {
   updateMask?: string[]
 }
 
+interface FirestoreRunQueryResponse {
+  document?: {
+    name?: string
+  }
+}
+
 function parseFirestoreErrorMessage(body: string): string {
   if (!body) {
     return 'Unknown Firestore API error'
@@ -148,6 +154,67 @@ export class FirestoreClient {
     return (await response.json()) as FirestoreDocument
   }
 
+  /**
+   * Query document ids in a collection where an integer field is <= a value.
+   */
+  async queryDocumentIdsByIntegerField(
+    collection: string,
+    fieldPath: string,
+    maxValue: number,
+    limit: number,
+  ): Promise<string[]> {
+    const response = await this.firestoreFetch(':runQuery', {
+      body: JSON.stringify({
+        structuredQuery: {
+          from: [
+            {
+              collectionId: collection,
+            },
+          ],
+          limit,
+          orderBy: [
+            {
+              direction: 'ASCENDING',
+              field: {
+                fieldPath,
+              },
+            },
+          ],
+          where: {
+            fieldFilter: {
+              field: {
+                fieldPath,
+              },
+              op: 'LESS_THAN_OR_EQUAL',
+              value: {
+                integerValue: String(Math.trunc(maxValue)),
+              },
+            },
+          },
+        },
+      }),
+      method: 'POST',
+    })
+
+    if (!response.ok) {
+      const body = await response.text()
+      throw firestoreError(
+        `Failed to query Firestore documents: ${parseFirestoreErrorMessage(body)}`,
+      )
+    }
+
+    const payload = (await response.json()) as FirestoreRunQueryResponse[]
+
+    return payload
+      .map((entry) => entry.document?.name)
+      .filter((name): name is string => typeof name === 'string')
+      .map((name) => {
+        const separatorIndex = name.lastIndexOf('/')
+        return separatorIndex >= 0 ? name.slice(separatorIndex + 1) : name
+      })
+      .filter((docId) => docId.length > 0)
+  }
+
   private async getGoogleAccessToken(): Promise<string> {
     if (this.env.ENVIRONMENT === 'test') {
       return 'test-google-access-token'
@@ -222,7 +289,9 @@ export class FirestoreClient {
     init: RequestInit,
   ): Promise<Response> {
     const accessToken = await this.getGoogleAccessToken()
-    const url = `${this.firestoreBaseUrl}/${relativePath}`
+    const url = relativePath.startsWith(':')
+      ? `${this.firestoreBaseUrl}${relativePath}`
+      : `${this.firestoreBaseUrl}/${relativePath}`
     const headers = new Headers(init.headers)
     headers.set('Authorization', `Bearer ${accessToken}`)
     headers.set('Content-Type', 'application/json')

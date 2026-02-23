@@ -4,6 +4,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createMockBindings } from '../../test/setup'
+import { AuthStore } from '../services/auth-store'
 import app from '../index'
 
 interface FirestoreDocument {
@@ -13,6 +14,8 @@ interface FirestoreDocument {
 
 const firestorePrefix =
   'https://firestore.googleapis.com/v1/projects/wow-threat/databases/(default)/documents/'
+const firestoreRunQueryPath =
+  'https://firestore.googleapis.com/v1/projects/wow-threat/databases/(default)/documents:runQuery'
 
 function createAuthFetchMock() {
   const documents = new Map<string, FirestoreDocument>()
@@ -36,6 +39,12 @@ function createAuthFetchMock() {
           },
         },
       )
+    }
+
+    if (url.toString().includes('warcraftlogs.com/oauth/revoke')) {
+      return new Response(null, {
+        status: 200,
+      })
     }
 
     if (url.toString().includes('warcraftlogs.com/api/v2/user')) {
@@ -206,13 +215,25 @@ function createAuthFetchMock() {
       }
     }
 
+    if (url.toString() === firestoreRunQueryPath) {
+      return new Response(JSON.stringify([]), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+    }
+
     throw new Error(`Unexpected fetch request in auth tests: ${requestUrl}`)
   })
 }
 
 describe('Auth Routes', () => {
+  let fetchMock: ReturnType<typeof createAuthFetchMock>
+
   beforeEach(() => {
-    vi.stubGlobal('fetch', createAuthFetchMock())
+    fetchMock = createAuthFetchMock()
+    vi.stubGlobal('fetch', fetchMock)
   })
 
   afterEach(() => {
@@ -407,5 +428,55 @@ describe('Auth Routes', () => {
       bindings,
     )
     expect(reuseRes.status).toBe(401)
+  })
+
+  it('revokes stored WCL refresh token during logout before deleting local tokens', async () => {
+    const bindings = createMockBindings()
+    const authStore = new AuthStore(bindings)
+    await authStore.saveWclTokens({
+      accessToken: 'wcl-access-token',
+      accessTokenExpiresAtMs: Date.now() + 60_000,
+      refreshToken: 'wcl-refresh-token',
+      refreshTokenExpiresAtMs: null,
+      tokenType: 'Bearer',
+      uid: 'wcl',
+      wclUserId: '12345',
+      wclUserName: 'TestWclUser',
+    })
+
+    const logoutRes = await app.request(
+      'http://localhost/auth/logout',
+      {
+        headers: {
+          Authorization: 'Bearer test-firebase-id-token:wcl',
+        },
+        method: 'POST',
+      },
+      bindings,
+    )
+    expect(logoutRes.status).toBe(204)
+
+    const revokeCalls = fetchMock.mock.calls.filter(([input]) =>
+      String(input).includes('warcraftlogs.com/oauth/revoke'),
+    )
+    expect(revokeCalls).toHaveLength(1)
+    const revokeCall = revokeCalls[0]
+    expect(revokeCall?.[1]?.method).toBe('POST')
+
+    const revokeBody = revokeCall?.[1]?.body
+    const revokeParams =
+      revokeBody instanceof URLSearchParams
+        ? revokeBody
+        : new URLSearchParams(String(revokeBody))
+    expect(revokeParams.get('token')).toBe('wcl-refresh-token')
+    expect(revokeParams.get('token_type_hint')).toBe('refresh_token')
+
+    const deleteCalls = fetchMock.mock.calls.filter(([input, init]) => {
+      return (
+        String(input).includes('documents/wcl_auth_tokens/wcl') &&
+        init?.method === 'DELETE'
+      )
+    })
+    expect(deleteCalls).toHaveLength(1)
   })
 })
