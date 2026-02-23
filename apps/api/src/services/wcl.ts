@@ -98,19 +98,28 @@ export interface RecentWclReport {
 }
 
 const maxRecentReportsLimit = 20
-const friendlyBuffTableAbilityIdKeys = [
-  'abilityGameID',
-  'abilityID',
-  'abilityId',
-  'gameID',
-  'gameId',
-] as const
 
-type UnknownRecord = Record<string, unknown>
+interface WclFriendlyBuffTableAuraBand {
+  endTime?: number | null
+  startTime?: number | null
+}
+
+interface WclFriendlyBuffTableAuraRow {
+  bands?: WclFriendlyBuffTableAuraBand[] | null
+  guid?: number | null
+}
+
+interface WclFriendlyBuffTableData {
+  auras?: WclFriendlyBuffTableAuraRow[] | null
+}
+
+interface WclFriendlyBuffTablePayload {
+  data?: WclFriendlyBuffTableData | null
+}
 
 interface WclFriendlyBuffBandsData {
   reportData?: {
-    report?: UnknownRecord | null
+    report?: Record<string, WclFriendlyBuffTablePayload | null> | null
   } | null
 }
 
@@ -171,39 +180,16 @@ function parseGuildFaction(value: unknown): string | null {
   return null
 }
 
-function asRecord(value: unknown): UnknownRecord | null {
-  return typeof value === 'object' && value !== null
-    ? (value as UnknownRecord)
-    : null
-}
-
-function readNumericField(
-  record: UnknownRecord,
-  keys: readonly string[],
-): number | null {
-  for (const key of keys) {
-    const parsed = parseNumericId(record[key])
-    if (parsed !== null) {
-      return parsed
-    }
-  }
-
-  return null
-}
-
-function parseFriendlyBuffBands(value: unknown): FriendlyBuffBand[] {
-  if (!Array.isArray(value)) {
+function parseFriendlyBuffBands(
+  value: WclFriendlyBuffTableAuraBand[] | null | undefined,
+): FriendlyBuffBand[] {
+  if (!value) {
     return []
   }
 
   return value.flatMap((entry) => {
-    const record = asRecord(entry)
-    if (!record) {
-      return []
-    }
-
-    const startTime = parseNumericId(record.startTime)
-    const endTime = parseNumericId(record.endTime)
+    const startTime = parseNumericId(entry.startTime)
+    const endTime = parseNumericId(entry.endTime)
     if (startTime === null) {
       return []
     }
@@ -220,50 +206,6 @@ function parseFriendlyBuffBands(value: unknown): FriendlyBuffBand[] {
   })
 }
 
-function collectFriendlyBuffBandEntries(
-  value: unknown,
-  entries: FriendlyBuffBandEntry[],
-  actorId: number,
-): void {
-  if (Array.isArray(value)) {
-    value.forEach((nested) =>
-      collectFriendlyBuffBandEntries(nested, entries, actorId),
-    )
-    return
-  }
-
-  const record = asRecord(value)
-  if (!record) {
-    return
-  }
-
-  const abilityId = readNumericField(record, friendlyBuffTableAbilityIdKeys)
-  const bands = parseFriendlyBuffBands(record.bands)
-  if (abilityId !== null && bands.length > 0) {
-    entries.push({
-      actorId,
-      abilityId,
-      bands,
-    })
-  }
-
-  Object.values(record).forEach((nested) =>
-    collectFriendlyBuffBandEntries(nested, entries, actorId),
-  )
-}
-
-function parseFriendlyBuffTablePayload(payload: unknown): unknown {
-  if (typeof payload !== 'string') {
-    return payload
-  }
-
-  try {
-    return JSON.parse(payload) as unknown
-  } catch {
-    return null
-  }
-}
-
 function parseCachedFriendlyBuffBands(
   value: FriendlyBuffBandEntry[] | CachedFriendlyBuffBands,
 ): CachedFriendlyBuffBands {
@@ -278,14 +220,30 @@ function parseCachedFriendlyBuffBands(
 }
 
 function extractBuffBandEntriesForActor(
-  tablePayload: unknown,
+  tablePayload: WclFriendlyBuffTablePayload | null | undefined,
   actorId: number,
 ): FriendlyBuffBandEntry[] {
-  const parsedPayload = parseFriendlyBuffTablePayload(tablePayload)
-  const buffEntries: FriendlyBuffBandEntry[] = []
-  collectFriendlyBuffBandEntries(parsedPayload, buffEntries, actorId)
+  const auraRows = tablePayload?.data?.auras ?? []
+  if (!Array.isArray(auraRows)) {
+    return []
+  }
 
-  return buffEntries.filter((entry) => entry.actorId === actorId)
+  return auraRows.flatMap((auraRow) => {
+    const abilityId = parseNumericId(auraRow.guid)
+    const bands = parseFriendlyBuffBands(auraRow.bands)
+
+    if (abilityId === null || bands.length === 0) {
+      return []
+    }
+
+    return [
+      {
+        actorId,
+        abilityId,
+        bands,
+      },
+    ]
+  })
 }
 
 function filterFightStartAurasByFriendlies(
@@ -323,6 +281,13 @@ function filterFightStartAurasByFriendlies(
   }, new Map<number, number[]>())
 }
 
+function countFightStartAuraIdsByActor(value: Map<number, number[]>): number {
+  return [...value.values()].reduce(
+    (totalAuraIds, auraIds) => totalAuraIds + auraIds.length,
+    0,
+  )
+}
+
 function buildActorScopedFriendlyBuffQuery(
   fightIds: readonly number[],
   friendlyActorIds: Set<number>,
@@ -345,7 +310,7 @@ function buildActorScopedFriendlyBuffQuery(
 
   const fields = [...aliasToActorId.entries()].map(
     ([alias, actorId]) =>
-      `${alias}: table(fightIDs: $fightIDs, dataType: Buffs, hostilityType: Friendlies, sourceID: ${actorId})`,
+      `${alias}: table(fightIDs: $fightIDs, dataType: Buffs, hostilityType: Friendlies, targetID: ${actorId}, viewBy: Target)`,
   )
 
   return {
@@ -862,17 +827,20 @@ export class WCLClient {
       >(cacheKey)
       if (cached) {
         const normalizedCache = parseCachedFriendlyBuffBands(cached)
+        const fightStartAuras = filterFightStartAurasByFriendlies(
+          normalizedCache.entries,
+          fightStartTime,
+          friendlyActorIds,
+        )
         console.info('[WCL] Friendly buff bands cache hit', {
           code,
           fightId,
           source: normalizedCache.source,
           auraBandEntries: normalizedCache.entries.length,
+          fightStartAuraActors: fightStartAuras.size,
+          fightStartAuraIds: countFightStartAuraIdsByActor(fightStartAuras),
         })
-        return filterFightStartAurasByFriendlies(
-          normalizedCache.entries,
-          fightStartTime,
-          friendlyActorIds,
-        )
+        return fightStartAuras
       }
     }
 
@@ -902,11 +870,19 @@ export class WCLClient {
         source: 'actor-scoped-batch',
       }
       await this.cache.set(cacheKey, cachedPayload)
-      return filterFightStartAurasByFriendlies(
+      const fightStartAuras = filterFightStartAurasByFriendlies(
         resolvedBuffBands,
         fightStartTime,
         friendlyActorIds,
       )
+      console.info('[WCL] Friendly buff bands fight-start aura extraction', {
+        code,
+        fightId,
+        auraBandEntries: resolvedBuffBands.length,
+        fightStartAuraActors: fightStartAuras.size,
+        fightStartAuraIds: countFightStartAuraIdsByActor(fightStartAuras),
+      })
+      return fightStartAuras
     } catch (error) {
       console.warn('[WCL] Failed to load friendly buff bands', {
         code,
@@ -947,7 +923,7 @@ export class WCLClient {
       },
     )
 
-    const reportRecord = asRecord(data.reportData?.report)
+    const reportRecord = data.reportData?.report
     if (!reportRecord) {
       return []
     }

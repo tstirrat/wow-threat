@@ -252,14 +252,14 @@ describe('CacheKeys', () => {
 
   it('generates correct report-scoped friendly buff bands key', () => {
     expect(CacheKeys.friendlyBuffBandsByReport('ABC123', 'public')).toBe(
-      'wcl:friendly-buff-bands-by-report:v2:ABC123:visibility:public:scope:shared',
+      'wcl:friendly-buff-bands-by-report:v4:ABC123:visibility:public:scope:shared',
     )
   })
 
   it('generates correct augmented events key', () => {
     expect(
       CacheKeys.augmentedEvents('ABC123', 5, 'v1.2.0', 'private', 'uid-1'),
-    ).toBe('augmented:v7:ABC123:5:v1.2.0:visibility:private:scope:uid:uid-1')
+    ).toBe('augmented:v8:ABC123:5:v1.2.0:visibility:private:scope:uid:uid-1')
   })
 
   it('does not collide public and private cache keys', () => {

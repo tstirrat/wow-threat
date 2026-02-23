@@ -29,6 +29,28 @@ export const eventsRoutes = new Hono<{
   Variables: Variables
 }>()
 
+function countSerializedInitialAuraIds(
+  initialAurasByActor: Record<string, number[]> | undefined,
+): number {
+  if (!initialAurasByActor) {
+    return 0
+  }
+
+  return Object.values(initialAurasByActor).reduce(
+    (totalAuraIds, auraIds) => totalAuraIds + auraIds.length,
+    0,
+  )
+}
+
+function countInitialAuraIds(
+  initialAurasByActor: Map<number, number[]>,
+): number {
+  return [...initialAurasByActor.values()].reduce(
+    (totalAuraIds, auraIds) => totalAuraIds + auraIds.length,
+    0,
+  )
+}
+
 /**
  * GET /reports/:code/fights/:id/events
  * Returns threat-augmented events for supported combat event types
@@ -115,6 +137,16 @@ eventsRoutes.get('/', async (c) => {
     : await augmentedCache.get<AugmentedEventsResponse>(cacheKey)
 
   if (cached) {
+    const serializedInitialAuras = cached.initialAurasByActor ?? {}
+    console.info('[Events] Returning augmented cache hit', {
+      code,
+      fightId,
+      buffBandFetchSkipped: true,
+      cachedInitialAuraActors: Object.keys(serializedInitialAuras).length,
+      cachedInitialAuraIds: countSerializedInitialAuraIds(
+        serializedInitialAuras,
+      ),
+    })
     return c.json(cached, 200, {
       'Cache-Control': cacheControl,
       'X-Cache-Status': 'HIT',
@@ -152,6 +184,17 @@ eventsRoutes.get('/', async (c) => {
       },
     ),
   ])
+
+  console.info('[Events] Loaded fight events and initial aura seeds', {
+    code,
+    fightId,
+    rawEvents: rawEvents.length,
+    fightFriendlyActors: fightFriendlyActorIds.size,
+    reportFights: reportFightIds.length,
+    reportFriendlyActors: reportFriendlyActorIds.size,
+    initialAuraActors: initialAurasByActor.size,
+    initialAuraIds: countInitialAuraIds(initialAurasByActor),
+  })
 
   const { actorMap, friendlyActorIds, enemies, abilitySchoolMap } =
     buildThreatEngineInput({

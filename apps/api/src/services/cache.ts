@@ -244,14 +244,14 @@ export const CacheKeys = {
     endTime?: number,
   ) =>
     `wcl:events:${CacheKeys.wclEventsSchemaVersion}:${code}:${fightId}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}:start:${startTime ?? 'full'}:end:${endTime ?? 'full'}`,
-  friendlyBuffBandsSchemaVersion: 'v2',
+  friendlyBuffBandsSchemaVersion: 'v4',
   friendlyBuffBandsByReport: (
     code: string,
     visibility: unknown,
     uid?: string,
   ) =>
     `wcl:friendly-buff-bands-by-report:${CacheKeys.friendlyBuffBandsSchemaVersion}:${code}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
-  augmentedSchemaVersion: 'v7',
+  augmentedSchemaVersion: 'v8',
   augmentedEvents: (
     code: string,
     fightId: number,

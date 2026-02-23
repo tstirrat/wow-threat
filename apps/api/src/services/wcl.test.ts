@@ -318,24 +318,28 @@ describe('WCLClient.getFriendlyBuffAurasAtFightStart', () => {
                   reportData: {
                     report: {
                       friendly_1: {
-                        entries: [
-                          {
-                            bands: [{ startTime: 500, endTime: 1800 }],
-                            abilityGameID: 1038,
-                          },
-                          {
-                            bands: [{ startTime: 1800, endTime: 2800 }],
-                            abilityGameID: 25895,
-                          },
-                        ],
+                        data: {
+                          auras: [
+                            {
+                              bands: [{ startTime: 500, endTime: 1800 }],
+                              guid: 1038,
+                            },
+                            {
+                              bands: [{ startTime: 1800, endTime: 2800 }],
+                              guid: 25895,
+                            },
+                          ],
+                        },
                       },
                       friendly_2: {
-                        entries: [
-                          {
-                            bands: [{ startTime: 0, endTime: 900 }],
-                            abilityGameID: 1038,
-                          },
-                        ],
+                        data: {
+                          auras: [
+                            {
+                              bands: [{ startTime: 0, endTime: 900 }],
+                              guid: 1038,
+                            },
+                          ],
+                        },
                       },
                     },
                   },
@@ -377,8 +381,17 @@ describe('WCLClient.getFriendlyBuffAurasAtFightStart', () => {
       return query.includes('GetFriendlyBuffBandsByActor')
     })
     expect(actorBatchCall).toBeDefined()
-    const actorBatchVariables = JSON.parse(actorBatchCall![1]!.body!.toString())
-      .variables as {
+    const actorBatchBody = JSON.parse(actorBatchCall![1]!.body!.toString()) as {
+      query: string
+      variables: {
+        fightIDs: number[]
+      }
+    }
+    expect(actorBatchBody.query).toContain('targetID: 1')
+    expect(actorBatchBody.query).toContain('targetID: 2')
+    expect(actorBatchBody.query).toContain('viewBy: Target')
+    expect(actorBatchBody.query).not.toContain('sourceID:')
+    const actorBatchVariables = actorBatchBody.variables as {
       fightIDs: number[]
     }
     expect(actorBatchVariables.fightIDs).toEqual([3, 4])
@@ -411,16 +424,18 @@ describe('WCLClient.getFriendlyBuffAurasAtFightStart', () => {
                   reportData: {
                     report: {
                       friendly_1: {
-                        entries: [
-                          {
-                            bands: [{ startTime: 100, endTime: 2000 }],
-                            abilityGameID: 1038,
-                          },
-                          {
-                            bands: [{ startTime: 2050, endTime: 4000 }],
-                            abilityGameID: 25895,
-                          },
-                        ],
+                        data: {
+                          auras: [
+                            {
+                              bands: [{ startTime: 100, endTime: 2000 }],
+                              guid: 1038,
+                            },
+                            {
+                              bands: [{ startTime: 2050, endTime: 4000 }],
+                              guid: 25895,
+                            },
+                          ],
+                        },
                       },
                     },
                   },
@@ -475,7 +490,6 @@ describe('WCLClient.getFriendlyBuffAurasAtFightStart', () => {
     expect(tableCalls).toHaveLength(1)
   })
 })
-
 describe('WCLClient.getRecentReports', () => {
   beforeEach(() => {
     vi.useFakeTimers()
