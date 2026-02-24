@@ -16,7 +16,8 @@ import { inferTalent } from '../../shared/talents'
 // ============================================================================
 
 export const Spells = {
-  TranquilAirTotem: 25909, // https://www.wowhead.com/classic/spell=25909/
+  TranquilAirBuff: 25909, // https://www.wowhead.com/classic/spell=25909/
+  TranquilAirTotem: 25908, // https://www.wowhead.com/classic/spell=25908/
   HealingGraceRank1: 29187, // https://www.wowhead.com/classic/spell=29187/
   HealingGraceRank2: 29189, // https://www.wowhead.com/classic/spell=29189/
   HealingGraceRank3: 29191, // https://www.wowhead.com/classic/spell=29191/
@@ -73,8 +74,8 @@ const HEALING_SPELLS = new Set([
 
 export const shamanConfig: ClassThreatConfig = {
   auraModifiers: {
-    // Tranquil Air Totem - 0.8x threat for party
-    [Spells.TranquilAirTotem]: () => ({
+    // WCL never returns this buff
+    [Spells.TranquilAirBuff]: () => ({
       source: 'aura',
       name: 'Tranquil Air Totem',
 
