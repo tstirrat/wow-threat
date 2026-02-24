@@ -1,7 +1,7 @@
 /**
  * Scrollable legend for threat chart actor visibility and isolation controls.
  */
-import { Eye } from 'lucide-react'
+import { Eye, Shield } from 'lucide-react'
 import { type FC, useId } from 'react'
 
 import type { ThreatSeries } from '../types/app'
@@ -70,6 +70,7 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
             <ul className="py-1">
               {series.map((item) => {
                 const isVisible = isActorVisible(item.actorId)
+                const isTank = item.actorType === 'Player' && item.actorRole === 'Tank'
                 const label =
                   item.actorType === 'Pet' ? item.actorName : item.label
                 return (
@@ -109,6 +110,16 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
                           style={{ color: item.color }}
                         >
                           {label}
+                          {isTank ? (
+                            <Shield
+                              aria-hidden="true"
+                              className={`ml-1 inline h-3 w-3 flex-shrink-0 ${
+                                isVisible
+                                  ? 'text-amber-500'
+                                  : 'text-amber-500/60'
+                              }`}
+                            />
+                          ) : null}
                         </span>
                       </Button>
                       {item.actorType === 'Player' ? (

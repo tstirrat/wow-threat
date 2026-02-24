@@ -2,6 +2,7 @@
  * Shared frontend app-level types.
  */
 import type { HitType, PlayerClass } from '@wow-threat/wcl-types'
+import type { ReportActorRole } from './api'
 
 export type WarcraftLogsHost =
   | 'fresh.warcraftlogs.com'
@@ -102,6 +103,7 @@ export interface ThreatSeries {
   actorName: string
   actorClass: PlayerClass | null
   actorType: 'Player' | 'Pet'
+  actorRole?: ReportActorRole
   ownerId: number | null
   label: string
   color: string

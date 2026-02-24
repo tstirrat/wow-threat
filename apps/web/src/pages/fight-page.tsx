@@ -28,6 +28,7 @@ import {
 import { resolveCurrentThreatConfig } from '../lib/threat-config'
 import { buildFightRankingsUrl } from '../lib/wcl-url'
 import { useReportRouteContext } from '../routes/report-layout-context'
+import type { ReportActorRole } from '../types/api'
 import type { WowheadLinksConfig } from '../types/app'
 
 const defaultWowheadLinksConfig: WowheadLinksConfig = {
@@ -149,6 +150,18 @@ export const FightPage: FC = () => {
     return fightDuration > 0 ? fightDuration : eventsData.summary.duration
   }, [eventsData, fightData])
 
+  const actorRoleById = useMemo(() => {
+    if (!fightData) {
+      return new Map<number, ReportActorRole>()
+    }
+
+    return new Map(
+      fightData.actors
+        .filter((actor) => actor.type === 'Player' && actor.role)
+        .map((actor) => [actor.id, actor.role]),
+    )
+  }, [fightData])
+
   const queryState = useFightQueryState({
     validPlayerIds,
     validActorIds,
@@ -197,7 +210,7 @@ export const FightPage: FC = () => {
       return []
     }
 
-    return buildThreatSeries({
+    const threatSeries = buildThreatSeries({
       events: eventsData.events,
       actors: fightData.actors,
       abilities: reportData.abilities,
@@ -205,7 +218,16 @@ export const FightPage: FC = () => {
       fightEndTime: fightData.endTime,
       target: selectedTarget,
     })
-  }, [eventsData, fightData, reportData, selectedTarget])
+
+    return threatSeries.map((series) => {
+      if (series.actorType !== 'Player') {
+        return series
+      }
+
+      const actorRole = actorRoleById.get(series.actorId)
+      return actorRole ? { ...series, actorRole } : series
+    })
+  }, [actorRoleById, eventsData, fightData, reportData, selectedTarget])
 
   const visibleSeries = useMemo(
     () => buildVisibleSeriesForLegend(allSeries, userSettings.showPets),
