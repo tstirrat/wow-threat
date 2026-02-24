@@ -276,7 +276,7 @@ export const CacheKeys = {
     uid?: string,
   ) =>
     `wcl:encounter-actor-roles:${CacheKeys.encounterActorRolesSchemaVersion}:${code}:${encounterId}:${fightId}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
-  augmentedSchemaVersion: 'v11',
+  augmentedSchemaVersion: 'v12',
   augmentedEvents: (
     code: string,
     fightId: number,

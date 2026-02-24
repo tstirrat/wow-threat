@@ -32,6 +32,10 @@ export const eventsRoutes = new Hono<{
 const BLESSING_OF_SALVATION_ID = 1038
 const GREATER_BLESSING_OF_SALVATION_ID = 25895
 const TRANQUIL_AIR_TOTEM_ID = 25909
+const SALVATION_AURA_IDS = new Set([
+  BLESSING_OF_SALVATION_ID,
+  GREATER_BLESSING_OF_SALVATION_ID,
+])
 
 function countSerializedInitialAuraIds(
   initialAurasByActor: Record<string, number[]> | undefined,
@@ -124,25 +128,26 @@ function normalizeTankActorIdsSegment(tankActorIds: readonly number[] | null): s
   return tankActorIds.join('-')
 }
 
-function inferFightThreatReductionAuras({
+interface FightSalvationEventInference {
+  combatantInfoMinorSalvationPlayerIds: Set<number>
+  eventInferredAurasByActor: Map<number, Set<number>>
+  minorSalvationRemovedPlayerIds: Set<number>
+}
+
+function buildFightSalvationEventInference({
   rawEvents,
-  initialAurasByActor,
   friendlyPlayerIds,
-  tankActorIds,
-  baselineAuraId,
 }: {
   rawEvents: WCLEvent[]
-  initialAurasByActor: Map<number, number[]>
   friendlyPlayerIds: Set<number>
-  tankActorIds: Set<number>
-  baselineAuraId: number
-}): Map<number, number[]> {
-  if (friendlyPlayerIds.size === 0) {
-    return initialAurasByActor
-  }
-
+}): FightSalvationEventInference {
   const combatantInfoMinorSalvationPlayerIds = new Set<number>()
   const minorSalvationRemovedPlayerIds = new Set<number>()
+  const eventInferredAurasByActor = new Map<number, Set<number>>()
+  const firstSeenSalvationEventTypeByActorAndAura = new Map<
+    number,
+    Map<number, 'applybuff' | 'refreshbuff' | 'removebuff'>
+  >()
 
   rawEvents.forEach((event) => {
     if (
@@ -163,7 +168,100 @@ function inferFightThreatReductionAuras({
     ) {
       minorSalvationRemovedPlayerIds.add(event.targetID)
     }
+
+    if (
+      (event.type !== 'applybuff' &&
+        event.type !== 'refreshbuff' &&
+        event.type !== 'removebuff') ||
+      !friendlyPlayerIds.has(event.targetID) ||
+      !SALVATION_AURA_IDS.has(event.abilityGameID)
+    ) {
+      return
+    }
+
+    const actorFirstSeenEvents =
+      firstSeenSalvationEventTypeByActorAndAura.get(event.targetID) ??
+      new Map<number, 'applybuff' | 'refreshbuff' | 'removebuff'>()
+
+    if (actorFirstSeenEvents.has(event.abilityGameID)) {
+      return
+    }
+    actorFirstSeenEvents.set(event.abilityGameID, event.type)
+    firstSeenSalvationEventTypeByActorAndAura.set(event.targetID, actorFirstSeenEvents)
+
+    if (event.type === 'applybuff') {
+      return
+    }
+
+    const inferredAuraIds = eventInferredAurasByActor.get(event.targetID) ?? new Set<number>()
+    inferredAuraIds.add(event.abilityGameID)
+    eventInferredAurasByActor.set(event.targetID, inferredAuraIds)
   })
+
+  return {
+    combatantInfoMinorSalvationPlayerIds,
+    eventInferredAurasByActor,
+    minorSalvationRemovedPlayerIds,
+  }
+}
+
+function mergeInferredInitialAuras({
+  initialAurasByActor,
+  inferredAurasByActor,
+}: {
+  initialAurasByActor: Map<number, number[]>
+  inferredAurasByActor: Map<number, Set<number>>
+}): Map<number, number[]> {
+  if (inferredAurasByActor.size === 0) {
+    return initialAurasByActor
+  }
+
+  const mergedInitialAurasByActor = new Map<number, number[]>(initialAurasByActor)
+
+  inferredAurasByActor.forEach((inferredAuraIds, actorId) => {
+    const actorAuraIds = new Set(mergedInitialAurasByActor.get(actorId) ?? [])
+    const previousSize = actorAuraIds.size
+    inferredAuraIds.forEach((auraId) => actorAuraIds.add(auraId))
+    if (actorAuraIds.size === previousSize) {
+      return
+    }
+
+    mergedInitialAurasByActor.set(
+      actorId,
+      [...actorAuraIds].sort((left, right) => left - right),
+    )
+  })
+
+  return mergedInitialAurasByActor
+}
+
+function countInferredAuraIdsByActor(
+  inferredAurasByActor: Map<number, Set<number>>,
+): number {
+  return [...inferredAurasByActor.values()].reduce(
+    (totalAuraIds, auraIds) => totalAuraIds + auraIds.size,
+    0,
+  )
+}
+
+function inferFightThreatReductionAuras({
+  initialAurasByActor,
+  friendlyPlayerIds,
+  tankActorIds,
+  baselineAuraId,
+  combatantInfoMinorSalvationPlayerIds,
+  minorSalvationRemovedPlayerIds,
+}: {
+  initialAurasByActor: Map<number, number[]>
+  friendlyPlayerIds: Set<number>
+  tankActorIds: Set<number>
+  baselineAuraId: number
+  combatantInfoMinorSalvationPlayerIds: Set<number>
+  minorSalvationRemovedPlayerIds: Set<number>
+}): Map<number, number[]> {
+  if (friendlyPlayerIds.size === 0) {
+    return initialAurasByActor
+  }
   const inferredAurasByActor = new Map<number, number[]>(initialAurasByActor)
 
   friendlyPlayerIds.forEach((actorId) => {
@@ -331,6 +429,14 @@ eventsRoutes.get('/', async (c) => {
     ),
   ])
   const friendlyPlayerIds = new Set<number>(fight.friendlyPlayers ?? [])
+  const salvationEventInference = buildFightSalvationEventInference({
+    rawEvents,
+    friendlyPlayerIds,
+  })
+  const initialAurasWithEventInference = mergeInferredInitialAuras({
+    initialAurasByActor,
+    inferredAurasByActor: salvationEventInference.eventInferredAurasByActor,
+  })
   const baselineAuraId = inferThreatReduction
     ? resolveFightThreatReductionBaselineAuraId({
         report,
@@ -388,13 +494,16 @@ eventsRoutes.get('/', async (c) => {
   const effectiveInitialAurasByActor =
     shouldInferThreatReductionAuras && baselineAuraId !== null
     ? inferFightThreatReductionAuras({
-        rawEvents,
-        initialAurasByActor,
+        initialAurasByActor: initialAurasWithEventInference,
         friendlyPlayerIds,
         tankActorIds,
         baselineAuraId,
+        combatantInfoMinorSalvationPlayerIds:
+          salvationEventInference.combatantInfoMinorSalvationPlayerIds,
+        minorSalvationRemovedPlayerIds:
+          salvationEventInference.minorSalvationRemovedPlayerIds,
       })
-    : initialAurasByActor
+    : initialAurasWithEventInference
 
   console.info('[Events] Loaded fight events and initial aura seeds', {
     code,
@@ -410,6 +519,11 @@ eventsRoutes.get('/', async (c) => {
         ? null
         : normalizeTankActorIdsSegment(requestedTankActorIds),
     inferredTankActors: tankActorIds.size,
+    eventInferredSalvationActors:
+      salvationEventInference.eventInferredAurasByActor.size,
+    eventInferredSalvationAuraIds: countInferredAuraIdsByActor(
+      salvationEventInference.eventInferredAurasByActor,
+    ),
     initialAuraActors: effectiveInitialAurasByActor.size,
     initialAuraIds: countInitialAuraIds(effectiveInitialAurasByActor),
   })

@@ -8,6 +8,7 @@ import {
   createApplyBuffEvent,
   createDamageEvent,
   createHealEvent,
+  createRefreshBuffEvent,
   createRemoveBuffEvent,
 } from '@wow-threat/shared'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -573,6 +574,106 @@ describe('Events API', () => {
         expect(enabledData.initialAurasByActor?.['2']).toEqual([25895])
         expect(enabledData.initialAurasByActor?.['3']).toEqual([25895])
       }
+    })
+
+    it('always infers initial salvation from remove/refresh without prior apply', async () => {
+      const inferFightId = 18
+      const inferReport = buildInferThreatReductionReport({
+        code: 'SALVEALWAYS1',
+        fightId: inferFightId,
+        encounterId: 9018,
+        players: [
+          { id: 1, name: 'Maintank', subType: 'Warrior' },
+          { id: 2, name: 'Rogueone', subType: 'Rogue' },
+          { id: 3, name: 'Priestone', subType: 'Priest' },
+        ],
+        tankPlayerIds: [1],
+      })
+      mockFetch({
+        report: inferReport,
+        events: [
+          createRemoveBuffEvent({
+            timestamp: 1600,
+            sourceID: 1,
+            targetID: 2,
+            abilityGameID: 1038,
+          }),
+          createRefreshBuffEvent({
+            timestamp: 1700,
+            sourceID: 1,
+            targetID: 3,
+            abilityGameID: 25895,
+          }),
+        ],
+      })
+
+      const response = await app.request(
+        `http://localhost/v1/reports/SALVEALWAYS1/fights/${inferFightId}/events`,
+        {},
+        createMockBindings(),
+      )
+
+      expect(response.status).toBe(200)
+      const data: AugmentedEventsResponse = await response.json()
+      expect(data.initialAurasByActor?.['1']).toBeUndefined()
+      expect(data.initialAurasByActor?.['2']).toEqual([1038])
+      expect(data.initialAurasByActor?.['3']).toEqual([25895])
+    })
+
+    it('does not infer initial salvation when apply exists before remove/refresh', async () => {
+      const inferFightId = 19
+      const inferReport = buildInferThreatReductionReport({
+        code: 'SALVEALWAYS2',
+        fightId: inferFightId,
+        encounterId: 9019,
+        players: [
+          { id: 1, name: 'Maintank', subType: 'Warrior' },
+          { id: 2, name: 'Rogueone', subType: 'Rogue' },
+          { id: 3, name: 'Priestone', subType: 'Priest' },
+        ],
+        tankPlayerIds: [1],
+      })
+      mockFetch({
+        report: inferReport,
+        events: [
+          createApplyBuffEvent({
+            timestamp: 1500,
+            sourceID: 1,
+            targetID: 2,
+            abilityGameID: 1038,
+          }),
+          createRemoveBuffEvent({
+            timestamp: 1600,
+            sourceID: 1,
+            targetID: 2,
+            abilityGameID: 1038,
+          }),
+          createApplyBuffEvent({
+            timestamp: 1650,
+            sourceID: 1,
+            targetID: 3,
+            abilityGameID: 25895,
+          }),
+          createRefreshBuffEvent({
+            timestamp: 1700,
+            sourceID: 1,
+            targetID: 3,
+            abilityGameID: 25895,
+          }),
+        ],
+      })
+
+      const response = await app.request(
+        `http://localhost/v1/reports/SALVEALWAYS2/fights/${inferFightId}/events`,
+        {},
+        createMockBindings(),
+      )
+
+      expect(response.status).toBe(200)
+      const data: AugmentedEventsResponse = await response.json()
+      expect(data.initialAurasByActor?.['1']).toBeUndefined()
+      expect(data.initialAurasByActor?.['2']).toBeUndefined()
+      expect(data.initialAurasByActor?.['3']).toBeUndefined()
     })
 
     it('accepts explicit tankActorIds to avoid encounter role lookups in inference mode', async () => {
