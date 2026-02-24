@@ -29,8 +29,8 @@ metadata (name, school/type, icon) through `report.masterData.abilities`.
 apps/api/               @wow-threat/api          Cloudflare Worker API (Hono v4)
 apps/web/               @wow-threat/web          Frontend SPA (React + Vite, Firebase Hosting)
 packages/shared/        @wow-threat/shared       Cross-cutting utilities
-packages/threat-engine/ @wow-threat/engine Core threat simulation engine
-packages/threat-config/ @wow-threat/config Per-class threat calculation configs
+packages/engine/ @wow-threat/engine Core threat simulation engine
+packages/config/ @wow-threat/config Per-class threat calculation configs
 packages/wcl-types/     @wow-threat/wcl-types    WCL API type definitions
 tooling/typescript-config/                       Shared tsconfig presets
 ```
@@ -148,7 +148,7 @@ pnpm --filter @wow-threat/web e2e
 
 Tests are co-located with source (`foo.ts` / `foo.test.ts`).
 API test helpers live in `apps/api/test/`. Web test helpers live in `apps/web/src/test/`.
-Threat engine test helpers live in `packages/threat-engine/src/test/helpers/`.
+Threat engine test helpers live in `packages/engine/src/test/helpers/`.
 
 ## Typecheck & Lint
 

@@ -3,7 +3,7 @@
 ## Threat Config Authoring Guide
 
 Use this package guide when adding or updating class/raid threat configs in
-`packages/threat-config/src/**`.
+`packages/config/src/**`.
 
 ## Mandatory Config Version Bumps
 
