@@ -12,6 +12,7 @@ export function useFightEvents(
   fightId: number,
   configVersion: string | null,
   inferThreatReduction: boolean,
+  enabled = true,
 ): {
   data: AugmentedEventsResponse | undefined
   isLoading: boolean
@@ -26,7 +27,7 @@ export function useFightEvents(
     ),
     queryFn: () =>
       getFightEvents(reportId, fightId, configVersion, inferThreatReduction),
-    enabled: reportId.length > 0 && Number.isFinite(fightId),
+    enabled: reportId.length > 0 && Number.isFinite(fightId) && enabled,
   })
 
   return {

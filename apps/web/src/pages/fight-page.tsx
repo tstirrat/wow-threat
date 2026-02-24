@@ -93,8 +93,11 @@ export const FightPage: FC = () => {
     new URLSearchParams(location.search).get('renderer') === 'svg'
       ? 'svg'
       : 'canvas'
-  const { settings: userSettings, updateSettings: updateUserSettings } =
-    useUserSettings()
+  const {
+    settings: userSettings,
+    isLoading: isUserSettingsLoading,
+    updateSettings: updateUserSettings,
+  } = useUserSettings()
 
   const threatConfig = useMemo(
     () => resolveCurrentThreatConfig(reportData),
@@ -106,6 +109,7 @@ export const FightPage: FC = () => {
     fightId,
     threatConfig?.version ?? null,
     userSettings.inferThreatReduction,
+    !isUserSettingsLoading,
   )
   const fightData = fightQuery.data ?? null
   const eventsData = eventsQuery.data ?? null
@@ -372,7 +376,7 @@ export const FightPage: FC = () => {
     )
   }
 
-  if (fightQuery.isLoading || eventsQuery.isLoading) {
+  if (fightQuery.isLoading || isUserSettingsLoading || eventsQuery.isLoading) {
     return <FightPageLoadingSkeleton />
   }
 

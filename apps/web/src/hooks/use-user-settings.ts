@@ -1,14 +1,23 @@
 /**
- * Firestore realtime hook for persisted per-user chart preferences.
+ * Firestore-backed context for persisted per-user chart preferences.
  */
 import { useAuth } from '@/auth/auth-provider'
 import {
+  type FC,
   type FirestoreDataConverter,
+  type PropsWithChildren,
   doc,
   onSnapshot,
   setDoc,
 } from 'firebase/firestore'
-import { useEffect, useMemo, useState } from 'react'
+import {
+  createContext,
+  createElement,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 
 import { getFirebaseFirestore } from '../lib/firebase'
 
@@ -84,26 +93,33 @@ function buildNextSettings({
   }
 }
 
-/** Subscribe and persist signed-in user settings via Firestore realtime SDK. */
-export function useUserSettings(): UseUserSettingsResult {
-  const { authEnabled, user } = useAuth()
+const UserSettingsContext = createContext<UseUserSettingsResult | null>(null)
+
+/** Provides user settings state for the application tree. */
+export const UserSettingsProvider: FC<PropsWithChildren> = ({ children }) => {
+  const { authEnabled, isInitializing, user } = useAuth()
   const uid = user?.uid ?? null
   const firestore = getFirebaseFirestore()
   const [settings, setSettings] = useState<UserSettings>(defaultUserSettings)
-  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [isLoading, setIsLoading] = useState<boolean>(authEnabled)
   const [isSaving, setIsSaving] = useState<boolean>(false)
   const [error, setError] = useState<Error | null>(null)
 
   const documentRef = useMemo(() => {
-    if (!authEnabled || !uid || !firestore) {
+    if (isInitializing || !authEnabled || !uid || !firestore) {
       return null
     }
 
     return doc(firestore, 'settings', uid).withConverter(userSettingsConverter)
-  }, [authEnabled, firestore, uid])
+  }, [authEnabled, firestore, isInitializing, uid])
 
   useEffect(() => {
-    if (!documentRef) {
+    if (isInitializing) {
+      setIsLoading(authEnabled)
+      return
+    }
+
+    if (!authEnabled || !uid || !firestore || !documentRef) {
       setSettings(defaultUserSettings)
       setIsLoading(false)
       setError(null)
@@ -134,42 +150,57 @@ export function useUserSettings(): UseUserSettingsResult {
     return () => {
       unsubscribe()
     }
-  }, [documentRef])
+  }, [authEnabled, documentRef, firestore, isInitializing, uid])
 
-  return {
-    settings,
-    isLoading,
-    isSaving,
-    error,
-    updateSettings: async (patch: UpdateUserSettingsRequest) => {
-      setError(null)
-      const optimisticSettings = buildNextSettings({
-        current: settings,
-        patch,
-      })
-      const previousSettings = settings
-      setSettings(optimisticSettings)
-
-      if (!documentRef) {
-        return
-      }
-
-      setIsSaving(true)
-
-      try {
-        await setDoc(documentRef, optimisticSettings, {
-          merge: true,
+  const value = useMemo<UseUserSettingsResult>(
+    () => ({
+      settings,
+      isLoading,
+      isSaving,
+      error,
+      updateSettings: async (patch: UpdateUserSettingsRequest) => {
+        setError(null)
+        const optimisticSettings = buildNextSettings({
+          current: settings,
+          patch,
         })
-      } catch (writeError) {
-        setSettings(previousSettings)
-        setError(
-          writeError instanceof Error
-            ? writeError
-            : new Error('Failed to update user settings'),
-        )
-      } finally {
-        setIsSaving(false)
-      }
-    },
+        const previousSettings = settings
+        setSettings(optimisticSettings)
+
+        if (!documentRef) {
+          return
+        }
+
+        setIsSaving(true)
+
+        try {
+          await setDoc(documentRef, optimisticSettings, {
+            merge: true,
+          })
+        } catch (writeError) {
+          setSettings(previousSettings)
+          setError(
+            writeError instanceof Error
+              ? writeError
+              : new Error('Failed to update user settings'),
+          )
+        } finally {
+          setIsSaving(false)
+        }
+      },
+    }),
+    [documentRef, error, isLoading, isSaving, settings],
+  )
+
+  return createElement(UserSettingsContext.Provider, { value }, children)
+}
+
+/** Reads the shared user settings state from context. */
+export function useUserSettings(): UseUserSettingsResult {
+  const context = useContext(UserSettingsContext)
+  if (!context) {
+    throw new Error('useUserSettings must be used within UserSettingsProvider')
   }
+
+  return context
 }
