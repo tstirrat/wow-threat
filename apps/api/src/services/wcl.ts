@@ -1281,8 +1281,9 @@ export class WCLClient {
     }
 
     const normalizedVisibility = normalizeVisibility(visibility)
-    const cacheKey = CacheKeys.friendlyBuffBandsByReport(
+    const cacheKey = CacheKeys.friendlyBuffBandsByFight(
       code,
+      fightId,
       normalizedVisibility,
       normalizedVisibility === 'private' ? this.uid : undefined,
     )

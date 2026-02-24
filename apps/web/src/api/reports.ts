@@ -10,6 +10,30 @@ import type {
 } from '../types/api'
 import { requestJson } from './client'
 
+function normalizeTankActorIds(
+  tankActorIds: readonly number[] | null | undefined,
+): number[] | null {
+  if (tankActorIds == null) {
+    return null
+  }
+
+  return [...new Set(tankActorIds)]
+    .map((value) => Math.trunc(value))
+    .filter((value) => Number.isFinite(value) && value > 0)
+    .sort((left, right) => left - right)
+}
+
+function serializeTankActorIds(
+  tankActorIds: readonly number[] | null | undefined,
+): string {
+  const normalized = normalizeTankActorIds(tankActorIds)
+  if (normalized === null) {
+    return 'auto'
+  }
+
+  return normalized.length > 0 ? normalized.join(',') : 'none'
+}
+
 /** Fetch report metadata for a report code. */
 export function getReport(reportId: string): Promise<ReportResponse> {
   return requestJson<ReportResponse>(
@@ -33,12 +57,20 @@ export function getFightEvents(
   fightId: number,
   configVersion: string | null,
   inferThreatReduction: boolean,
+  tankActorIds: readonly number[] | null = null,
 ): Promise<AugmentedEventsResponse> {
   const searchParams = new URLSearchParams()
   if (configVersion) {
     searchParams.set('configVersion', configVersion)
   }
   searchParams.set('inferThreatReduction', String(inferThreatReduction))
+  if (inferThreatReduction && tankActorIds !== null) {
+    const normalizedTankActorIds = normalizeTankActorIds(tankActorIds)
+    searchParams.set(
+      'tankActorIds',
+      normalizedTankActorIds ? normalizedTankActorIds.join(',') : '',
+    )
+  }
   const query = searchParams.toString()
 
   return requestJson<AugmentedEventsResponse>(
@@ -80,10 +112,12 @@ export const fightEventsQueryKey = (
   fightId: number,
   configVersion: string | null,
   inferThreatReduction: boolean,
-): readonly ['fight-events', string, number, string | null, boolean] => [
+  tankActorIds: readonly number[] | null = null,
+): readonly ['fight-events', string, number, string | null, boolean, string] => [
   'fight-events',
   reportId,
   fightId,
   configVersion,
   inferThreatReduction,
+  inferThreatReduction ? serializeTankActorIds(tankActorIds) : 'off',
 ]

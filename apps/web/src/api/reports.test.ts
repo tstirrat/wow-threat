@@ -38,13 +38,24 @@ describe('reports api helpers', () => {
     )
   })
 
+  it('includes tankActorIds in fight events requests when provided', async () => {
+    await getFightEvents('ABC123xyz', 12, '1.3.1', true, [3, 1, 3, 2])
+
+    expect(requestJson).toHaveBeenCalledWith(
+      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events?configVersion=1.3.1&inferThreatReduction=true&tankActorIds=1%2C2%2C3`,
+    )
+  })
+
   it('includes configVersion and inferThreatReduction in fight events query keys', () => {
-    expect(fightEventsQueryKey('ABC123xyz', 12, '1.3.1', true)).toEqual([
+    expect(
+      fightEventsQueryKey('ABC123xyz', 12, '1.3.1', true, [2, 1]),
+    ).toEqual([
       'fight-events',
       'ABC123xyz',
       12,
       '1.3.1',
       true,
+      '1,2',
     ])
   })
 

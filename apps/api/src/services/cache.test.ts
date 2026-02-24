@@ -250,9 +250,9 @@ describe('CacheKeys', () => {
     )
   })
 
-  it('generates correct report-scoped friendly buff bands key', () => {
-    expect(CacheKeys.friendlyBuffBandsByReport('ABC123', 'public')).toBe(
-      'wcl:friendly-buff-bands-by-report:v4:ABC123:visibility:public:scope:shared',
+  it('generates correct fight-scoped friendly buff bands key', () => {
+    expect(CacheKeys.friendlyBuffBandsByFight('ABC123', 5, 'public')).toBe(
+      'wcl:friendly-buff-bands-by-fight:v5:ABC123:5:visibility:public:scope:shared',
     )
   })
 
@@ -277,11 +277,12 @@ describe('CacheKeys', () => {
         5,
         'v1.2.0',
         true,
+        [1, 3, 2, 3],
         'private',
         'uid-1',
       ),
     ).toBe(
-      'augmented:v10:ABC123:5:v1.2.0:inferThreatReduction:true:visibility:private:scope:uid:uid-1',
+      'augmented:v11:ABC123:5:v1.2.0:inferThreatReduction:true:tankActorIds:1,2,3:visibility:private:scope:uid:uid-1',
     )
   })
 
@@ -305,6 +306,7 @@ describe('CacheKeys', () => {
       5,
       'v1.2.0',
       true,
+      null,
       'public',
     )
     const standardKey = CacheKeys.augmentedEvents(
@@ -312,10 +314,42 @@ describe('CacheKeys', () => {
       5,
       'v1.2.0',
       false,
+      null,
       'public',
     )
 
     expect(inferredKey).not.toBe(standardKey)
+  })
+
+  it('does not collide inferred augmented event keys by tank actor id mode', () => {
+    const autoResolvedKey = CacheKeys.augmentedEvents(
+      'ABC123',
+      5,
+      'v1.2.0',
+      true,
+      null,
+      'public',
+    )
+    const explicitNoneKey = CacheKeys.augmentedEvents(
+      'ABC123',
+      5,
+      'v1.2.0',
+      true,
+      [],
+      'public',
+    )
+    const explicitTankKey = CacheKeys.augmentedEvents(
+      'ABC123',
+      5,
+      'v1.2.0',
+      true,
+      [1],
+      'public',
+    )
+
+    expect(autoResolvedKey).not.toBe(explicitNoneKey)
+    expect(autoResolvedKey).not.toBe(explicitTankKey)
+    expect(explicitNoneKey).not.toBe(explicitTankKey)
   })
 
   it('treats invalid visibility values as private', () => {

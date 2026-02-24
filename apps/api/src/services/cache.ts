@@ -47,6 +47,21 @@ function resolveVisibilityScope(visibility: unknown, uid?: string): string {
   return `uid:${uid?.trim() || 'anonymous'}`
 }
 
+function normalizeTankActorIdsForCache(
+  tankActorIds: readonly number[] | null | undefined,
+): string {
+  if (tankActorIds == null) {
+    return 'auto'
+  }
+
+  const normalized = [...new Set(tankActorIds)]
+    .map((value) => Math.trunc(value))
+    .filter((value) => Number.isFinite(value) && value > 0)
+    .sort((left, right) => left - right)
+
+  return normalized.length > 0 ? normalized.join(',') : 'none'
+}
+
 function hasGzipPrefix(bytes: Uint8Array): boolean {
   return gzipValuePrefix.every((value, index) => bytes[index] === value)
 }
@@ -244,13 +259,14 @@ export const CacheKeys = {
     endTime?: number,
   ) =>
     `wcl:events:${CacheKeys.wclEventsSchemaVersion}:${code}:${fightId}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}:start:${startTime ?? 'full'}:end:${endTime ?? 'full'}`,
-  friendlyBuffBandsSchemaVersion: 'v4',
-  friendlyBuffBandsByReport: (
+  friendlyBuffBandsSchemaVersion: 'v5',
+  friendlyBuffBandsByFight: (
     code: string,
+    fightId: number,
     visibility: unknown,
     uid?: string,
   ) =>
-    `wcl:friendly-buff-bands-by-report:${CacheKeys.friendlyBuffBandsSchemaVersion}:${code}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
+    `wcl:friendly-buff-bands-by-fight:${CacheKeys.friendlyBuffBandsSchemaVersion}:${code}:${fightId}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
   encounterActorRolesSchemaVersion: 'v1',
   encounterActorRoles: (
     code: string,
@@ -260,14 +276,15 @@ export const CacheKeys = {
     uid?: string,
   ) =>
     `wcl:encounter-actor-roles:${CacheKeys.encounterActorRolesSchemaVersion}:${code}:${encounterId}:${fightId}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
-  augmentedSchemaVersion: 'v10',
+  augmentedSchemaVersion: 'v11',
   augmentedEvents: (
     code: string,
     fightId: number,
     configVersion: string,
     inferThreatReduction: boolean,
+    tankActorIds: readonly number[] | null,
     visibility: unknown,
     uid?: string,
   ) =>
-    `augmented:${CacheKeys.augmentedSchemaVersion}:${code}:${fightId}:${configVersion}:inferThreatReduction:${inferThreatReduction ? 'true' : 'false'}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
+    `augmented:${CacheKeys.augmentedSchemaVersion}:${code}:${fightId}:${configVersion}:inferThreatReduction:${inferThreatReduction ? 'true' : 'false'}:tankActorIds:${normalizeTankActorIdsForCache(tankActorIds)}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
 }

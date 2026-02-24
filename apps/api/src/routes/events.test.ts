@@ -575,6 +575,65 @@ describe('Events API', () => {
       }
     })
 
+    it('accepts explicit tankActorIds to avoid encounter role lookups in inference mode', async () => {
+      const inferFightId = 17
+      const inferReport = buildInferThreatReductionReport({
+        code: 'INFERTANKIDS',
+        fightId: inferFightId,
+        encounterId: 9017,
+        players: [
+          { id: 1, name: 'Maintank', subType: 'Warrior' },
+          { id: 2, name: 'Rogueone', subType: 'Rogue' },
+          { id: 3, name: 'Palastar', subType: 'Paladin' },
+        ],
+        tankPlayerIds: [],
+      })
+      const fetchMock = mockFetch({
+        report: inferReport,
+        events: [
+          createDamageEvent({
+            timestamp: 1500,
+            sourceID: 2,
+            targetID: 50,
+            abilityGameID: 23922,
+            amount: 1000,
+            absorbed: 0,
+            blocked: 0,
+            mitigated: 0,
+            overkill: 0,
+            hitType: 'hit',
+            tick: false,
+            multistrike: false,
+          }),
+        ],
+      })
+
+      const response = await app.request(
+        `http://localhost/v1/reports/INFERTANKIDS/fights/${inferFightId}/events?inferThreatReduction=true&tankActorIds=1`,
+        {},
+        createMockBindings(),
+      )
+
+      expect(response.status).toBe(200)
+      const data: AugmentedEventsResponse = await response.json()
+      expect(data.initialAurasByActor?.['1']).toBeUndefined()
+      expect(data.initialAurasByActor?.['2']).toEqual([25895])
+      expect(data.initialAurasByActor?.['3']).toEqual([25895])
+
+      const encounterRoleCalls = fetchMock.mock.calls.filter(([, init]) => {
+        if (!init || typeof init !== 'object') {
+          return false
+        }
+
+        const body =
+          'body' in init && init.body ? JSON.parse(String(init.body)) : null
+        return typeof body?.query === 'string'
+          ? body.query.includes('GetEncounterActorRoles')
+          : false
+      })
+      expect(encounterRoleCalls).toHaveLength(0)
+    })
+
     it('applies minor salvation edge-case precedence while inferring', async () => {
       const inferFightId = 12
       const inferReport = buildInferThreatReductionReport({

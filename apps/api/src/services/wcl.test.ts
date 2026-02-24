@@ -708,7 +708,7 @@ describe('WCLClient.getFriendlyBuffAurasAtFightStart', () => {
     expect(actorBatchVariables.fightIDs).toEqual([3, 4])
   })
 
-  it('reuses report-scoped band cache across different fights', async () => {
+  it('uses fight-scoped band cache and does not reuse across different fights', async () => {
     const fetchMock = vi.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = typeof input === 'string' ? input : input.toString()
@@ -798,7 +798,7 @@ describe('WCLClient.getFriendlyBuffAurasAtFightStart', () => {
       const query = JSON.parse(body.toString()).query as string
       return query.includes('GetFriendlyBuffBandsByActor')
     })
-    expect(tableCalls).toHaveLength(1)
+    expect(tableCalls).toHaveLength(2)
   })
 })
 describe('WCLClient.getRecentReports', () => {

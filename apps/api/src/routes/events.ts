@@ -21,7 +21,7 @@ import {
 } from '../middleware/error'
 import { CacheKeys, createCache, normalizeVisibility } from '../services/cache'
 import { WCLClient, resolveFightTankActorIds } from '../services/wcl'
-import type { AugmentedEventsResponse, ReportActorRole } from '../types/api'
+import type { AugmentedEventsResponse } from '../types/api'
 import type { Bindings, Variables } from '../types/bindings'
 
 export const eventsRoutes = new Hono<{
@@ -59,76 +59,112 @@ function isTruthyQueryParam(value: string | undefined): boolean {
   return value === '1' || value === 'true'
 }
 
-function inferFightThreatReductionAuras({
+function parseActorIdListQueryParam(value: string | undefined): number[] | null {
+  if (value === undefined) {
+    return null
+  }
+
+  const parsedActorIds = value
+    .split(',')
+    .map((part) => Number.parseInt(part.trim(), 10))
+    .filter((part) => Number.isFinite(part) && part > 0)
+
+  return [...new Set(parsedActorIds)].sort((left, right) => left - right)
+}
+
+function resolveFightThreatReductionBaselineAuraId({
   report,
-  fight,
-  rawEvents,
-  initialAurasByActor,
-  tankActorIds,
+  friendlyPlayerIds,
 }: {
   report: Report
-  fight: Report['fights'][number]
+  friendlyPlayerIds: Set<number>
+}): number | null {
+  let hasPaladin = false
+  let hasShaman = false
+
+  report.masterData.actors.forEach((actor) => {
+    if (
+      actor.type !== 'Player' ||
+      !friendlyPlayerIds.has(actor.id) ||
+      (hasPaladin && hasShaman)
+    ) {
+      return
+    }
+
+    if (actor.subType === 'Paladin') {
+      hasPaladin = true
+      return
+    }
+
+    if (actor.subType === 'Shaman') {
+      hasShaman = true
+    }
+  })
+
+  if (hasPaladin) {
+    return GREATER_BLESSING_OF_SALVATION_ID
+  }
+
+  if (hasShaman) {
+    return TRANQUIL_AIR_TOTEM_ID
+  }
+
+  return null
+}
+
+function normalizeTankActorIdsSegment(tankActorIds: readonly number[] | null): string {
+  if (tankActorIds === null) {
+    return 'auto'
+  }
+
+  if (tankActorIds.length === 0) {
+    return 'none'
+  }
+
+  return tankActorIds.join('-')
+}
+
+function inferFightThreatReductionAuras({
+  rawEvents,
+  initialAurasByActor,
+  friendlyPlayerIds,
+  tankActorIds,
+  baselineAuraId,
+}: {
   rawEvents: WCLEvent[]
   initialAurasByActor: Map<number, number[]>
+  friendlyPlayerIds: Set<number>
   tankActorIds: Set<number>
+  baselineAuraId: number
 }): Map<number, number[]> {
-  const friendlyPlayerIds = new Set(fight.friendlyPlayers ?? [])
   if (friendlyPlayerIds.size === 0) {
     return initialAurasByActor
   }
 
-  const friendlyPlayerClasses = report.masterData.actors.flatMap((actor) =>
-    actor.type === 'Player' && friendlyPlayerIds.has(actor.id)
-      ? [actor.subType]
-      : [],
-  )
-  const hasPaladin = friendlyPlayerClasses.includes('Paladin')
-  const hasShaman = friendlyPlayerClasses.includes('Shaman')
-  if (!hasPaladin && !hasShaman) {
-    return initialAurasByActor
-  }
+  const combatantInfoMinorSalvationPlayerIds = new Set<number>()
+  const minorSalvationRemovedPlayerIds = new Set<number>()
 
-  const baselineAuraId = hasPaladin
-    ? GREATER_BLESSING_OF_SALVATION_ID
-    : TRANQUIL_AIR_TOTEM_ID
-  const combatantInfoMinorSalvationPlayerIds = rawEvents.reduce(
-    (result, event) => {
-      if (
-        event.type !== 'combatantinfo' ||
-        !friendlyPlayerIds.has(event.sourceID)
-      ) {
-        return result
-      }
-
-      const hasMinorSalvation = (event.auras ?? []).some(
+  rawEvents.forEach((event) => {
+    if (
+      event.type === 'combatantinfo' &&
+      friendlyPlayerIds.has(event.sourceID) &&
+      (event.auras ?? []).some(
         (aura) => aura.ability === BLESSING_OF_SALVATION_ID,
       )
-      if (hasMinorSalvation) {
-        result.add(event.sourceID)
-      }
+    ) {
+      combatantInfoMinorSalvationPlayerIds.add(event.sourceID)
+      return
+    }
 
-      return result
-    },
-    new Set<number>(),
-  )
-  const minorSalvationRemovedPlayerIds = rawEvents.reduce((result, event) => {
     if (
       event.type === 'removebuff' &&
       event.abilityGameID === BLESSING_OF_SALVATION_ID &&
       friendlyPlayerIds.has(event.targetID)
     ) {
-      result.add(event.targetID)
+      minorSalvationRemovedPlayerIds.add(event.targetID)
     }
-
-    return result
-  }, new Set<number>())
-
-  const inferredAurasByActor = new Map<number, number[]>(
-    [...initialAurasByActor.entries()].map(([actorId, auraIds]) => [
-      actorId,
-      [...new Set(auraIds)].sort((left, right) => left - right),
-    ]),
-  )
+  })
+  const inferredAurasByActor = new Map<number, number[]>(initialAurasByActor)
 
   friendlyPlayerIds.forEach((actorId) => {
     if (tankActorIds.has(actorId)) {
@@ -141,16 +177,19 @@ function inferFightThreatReductionAuras({
       combatantInfoMinorSalvationPlayerIds.has(actorId)
     const hasMinorSalvationRemoval = minorSalvationRemovedPlayerIds.has(actorId)
 
-    if (hasMinorSalvationRemoval && !hasInitialMinorSalvation) {
-      actorAuraIds.add(BLESSING_OF_SALVATION_ID)
-    } else if (
-      !(
-        baselineAuraId === GREATER_BLESSING_OF_SALVATION_ID &&
-        hasInitialMinorSalvation
-      )
-    ) {
-      actorAuraIds.add(baselineAuraId)
+    const inferredAuraId =
+      hasMinorSalvationRemoval && !hasInitialMinorSalvation
+        ? BLESSING_OF_SALVATION_ID
+        : baselineAuraId === GREATER_BLESSING_OF_SALVATION_ID &&
+            hasInitialMinorSalvation
+          ? null
+          : baselineAuraId
+
+    if (inferredAuraId === null || actorAuraIds.has(inferredAuraId)) {
+      return
     }
+
+    actorAuraIds.add(inferredAuraId)
 
     inferredAurasByActor.set(
       actorId,
@@ -171,8 +210,10 @@ eventsRoutes.get('/', async (c) => {
   const configVersionParam = c.req.query('configVersion')
   const refreshParam = c.req.query('refresh')
   const inferThreatReductionParam = c.req.query('inferThreatReduction')
+  const tankActorIdsParam = c.req.query('tankActorIds')
   const bypassAugmentedCache = isTruthyQueryParam(refreshParam)
   const inferThreatReduction = isTruthyQueryParam(inferThreatReductionParam)
+  const requestedTankActorIds = parseActorIdListQueryParam(tankActorIdsParam)
 
   // Validate fight ID
   const fightId = parseInt(idParam, 10)
@@ -242,6 +283,7 @@ eventsRoutes.get('/', async (c) => {
     fightId,
     configVersion,
     inferThreatReduction,
+    inferThreatReduction ? requestedTankActorIds : null,
     visibility,
     visibility === 'private' ? uid : undefined,
   )
@@ -272,13 +314,6 @@ eventsRoutes.get('/', async (c) => {
     ...(fight.friendlyPlayers ?? []),
     ...(fight.friendlyPets ?? []).map((pet) => pet.id),
   ])
-  const reportFightIds = report.fights.map((reportFight) => reportFight.id)
-  const reportFriendlyActorIds = new Set<number>(
-    report.fights.flatMap((reportFight) => [
-      ...(reportFight.friendlyPlayers ?? []),
-      ...(reportFight.friendlyPets ?? []).map((pet) => pet.id),
-    ]),
-  )
 
   const [rawEvents, initialAurasByActor] = await Promise.all([
     wcl.getEvents(code, fightId, visibility, fight.startTime, fight.endTime, {
@@ -292,23 +327,41 @@ eventsRoutes.get('/', async (c) => {
       fightFriendlyActorIds,
       {
         bypassCache: bypassAugmentedCache,
-        queryFightIds: reportFightIds,
-        queryFriendlyActorIds: reportFriendlyActorIds,
       },
     ),
   ])
-  const friendlyPlayers = report.masterData.actors.flatMap((actor) =>
-    actor.type === 'Player' && (fight.friendlyPlayers ?? []).includes(actor.id)
-      ? [
-          {
-            id: actor.id,
-            name: actor.name,
-          },
-        ]
-      : [],
-  )
-  const encounterActorRoles = inferThreatReduction
-    ? await wcl.getEncounterActorRoles(
+  const friendlyPlayerIds = new Set<number>(fight.friendlyPlayers ?? [])
+  const baselineAuraId = inferThreatReduction
+    ? resolveFightThreatReductionBaselineAuraId({
+        report,
+        friendlyPlayerIds,
+      })
+    : null
+  const shouldInferThreatReductionAuras =
+    inferThreatReduction &&
+    baselineAuraId !== null &&
+    friendlyPlayerIds.size > 0
+  const tankActorIds = new Set<number>()
+
+  if (shouldInferThreatReductionAuras) {
+    if (requestedTankActorIds !== null) {
+      requestedTankActorIds.forEach((actorId) => {
+        if (friendlyPlayerIds.has(actorId)) {
+          tankActorIds.add(actorId)
+        }
+      })
+    } else {
+      const friendlyPlayers = report.masterData.actors.flatMap((actor) =>
+        actor.type === 'Player' && friendlyPlayerIds.has(actor.id)
+          ? [
+              {
+                id: actor.id,
+                name: actor.name,
+              },
+            ]
+          : [],
+      )
+      const encounterActorRoles = await wcl.getEncounterActorRoles(
         code,
         fight.encounterID ?? null,
         fight.id,
@@ -318,22 +371,28 @@ eventsRoutes.get('/', async (c) => {
           bypassCache: bypassAugmentedCache,
         },
       )
-    : new Map<number, ReportActorRole>()
-  const tankActorIds = inferThreatReduction
-    ? new Set<number>([
+      const resolvedTankActorIds = new Set<number>([
         ...resolveFightTankActorIds(report, fightId),
         ...[...encounterActorRoles.entries()].flatMap(([actorId, role]) =>
           role === 'Tank' ? [actorId] : [],
         ),
       ])
-    : new Set<number>()
-  const effectiveInitialAurasByActor = inferThreatReduction
+      resolvedTankActorIds.forEach((actorId) => {
+        if (friendlyPlayerIds.has(actorId)) {
+          tankActorIds.add(actorId)
+        }
+      })
+    }
+  }
+
+  const effectiveInitialAurasByActor =
+    shouldInferThreatReductionAuras && baselineAuraId !== null
     ? inferFightThreatReductionAuras({
-        report,
-        fight,
         rawEvents,
         initialAurasByActor,
+        friendlyPlayerIds,
         tankActorIds,
+        baselineAuraId,
       })
     : initialAurasByActor
 
@@ -342,9 +401,14 @@ eventsRoutes.get('/', async (c) => {
     fightId,
     rawEvents: rawEvents.length,
     fightFriendlyActors: fightFriendlyActorIds.size,
-    reportFights: reportFightIds.length,
-    reportFriendlyActors: reportFriendlyActorIds.size,
     inferThreatReduction,
+    inferenceBaselineAuraId: baselineAuraId,
+    tankActorIdSource:
+      requestedTankActorIds === null ? 'encounter-rankings' : 'request',
+    requestedTankActorIds:
+      requestedTankActorIds === null
+        ? null
+        : normalizeTankActorIdsSegment(requestedTankActorIds),
     inferredTankActors: tankActorIds.size,
     initialAuraActors: effectiveInitialAurasByActor.size,
     initialAuraIds: countInitialAuraIds(effectiveInitialAurasByActor),
@@ -404,7 +468,7 @@ eventsRoutes.get('/', async (c) => {
       'X-Cache-Status': 'MISS',
       'X-Game-Version': String(gameVersion),
       'X-Config-Version': configVersion,
-      ETag: `"${code}-${fightId}-${configVersion}-${inferThreatReduction ? 'infer' : 'standard'}"`,
+      ETag: `"${code}-${fightId}-${configVersion}-${inferThreatReduction ? `infer-${normalizeTankActorIdsSegment(requestedTankActorIds)}` : 'standard'}"`,
     },
     status: 200,
   })

@@ -76,6 +76,15 @@ describe('FightPage inferThreatReduction startup behavior', () => {
   })
 
   it('gates first events request until user settings finish loading', () => {
+    let isFightLoading = true
+    let fightData: { actors: Array<{ id: number; role?: string; type: string }> } | null =
+      null
+    useFightDataMock.mockImplementation(() => ({
+      data: fightData,
+      error: null,
+      isLoading: isFightLoading,
+    }))
+
     let isSettingsLoading = true
     useUserSettingsMock.mockImplementation(() => ({
       error: null,
@@ -109,6 +118,7 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       9,
       null,
       true,
+      null,
       false,
     )
     expect(
@@ -116,6 +126,16 @@ describe('FightPage inferThreatReduction startup behavior', () => {
     ).toBe(false)
 
     isSettingsLoading = false
+    isFightLoading = false
+    fightData = {
+      actors: [
+        {
+          id: 1,
+          role: 'Tank',
+          type: 'Player',
+        },
+      ],
+    }
     rendered.rerender(
       <MemoryRouter
         future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
@@ -136,6 +156,7 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       9,
       null,
       true,
+      [1],
       true,
     )
     expect(
