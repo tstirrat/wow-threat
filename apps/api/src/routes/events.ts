@@ -31,7 +31,6 @@ export const eventsRoutes = new Hono<{
 
 const BLESSING_OF_SALVATION_ID = 1038
 const GREATER_BLESSING_OF_SALVATION_ID = 25895
-const TRANQUIL_AIR_TOTEM_ID = 25909
 const SALVATION_AURA_IDS = new Set([
   BLESSING_OF_SALVATION_ID,
   GREATER_BLESSING_OF_SALVATION_ID,
@@ -83,37 +82,14 @@ function resolveFightThreatReductionBaselineAuraId({
   report: Report
   friendlyPlayerIds: Set<number>
 }): number | null {
-  let hasPaladin = false
-  let hasShaman = false
+  const hasPaladin = report.masterData.actors.some(
+    (actor) =>
+      actor.type === 'Player' &&
+      friendlyPlayerIds.has(actor.id) &&
+      actor.subType === 'Paladin',
+  )
 
-  report.masterData.actors.forEach((actor) => {
-    if (
-      actor.type !== 'Player' ||
-      !friendlyPlayerIds.has(actor.id) ||
-      (hasPaladin && hasShaman)
-    ) {
-      return
-    }
-
-    if (actor.subType === 'Paladin') {
-      hasPaladin = true
-      return
-    }
-
-    if (actor.subType === 'Shaman') {
-      hasShaman = true
-    }
-  })
-
-  if (hasPaladin) {
-    return GREATER_BLESSING_OF_SALVATION_ID
-  }
-
-  if (hasShaman) {
-    return TRANQUIL_AIR_TOTEM_ID
-  }
-
-  return null
+  return hasPaladin ? GREATER_BLESSING_OF_SALVATION_ID : null
 }
 
 function normalizeTankActorIdsSegment(tankActorIds: readonly number[] | null): string {

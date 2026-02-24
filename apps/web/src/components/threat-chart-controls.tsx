@@ -94,8 +94,8 @@ export const ThreatChartControls: FC<ThreatChartControlsProps> = ({
               </Button>
             </TooltipTrigger>
             <TooltipContent side="top">
-              Infers Salvation or Tranquil Air Totem depending on the class
-              mixture of the fight.
+              Infers Salvation for non-tank players when a Paladin is present
+              in the fight.
             </TooltipContent>
           </Tooltip>
         </div>

@@ -818,51 +818,7 @@ describe('Events API', () => {
       expect(data.initialAurasByActor?.['3']).toEqual([1038])
     })
 
-    it('infers tranquil air in shaman-only fights and makes no changes without paladins or shamans', async () => {
-      const shamanFightId = 13
-      const shamanReport = buildInferThreatReductionReport({
-        code: 'INFERSHAMAN',
-        fightId: shamanFightId,
-        encounterId: 9003,
-        players: [
-          { id: 1, name: 'MainTank', subType: 'Warrior' },
-          { id: 2, name: 'Bladefury', subType: 'Rogue' },
-          { id: 3, name: 'Totemlord', subType: 'Shaman' },
-        ],
-        tankPlayerIds: [1],
-      })
-      mockFetch({
-        report: shamanReport,
-        events: [
-          createDamageEvent({
-            timestamp: 1500,
-            sourceID: 2,
-            targetID: 50,
-            abilityGameID: 23922,
-            amount: 1000,
-            absorbed: 0,
-            blocked: 0,
-            mitigated: 0,
-            overkill: 0,
-            hitType: 'hit',
-            tick: false,
-            multistrike: false,
-          }),
-        ],
-      })
-
-      const shamanResponse = await app.request(
-        `http://localhost/v1/reports/INFERSHAMAN/fights/${shamanFightId}/events?inferThreatReduction=true`,
-        {},
-        createMockBindings(),
-      )
-      expect(shamanResponse.status).toBe(200)
-      const shamanData: AugmentedEventsResponse = await shamanResponse.json()
-
-      expect(shamanData.initialAurasByActor?.['1']).toBeUndefined()
-      expect(shamanData.initialAurasByActor?.['2']).toEqual([25909])
-      expect(shamanData.initialAurasByActor?.['3']).toEqual([25909])
-
+    it('makes no changes without paladins present', async () => {
       const noBuffFightId = 14
       const noBuffReport = buildInferThreatReductionReport({
         code: 'INFERNONE',
