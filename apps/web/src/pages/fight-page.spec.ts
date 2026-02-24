@@ -223,7 +223,7 @@ test.describe('fight page', () => {
     ).toHaveText('Total')
     await expect(
       fightPage.summary.totalRow().getByRole('cell').nth(2),
-    ).toHaveText('550')
+    ).toHaveText('550.00')
   })
 
   test('focuses a player from the legend focus button', async ({ page }) => {
