@@ -66,6 +66,8 @@ export type ThreatChartProps = {
   onShowPetsChange: (showPets: boolean) => void
   showEnergizeEvents: boolean
   onShowEnergizeEventsChange: (showEnergizeEvents: boolean) => void
+  inferThreatReduction: boolean
+  onInferThreatReductionChange: (inferThreatReduction: boolean) => void
 }
 
 export const ThreatChart: FC<ThreatChartProps> = ({
@@ -79,6 +81,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   onShowPetsChange,
   showEnergizeEvents,
   onShowEnergizeEventsChange,
+  inferThreatReduction,
+  onInferThreatReductionChange,
 }) => {
   const chartRef = useRef<ReactEChartsCore>(null)
   const [isChartReady, setIsChartReady] = useState(false)
@@ -294,6 +298,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         onClearIsolate={handleClearIsolate}
         showEnergizeEvents={showEnergizeEvents}
         onShowEnergizeEventsChange={onShowEnergizeEventsChange}
+        inferThreatReduction={inferThreatReduction}
+        onInferThreatReductionChange={onInferThreatReductionChange}
       />
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_14rem]">
         <div>

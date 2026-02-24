@@ -11,13 +11,17 @@ import type {
 
 import type {
   ReportAbilitySummary,
+  ReportActorRole,
   ReportActorSummary,
   ReportFightParticipant,
   ReportFightSummary,
 } from './api'
 
 /** Convert a WCL actor to a stable frontend-facing actor summary. */
-export function toReportActorSummary(actor: ReportActor): ReportActorSummary {
+export function toReportActorSummary(
+  actor: ReportActor,
+  role?: ReportActorRole,
+): ReportActorSummary {
   if (actor.type === 'Pet') {
     return {
       id: actor.id,
@@ -25,6 +29,7 @@ export function toReportActorSummary(actor: ReportActor): ReportActorSummary {
       name: actor.name,
       type: actor.type,
       petOwner: actor.petOwner,
+      ...(role ? { role } : {}),
     }
   }
 
@@ -34,6 +39,7 @@ export function toReportActorSummary(actor: ReportActor): ReportActorSummary {
     name: actor.name,
     type: actor.type,
     subType: actor.subType,
+    ...(role ? { role } : {}),
   }
 }
 

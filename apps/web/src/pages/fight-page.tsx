@@ -105,6 +105,7 @@ export const FightPage: FC = () => {
     reportId,
     fightId,
     threatConfig?.version ?? null,
+    userSettings.inferThreatReduction,
   )
   const fightData = fightQuery.data ?? null
   const eventsData = eventsQuery.data ?? null
@@ -353,6 +354,14 @@ export const FightPage: FC = () => {
     },
     [updateUserSettings],
   )
+  const handleInferThreatReductionChange = useCallback(
+    (inferThreatReduction: boolean) => {
+      void updateUserSettings({
+        inferThreatReduction,
+      })
+    },
+    [updateUserSettings],
+  )
 
   if (!reportId || Number.isNaN(fightId)) {
     return (
@@ -449,6 +458,8 @@ export const FightPage: FC = () => {
             onShowPetsChange={handleShowPetsChange}
             showEnergizeEvents={userSettings.showEnergizeEvents}
             onShowEnergizeEventsChange={handleShowEnergizeEventsChange}
+            inferThreatReduction={userSettings.inferThreatReduction}
+            onInferThreatReductionChange={handleInferThreatReductionChange}
           />
         )}
       </SectionCard>

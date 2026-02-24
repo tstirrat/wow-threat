@@ -23,27 +23,28 @@ describe('reports api helpers', () => {
   })
 
   it('includes configVersion in fight events requests when available', async () => {
-    await getFightEvents('ABC123xyz', 12, '1.3.1')
+    await getFightEvents('ABC123xyz', 12, '1.3.1', true)
 
     expect(requestJson).toHaveBeenCalledWith(
-      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events?configVersion=1.3.1`,
+      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events?configVersion=1.3.1&inferThreatReduction=true`,
     )
   })
 
   it('omits configVersion in fight events requests when unavailable', async () => {
-    await getFightEvents('ABC123xyz', 12, null)
+    await getFightEvents('ABC123xyz', 12, null, false)
 
     expect(requestJson).toHaveBeenCalledWith(
-      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events`,
+      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events?inferThreatReduction=false`,
     )
   })
 
-  it('includes configVersion in fight events query keys', () => {
-    expect(fightEventsQueryKey('ABC123xyz', 12, '1.3.1')).toEqual([
+  it('includes configVersion and inferThreatReduction in fight events query keys', () => {
+    expect(fightEventsQueryKey('ABC123xyz', 12, '1.3.1', true)).toEqual([
       'fight-events',
       'ABC123xyz',
       12,
       '1.3.1',
+      true,
     ])
   })
 

@@ -36,6 +36,12 @@ export class ThreatChartObject {
     return this.section.getByRole('checkbox', { name: 'Show energize events' })
   }
 
+  inferThreatReductionCheckbox(): Locator {
+    return this.section.getByRole('checkbox', {
+      name: 'Infer threat reduction buffs',
+    })
+  }
+
   chartContainer(): Locator {
     return this.section.locator('.echarts-for-react')
   }
@@ -138,6 +144,17 @@ export class ThreatChartObject {
     }
 
     await showEnergizeEventsCheckbox.click()
+  }
+
+  async setInferThreatReduction(checked: boolean): Promise<void> {
+    const inferThreatReductionCheckbox = this.inferThreatReductionCheckbox()
+    const isChecked = await inferThreatReductionCheckbox.isChecked()
+
+    if (isChecked === checked) {
+      return
+    }
+
+    await inferThreatReductionCheckbox.click()
   }
 
   async seriesClickPointByStroke(strokeColor: string): Promise<Point | null> {

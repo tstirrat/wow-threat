@@ -81,6 +81,46 @@ describe('Fights API', () => {
       ).toBe(true)
     })
 
+    it('returns player roles when encounter rankings are available', async () => {
+      const roleReportCode = 'ROLE123xyz'
+      mockFetch({
+        report: {
+          ...reportData,
+          code: roleReportCode,
+          fights: reportData.fights.map((fight) =>
+            fight.id === 1 ? { ...fight, encounterID: 111 } : fight,
+          ),
+        },
+        encounterActorRoles: [
+          {
+            encounterID: 111,
+            fightID: 1,
+            roles: {
+              tanks: {
+                characters: [{ id: 1, name: 'Tankwarrior' }],
+              },
+              healers: {
+                characters: [{ id: 2, name: 'Healpriest' }],
+              },
+            },
+          },
+        ],
+      })
+
+      const res = await app.request(
+        `http://localhost/v1/reports/${roleReportCode}/fights/1`,
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(200)
+      const data = await res.json<FightsResponse>()
+
+      expect(data.actors.find((actor) => actor.id === 1)?.role).toBe('Tank')
+      expect(data.actors.find((actor) => actor.id === 2)?.role).toBe('Healer')
+      expect(data.actors.find((actor) => actor.id === 3)?.role).toBeUndefined()
+    })
+
     it('returns wipe fight correctly', async () => {
       const res = await app.request(
         'http://localhost/v1/reports/ABC123xyz/fights/3',

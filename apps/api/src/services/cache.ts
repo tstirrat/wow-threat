@@ -228,7 +228,7 @@ export function createCache(
 // Cache key builders
 export const CacheKeys = {
   wclToken: () => 'wcl:token',
-  reportSchemaVersion: 'v3',
+  reportSchemaVersion: 'v4',
   report: (code: string, visibility: unknown, uid?: string) =>
     `wcl:report:${CacheKeys.reportSchemaVersion}:${code}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
   fightsSchemaVersion: 'v2',
@@ -251,13 +251,23 @@ export const CacheKeys = {
     uid?: string,
   ) =>
     `wcl:friendly-buff-bands-by-report:${CacheKeys.friendlyBuffBandsSchemaVersion}:${code}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
-  augmentedSchemaVersion: 'v9',
+  encounterActorRolesSchemaVersion: 'v1',
+  encounterActorRoles: (
+    code: string,
+    encounterId: number,
+    fightId: number,
+    visibility: unknown,
+    uid?: string,
+  ) =>
+    `wcl:encounter-actor-roles:${CacheKeys.encounterActorRolesSchemaVersion}:${code}:${encounterId}:${fightId}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
+  augmentedSchemaVersion: 'v10',
   augmentedEvents: (
     code: string,
     fightId: number,
     configVersion: string,
+    inferThreatReduction: boolean,
     visibility: unknown,
     uid?: string,
   ) =>
-    `augmented:${CacheKeys.augmentedSchemaVersion}:${code}:${fightId}:${configVersion}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
+    `augmented:${CacheKeys.augmentedSchemaVersion}:${code}:${fightId}:${configVersion}:inferThreatReduction:${inferThreatReduction ? 'true' : 'false'}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
 }

@@ -10,7 +10,11 @@ import {
   isBossFightForNavigation,
   normalizeEncounterNameForNavigation,
 } from '../lib/fight-navigation'
-import type { ReportActorSummary, ReportFightSummary } from '../types/api'
+import type {
+  ReportActorRole,
+  ReportActorSummary,
+  ReportFightSummary,
+} from '../types/api'
 import { Button } from './ui/button'
 import {
   Table,
@@ -86,17 +90,8 @@ export const PlayersNavigationList: FC<PlayersNavigationListProps> = ({
     )
   }
 
-  const resolvePlayerRole = (
-    player: ReportActorSummary,
-  ): 'tank' | 'heal' | 'dps' | null => {
-    const role = (player as ReportActorSummary & { role?: string | null }).role
-
-    if (role === 'tank' || role === 'heal' || role === 'dps') {
-      return role
-    }
-
-    return null
-  }
+  const resolvePlayerRole = (player: ReportActorSummary): ReportActorRole | null =>
+    player.role ?? null
 
   const hasRoleColumn = sortedPlayers.some(
     (player) => resolvePlayerRole(player) !== null,

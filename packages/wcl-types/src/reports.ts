@@ -173,6 +173,50 @@ export interface ReportRankedCharacterServer {
   slug?: string
 }
 
+export type ReportRankingCompareType = 'Rankings' | 'Parses'
+export type ReportRankingTimeframeType = 'Today' | 'Historical'
+export type ReportRoleType = 'Any' | 'DPS' | 'Healer' | 'Tank'
+
+export interface ReportEncounterRankingNode {
+  encounterID?: number | null
+  encounterId?: number | null
+  fightID?: number | null
+  fightId?: number | null
+  role?: ReportRoleType | string | null
+  [key: string]: unknown
+}
+
+export interface ReportRankingsCharacter {
+  id?: number
+  name?: string
+  class?: string | null
+  spec?: string | null
+}
+
+export interface ReportRankingsRoleGroup {
+  characters?: Array<ReportRankingsCharacter | null> | null
+}
+
+export interface ReportRankingsRoles {
+  tanks?: ReportRankingsRoleGroup | null
+  healers?: ReportRankingsRoleGroup | null
+  dps?: ReportRankingsRoleGroup | null
+}
+
+export interface ReportEncounterRankingsEntry {
+  encounterID?: number | null
+  encounterId?: number | null
+  fightID?: number | null
+  fightId?: number | null
+  roles?: ReportRankingsRoles | null
+}
+
+export type ReportEncounterRankings =
+  | ReportEncounterRankingNode
+  | ReportEncounterRankingNode[]
+  | Record<string, unknown>
+  | null
+
 export interface ReportRankedCharacter {
   canonicalID: number
   claimed?: boolean | null
@@ -184,13 +228,9 @@ export interface ReportRankedCharacter {
   level: number
   name: string
   server: ReportRankedCharacterServer
-  encounterRankings?: unknown
+  encounterRankings?: ReportEncounterRankings
   zoneRankings?: unknown
 }
-
-export type ReportRankingCompareType = 'Rankings' | 'Parses'
-export type ReportRankingTimeframeType = 'Today' | 'Historical'
-export type ReportRoleType = 'Any' | 'DPS' | 'Healer' | 'Tank'
 
 export interface Report {
   code: string

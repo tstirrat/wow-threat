@@ -6,6 +6,7 @@ import type { PlayerClass, ReportVisibility, Zone } from '@wow-threat/wcl-types'
 
 export type ReportActorType = 'Player' | 'NPC' | 'Pet'
 export type ReportActorSubType = PlayerClass | 'Boss' | 'NPC'
+export type ReportActorRole = 'Tank' | 'Healer' | 'DPS'
 
 export interface ReportActorSummary {
   id: number
@@ -14,6 +15,7 @@ export interface ReportActorSummary {
   type: ReportActorType
   subType?: ReportActorSubType
   petOwner?: number | null
+  role?: ReportActorRole
 }
 
 export interface ReportAbilitySummary {

@@ -327,6 +327,31 @@ export type WCLSchemaRankingCompareType = 'Rankings' | 'Parses'
 
 export type WCLSchemaRankingTimeframeType = 'Today' | 'Historical'
 
+export interface WCLSchemaReportRankingCharacter {
+  id: number
+  name: string
+  class?: string | null
+  spec?: string | null
+}
+
+export interface WCLSchemaReportRankingRoleGroup {
+  characters?: Array<WCLSchemaReportRankingCharacter | null> | null
+}
+
+export interface WCLSchemaReportRankingRoles {
+  tanks?: WCLSchemaReportRankingRoleGroup | null
+  healers?: WCLSchemaReportRankingRoleGroup | null
+  dps?: WCLSchemaReportRankingRoleGroup | null
+}
+
+export interface WCLSchemaReportEncounterRanking {
+  encounterID: number
+  encounterId?: number | null
+  fightID?: number | null
+  fightId?: number | null
+  roles?: WCLSchemaReportRankingRoles | null
+}
+
 export interface WCLSchemaRegion {
   id: number
   compactName: string

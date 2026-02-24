@@ -2,6 +2,7 @@
  * Warcraft Logs API client with visibility-aware caching and private token support.
  */
 import type {
+  Report,
   WCLEventsResponse,
   WCLReportResponse,
 } from '@wow-threat/wcl-types'
@@ -13,6 +14,7 @@ import {
   wclRateLimited,
 } from '../middleware/error'
 import type { WclRateLimitResponse } from '../types/api'
+import type { ReportActorRole } from '../types/api'
 import type { Bindings } from '../types/bindings'
 import { AuthStore } from './auth-store'
 import {
@@ -132,6 +134,37 @@ interface WclFriendlyBuffBandsData {
   } | null
 }
 
+interface WclReportRankingsCharacter {
+  id?: number | string | null
+  name?: string | null
+}
+
+interface WclReportRankingsRoleGroup {
+  characters?: Array<WclReportRankingsCharacter | null> | null
+}
+
+interface WclReportRankingsRoles {
+  tanks?: WclReportRankingsRoleGroup | null
+  healers?: WclReportRankingsRoleGroup | null
+  dps?: WclReportRankingsRoleGroup | null
+}
+
+interface WclReportRankingEntry {
+  encounterID?: number | string | null
+  encounterId?: number | string | null
+  fightID?: number | string | null
+  fightId?: number | string | null
+  roles?: WclReportRankingsRoles | null
+}
+
+interface WclReportRankingsData {
+  reportData?: {
+    report?: {
+      rankings?: unknown
+    } | null
+  } | null
+}
+
 interface FriendlyBuffBand {
   startTime: number
   endTime: number | null
@@ -153,6 +186,16 @@ interface CachedFriendlyBuffBands {
 interface ActorScopedFriendlyBuffQuery {
   aliasToActorId: Map<string, number>
   query: string
+}
+
+interface EncounterRankingTarget {
+  encounterId: number | null
+  fightId: number | null
+}
+
+interface EncounterFriendlyPlayer {
+  id: number
+  name: string
 }
 
 function shouldFallbackToUserToken(error: unknown): boolean {
@@ -187,6 +230,294 @@ function parseGuildFaction(value: unknown): string | null {
   }
 
   return null
+}
+
+function parseReportRankingCharacters(
+  value: unknown,
+): Array<WclReportRankingsCharacter | null> {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value.flatMap((character) => {
+    if (!character || typeof character !== 'object') {
+      return []
+    }
+
+    const record = character as Record<string, unknown>
+    const id = parseNumericId(record.id)
+    const name = typeof record.name === 'string' ? record.name : null
+
+    return [{ id, name }]
+  })
+}
+
+function parseReportRankingRoleGroups(
+  value: unknown,
+): WclReportRankingsRoles | null {
+  if (!value || typeof value !== 'object') {
+    return null
+  }
+
+  const record = value as Record<string, unknown>
+  const parseRoleGroup = (
+    roleValue: unknown,
+  ): WclReportRankingsRoleGroup | null => {
+    if (!roleValue || typeof roleValue !== 'object') {
+      return null
+    }
+
+    const roleRecord = roleValue as Record<string, unknown>
+    const rawCharacters = roleRecord.characters
+    const characters = parseReportRankingCharacters(rawCharacters)
+    if (characters.length === 0) {
+      return null
+    }
+
+    return { characters }
+  }
+
+  const tanks = parseRoleGroup(record.tanks)
+  const healers = parseRoleGroup(record.healers)
+  const dps = parseRoleGroup(record.dps)
+  if (!tanks && !healers && !dps) {
+    return null
+  }
+
+  return {
+    tanks: tanks ?? null,
+    healers: healers ?? null,
+    dps: dps ?? null,
+  }
+}
+
+function parseReportRankingEntry(value: unknown): WclReportRankingEntry | null {
+  if (!value || typeof value !== 'object') {
+    return null
+  }
+
+  const record = value as Record<string, unknown>
+  const encounterID = parseNumericId(
+    record.encounterID ?? record.encounterId,
+  )
+  const fightID = parseNumericId(record.fightID ?? record.fightId)
+  const roles = parseReportRankingRoleGroups(record.roles)
+
+  const hasRoles = roles !== null
+  if (!hasRoles && encounterID === null && fightID === null) {
+    return null
+  }
+
+  return {
+    encounterID,
+    encounterId: encounterID,
+    fightID,
+    fightId: fightID,
+    roles: roles ?? undefined,
+  }
+}
+
+function parseReportRankings(value: unknown): WclReportRankingEntry[] {
+  if (!value) {
+    return []
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((entry) => {
+      const normalized = parseReportRankingEntry(entry)
+      return normalized === null ? [] : [normalized]
+    })
+  }
+
+  if (typeof value !== 'object') {
+    return []
+  }
+
+  const normalized = parseReportRankingEntry(value)
+  if (normalized !== null) {
+    return [normalized]
+  }
+
+  return Object.values(value as Record<string, unknown>).flatMap((nestedValue) => {
+    return parseReportRankings(nestedValue)
+  })
+}
+
+function buildFriendlyPlayerIdsByNormalizedName(
+  friendlyPlayers: EncounterFriendlyPlayer[],
+): Map<string, Set<number>> {
+  return friendlyPlayers.reduce((map, player) => {
+    const normalizedName = player.name.toLowerCase().trim()
+    if (normalizedName.length === 0) {
+      return map
+    }
+
+    const actorIds = map.get(normalizedName) ?? new Set<number>()
+    actorIds.add(player.id)
+    map.set(normalizedName, actorIds)
+    return map
+  }, new Map<string, Set<number>>())
+}
+
+function buildFriendlyPlayerIdsByNameFromEntries(
+  friendlyPlayers: EncounterFriendlyPlayer[],
+): Map<string, Set<number>> {
+  return buildFriendlyPlayerIdsByNormalizedName(friendlyPlayers)
+}
+
+function parseRoleEntriesToActorRoles({
+  rankingEntries,
+  encounterTarget,
+  reportActorNameLookup,
+  friendlyPlayerIds,
+}: {
+  rankingEntries: WclReportRankingEntry[]
+  encounterTarget: EncounterRankingTarget
+  reportActorNameLookup: Map<string, Set<number>>
+  friendlyPlayerIds: Set<number>
+}): Map<number, ReportActorRole> {
+  return rankingEntries.reduce((actorRoles, rankingEntry) => {
+    if (!rankingEntry) {
+      return actorRoles
+    }
+
+    const rankingFightId = parseNumericId(
+      rankingEntry.fightID ?? rankingEntry.fightId,
+    )
+    const rankingEncounterId = parseNumericId(
+      rankingEntry.encounterID ?? rankingEntry.encounterId,
+    )
+    if (
+      rankingFightId !== null &&
+      rankingFightId !== encounterTarget.fightId
+    ) {
+      return actorRoles
+    }
+    if (
+      encounterTarget.encounterId !== null &&
+      rankingEncounterId !== null &&
+      rankingEncounterId !== encounterTarget.encounterId
+    ) {
+      return actorRoles
+    }
+
+    const rolesByBucket: Array<[
+      'Tank' | 'Healer' | 'DPS',
+      WclReportRankingsRoleGroup | null | undefined,
+    ]> = [
+      ['Tank', rankingEntry.roles?.tanks],
+      ['Healer', rankingEntry.roles?.healers],
+      ['DPS', rankingEntry.roles?.dps],
+    ]
+
+    rolesByBucket.forEach(([role, roleBucket]) => {
+      if (!Array.isArray(roleBucket?.characters)) {
+        return
+      }
+
+      roleBucket.characters.forEach((character) => {
+        parseReportRankingCharacterActorIds(
+          character,
+          reportActorNameLookup,
+          friendlyPlayerIds,
+        ).forEach((actorId) => {
+          actorRoles.set(actorId, role)
+        })
+      })
+    })
+
+    return actorRoles
+  }, new Map<number, ReportActorRole>())
+}
+
+function buildFriendlyPlayerIdsByName(
+  reportActors: Map<number, Report['masterData']['actors'][number]>,
+  friendlyPlayerIds: Set<number>,
+): Map<string, Set<number>> {
+  return [...friendlyPlayerIds].reduce((map, actorId) => {
+    const actor = reportActors.get(actorId)
+    if (!actor || actor.type !== 'Player' || !actor.name) {
+      return map
+    }
+
+    const normalizedName = actor.name.toLowerCase().trim()
+    const actorIds = map.get(normalizedName) ?? new Set()
+    actorIds.add(actorId)
+    map.set(normalizedName, actorIds)
+    return map
+  }, new Map<string, Set<number>>())
+}
+
+function parseReportRankingCharacterActorIds(
+  character: WclReportRankingsCharacter | null | undefined,
+  reportActorNameLookup: Map<string, Set<number>>,
+  friendlyPlayerIds: Set<number>,
+): Set<number> {
+  const actorIds = new Set<number>()
+  const actorId = parseNumericId(character?.id)
+  if (actorId !== null && friendlyPlayerIds.has(actorId)) {
+    actorIds.add(actorId)
+  }
+
+  const normalizedName = character?.name?.toLowerCase().trim()
+  if (normalizedName) {
+    reportActorNameLookup
+      .get(normalizedName)
+      ?.forEach((matchingActorId) => actorIds.add(matchingActorId))
+  }
+
+  return actorIds
+}
+
+function resolveFightActorRolesFromReportRankings(
+  report: Report,
+  fightId: number,
+): Map<number, ReportActorRole> {
+  const fight = report.fights.find((entry) => entry.id === fightId)
+  if (!fight) {
+    return new Map()
+  }
+
+  const encounterTarget: EncounterRankingTarget = {
+    encounterId: fight.encounterID ?? null,
+    fightId,
+  }
+  const friendlyPlayerIds = new Set(fight.friendlyPlayers ?? [])
+  const reportActors = new Map(
+    report.masterData.actors.map((actor) => [actor.id, actor]),
+  )
+  const reportActorNameLookup = buildFriendlyPlayerIdsByName(
+    reportActors,
+    friendlyPlayerIds,
+  )
+  return parseRoleEntriesToActorRoles({
+    rankingEntries: parseReportRankings(report.rankings),
+    encounterTarget,
+    reportActorNameLookup,
+    friendlyPlayerIds,
+  })
+}
+
+/** Resolve fight actor roles from report encounter ranking metadata. */
+export function resolveFightActorRoles(
+  report: Report,
+  fightId: number,
+): Map<number, ReportActorRole> {
+  return resolveFightActorRolesFromReportRankings(report, fightId)
+}
+
+/** Resolve fight tank actor IDs from report ranking metadata. */
+export function resolveFightTankActorIds(
+  report: Report,
+  fightId: number,
+): Set<number> {
+  const tankActorIds = new Set<number>()
+  for (const [actorId, role] of resolveFightActorRoles(report, fightId)) {
+    if (role === 'Tank') {
+      tankActorIds.add(actorId)
+    }
+  }
+  return tankActorIds
 }
 
 function parseFriendlyBuffBands(
@@ -663,6 +994,88 @@ export class WCLClient {
 
     await this.cacheReport(code, userData)
     return userData
+  }
+
+  /** Resolve fight actor roles from encounter rankings for a specific fight. */
+  async getEncounterActorRoles(
+    code: string,
+    encounterId: number | null,
+    fightId: number,
+    visibility: unknown,
+    friendlyPlayers: EncounterFriendlyPlayer[],
+    options: { bypassCache?: boolean } = {},
+  ): Promise<Map<number, ReportActorRole>> {
+    if (encounterId === null || friendlyPlayers.length === 0) {
+      return new Map()
+    }
+
+    const { bypassCache = false } = options
+    const normalizedVisibility = normalizeVisibility(visibility)
+    const cacheKey = CacheKeys.encounterActorRoles(
+      code,
+      encounterId,
+      fightId,
+      normalizedVisibility,
+      normalizedVisibility === 'private' ? this.uid : undefined,
+    )
+    const friendlyPlayerIds = new Set(friendlyPlayers.map((player) => player.id))
+
+    if (!bypassCache) {
+      const cached = await this.cache.get<Array<{
+        actorId: number
+        role: ReportActorRole
+      }>>(cacheKey)
+      if (cached) {
+        return new Map(
+          cached
+            .filter((entry) => friendlyPlayerIds.has(entry.actorId))
+            .map((entry) => [entry.actorId, entry.role] as const),
+        )
+      }
+    }
+
+    const accessToken =
+      normalizedVisibility === 'private'
+        ? await this.getUserAccessToken()
+        : undefined
+    const query = `
+      query GetEncounterActorRoles($code: String!, $encounterID: Int!, $fightIDs: [Int!]) {
+        reportData {
+          report(code: $code) {
+            rankings(encounterID: $encounterID, fightIDs: $fightIDs)
+          }
+        }
+      }
+    `
+    const data = await this.query<WclReportRankingsData>(
+      query,
+      {
+        code,
+        encounterID: encounterId,
+        fightIDs: [fightId],
+      },
+      {
+        accessToken,
+      },
+    )
+
+    const actorRoles = parseRoleEntriesToActorRoles({
+      rankingEntries: parseReportRankings(data.reportData?.report?.rankings),
+      encounterTarget: {
+        encounterId,
+        fightId,
+      },
+      reportActorNameLookup: buildFriendlyPlayerIdsByNameFromEntries(
+        friendlyPlayers,
+      ),
+      friendlyPlayerIds,
+    })
+    await this.cache.set(
+      cacheKey,
+      [...actorRoles.entries()].map(([actorId, role]) => ({ actorId, role })),
+    )
+
+    return actorRoles
   }
 
   /** Get WCL GraphQL key usage details for the current hour. */

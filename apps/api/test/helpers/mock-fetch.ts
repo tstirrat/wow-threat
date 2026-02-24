@@ -84,6 +84,32 @@ export interface MockWCLResponses {
         type: string | null
       }>
     }
+    rankings?: Array<{
+      encounterID?: number | null
+      encounterId?: number | null
+      fightID?: number | null
+      fightId?: number | null
+      roles?: {
+        tanks?: {
+          characters?: Array<{
+            id?: number | null
+            name?: string | null
+          } | null> | null
+        } | null
+        healers?: {
+          characters?: Array<{
+            id?: number | null
+            name?: string | null
+          } | null> | null
+        } | null
+        dps?: {
+          characters?: Array<{
+            id?: number | null
+            name?: string | null
+          } | null> | null
+        } | null
+      } | null
+    }>
   }
   events?: unknown[]
   eventsPages?: Array<{
@@ -92,6 +118,32 @@ export interface MockWCLResponses {
     nextPageTimestamp: number | null
   }>
   friendlyBuffBandsByActor?: unknown
+  encounterActorRoles?: Array<{
+    encounterID?: number | null
+    encounterId?: number | null
+    fightID?: number | null
+    fightId?: number | null
+    roles?: {
+      tanks?: {
+        characters?: Array<{
+          id?: number | null
+          name?: string | null
+        } | null> | null
+      } | null
+      healers?: {
+        characters?: Array<{
+          id?: number | null
+          name?: string | null
+        } | null> | null
+      } | null
+      dps?: {
+        characters?: Array<{
+          id?: number | null
+          name?: string | null
+        } | null> | null
+      } | null
+    } | null
+  }>
 }
 
 const defaultTokenResponse = {
@@ -131,6 +183,28 @@ export function createMockFetch(responses: MockWCLResponses = {}) {
               data: {
                 reportData: {
                   report: responses.friendlyBuffBandsByActor ?? {},
+                },
+              },
+            }),
+            {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          )
+        }
+
+        // Encounter actor role rankings query
+        if (query?.includes('GetEncounterActorRoles')) {
+          return new Response(
+            JSON.stringify({
+              data: {
+                reportData: {
+                  report: {
+                    rankings:
+                      responses.encounterActorRoles ??
+                      responses.report?.rankings ??
+                      [],
+                  },
                 },
               },
             }),

@@ -228,7 +228,7 @@ describe('CacheKeys', () => {
 
   it('generates correct report key', () => {
     expect(CacheKeys.report('ABC123', 'public')).toBe(
-      'wcl:report:v3:ABC123:visibility:public:scope:shared',
+      'wcl:report:v4:ABC123:visibility:public:scope:shared',
     )
   })
 
@@ -256,10 +256,33 @@ describe('CacheKeys', () => {
     )
   })
 
+  it('generates correct encounter actor roles key', () => {
+    expect(
+      CacheKeys.encounterActorRoles(
+        'ABC123',
+        1602,
+        9,
+        'private',
+        'uid-1',
+      ),
+    ).toBe(
+      'wcl:encounter-actor-roles:v1:ABC123:1602:9:visibility:private:scope:uid:uid-1',
+    )
+  })
+
   it('generates correct augmented events key', () => {
     expect(
-      CacheKeys.augmentedEvents('ABC123', 5, 'v1.2.0', 'private', 'uid-1'),
-    ).toBe('augmented:v9:ABC123:5:v1.2.0:visibility:private:scope:uid:uid-1')
+      CacheKeys.augmentedEvents(
+        'ABC123',
+        5,
+        'v1.2.0',
+        true,
+        'private',
+        'uid-1',
+      ),
+    ).toBe(
+      'augmented:v10:ABC123:5:v1.2.0:inferThreatReduction:true:visibility:private:scope:uid:uid-1',
+    )
   })
 
   it('does not collide public and private cache keys', () => {
@@ -276,9 +299,28 @@ describe('CacheKeys', () => {
     expect(firstUserKey).not.toBe(secondUserKey)
   })
 
+  it('does not collide inferred and non-inferred augmented event keys', () => {
+    const inferredKey = CacheKeys.augmentedEvents(
+      'ABC123',
+      5,
+      'v1.2.0',
+      true,
+      'public',
+    )
+    const standardKey = CacheKeys.augmentedEvents(
+      'ABC123',
+      5,
+      'v1.2.0',
+      false,
+      'public',
+    )
+
+    expect(inferredKey).not.toBe(standardKey)
+  })
+
   it('treats invalid visibility values as private', () => {
     expect(CacheKeys.report('ABC123', 'internal')).toBe(
-      'wcl:report:v3:ABC123:visibility:private:scope:uid:anonymous',
+      'wcl:report:v4:ABC123:visibility:private:scope:uid:anonymous',
     )
   })
 })

@@ -3,10 +3,12 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import type { Report } from '@wow-threat/wcl-types'
+
 import { createMockBindings } from '../../test/setup'
 import { type AppError, ErrorCodes } from '../middleware/error'
 import { encryptSecret, importAesGcmKey } from './token-utils'
-import { WCLClient } from './wcl'
+import { WCLClient, resolveFightTankActorIds } from './wcl'
 
 const firestorePrefix =
   'https://firestore.googleapis.com/v1/projects/wow-threat/databases/(default)/documents/'
@@ -152,6 +154,48 @@ describe('WCLClient.getReport', () => {
     expect(result.reportData.report.visibility).toBe('public')
   })
 
+  it('keeps report metadata query free of rankings fields that require encounter ids', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input.toString()
+
+      if (
+        url.includes('warcraftlogs.com/oauth/token') &&
+        init?.body?.toString().includes('client_credentials')
+      ) {
+        return new Response(
+          JSON.stringify({
+            access_token: 'client-token',
+            expires_in: 3600,
+            token_type: 'Bearer',
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+
+      if (url.includes('warcraftlogs.com/api/v2/client')) {
+        const body = init?.body ? JSON.parse(init.body.toString()) : {}
+        const query = body.query as string
+
+        expect(query).not.toContain('rankedCharacters')
+        expect(query).not.toContain('encounterRankings')
+        expect(query).not.toContain('\n            rankings')
+
+        return new Response(
+          JSON.stringify({
+            data: createWclReport({ visibility: 'public' }),
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+
+      return new Response(null, { status: 404 })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const client = new WCLClient(createMockBindings(), 'wcl:12345')
+    await client.getReport('ABC123')
+  })
+
   it('falls back to user token when client token gets permission error', async () => {
     const mockFetch = createWclFetchMock({ clientTokenFails: true })
     vi.stubGlobal('fetch', mockFetch)
@@ -215,6 +259,213 @@ describe('WCLClient.getReport', () => {
       },
       statusCode: 429,
     } satisfies Partial<AppError>)
+  })
+})
+
+describe('resolveFightTankActorIds', () => {
+  it('returns tank actor ids when encounter rankings include a matching tank role', () => {
+    const report = {
+      code: 'ABC123',
+      title: 'Tank roles',
+      owner: { name: 'Owner' },
+      visibility: 'public',
+      guild: null,
+      startTime: 1000,
+      endTime: 5000,
+      zone: { id: 1, name: 'Zone' },
+      fights: [
+        {
+          id: 11,
+          encounterID: 9001,
+          name: 'Boss',
+          startTime: 1000,
+          endTime: 5000,
+          kill: true,
+          difficulty: null,
+          bossPercentage: null,
+          fightPercentage: null,
+          enemyNPCs: [],
+          enemyPets: [],
+          friendlyPlayers: [1, 2, 3],
+          friendlyPets: [],
+        },
+      ],
+      masterData: {
+        gameVersion: 2,
+        actors: [
+          {
+            id: 1,
+            name: 'Tank',
+            type: 'Player' as const,
+            subType: 'Warrior' as const,
+            petOwner: null,
+          },
+          {
+            id: 2,
+            name: 'Dps',
+            type: 'Player' as const,
+            subType: 'Rogue' as const,
+            petOwner: null,
+          },
+          {
+            id: 3,
+            name: 'Healer',
+            type: 'Player' as const,
+            subType: 'Priest' as const,
+            petOwner: null,
+          },
+        ],
+      },
+      rankings: [
+        {
+          encounterID: 9001,
+          fightID: 11,
+          roles: {
+            tanks: {
+              characters: [{ id: 1, name: 'Tank' }],
+            },
+            healers: {
+              characters: [{ id: 3, name: 'Healer' }],
+            },
+            dps: {
+              characters: [{ id: 2, name: 'Dps' }],
+            },
+          },
+        },
+      ],
+    }
+
+    expect(resolveFightTankActorIds(report as unknown as Report, 11)).toEqual(
+      new Set([1]),
+    )
+  })
+
+  it('returns an empty set when fight or rankings are missing', () => {
+    const report = {
+      code: 'ABC123',
+      title: 'No rankings',
+      owner: { name: 'Owner' },
+      visibility: 'public',
+      guild: null,
+      startTime: 1000,
+      endTime: 5000,
+      zone: { id: 1, name: 'Zone' },
+      fights: [
+        {
+          id: 12,
+          encounterID: 9002,
+          name: 'Boss',
+          startTime: 1000,
+          endTime: 5000,
+          kill: true,
+          difficulty: null,
+          bossPercentage: null,
+          fightPercentage: null,
+          enemyNPCs: [],
+          enemyPets: [],
+          friendlyPlayers: [1],
+          friendlyPets: [],
+        },
+      ],
+      masterData: {
+        gameVersion: 2,
+        actors: [],
+      },
+    }
+
+    expect(resolveFightTankActorIds(report as unknown as Report, 999)).toEqual(
+      new Set(),
+    )
+    expect(resolveFightTankActorIds(report as unknown as Report, 12)).toEqual(
+      new Set(),
+    )
+  })
+})
+
+describe('WCLClient.getEncounterActorRoles', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-01-15T00:00:00Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('returns mapped friendly actor roles from encounter rankings', async () => {
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString()
+
+        if (url.includes('warcraftlogs.com/oauth/token')) {
+          return new Response(
+            JSON.stringify({
+              access_token: 'client-token',
+              expires_in: 3600,
+              token_type: 'Bearer',
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          )
+        }
+
+        if (url.includes('warcraftlogs.com/api/v2/client')) {
+          const body = init?.body ? JSON.parse(init.body.toString()) : {}
+          const query = body.query as string
+
+          if (query.includes('GetEncounterActorRoles')) {
+            return new Response(
+              JSON.stringify({
+                data: {
+                  reportData: {
+                    report: {
+                      rankings: [
+                        {
+                          encounterID: 1602,
+                          fightID: 9,
+                          roles: {
+                            tanks: {
+                              characters: [{ id: 1, name: 'Tank One' }],
+                            },
+                            healers: {
+                              characters: [{ id: 2, name: 'Heal One' }],
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              }),
+              { status: 200, headers: { 'Content-Type': 'application/json' } },
+            )
+          }
+        }
+
+        return new Response(null, { status: 404 })
+      },
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const client = new WCLClient(createMockBindings(), 'wcl:12345')
+    const actorRoles = await client.getEncounterActorRoles(
+      'ABC123',
+      1602,
+      9,
+      'public',
+      [
+        { id: 1, name: 'Tank One' },
+        { id: 2, name: 'Heal One' },
+        { id: 3, name: 'Dps One' },
+      ],
+    )
+
+    expect(actorRoles).toEqual(
+      new Map<number, 'Tank' | 'Healer' | 'DPS'>([
+        [1, 'Tank'],
+        [2, 'Healer'],
+      ]),
+    )
   })
 })
 

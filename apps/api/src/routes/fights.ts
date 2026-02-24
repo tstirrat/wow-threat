@@ -14,8 +14,8 @@ import {
   unauthorized,
 } from '../middleware/error'
 import { normalizeVisibility } from '../services/cache'
-import { WCLClient } from '../services/wcl'
-import type { FightsResponse } from '../types/api'
+import { resolveFightActorRoles, WCLClient } from '../services/wcl'
+import type { FightsResponse, ReportActorRole } from '../types/api'
 import { toReportActorSummary } from '../types/api-transformers'
 import type { Bindings, Variables } from '../types/bindings'
 import { eventsRoutes } from './events'
@@ -67,6 +67,28 @@ fightsRoutes.get('/:id', async (c) => {
 
   // Build a lookup map for faster actor resolution
   const reportActors = new Map(masterData.actors.map((a) => [a.id, a]))
+  const reportActorRoles = resolveFightActorRoles(report, fight.id)
+  const friendlyPlayers = masterData.actors.flatMap((actor) =>
+    actor.type === 'Player' && (fight.friendlyPlayers ?? []).includes(actor.id)
+      ? [
+          {
+            id: actor.id,
+            name: actor.name,
+          },
+        ]
+      : [],
+  )
+  const encounterActorRoles = await wcl.getEncounterActorRoles(
+    code,
+    fight.encounterID ?? null,
+    fight.id,
+    visibility,
+    friendlyPlayers,
+  )
+  const actorRoles = new Map<number, ReportActorRole>([
+    ...reportActorRoles.entries(),
+    ...encounterActorRoles.entries(),
+  ])
 
   // Build actors from fight participants
   const petActors = (fight.friendlyPets ?? [])
@@ -77,7 +99,9 @@ fightsRoutes.get('/:id', async (c) => {
     .map((id) => reportActors.get(id))
     .filter(exists)
     .concat(petActors)
-    .map((actor: ReportActor) => toReportActorSummary(actor))
+    .map((actor: ReportActor) =>
+      toReportActorSummary(actor, actorRoles.get(actor.id)),
+    )
 
   // Build enemies from fight-level enemyNPCs + enemyPets
   const enemyGameIdByActorId = new Map(

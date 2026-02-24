@@ -32,11 +32,13 @@ export function getFightEvents(
   reportId: string,
   fightId: number,
   configVersion: string | null,
+  inferThreatReduction: boolean,
 ): Promise<AugmentedEventsResponse> {
   const searchParams = new URLSearchParams()
   if (configVersion) {
     searchParams.set('configVersion', configVersion)
   }
+  searchParams.set('inferThreatReduction', String(inferThreatReduction))
   const query = searchParams.toString()
 
   return requestJson<AugmentedEventsResponse>(
@@ -77,9 +79,11 @@ export const fightEventsQueryKey = (
   reportId: string,
   fightId: number,
   configVersion: string | null,
-): readonly ['fight-events', string, number, string | null] => [
+  inferThreatReduction: boolean,
+): readonly ['fight-events', string, number, string | null, boolean] => [
   'fight-events',
   reportId,
   fightId,
   configVersion,
+  inferThreatReduction,
 ]

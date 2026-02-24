@@ -15,16 +15,19 @@ import { getFirebaseFirestore } from '../lib/firebase'
 export interface UserSettings {
   showPets: boolean
   showEnergizeEvents: boolean
+  inferThreatReduction: boolean
 }
 
 const defaultUserSettings: UserSettings = {
   showPets: false,
   showEnergizeEvents: false,
+  inferThreatReduction: false,
 }
 
 interface StoredUserSettings {
   showPets?: boolean
   showEnergizeEvents?: boolean
+  inferThreatReduction?: boolean
 }
 
 const userSettingsConverter: FirestoreDataConverter<UserSettings> = {
@@ -32,6 +35,7 @@ const userSettingsConverter: FirestoreDataConverter<UserSettings> = {
     return {
       showPets: settings.showPets,
       showEnergizeEvents: settings.showEnergizeEvents,
+      inferThreatReduction: settings.inferThreatReduction,
     }
   },
   fromFirestore(snapshot): UserSettings {
@@ -45,6 +49,10 @@ const userSettingsConverter: FirestoreDataConverter<UserSettings> = {
         typeof data.showEnergizeEvents === 'boolean'
           ? data.showEnergizeEvents
           : defaultUserSettings.showEnergizeEvents,
+      inferThreatReduction:
+        typeof data.inferThreatReduction === 'boolean'
+          ? data.inferThreatReduction
+          : defaultUserSettings.inferThreatReduction,
     }
   },
 }
@@ -52,6 +60,7 @@ const userSettingsConverter: FirestoreDataConverter<UserSettings> = {
 export interface UpdateUserSettingsRequest {
   showPets?: boolean
   showEnergizeEvents?: boolean
+  inferThreatReduction?: boolean
 }
 
 export interface UseUserSettingsResult {

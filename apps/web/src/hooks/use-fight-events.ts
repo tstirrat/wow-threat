@@ -11,14 +11,21 @@ export function useFightEvents(
   reportId: string,
   fightId: number,
   configVersion: string | null,
+  inferThreatReduction: boolean,
 ): {
   data: AugmentedEventsResponse | undefined
   isLoading: boolean
   error: Error | null
 } {
   const query = useQuery({
-    queryKey: fightEventsQueryKey(reportId, fightId, configVersion),
-    queryFn: () => getFightEvents(reportId, fightId, configVersion),
+    queryKey: fightEventsQueryKey(
+      reportId,
+      fightId,
+      configVersion,
+      inferThreatReduction,
+    ),
+    queryFn: () =>
+      getFightEvents(reportId, fightId, configVersion, inferThreatReduction),
     enabled: reportId.length > 0 && Number.isFinite(fightId),
   })
 
