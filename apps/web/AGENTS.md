@@ -1,5 +1,29 @@
 # AGENTS.md
 
+## Task Routing (Open These Files First)
+
+| Task | Open these files first |
+| --- | --- |
+| Add/change routes or page flow | `apps/web/src/routes/router.tsx`, `apps/web/src/routes/root-layout.tsx`, `apps/web/src/routes/report-layout.tsx`, `apps/web/src/pages/*.tsx` |
+| Report/fight data loading | `apps/web/src/api/client.ts`, `apps/web/src/api/reports.ts`, `apps/web/src/hooks/use-report-data.ts`, `apps/web/src/hooks/use-fight-data.ts` |
+| Query-param/deep-link behavior | `apps/web/src/hooks/use-fight-query-state.ts`, `apps/web/src/lib/search-params.ts`, `apps/web/src/lib/fight-navigation.ts` |
+| Threat chart, legend, tooltip behavior | `apps/web/src/components/threat-chart.tsx`, `apps/web/src/components/threat-chart-legend.tsx`, `apps/web/src/components/threat-chart-controls.tsx`, `apps/web/src/lib/threat-chart-*.ts*`, `apps/web/src/hooks/use-threat-chart-*.ts` |
+| Auth and WCL popup flow | `apps/web/src/auth/auth-provider.tsx`, `apps/web/src/auth/wcl-popup-bridge.ts`, `apps/web/src/pages/auth-complete-page.tsx` |
+| Recent reports/account persistence | `apps/web/src/hooks/use-recent-reports.ts`, `apps/web/src/hooks/use-user-recent-reports.ts`, `apps/web/src/lib/recent-reports.ts`, `apps/web/src/lib/account-recent-reports-cache.ts` |
+| UI component updates | `apps/web/src/components/*.tsx`, `apps/web/src/components/ui/*.tsx`, `apps/web/src/index.css` |
+| E2E test updates after UX changes | `apps/web/src/pages/*.spec.ts`, `apps/web/src/test/page-objects/**`, `apps/web/src/test/helpers/**` |
+
+## Change Checklist
+
+1. Update route/page/component/hook files in the primary flow
+2. Update unit/integration tests near touched modules (`*.test.ts`/`*.test.tsx`)
+3. Update Playwright specs/page objects when interaction or navigation behavior changes
+4. Run scoped checks:
+   - `pnpm --filter @wow-threat/web lint`
+   - `pnpm --filter @wow-threat/web typecheck`
+   - `pnpm --filter @wow-threat/web test`
+   - `pnpm --filter @wow-threat/web e2e` (when UI flow changes)
+
 ## Frontend Architecture (v0)
 
 - App architecture: Single Page Application (SPA)

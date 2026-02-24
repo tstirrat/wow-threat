@@ -6,6 +6,52 @@ pnpm monorepo (Turborepo) for a World of Warcraft combat log threat calculation 
 The backend API runs on Cloudflare Workers using Hono, and the frontend web app is a React SPA hosted on Firebase Hosting.
 All code is TypeScript (strict mode, ESM). Node >= 20 (see `.nvmrc`), pnpm 9.15+.
 
+## Start Here (Agent Quickstart)
+
+Use this sequence to route work quickly:
+
+1. Identify the primary package from the task (`apps/api`, `apps/web`, `packages/config`, `packages/engine`, `packages/shared`, `packages/wcl-types`)
+2. Open the package-level guide when it exists:
+   - `apps/api/AGENTS.md`
+   - `apps/web/AGENTS.md`
+   - `packages/config/AGENTS.md`
+3. Jump to package landmarks in [Task Routing](#task-routing-open-these-files-first)
+4. Run scoped commands first (`pnpm --filter <pkg> ...`) and avoid top-level turbo commands unless needed
+5. Validate with lint + typecheck + tests for touched areas, then run formatting
+
+Quick worktree sanity check before edits/runs:
+
+```bash
+git rev-parse --show-toplevel
+git branch --show-current
+git worktree list
+```
+
+## Task Routing (Open These Files First)
+
+| Task | Package(s) | Open these files first |
+| --- | --- | --- |
+| Add or change API route/handler | `@wow-threat/api` | `apps/api/src/index.ts`, `apps/api/src/routes/*.ts`, `apps/api/src/types/api.ts` |
+| API middleware or error behavior | `@wow-threat/api` | `apps/api/src/middleware/*.ts`, `apps/api/src/middleware/error.ts`, `apps/api/src/types/bindings.ts` |
+| Warcraft Logs fetch/auth/rate limiting | `@wow-threat/api`, `@wow-threat/wcl-types` | `apps/api/src/services/wcl.ts`, `apps/api/src/services/wcl-oauth.ts`, `apps/api/src/services/wcl-rate-limit.ts`, `packages/wcl-types/src/report-schema.ts` |
+| Web routing/page flow | `@wow-threat/web` | `apps/web/src/routes/router.tsx`, `apps/web/src/pages/*.tsx`, `apps/web/src/app.tsx` |
+| Web chart/threat presentation | `@wow-threat/web` | `apps/web/src/components/threat-chart.tsx`, `apps/web/src/lib/threat-aggregation.ts`, `apps/web/src/hooks/use-fight-events.ts` |
+| Web auth/session | `@wow-threat/web`, `@wow-threat/api` | `apps/web/src/auth/*`, `apps/api/src/routes/auth.ts`, `apps/api/src/services/firebase-auth.ts` |
+| Threat rules/config changes | `@wow-threat/config` | `packages/config/src/era/**`, `packages/config/src/sod/**`, `packages/config/src/tbc/**`, `packages/config/src/*/index.ts` |
+| Threat engine behavior | `@wow-threat/engine` | `packages/engine/src/threat-engine.ts`, `packages/engine/src/fight-state.ts`, `packages/engine/src/actor-state.ts` |
+| Cross-package shared types/helpers | `@wow-threat/shared` | `packages/shared/src/types.ts`, `packages/shared/src/index.ts`, `packages/shared/src/utils.ts` |
+| WCL schema/type alignment | `@wow-threat/wcl-types` | `packages/wcl-types/src/report-schema.ts`, `packages/wcl-types/src/events.ts`, `packages/wcl-types/src/reports.ts` |
+
+## Repo Landmarks
+
+- Workspace graph/config: `pnpm-workspace.yaml`, `turbo.json`, `package.json`
+- API entry: `apps/api/src/index.ts`
+- Web entry: `apps/web/src/main.tsx`, `apps/web/src/app.tsx`
+- Config resolver: `packages/config/src/config-resolver.ts`
+- Engine entry: `packages/engine/src/index.ts`
+- Shared exports: `packages/shared/src/index.ts`
+- WCL schema source of truth: `packages/wcl-types/src/report-schema.ts`
+
 ## Warcraft Logs Domains
 
 Use the correct Warcraft Logs host for the game branch you are inspecting:
@@ -15,6 +61,8 @@ Use the correct Warcraft Logs host for the game branch you are inspecting:
 - `fresh.warcraftlogs.com` -> Anniversary Edition progression (currently Burning Crusade)
 - `vanilla.warcraftlogs.com` -> Classic Era (does not progress to Burning Crusade)
 - `sod.warcraftlogs.com` -> Season of Discovery
+
+Progression labels can change over time. If branch/version assumptions matter for the task, verify current host usage before coding.
 
 When querying combatant/talent payloads, pick the host intentionally. Payload shape
 and talent metadata can differ by host/version.
@@ -34,8 +82,8 @@ metadata (name, school/type, icon) through `report.masterData.abilities`.
 apps/api/               @wow-threat/api          Cloudflare Worker API (Hono v4)
 apps/web/               @wow-threat/web          Frontend SPA (React + Vite, Firebase Hosting)
 packages/shared/        @wow-threat/shared       Cross-cutting utilities
-packages/engine/ @wow-threat/engine Core threat simulation engine
-packages/config/ @wow-threat/config Per-class threat calculation configs
+packages/engine/        @wow-threat/engine       Core threat simulation engine
+packages/config/        @wow-threat/config       Per-class threat calculation configs
 packages/wcl-types/     @wow-threat/wcl-types    WCL API type definitions
 tooling/typescript-config/                       Shared tsconfig presets
 ```
@@ -166,10 +214,11 @@ pnpm --filter @wow-threat/web typecheck   # Typecheck web only
 pnpm --filter @wow-threat/web lint        # Lint web only
 ```
 
-## Web Frontend Conventions
+## Package-Specific Conventions
 
-React/frontend-specific architecture and conventions live in
-`apps/web/AGENTS.md`.
+- API conventions: `apps/api/AGENTS.md`
+- Web conventions: `apps/web/AGENTS.md`
+- Config authoring conventions: `packages/config/AGENTS.md`
 
 ## Code Style
 

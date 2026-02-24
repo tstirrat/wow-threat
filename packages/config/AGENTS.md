@@ -5,6 +5,29 @@
 Use this package guide when adding or updating class/raid threat configs in
 `packages/config/src/**`.
 
+## Task Routing (Open These Files First)
+
+| Task | Open these files first |
+| --- | --- |
+| Change class threat rules for Era | `packages/config/src/era/classes/*.ts`, `packages/config/src/era/classes/*.test.ts`, `packages/config/src/era/index.ts` |
+| Change class threat rules for SoD | `packages/config/src/sod/classes/*.ts`, `packages/config/src/sod/classes/*.test.ts`, `packages/config/src/sod/index.ts` |
+| Change class threat rules for TBC/Anniversary | `packages/config/src/tbc/classes/*.ts`, `packages/config/src/tbc/classes/*.test.ts`, `packages/config/src/tbc/index.ts` |
+| Change raid/boss-specific rules | `packages/config/src/*/raids/*.ts`, related `*.test.ts` files, optional `__snapshots__/*.snap` |
+| Update shared formulas/utilities | `packages/config/src/shared/formulas.ts`, `packages/config/src/shared/talents.ts`, `packages/config/src/shared/utils.ts` and corresponding tests |
+| Update config selection/resolution | `packages/config/src/config-resolver.ts`, `packages/config/src/config-resolver.test.ts`, `packages/config/src/index.ts` |
+| Work with integration fixtures | `packages/config/src/test/fixtures/**`, `packages/config/src/test/integration/**` |
+
+## Change Checklist
+
+1. Update threat config/formula logic in target era or shared module
+2. Keep spell IDs in `Spells` constants with matching Wowhead links
+3. Add/update nearby tests (`*.test.ts`, integration tests, or snapshots when appropriate)
+4. Bump required config version(s) in owning `index.ts` file(s)
+5. Run scoped checks:
+   - `pnpm --filter @wow-threat/config lint`
+   - `pnpm --filter @wow-threat/config typecheck`
+   - `pnpm --filter @wow-threat/config test`
+
 ## Mandatory Config Version Bumps
 
 - Any effective threat-config change must bump the owning config `version` in:
