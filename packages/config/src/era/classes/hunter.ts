@@ -5,7 +5,11 @@
  */
 import type { ClassThreatConfig } from '@wow-threat/shared'
 
-import { modifyThreat, threat } from '../../shared/formulas'
+import {
+  modifyThreat,
+  threat,
+  threatOnDebuffOrDamage,
+} from '../../shared/formulas'
 
 // ============================================================================
 // Spell IDs
@@ -22,6 +26,10 @@ export const Spells = {
   DisengageR1: 781, // https://www.wowhead.com/classic/spell=781/
   DisengageR2: 14272, // https://www.wowhead.com/classic/spell=14272/
   DisengageR3: 14273, // https://www.wowhead.com/classic/spell=14273/
+  PetScreechR1: 24423, // https://www.wowhead.com/classic/spell=24423/
+  PetScreechR2: 24577, // https://www.wowhead.com/classic/spell=24577/
+  PetScreechR3: 24578, // https://www.wowhead.com/classic/spell=24578/
+  PetScreechR4: 24579, // https://www.wowhead.com/classic/spell=24579/
 } as const
 
 // ============================================================================
@@ -71,5 +79,10 @@ export const hunterConfig: ClassThreatConfig = {
     [Spells.DisengageR1]: threat({ modifier: 0, bonus: -140 }),
     [Spells.DisengageR2]: threat({ modifier: 0, bonus: -280 }),
     [Spells.DisengageR3]: threat({ modifier: 0, bonus: -405 }),
+
+    [Spells.PetScreechR1]: threatOnDebuffOrDamage(25),
+    [Spells.PetScreechR2]: threatOnDebuffOrDamage(50),
+    [Spells.PetScreechR3]: threatOnDebuffOrDamage(75),
+    [Spells.PetScreechR4]: threatOnDebuffOrDamage(100),
   },
 }

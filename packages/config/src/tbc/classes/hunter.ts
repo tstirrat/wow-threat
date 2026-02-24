@@ -9,7 +9,7 @@ import {
   Spells as EraSpells,
   hunterConfig as eraHunterConfig,
 } from '../../era/classes/hunter'
-import { threat } from '../../shared/formulas'
+import { threat, threatOnDebuffOrDamage } from '../../shared/formulas'
 
 export const Spells = {
   ...EraSpells,
@@ -20,6 +20,7 @@ export const Spells = {
   ExplosiveTrapEffectR2: 14314, // https://www.wowhead.com/tbc/spell=14314/
   ExplosiveTrapEffectR3: 14315, // https://www.wowhead.com/tbc/spell=14315/
   ExplosiveTrapEffectR4: 27025, // https://www.wowhead.com/tbc/spell=27025/
+  PetScreechR5: 27051, // https://www.wowhead.com/tbc/spell=27051/
 } as const
 
 const MISDIRECTION_DURATION_MS = 30000
@@ -114,6 +115,7 @@ export const hunterConfig: ClassThreatConfig = {
 
   abilities: {
     ...eraHunterConfig.abilities,
+    [Spells.PetScreechR5]: threatOnDebuffOrDamage(210),
     [Spells.DistractingShotR7]: threat({ bonus: 900, eventTypes: ['cast'] }),
     [Spells.Misdirection]: (ctx) => ({
       formula: '0',
