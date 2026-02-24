@@ -147,6 +147,10 @@ git -C /path/to/main-worktree merge --ff-only <feature-branch>
 - Introduce targeted tests for any new code or functionality whenever practical—unit, integration, or e2e tests that guard the behavior you add are preferred and should live alongside the relevant source files.
 - Run `pnpm fmt` using the project’s Prettier formatter before considering a change complete.
 
+## Commit conventions
+
+- Prefer [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#summary) format by default (for example `feat`, `fix`, `chore`).
+
 ## Config Versioning Rule
 
 - Any effective threat-config change under `packages/config/src/**` must bump the owning config version in its index file:

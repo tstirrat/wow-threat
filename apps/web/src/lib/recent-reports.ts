@@ -4,7 +4,7 @@
 import type { RecentReportEntry } from '../types/app'
 import { recentReportsStorageKey } from './constants'
 
-const maxRecentReports = 5
+const maxRecentReports = 10
 
 /** Read recent report entries from local storage. */
 export function loadRecentReports(): RecentReportEntry[] {
