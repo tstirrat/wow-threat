@@ -19,6 +19,11 @@ Use the correct Warcraft Logs host for the game branch you are inspecting:
 When querying combatant/talent payloads, pick the host intentionally. Payload shape
 and talent metadata can differ by host/version.
 
+When reasoning about the WCL GraphQL API (field names, types, and nesting), use
+`packages/wcl-types/src/report-schema.ts` as the source of truth. This file is
+generated from schema introspection, so do not guess GraphQL structure when this file
+can be referenced.
+
 Events queries use the implied WCL default `useAbilityIDs: true`, so event payloads
 include `abilityGameID` and do not include nested `ability` objects. Resolve spell
 metadata (name, school/type, icon) through `report.masterData.abilities`.
