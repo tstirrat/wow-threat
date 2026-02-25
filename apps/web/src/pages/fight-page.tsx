@@ -110,7 +110,6 @@ export const FightPage: FC = () => {
   const eventsQuery = useFightEvents(
     reportId,
     fightId,
-    threatConfig?.version ?? null,
     userSettings.inferThreatReduction,
     eventsQueryEnabled,
   )

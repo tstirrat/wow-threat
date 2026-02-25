@@ -117,12 +117,11 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       1,
       'WaxMPvZrAHT9gJhc',
       9,
-      null,
       true,
       false,
     )
     expect(
-      useFightEventsMock.mock.calls.some((call) => call[3] === false),
+      useFightEventsMock.mock.calls.some((call) => call[2] === false),
     ).toBe(false)
 
     isSettingsLoading = false
@@ -154,12 +153,11 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       2,
       'WaxMPvZrAHT9gJhc',
       9,
-      null,
       true,
       true,
     )
     expect(
-      useFightEventsMock.mock.calls.some((call) => call[3] === false),
+      useFightEventsMock.mock.calls.some((call) => call[2] === false),
     ).toBe(false)
   })
 })

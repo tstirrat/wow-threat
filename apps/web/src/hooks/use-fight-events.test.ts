@@ -30,7 +30,7 @@ describe('useFightEvents', () => {
   })
 
   it('keeps query disabled when enabled flag is false', () => {
-    renderHook(() => useFightEvents('ABC123xyz', 12, '1.3.1', true, false))
+    renderHook(() => useFightEvents('ABC123xyz', 12, true, false))
 
     expect(useQuery).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -40,7 +40,7 @@ describe('useFightEvents', () => {
   })
 
   it('enables query when enabled flag is true and inputs are valid', () => {
-    renderHook(() => useFightEvents('ABC123xyz', 12, '1.3.1', true, true))
+    renderHook(() => useFightEvents('ABC123xyz', 12, true, true))
 
     expect(useQuery).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -50,21 +50,19 @@ describe('useFightEvents', () => {
   })
 
   it('passes inferThreatReduction through query key generation', () => {
-    renderHook(() => useFightEvents('ABC123xyz', 12, '1.3.1', false, true))
-    renderHook(() => useFightEvents('ABC123xyz', 12, '1.3.1', true, true))
+    renderHook(() => useFightEvents('ABC123xyz', 12, false, true))
+    renderHook(() => useFightEvents('ABC123xyz', 12, true, true))
 
     expect(fightEventsQueryKey).toHaveBeenNthCalledWith(
       1,
       'ABC123xyz',
       12,
-      '1.3.1',
       false,
     )
     expect(fightEventsQueryKey).toHaveBeenNthCalledWith(
       2,
       'ABC123xyz',
       12,
-      '1.3.1',
       true,
     )
   })

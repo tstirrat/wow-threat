@@ -1,5 +1,6 @@
 export * from './utils'
 export * from './types'
+export * from './cache-versions'
 export * from './test/helpers/context'
 export * from './test/helpers/config'
 export * from './test/helpers/events'

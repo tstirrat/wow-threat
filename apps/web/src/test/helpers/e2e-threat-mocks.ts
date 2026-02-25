@@ -246,7 +246,7 @@ export const e2eReportResponse: ReportResponse = {
   startTime: 1000000,
   threatConfig: {
     displayName: 'Fresh',
-    version: '2026.2.12',
+    version: 20260212,
   },
   title: e2eReportTitle,
   zone: {

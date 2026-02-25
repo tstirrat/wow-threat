@@ -3,6 +3,7 @@
  */
 import type { ApiError } from '@/middleware/error'
 import type { HealthCheckResponse } from '@/types/bindings'
+import { immutableApiCacheVersions } from '@wow-threat/shared'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import mockReportData from '../../test/fixtures/wcl-responses/anniversary-report.json'
@@ -48,7 +49,7 @@ describe('Reports API', () => {
       expect(data.gameVersion).toBe(2)
       expect(data.threatConfig).toEqual({
         displayName: 'Vanilla (Era)',
-        version: expect.any(String),
+        version: expect.any(Number),
       })
       expect(data.fights).toHaveLength(3)
       expect(data.fights[0]?.encounterID).toBeNull()
@@ -85,7 +86,7 @@ describe('Reports API', () => {
       expect(data.abilities).toEqual([])
       expect(data.threatConfig).toEqual({
         displayName: 'Vanilla (Era)',
-        version: expect.any(String),
+        version: expect.any(Number),
       })
     })
 
@@ -116,7 +117,7 @@ describe('Reports API', () => {
       expect(data.gameVersion).toBe(2)
       expect(data.threatConfig).toEqual({
         displayName: 'Season of Discovery',
-        version: expect.any(String),
+        version: expect.any(Number),
       })
     })
 
@@ -148,7 +149,7 @@ describe('Reports API', () => {
       expect(data.gameVersion).toBe(2)
       expect(data.threatConfig).toEqual({
         displayName: 'TBC (Anniversary)',
-        version: expect.any(String),
+        version: expect.any(Number),
       })
     })
 
@@ -180,7 +181,7 @@ describe('Reports API', () => {
       expect(data.gameVersion).toBe(3)
       expect(data.threatConfig).toEqual({
         displayName: 'TBC (Anniversary)',
-        version: expect.any(String),
+        version: expect.any(Number),
       })
     })
 
@@ -346,14 +347,31 @@ describe('Reports API', () => {
       expect(data.error.code).toBe('WCL_API_ERROR')
     })
 
-    it('sets immutable cache headers', async () => {
+    it('sets revalidation cache headers for unversioned requests', async () => {
       const res = await app.request(
         'http://localhost/v1/reports/ABC123xyz',
         {},
         createMockBindings(),
       )
 
+      expect(res.headers.get('Cache-Control')).toContain('must-revalidate')
+      expect(res.headers.get('Cache-Control')).not.toContain('immutable')
+      expect(res.headers.get('X-Cache-Version')).toBe(
+        immutableApiCacheVersions.report,
+      )
+    })
+
+    it('sets immutable cache headers for versioned requests', async () => {
+      const res = await app.request(
+        `http://localhost/v1/reports/ABC123xyz?cv=${immutableApiCacheVersions.report}`,
+        {},
+        createMockBindings(),
+      )
+
       expect(res.headers.get('Cache-Control')).toContain('immutable')
+      expect(res.headers.get('X-Cache-Version')).toBe(
+        immutableApiCacheVersions.report,
+      )
     })
   })
 

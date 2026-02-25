@@ -5,6 +5,8 @@
  * Uses Cloudflare KV in production/staging and local wrangler dev (KV emulation).
  * Uses in-memory cache for tests and as a dev fallback when KV bindings are absent.
  */
+import { cacheSchemaVersions } from '@wow-threat/shared'
+
 import type { Bindings } from '../types/bindings'
 
 export interface CacheService {
@@ -228,7 +230,7 @@ export function createCache(
 // Cache key builders
 export const CacheKeys = {
   wclToken: () => 'wcl:token',
-  reportSchemaVersion: 'v6',
+  reportSchemaVersion: cacheSchemaVersions.report,
   report: (
     code: string,
     visibility: unknown,
@@ -236,10 +238,10 @@ export const CacheKeys = {
     rankingScope = 'none',
   ) =>
     `wcl:report:${CacheKeys.reportSchemaVersion}:${code}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}:rankings:${rankingScope}`,
-  fightsSchemaVersion: 'v3',
+  fightsSchemaVersion: cacheSchemaVersions.fights,
   fights: (code: string, fightId: number, visibility: unknown, uid?: string) =>
     `wcl:fights:${CacheKeys.fightsSchemaVersion}:${code}:${fightId}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
-  wclEventsSchemaVersion: 'v3',
+  wclEventsSchemaVersion: cacheSchemaVersions.events,
   events: (
     code: string,
     fightId: number,
@@ -249,7 +251,7 @@ export const CacheKeys = {
     endTime?: number,
   ) =>
     `wcl:events:${CacheKeys.wclEventsSchemaVersion}:${code}:${fightId}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}:start:${startTime ?? 'full'}:end:${endTime ?? 'full'}`,
-  friendlyBuffBandsSchemaVersion: 'v5',
+  friendlyBuffBandsSchemaVersion: cacheSchemaVersions.friendlyBuffBandsByFight,
   friendlyBuffBandsByFight: (
     code: string,
     fightId: number,
@@ -257,7 +259,7 @@ export const CacheKeys = {
     uid?: string,
   ) =>
     `wcl:friendly-buff-bands-by-fight:${CacheKeys.friendlyBuffBandsSchemaVersion}:${code}:${fightId}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
-  encounterActorRolesSchemaVersion: 'v1',
+  encounterActorRolesSchemaVersion: cacheSchemaVersions.encounterActorRoles,
   encounterActorRoles: (
     code: string,
     encounterId: number,
@@ -266,7 +268,7 @@ export const CacheKeys = {
     uid?: string,
   ) =>
     `wcl:encounter-actor-roles:${CacheKeys.encounterActorRolesSchemaVersion}:${code}:${encounterId}:${fightId}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
-  augmentedSchemaVersion: 'v14',
+  augmentedSchemaVersion: cacheSchemaVersions.augmentedEvents,
   augmentedEvents: (
     code: string,
     fightId: number,

@@ -10,7 +10,6 @@ import type { AugmentedEventsResponse } from '../types/api'
 export function useFightEvents(
   reportId: string,
   fightId: number,
-  configVersion: string | null,
   inferThreatReduction: boolean,
   enabled = true,
 ): {
@@ -19,14 +18,8 @@ export function useFightEvents(
   error: Error | null
 } {
   const query = useQuery({
-    queryKey: fightEventsQueryKey(
-      reportId,
-      fightId,
-      configVersion,
-      inferThreatReduction,
-    ),
-    queryFn: () =>
-      getFightEvents(reportId, fightId, configVersion, inferThreatReduction),
+    queryKey: fightEventsQueryKey(reportId, fightId, inferThreatReduction),
+    queryFn: () => getFightEvents(reportId, fightId, inferThreatReduction),
     enabled: reportId.length > 0 && Number.isFinite(fightId) && enabled,
   })
 

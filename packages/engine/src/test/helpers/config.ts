@@ -39,7 +39,7 @@ export function createMockThreatConfig(
   overrides?: Partial<ThreatConfig>,
 ): ThreatConfig {
   const defaultConfig: ThreatConfig = {
-    version: 'test-1.0.0',
+    version: 1,
     displayName: 'Test Config',
     wowhead: {
       domain: 'classic',

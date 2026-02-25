@@ -14,6 +14,7 @@ export function getSupportedGameVersions(): number[] {
 }
 
 export { resolveConfig, resolveConfigOrNull } from './config-resolver'
+export { configCacheVersion, configVersionVector } from './version'
 
 // Re-export types
 export * from './shared/formulas'

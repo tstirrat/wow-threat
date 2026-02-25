@@ -22,7 +22,7 @@ function createReportResponse(
     gameVersion: 2,
     threatConfig: {
       displayName: 'stale',
-      version: '1.0.2',
+      version: 102,
     },
     zone: {
       id: 1001,
@@ -58,7 +58,7 @@ describe('threat-config helpers', () => {
     const report = createReportResponse({
       threatConfig: {
         displayName: 'stale',
-        version: '1.0.2',
+        version: 102,
       },
     })
 

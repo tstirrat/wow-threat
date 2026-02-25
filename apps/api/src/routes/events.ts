@@ -4,6 +4,7 @@
  * GET /reports/:code/fights/:id/events - Get events with threat calculations
  */
 import {
+  configCacheVersion,
   getSupportedGameVersions,
   resolveConfigOrNull,
 } from '@wow-threat/config'
@@ -64,7 +65,7 @@ function isTruthyQueryParam(value: string | undefined): boolean {
 eventsRoutes.get('/', async (c) => {
   const code = c.req.param('code')!
   const idParam = c.req.param('id')!
-  const configVersionParam = c.req.query('configVersion')
+  const configVersionParam = c.req.query('cv')
   const refreshParam = c.req.query('refresh')
   const inferThreatReductionParam = c.req.query('inferThreatReduction')
   const bypassAugmentedCache = isTruthyQueryParam(refreshParam)
@@ -119,10 +120,10 @@ eventsRoutes.get('/', async (c) => {
       ),
     })
   }
-  if (configVersionParam && configVersionParam !== config.version) {
-    throw invalidConfigVersion(configVersionParam, config.version)
+  if (configVersionParam && configVersionParam !== configCacheVersion) {
+    throw invalidConfigVersion(configVersionParam, configCacheVersion)
   }
-  const configVersion = config.version
+  const configVersion = configCacheVersion
   const isVersionedRequest = configVersionParam === configVersion
 
   const cacheControl =

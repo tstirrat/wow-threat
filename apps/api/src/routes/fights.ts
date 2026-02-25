@@ -3,7 +3,7 @@
  *
  * GET /reports/:code/fights/:id - Get fight details
  */
-import { exists } from '@wow-threat/shared'
+import { exists, immutableApiCacheVersions } from '@wow-threat/shared'
 import type { ReportActor } from '@wow-threat/wcl-types'
 import { Hono } from 'hono'
 
@@ -34,6 +34,9 @@ export type { FightsResponse } from '../types/api'
 fightsRoutes.get('/:id', async (c) => {
   const code = c.req.param('code')!
   const idParam = c.req.param('id')!
+  const cacheVersionParam = c.req.query('cv')
+  const isVersionedRequest =
+    cacheVersionParam === immutableApiCacheVersions.fight
 
   // Validate fight ID
   const fightId = parseInt(idParam, 10)
@@ -129,7 +132,9 @@ fightsRoutes.get('/:id', async (c) => {
     c.env.ENVIRONMENT === 'development'
       ? 'no-store, no-cache, must-revalidate'
       : visibility === 'public'
-        ? 'public, max-age=31536000, immutable'
+        ? isVersionedRequest
+          ? 'public, max-age=31536000, immutable'
+          : 'public, max-age=0, must-revalidate'
         : 'private, no-store'
 
   return c.json<FightsResponse>(
@@ -147,6 +152,7 @@ fightsRoutes.get('/:id', async (c) => {
     200,
     {
       'Cache-Control': cacheControl,
+      'X-Cache-Version': immutableApiCacheVersions.fight,
     },
   )
 })

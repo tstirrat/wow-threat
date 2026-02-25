@@ -382,8 +382,8 @@ export interface WowheadConfig {
 }
 
 export interface ThreatConfig {
-  /** Semantic version of this config */
-  version: string
+  /** Numeric revision for this config payload */
+  version: number
   /** Human-readable config label, e.g. "Season of Discovery" */
   displayName: string
   /** Wowhead link + tooltip domain config for this game branch. */

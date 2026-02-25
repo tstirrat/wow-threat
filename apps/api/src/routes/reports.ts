@@ -5,6 +5,7 @@
  * GET /reports/:code - Get report metadata
  */
 import { resolveConfigOrNull } from '@wow-threat/config'
+import { immutableApiCacheVersions } from '@wow-threat/shared'
 import type {
   ReportAbility as WCLReportAbility,
   ReportActor as WCLReportActor,
@@ -75,6 +76,9 @@ reportRoutes.get('/recent', async (c) => {
  */
 reportRoutes.get('/:code', async (c) => {
   const code = c.req.param('code')
+  const cacheVersionParam = c.req.query('cv')
+  const isVersionedRequest =
+    cacheVersionParam === immutableApiCacheVersions.report
 
   // Validate report code format
   if (!code || !REPORT_CODE_REGEX.test(code)) {
@@ -104,7 +108,9 @@ reportRoutes.get('/:code', async (c) => {
     c.env.ENVIRONMENT === 'development'
       ? 'no-store, no-cache, must-revalidate'
       : visibility === 'public'
-        ? 'public, max-age=31536000, immutable'
+        ? isVersionedRequest
+          ? 'public, max-age=31536000, immutable'
+          : 'public, max-age=0, must-revalidate'
         : 'private, no-store'
 
   return c.json<ReportResponse>(
@@ -152,6 +158,7 @@ reportRoutes.get('/:code', async (c) => {
     200,
     {
       'Cache-Control': cacheControl,
+      'X-Cache-Version': immutableApiCacheVersions.report,
     },
   )
 })

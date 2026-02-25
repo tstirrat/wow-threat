@@ -1,6 +1,9 @@
 /**
  * API functions for report, fight, and event data.
  */
+import { configCacheVersion } from '@wow-threat/config'
+import { immutableApiCacheVersions } from '@wow-threat/shared'
+
 import { defaultApiBaseUrl } from '../lib/constants'
 import type {
   AugmentedEventsResponse,
@@ -12,8 +15,12 @@ import { requestJson } from './client'
 
 /** Fetch report metadata for a report code. */
 export function getReport(reportId: string): Promise<ReportResponse> {
+  const searchParams = new URLSearchParams({
+    cv: immutableApiCacheVersions.report,
+  })
+
   return requestJson<ReportResponse>(
-    `${defaultApiBaseUrl}/v1/reports/${reportId}`,
+    `${defaultApiBaseUrl}/v1/reports/${reportId}?${searchParams.toString()}`,
   )
 }
 
@@ -22,8 +29,12 @@ export function getFight(
   reportId: string,
   fightId: number,
 ): Promise<FightsResponse> {
+  const searchParams = new URLSearchParams({
+    cv: immutableApiCacheVersions.fight,
+  })
+
   return requestJson<FightsResponse>(
-    `${defaultApiBaseUrl}/v1/reports/${reportId}/fights/${fightId}`,
+    `${defaultApiBaseUrl}/v1/reports/${reportId}/fights/${fightId}?${searchParams.toString()}`,
   )
 }
 
@@ -31,13 +42,11 @@ export function getFight(
 export function getFightEvents(
   reportId: string,
   fightId: number,
-  configVersion: string | null,
   inferThreatReduction: boolean,
 ): Promise<AugmentedEventsResponse> {
-  const searchParams = new URLSearchParams()
-  if (configVersion) {
-    searchParams.set('configVersion', configVersion)
-  }
+  const searchParams = new URLSearchParams({
+    cv: configCacheVersion,
+  })
   searchParams.set('inferThreatReduction', String(inferThreatReduction))
   const query = searchParams.toString()
 
@@ -78,12 +87,11 @@ export const fightQueryKey = (
 export const fightEventsQueryKey = (
   reportId: string,
   fightId: number,
-  configVersion: string | null,
   inferThreatReduction: boolean,
-): readonly ['fight-events', string, number, string | null, boolean] => [
+): readonly ['fight-events', string, number, string, boolean] => [
   'fight-events',
   reportId,
   fightId,
-  configVersion,
+  configCacheVersion,
   inferThreatReduction,
 ]

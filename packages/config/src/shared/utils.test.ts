@@ -33,7 +33,7 @@ describe('validateAuraModifiers', () => {
     }
 
     return {
-      version: '1.0.0',
+      version: 1,
       displayName: 'Test Config',
       wowhead: {
         domain: 'classic',
@@ -216,7 +216,7 @@ describe('validateAbilities', () => {
     }
 
     return {
-      version: '1.0.0',
+      version: 1,
       displayName: 'Test Config',
       wowhead: {
         domain: 'classic',
@@ -400,7 +400,7 @@ describe('validateAbilities', () => {
 
   it('handles config with no global abilities', () => {
     const config: ThreatConfig = {
-      version: '1.0.0',
+      version: 1,
       displayName: 'Test Config',
       wowhead: {
         domain: 'classic',

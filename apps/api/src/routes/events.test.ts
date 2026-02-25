@@ -2,7 +2,7 @@
  * Integration Tests for Events API
  */
 import type { ApiError } from '@/middleware/error'
-import { resolveConfigOrNull } from '@wow-threat/config'
+import { configCacheVersion, resolveConfigOrNull } from '@wow-threat/config'
 import {
   createAbsorbedEvent,
   createApplyBuffEvent,
@@ -283,19 +283,19 @@ describe('Events API', () => {
 
       expect(res.headers.get('Cache-Control')).toContain('must-revalidate')
       expect(res.headers.get('Cache-Control')).not.toContain('immutable')
-      expect(res.headers.get('X-Config-Version')).toBe(configVersion)
+      expect(res.headers.get('X-Config-Version')).toBe(configCacheVersion)
       expect(res.headers.get('X-Game-Version')).toBe('2')
     })
 
     it('sets immutable cache headers for versioned responses', async () => {
       const res = await app.request(
-        `http://localhost/v1/reports/ABC123xyz/fights/1/events?configVersion=${configVersion}`,
+        `http://localhost/v1/reports/ABC123xyz/fights/1/events?cv=${configCacheVersion}`,
         {},
         createMockBindings(),
       )
 
       expect(res.headers.get('Cache-Control')).toContain('immutable')
-      expect(res.headers.get('X-Config-Version')).toBe(configVersion)
+      expect(res.headers.get('X-Config-Version')).toBe(configCacheVersion)
       expect(res.headers.get('X-Game-Version')).toBe('2')
     })
 
@@ -350,7 +350,20 @@ describe('Events API', () => {
 
     it('returns 400 for unsupported config version', async () => {
       const res = await app.request(
-        'http://localhost/v1/reports/ABC123xyz/fights/1/events?configVersion=not-a-real-version',
+        'http://localhost/v1/reports/ABC123xyz/fights/1/events?cv=not-a-real-version',
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(400)
+
+      const data: ApiError = await res.json()
+      expect(data.error.code).toBe('INVALID_CONFIG_VERSION')
+    })
+
+    it('rejects non-cache-tag config version values', async () => {
+      const res = await app.request(
+        `http://localhost/v1/reports/ABC123xyz/fights/1/events?cv=${configVersion}`,
         {},
         createMockBindings(),
       )

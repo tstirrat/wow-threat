@@ -1,14 +1,18 @@
 /**
  * Tests for report, fight, and events API helpers.
  */
+import { configCacheVersion } from '@wow-threat/config'
+import { immutableApiCacheVersions } from '@wow-threat/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { defaultApiBaseUrl } from '../lib/constants'
 import { requestJson } from './client'
 import {
   fightEventsQueryKey,
+  getFight,
   getFightEvents,
   getRecentReports,
+  getReport,
   recentReportsQueryKey,
 } from './reports'
 
@@ -22,28 +26,28 @@ describe('reports api helpers', () => {
     vi.mocked(requestJson).mockResolvedValue({} as never)
   })
 
-  it('includes configVersion in fight events requests when available', async () => {
-    await getFightEvents('ABC123xyz', 12, '1.3.1', true)
+  it('includes cv in fight events requests', async () => {
+    await getFightEvents('ABC123xyz', 12, true)
 
     expect(requestJson).toHaveBeenCalledWith(
-      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events?configVersion=1.3.1&inferThreatReduction=true`,
+      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events?cv=${configCacheVersion}&inferThreatReduction=true`,
     )
   })
 
-  it('omits configVersion in fight events requests when unavailable', async () => {
-    await getFightEvents('ABC123xyz', 12, null, false)
+  it('includes inferThreatReduction=false in fight events requests', async () => {
+    await getFightEvents('ABC123xyz', 12, false)
 
     expect(requestJson).toHaveBeenCalledWith(
-      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events?inferThreatReduction=false`,
+      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events?cv=${configCacheVersion}&inferThreatReduction=false`,
     )
   })
 
-  it('includes configVersion and inferThreatReduction in fight events query keys', () => {
-    expect(fightEventsQueryKey('ABC123xyz', 12, '1.3.1', true)).toEqual([
+  it('includes config cache version and inferThreatReduction in fight events query keys', () => {
+    expect(fightEventsQueryKey('ABC123xyz', 12, true)).toEqual([
       'fight-events',
       'ABC123xyz',
       12,
-      '1.3.1',
+      configCacheVersion,
       true,
     ])
   })
@@ -62,5 +66,21 @@ describe('reports api helpers', () => {
       10,
       'wcl:12345',
     ])
+  })
+
+  it('includes cv in report metadata requests', async () => {
+    await getReport('ABC123xyz')
+
+    expect(requestJson).toHaveBeenCalledWith(
+      `${defaultApiBaseUrl}/v1/reports/ABC123xyz?cv=${immutableApiCacheVersions.report}`,
+    )
+  })
+
+  it('includes cv in fight metadata requests', async () => {
+    await getFight('ABC123xyz', 12)
+
+    expect(requestJson).toHaveBeenCalledWith(
+      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12?cv=${immutableApiCacheVersions.fight}`,
+    )
   })
 })

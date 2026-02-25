@@ -55,7 +55,7 @@ export interface ReportFightSummary {
 
 export interface ThreatConfigSummary {
   displayName: string
-  version: string
+  version: number
 }
 
 export interface ReportGuildSummary {

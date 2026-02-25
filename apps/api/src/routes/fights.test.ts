@@ -2,6 +2,7 @@
  * Integration Tests for Fights API
  */
 import type { ApiError } from '@/middleware/error'
+import { immutableApiCacheVersions } from '@wow-threat/shared'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import mockReportData from '../../test/fixtures/wcl-responses/anniversary-report.json'
@@ -184,6 +185,33 @@ describe('Fights API', () => {
       expect(data.id).toBe(3)
       expect(data.name).toBe('Gluth')
       expect(data.kill).toBe(false)
+    })
+
+    it('sets revalidation cache headers for unversioned requests', async () => {
+      const res = await app.request(
+        'http://localhost/v1/reports/ABC123xyz/fights/1',
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.headers.get('Cache-Control')).toContain('must-revalidate')
+      expect(res.headers.get('Cache-Control')).not.toContain('immutable')
+      expect(res.headers.get('X-Cache-Version')).toBe(
+        immutableApiCacheVersions.fight,
+      )
+    })
+
+    it('sets immutable cache headers for versioned requests', async () => {
+      const res = await app.request(
+        `http://localhost/v1/reports/ABC123xyz/fights/1?cv=${immutableApiCacheVersions.fight}`,
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.headers.get('Cache-Control')).toContain('immutable')
+      expect(res.headers.get('X-Cache-Version')).toBe(
+        immutableApiCacheVersions.fight,
+      )
     })
   })
 })
