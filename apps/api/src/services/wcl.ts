@@ -179,6 +179,96 @@ interface EncounterFriendlyPlayer {
   name: string
 }
 
+type ReportWithFightRankings = Pick<
+  Report,
+  'fights' | 'masterData' | 'rankings'
+>
+
+interface GetReportOptions {
+  rankingFightIds?: number[]
+}
+
+interface WclFightDetailsData {
+  reportData?: {
+    report?:
+      | (ReportWithFightRankings & Pick<Report, 'code' | 'visibility'>)
+      | null
+  } | null
+}
+
+function normalizeRankingFightIds(fightIds: number[] = []): number[] {
+  return [...new Set(fightIds.map((fightId) => Math.trunc(fightId)))]
+    .filter(Number.isFinite)
+    .sort((left, right) => left - right)
+}
+
+function buildReportRankingScope(rankingFightIds: number[]): string {
+  if (rankingFightIds.length === 0) {
+    return 'none'
+  }
+
+  return `fights-${rankingFightIds.join('_')}`
+}
+
+function extractGraphQLOperationName(graphqlQuery: string): string {
+  const match = /query\s+([A-Za-z0-9_]+)/.exec(graphqlQuery)
+  return match?.[1] ?? 'AnonymousQuery'
+}
+
+function summarizeQueryVariables(
+  variables: Record<string, unknown>,
+): Record<string, unknown> {
+  return Object.entries(variables).reduce<Record<string, unknown>>(
+    (summary, [key, value]) => {
+      if (value === null || value === undefined) {
+        summary[key] = value
+        return summary
+      }
+
+      if (typeof value === 'number' || typeof value === 'boolean') {
+        summary[key] = value
+        return summary
+      }
+
+      if (typeof value === 'string') {
+        summary[key] =
+          value.length > 24 ? `${value.slice(0, 24)}...` : value
+        return summary
+      }
+
+      if (Array.isArray(value)) {
+        summary[key] = {
+          length: value.length,
+          preview: value.slice(0, 3),
+        }
+        return summary
+      }
+
+      summary[key] = {
+        type: typeof value,
+      }
+      return summary
+    },
+    {},
+  )
+}
+
+function toErrorLogMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  return String(error)
+}
+
+function monotonicNowMs(): number {
+  if (typeof globalThis.performance?.now === 'function') {
+    return globalThis.performance.now()
+  }
+
+  return Date.now()
+}
+
 function shouldFallbackToUserToken(error: unknown): boolean {
   if (!(error instanceof AppError)) {
     return true
@@ -334,7 +424,7 @@ function parseReportRankingCharacterActorIds(
 }
 
 function resolveFightActorRolesFromReportRankings(
-  report: Report,
+  report: ReportWithFightRankings,
   fightId: number,
 ): Map<number, ReportActorRole> {
   const fight = report.fights.find((entry) => entry.id === fightId)
@@ -366,7 +456,7 @@ function resolveFightActorRolesFromReportRankings(
 
 /** Resolve fight actor roles from report encounter ranking metadata. */
 export function resolveFightActorRoles(
-  report: Report,
+  report: ReportWithFightRankings,
   fightId: number,
 ): Map<number, ReportActorRole> {
   return resolveFightActorRolesFromReportRankings(report, fightId)
@@ -374,7 +464,7 @@ export function resolveFightActorRoles(
 
 /** Resolve fight tank actor IDs from report ranking metadata. */
 export function resolveFightTankActorIds(
-  report: Report,
+  report: ReportWithFightRankings,
   fightId: number,
 ): Set<number> {
   const tankActorIds = new Set<number>()
@@ -678,40 +768,83 @@ export class WCLClient {
     variables: Record<string, unknown>,
     options: { accessToken?: string; scope?: 'client' | 'user' } = {},
   ): Promise<T> {
+    const operationName = extractGraphQLOperationName(graphqlQuery)
+    const queryStartedAt = monotonicNowMs()
+    const tokenStartedAt = monotonicNowMs()
     const accessToken = options.accessToken ?? (await this.getClientToken())
+    const tokenResolutionMs = monotonicNowMs() - tokenStartedAt
     const scope = options.scope ?? (options.accessToken ? 'user' : 'client')
     const apiUrl = scope === 'user' ? WCL_USER_API_URL : WCL_CLIENT_API_URL
-    const response = await fetch(apiUrl, {
-      body: JSON.stringify({
-        query: graphqlQuery,
-        variables,
-      }),
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-    })
+    const variableSummary = summarizeQueryVariables(variables)
+    let status: number | null = null
 
-    if (response.status === 429) {
-      const retryAfter = response.headers.get('Retry-After')
-      throw wclRateLimited(
-        buildWclRateLimitDetails(`wcl-${scope}-graphql`, retryAfter),
-      )
-    }
-    if (!response.ok) {
-      throw wclApiError(`WCL API error: ${response.status}`)
-    }
+    try {
+      const fetchStartedAt = monotonicNowMs()
+      const response = await fetch(apiUrl, {
+        body: JSON.stringify({
+          query: graphqlQuery,
+          variables,
+        }),
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      })
+      status = response.status
+      const fetchDurationMs = monotonicNowMs() - fetchStartedAt
 
-    const result = (await response.json()) as WclQueryResult<T>
-    if (result.errors?.length) {
-      throw wclApiError(result.errors[0]?.message ?? 'Unknown GraphQL error')
-    }
-    if (!result.data) {
-      throw wclApiError('No data returned from WCL API')
-    }
+      if (response.status === 429) {
+        const retryAfter = response.headers.get('Retry-After')
+        throw wclRateLimited(
+          buildWclRateLimitDetails(`wcl-${scope}-graphql`, retryAfter),
+        )
+      }
+      if (!response.ok) {
+        throw wclApiError(`WCL API error: ${response.status}`)
+      }
 
-    return result.data
+      const parseStartedAt = monotonicNowMs()
+      const result = (await response.json()) as WclQueryResult<T>
+      const parseDurationMs = monotonicNowMs() - parseStartedAt
+      const totalDurationMs = monotonicNowMs() - queryStartedAt
+
+      if (result.errors?.length) {
+        throw wclApiError(result.errors[0]?.message ?? 'Unknown GraphQL error')
+      }
+      if (!result.data) {
+        throw wclApiError('No data returned from WCL API')
+      }
+
+      const isSlow = totalDurationMs >= 1000
+      const logFn = isSlow ? console.warn : console.info
+
+      logFn('[WCL] GraphQL query completed', {
+        fetchDurationMs,
+        operationName,
+        parseDurationMs,
+        queryLength: graphqlQuery.length,
+        scope,
+        status: response.status,
+        tokenResolutionMs,
+        totalDurationMs,
+        variables: variableSummary,
+      })
+
+      return result.data
+    } catch (error) {
+      console.warn('[WCL] GraphQL query failed', {
+        durationMs: monotonicNowMs() - queryStartedAt,
+        error: toErrorLogMessage(error),
+        operationName,
+        queryLength: graphqlQuery.length,
+        scope,
+        status,
+        tokenResolutionMs,
+        variables: variableSummary,
+      })
+      throw error
+    }
   }
 
   /**
@@ -720,12 +853,14 @@ export class WCLClient {
   private async cacheReport(
     code: string,
     data: WCLReportResponse['data'],
+    rankingScope: string,
   ): Promise<void> {
     const visibility = normalizeVisibility(data.reportData.report.visibility)
     const cacheKey = CacheKeys.report(
       code,
       visibility,
       visibility === 'private' ? this.uid : undefined,
+      rankingScope,
     )
     await this.cache.set(cacheKey, data)
   }
@@ -733,9 +868,24 @@ export class WCLClient {
   /**
    * Get report metadata, including visibility, with client-token fallback to user-token.
    */
-  async getReport(code: string): Promise<WCLReportResponse['data']> {
-    const privateCacheKey = CacheKeys.report(code, 'private', this.uid)
-    const publicCacheKey = CacheKeys.report(code, 'public')
+  async getReport(
+    code: string,
+    options: GetReportOptions = {},
+  ): Promise<WCLReportResponse['data']> {
+    const rankingFightIds = normalizeRankingFightIds(options.rankingFightIds)
+    const rankingScope = buildReportRankingScope(rankingFightIds)
+    const privateCacheKey = CacheKeys.report(
+      code,
+      'private',
+      this.uid,
+      rankingScope,
+    )
+    const publicCacheKey = CacheKeys.report(
+      code,
+      'public',
+      undefined,
+      rankingScope,
+    )
 
     const privateCached =
       await this.cache.get<WCLReportResponse['data']>(privateCacheKey)
@@ -749,8 +899,14 @@ export class WCLClient {
       return publicCached
     }
 
+    const rankingVariablesDefinition =
+      rankingFightIds.length > 0 ? ', $rankingFightIDs: [Int!]' : ''
+    const rankingsField =
+      rankingFightIds.length > 0
+        ? '\n            rankings(fightIDs: $rankingFightIDs)'
+        : ''
     const query = `
-      query GetReport($code: String!) {
+      query GetReport($code: String!${rankingVariablesDefinition}) {
         reportData {
           report(code: $code) {
             code
@@ -826,19 +982,28 @@ export class WCLClient {
                 name
                 type
               }
-            }
-            rankings
+            }${rankingsField}
           }
         }
       }
     `
+    const variables: {
+      code: string
+      rankingFightIDs?: number[]
+    } = {
+      code,
+    }
+    if (rankingFightIds.length > 0) {
+      variables.rankingFightIDs = rankingFightIds
+    }
 
     try {
-      const clientData = await this.query<WCLReportResponse['data']>(query, {
-        code,
-      })
+      const clientData = await this.query<WCLReportResponse['data']>(
+        query,
+        variables,
+      )
       if (clientData.reportData.report) {
-        await this.cacheReport(code, clientData)
+        await this.cacheReport(code, clientData, rankingScope)
         return clientData
       }
     } catch (error) {
@@ -851,7 +1016,7 @@ export class WCLClient {
     const userAccessToken = await this.getUserAccessToken()
     const userData = await this.query<WCLReportResponse['data']>(
       query,
-      { code },
+      variables,
       { accessToken: userAccessToken },
     )
 
@@ -859,7 +1024,125 @@ export class WCLClient {
       throw wclApiError('Report not found')
     }
 
-    await this.cacheReport(code, userData)
+    await this.cacheReport(code, userData, rankingScope)
+    return userData
+  }
+
+  private async cacheFightDetails(
+    code: string,
+    fightId: number,
+    data: WclFightDetailsData,
+  ): Promise<void> {
+    const visibility = normalizeVisibility(data.reportData?.report?.visibility)
+    const cacheKey = CacheKeys.fights(
+      code,
+      fightId,
+      visibility,
+      visibility === 'private' ? this.uid : undefined,
+    )
+    await this.cache.set(cacheKey, data)
+  }
+
+  /**
+   * Get fight-scoped report metadata for /fights/:id.
+   */
+  async getFightDetails(
+    code: string,
+    fightId: number,
+  ): Promise<WclFightDetailsData> {
+    const privateCacheKey = CacheKeys.fights(code, fightId, 'private', this.uid)
+    const publicCacheKey = CacheKeys.fights(code, fightId, 'public')
+
+    const privateCached =
+      await this.cache.get<WclFightDetailsData>(privateCacheKey)
+    if (privateCached) {
+      return privateCached
+    }
+
+    const publicCached =
+      await this.cache.get<WclFightDetailsData>(publicCacheKey)
+    if (publicCached) {
+      return publicCached
+    }
+
+    const query = `
+      query GetFightDetails($code: String!, $fightIDs: [Int!]) {
+        reportData {
+          report(code: $code) {
+            code
+            visibility
+            fights(fightIDs: $fightIDs) {
+              id
+              encounterID
+              name
+              startTime
+              endTime
+              kill
+              difficulty
+              enemyNPCs {
+                id
+                gameID
+                instanceCount
+                groupCount
+                petOwner
+              }
+              enemyPets {
+                id
+                gameID
+                instanceCount
+                groupCount
+                petOwner
+              }
+              friendlyPlayers
+              friendlyPets {
+                id
+                gameID
+                instanceCount
+                groupCount
+                petOwner
+              }
+            }
+            masterData {
+              actors {
+                id
+                name
+                type
+                subType
+                petOwner
+              }
+            }
+            rankings(fightIDs: $fightIDs)
+          }
+        }
+      }
+    `
+    const variables = {
+      code,
+      fightIDs: [fightId],
+    }
+
+    try {
+      const clientData = await this.query<WclFightDetailsData>(query, variables)
+      if (clientData.reportData?.report) {
+        await this.cacheFightDetails(code, fightId, clientData)
+        return clientData
+      }
+    } catch (error) {
+      if (!shouldFallbackToUserToken(error)) {
+        throw error
+      }
+      // A failed client-token query may indicate a private report. Fall through.
+    }
+
+    const userAccessToken = await this.getUserAccessToken()
+    const userData = await this.query<WclFightDetailsData>(query, variables, {
+      accessToken: userAccessToken,
+    })
+    if (!userData.reportData?.report) {
+      throw wclApiError('Report not found')
+    }
+
+    await this.cacheFightDetails(code, fightId, userData)
     return userData
   }
 

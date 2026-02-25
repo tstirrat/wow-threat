@@ -14,7 +14,7 @@ import {
   unauthorized,
 } from '../middleware/error'
 import { normalizeVisibility } from '../services/cache'
-import { resolveFightActorRoles, WCLClient } from '../services/wcl'
+import { WCLClient, resolveFightActorRoles } from '../services/wcl'
 import type { FightsResponse, ReportActorRole } from '../types/api'
 import { toReportActorSummary } from '../types/api-transformers'
 import type { Bindings, Variables } from '../types/bindings'
@@ -47,7 +47,7 @@ fightsRoutes.get('/:id', async (c) => {
   }
 
   const wcl = new WCLClient(c.env, uid)
-  const data = await wcl.getReport(code)
+  const data = await wcl.getFightDetails(code, fightId)
 
   if (!data?.reportData?.report) {
     throw reportNotFound(code)
@@ -78,13 +78,16 @@ fightsRoutes.get('/:id', async (c) => {
         ]
       : [],
   )
-  const encounterActorRoles = await wcl.getEncounterActorRoles(
-    code,
-    fight.encounterID ?? null,
-    fight.id,
-    visibility,
-    friendlyPlayers,
-  )
+  const encounterActorRoles =
+    reportActorRoles.size > 0
+      ? new Map<number, ReportActorRole>()
+      : await wcl.getEncounterActorRoles(
+          code,
+          fight.encounterID ?? null,
+          fight.id,
+          visibility,
+          friendlyPlayers,
+        )
   const actorRoles = new Map<number, ReportActorRole>([
     ...reportActorRoles.entries(),
     ...encounterActorRoles.entries(),

@@ -2,10 +2,14 @@
  * Integration Tests for Fights API
  */
 import type { ApiError } from '@/middleware/error'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import mockReportData from '../../test/fixtures/wcl-responses/anniversary-report.json'
-import { mockFetch, restoreFetch } from '../../test/helpers/mock-fetch'
+import {
+  createMockFetch,
+  mockFetch,
+  restoreFetch,
+} from '../../test/helpers/mock-fetch'
 import { createMockBindings } from '../../test/setup'
 import app from '../index'
 import type { FightsResponse } from './fights'
@@ -119,6 +123,54 @@ describe('Fights API', () => {
       expect(data.actors.find((actor) => actor.id === 1)?.role).toBe('Tank')
       expect(data.actors.find((actor) => actor.id === 2)?.role).toBe('Healer')
       expect(data.actors.find((actor) => actor.id === 3)?.role).toBeUndefined()
+    })
+
+    it('uses fight-scoped report rankings without encounter-role fallback query', async () => {
+      const roleReportCode = 'ROLE456xyz'
+      const fetchMock = createMockFetch({
+        report: {
+          ...reportData,
+          code: roleReportCode,
+          fights: reportData.fights.map((fight) =>
+            fight.id === 1 ? { ...fight, encounterID: 111 } : fight,
+          ),
+          rankings: {
+            data: [
+              {
+                encounterID: 111,
+                fightID: 1,
+                roles: {
+                  tanks: {
+                    characters: [{ id: 1, name: 'Tankwarrior' }],
+                  },
+                },
+              },
+            ],
+          },
+        },
+      })
+      vi.stubGlobal('fetch', fetchMock)
+
+      const res = await app.request(
+        `http://localhost/v1/reports/${roleReportCode}/fights/1`,
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(200)
+      const data = await res.json<FightsResponse>()
+      expect(data.actors.find((actor) => actor.id === 1)?.role).toBe('Tank')
+
+      const encounterRoleCalls = fetchMock.mock.calls.filter((call) => {
+        const body = call[1]?.body
+        if (!body) {
+          return false
+        }
+
+        const query = JSON.parse(body.toString()).query as string
+        return query.includes('GetEncounterActorRoles')
+      })
+      expect(encounterRoleCalls).toHaveLength(0)
     })
 
     it('returns wipe fight correctly', async () => {

@@ -228,12 +228,17 @@ export function createCache(
 // Cache key builders
 export const CacheKeys = {
   wclToken: () => 'wcl:token',
-  reportSchemaVersion: 'v5',
-  report: (code: string, visibility: unknown, uid?: string) =>
-    `wcl:report:${CacheKeys.reportSchemaVersion}:${code}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
-  fightsSchemaVersion: 'v2',
-  fights: (code: string, visibility: unknown, uid?: string) =>
-    `wcl:fights:${CacheKeys.fightsSchemaVersion}:${code}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
+  reportSchemaVersion: 'v6',
+  report: (
+    code: string,
+    visibility: unknown,
+    uid?: string,
+    rankingScope = 'none',
+  ) =>
+    `wcl:report:${CacheKeys.reportSchemaVersion}:${code}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}:rankings:${rankingScope}`,
+  fightsSchemaVersion: 'v3',
+  fights: (code: string, fightId: number, visibility: unknown, uid?: string) =>
+    `wcl:fights:${CacheKeys.fightsSchemaVersion}:${code}:${fightId}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
   wclEventsSchemaVersion: 'v3',
   events: (
     code: string,

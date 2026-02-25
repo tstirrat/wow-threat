@@ -228,13 +228,19 @@ describe('CacheKeys', () => {
 
   it('generates correct report key', () => {
     expect(CacheKeys.report('ABC123', 'public')).toBe(
-      'wcl:report:v5:ABC123:visibility:public:scope:shared',
+      'wcl:report:v6:ABC123:visibility:public:scope:shared:rankings:none',
+    )
+  })
+
+  it('generates report key with ranking scope', () => {
+    expect(CacheKeys.report('ABC123', 'private', 'uid-1', 'fights-32')).toBe(
+      'wcl:report:v6:ABC123:visibility:private:scope:uid:uid-1:rankings:fights-32',
     )
   })
 
   it('generates correct fights key', () => {
-    expect(CacheKeys.fights('ABC123', 'private', 'uid-1')).toBe(
-      'wcl:fights:v2:ABC123:visibility:private:scope:uid:uid-1',
+    expect(CacheKeys.fights('ABC123', 5, 'private', 'uid-1')).toBe(
+      'wcl:fights:v3:ABC123:5:visibility:private:scope:uid:uid-1',
     )
   })
 
@@ -314,7 +320,7 @@ describe('CacheKeys', () => {
 
   it('treats invalid visibility values as private', () => {
     expect(CacheKeys.report('ABC123', 'internal')).toBe(
-      'wcl:report:v5:ABC123:visibility:private:scope:uid:anonymous',
+      'wcl:report:v6:ABC123:visibility:private:scope:uid:anonymous:rankings:none',
     )
   })
 })

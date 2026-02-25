@@ -84,7 +84,10 @@ eventsRoutes.get('/', async (c) => {
   const wcl = new WCLClient(c.env, uid)
 
   // Get report to find game version and fight info
-  const reportData = await wcl.getReport(code)
+  const reportData = await wcl.getReport(
+    code,
+    inferThreatReduction ? { rankingFightIds: [fightId] } : undefined,
+  )
   if (!reportData?.reportData?.report) {
     throw reportNotFound(code)
   }

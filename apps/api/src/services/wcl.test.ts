@@ -154,7 +154,7 @@ describe('WCLClient.getReport', () => {
     expect(result.reportData.report.visibility).toBe('public')
   })
 
-  it('keeps report metadata query free of encounter-ranked character fields', async () => {
+  it('keeps default report metadata query free of rankings payloads', async () => {
     const fetchMock = vi.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = typeof input === 'string' ? input : input.toString()
@@ -179,7 +179,7 @@ describe('WCLClient.getReport', () => {
 
           expect(query).not.toContain('rankedCharacters')
           expect(query).not.toContain('encounterRankings')
-          expect(query).toContain('\n            rankings')
+          expect(query).not.toContain('rankings(')
 
           return new Response(
             JSON.stringify({
@@ -196,6 +196,49 @@ describe('WCLClient.getReport', () => {
 
     const client = new WCLClient(createMockBindings(), 'wcl:12345')
     await client.getReport('ABC123')
+  })
+
+  it('requests fight-scoped rankings when ranking fight ids are provided', async () => {
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString()
+
+        if (
+          url.includes('warcraftlogs.com/oauth/token') &&
+          init?.body?.toString().includes('client_credentials')
+        ) {
+          return new Response(
+            JSON.stringify({
+              access_token: 'client-token',
+              expires_in: 3600,
+              token_type: 'Bearer',
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          )
+        }
+
+        if (url.includes('warcraftlogs.com/api/v2/client')) {
+          const body = init?.body ? JSON.parse(init.body.toString()) : {}
+          const query = body.query as string
+
+          expect(query).toContain('rankings(fightIDs: $rankingFightIDs)')
+          expect(body.variables.rankingFightIDs).toEqual([32])
+
+          return new Response(
+            JSON.stringify({
+              data: createWclReport({ visibility: 'public' }),
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          )
+        }
+
+        return new Response(null, { status: 404 })
+      },
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const client = new WCLClient(createMockBindings(), 'wcl:12345')
+    await client.getReport('ABC123', { rankingFightIds: [32, 32] })
   })
 
   it('falls back to user token when client token gets permission error', async () => {
@@ -261,6 +304,83 @@ describe('WCLClient.getReport', () => {
       },
       statusCode: 429,
     } satisfies Partial<AppError>)
+  })
+})
+
+describe('WCLClient.getFightDetails', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-01-15T00:00:00Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('requests fight-scoped report metadata with fight-scoped rankings', async () => {
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString()
+
+        if (url.includes('warcraftlogs.com/oauth/token')) {
+          return new Response(
+            JSON.stringify({
+              access_token: 'client-token',
+              expires_in: 3600,
+              token_type: 'Bearer',
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          )
+        }
+
+        if (url.includes('warcraftlogs.com/api/v2/client')) {
+          const body = init?.body ? JSON.parse(init.body.toString()) : {}
+          const query = body.query as string
+
+          expect(query).toContain('query GetFightDetails')
+          expect(query).toContain('fights(fightIDs: $fightIDs)')
+          expect(query).toContain('rankings(fightIDs: $fightIDs)')
+          expect(body.variables.fightIDs).toEqual([32])
+
+          return new Response(
+            JSON.stringify({
+              data: createWclReport({
+                fights: [
+                  {
+                    id: 32,
+                    encounterID: 1234,
+                    name: 'Fight 32',
+                    startTime: 1,
+                    endTime: 2,
+                    kill: true,
+                    difficulty: null,
+                    bossPercentage: null,
+                    fightPercentage: null,
+                    enemyNPCs: [],
+                    enemyPets: [],
+                    friendlyPlayers: [],
+                    friendlyPets: [],
+                  },
+                ],
+                rankings: {
+                  data: [],
+                },
+              }),
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          )
+        }
+
+        return new Response(null, { status: 404 })
+      },
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const client = new WCLClient(createMockBindings(), 'wcl:12345')
+    const result = await client.getFightDetails('ABC123', 32)
+
+    expect(result.reportData?.report?.fights?.[0]?.id).toBe(32)
   })
 })
 
