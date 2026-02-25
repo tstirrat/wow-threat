@@ -1615,7 +1615,7 @@ describe('threat-aggregation', () => {
 
     expect(rows).toEqual([
       {
-        key: '100',
+        key: '100:damage',
         abilityId: 100,
         abilityName: 'Shield Slam',
         amount: 300,
@@ -1989,7 +1989,7 @@ describe('threat-aggregation', () => {
 
     expect(rows).toEqual([
       {
-        key: '100',
+        key: '100:damage',
         abilityId: 100,
         abilityName: 'Shield Slam',
         amount: 400,
@@ -2019,6 +2019,232 @@ describe('threat-aggregation', () => {
         amount: 10,
         threat: 40,
         tps: 40,
+        isHeal: false,
+        isFixate: false,
+        modifierTotal: 1,
+        modifierBreakdown: [],
+      },
+    ])
+  })
+
+  it('groups buff/debuff lifecycle events while keeping them separate from damage', () => {
+    const actors: ReportActorSummary[] = [
+      {
+        id: 1,
+        name: 'Warrior',
+        type: 'Player',
+        subType: 'Warrior',
+      },
+    ]
+    const abilities: ReportAbilitySummary[] = [
+      {
+        gameID: 100,
+        icon: null,
+        name: 'Thunder Clap',
+        type: 'ability',
+      },
+      {
+        gameID: 101,
+        icon: null,
+        name: 'Battle Shout',
+        type: 'ability',
+      },
+    ]
+    const events = [
+      {
+        timestamp: 1000,
+        type: 'damage',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 10,
+        targetIsFriendly: false,
+        abilityGameID: 100,
+        amount: 200,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 120,
+              total: 120,
+            },
+          ],
+          calculation: {
+            formula: 'damage',
+            amount: 200,
+            baseThreat: 200,
+            modifiedThreat: 120,
+            isSplit: false,
+            modifiers: [],
+          },
+        },
+      },
+      {
+        timestamp: 1100,
+        type: 'applydebuff',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 10,
+        targetIsFriendly: false,
+        abilityGameID: 100,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 60,
+              total: 180,
+            },
+          ],
+          calculation: {
+            formula: 'debuff',
+            amount: 0,
+            baseThreat: 60,
+            modifiedThreat: 60,
+            isSplit: false,
+            modifiers: [],
+          },
+        },
+      },
+      {
+        timestamp: 1125,
+        type: 'refreshdebuff',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 10,
+        targetIsFriendly: false,
+        abilityGameID: 100,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 30,
+              total: 210,
+            },
+          ],
+          calculation: {
+            formula: 'debuff refresh',
+            amount: 0,
+            baseThreat: 30,
+            modifiedThreat: 30,
+            isSplit: false,
+            modifiers: [],
+          },
+        },
+      },
+      {
+        timestamp: 1150,
+        type: 'applybuff',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 1,
+        targetIsFriendly: true,
+        abilityGameID: 101,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 20,
+              total: 230,
+            },
+          ],
+          calculation: {
+            formula: 'buff',
+            amount: 0,
+            baseThreat: 20,
+            modifiedThreat: 20,
+            isSplit: false,
+            modifiers: [],
+          },
+        },
+      },
+      {
+        timestamp: 1175,
+        type: 'refreshbuff',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 1,
+        targetIsFriendly: true,
+        abilityGameID: 101,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 10,
+              total: 240,
+            },
+          ],
+          calculation: {
+            formula: 'buff refresh',
+            amount: 0,
+            baseThreat: 10,
+            modifiedThreat: 10,
+            isSplit: false,
+            modifiers: [],
+          },
+        },
+      },
+    ]
+
+    const rows = buildFocusedPlayerThreatRows({
+      events: events as never,
+      actors,
+      abilities,
+      fightStartTime: 1000,
+      target: {
+        id: 10,
+        instance: 0,
+      },
+      focusedPlayerId: 1,
+      windowStartMs: 0,
+      windowEndMs: 1000,
+    })
+
+    expect(rows).toEqual([
+      {
+        key: '100:damage',
+        abilityId: 100,
+        abilityName: 'Thunder Clap',
+        amount: 200,
+        threat: 120,
+        tps: 120,
+        isHeal: false,
+        isFixate: false,
+        modifierTotal: 1,
+        modifierBreakdown: [],
+      },
+      {
+        key: '100:debuff',
+        abilityId: 100,
+        abilityName: 'Thunder Clap (debuff)',
+        amount: 0,
+        threat: 90,
+        tps: 90,
+        isHeal: false,
+        isFixate: false,
+        modifierTotal: 1,
+        modifierBreakdown: [],
+      },
+      {
+        key: '101:buff',
+        abilityId: 101,
+        abilityName: 'Battle Shout (buff)',
+        amount: 0,
+        threat: 30,
+        tps: 30,
         isHeal: false,
         isFixate: false,
         modifierTotal: 1,
@@ -2135,7 +2361,7 @@ describe('threat-aggregation', () => {
 
     expect(rows).toEqual([
       {
-        key: '200',
+        key: '200:damage',
         abilityId: 200,
         abilityName: 'Bite',
         amount: 100,
@@ -2263,9 +2489,9 @@ describe('threat-aggregation', () => {
 
     expect(rows).toEqual([
       {
-        key: '355',
+        key: '355:cast',
         abilityId: 355,
-        abilityName: 'Taunt',
+        abilityName: 'Taunt (cast)',
         amount: 0,
         threat: 100000,
         tps: null,
@@ -2275,7 +2501,7 @@ describe('threat-aggregation', () => {
         modifierBreakdown: [],
       },
       {
-        key: '48438',
+        key: '48438:heal',
         abilityId: 48438,
         abilityName: 'Wild Growth',
         amount: 200,

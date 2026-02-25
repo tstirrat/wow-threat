@@ -1356,16 +1356,27 @@ function resolveFocusedThreatRowSpellSchool(
   return labels.join('/')
 }
 
-function resolveFocusedThreatEventSuffix(eventType: string): string | null {
-  if (eventType === 'resourcechange') {
-    return 'resourcechange'
+function resolveFocusedThreatEventCategory(eventType: string): string {
+  switch (eventType) {
+    case 'applybuff':
+    case 'refreshbuff':
+    case 'applybuffstack':
+      return 'buff'
+    case 'applydebuff':
+    case 'refreshdebuff':
+    case 'applydebuffstack':
+      return 'debuff'
+    default:
+      return eventType
+  }
+}
+
+function resolveFocusedThreatEventSuffix(eventCategory: string): string | null {
+  if (eventCategory === 'damage' || eventCategory === 'heal') {
+    return null
   }
 
-  if (eventType === 'energize') {
-    return 'energize'
-  }
-
-  return null
+  return eventCategory
 }
 
 /** Build totals/class metadata for the currently focused player. */
@@ -1597,15 +1608,16 @@ export function buildFocusedPlayerThreatRows({
     }
 
     const eventType = event.type.toLowerCase()
+    const eventCategory = resolveFocusedThreatEventCategory(eventType)
     const abilityId = event.abilityGameID ?? null
     const abilityName = resolveAbilityName(abilityId, abilityById)
-    const eventSuffix = resolveFocusedThreatEventSuffix(eventType)
+    const eventSuffix = resolveFocusedThreatEventSuffix(eventCategory)
     const rowAbilityName = eventSuffix
       ? `${abilityName} (${eventSuffix})`
       : abilityName
     const keyBase =
       abilityId === null ? `unknown:${abilityName}` : String(abilityId)
-    const key = eventSuffix ? `${keyBase}:${eventType}` : keyBase
+    const key = `${keyBase}:${eventCategory}`
     const spellSchool = resolveFocusedThreatRowSpellSchool(
       abilityId,
       abilityById,
