@@ -42,4 +42,10 @@ describe('threat-chart-point-size', () => {
   it('keeps death markers at the default marker size', () => {
     expect(resolvePointSize(createPoint({ markerKind: 'death' }))).toBe(8)
   })
+
+  it('uses larger dots for tranquil air totem markers', () => {
+    expect(
+      resolvePointSize(createPoint({ markerKind: 'tranquilAirTotem' })),
+    ).toBe(9)
+  })
 })

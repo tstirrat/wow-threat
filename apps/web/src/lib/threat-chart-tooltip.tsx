@@ -16,6 +16,7 @@ import { resolveThreatStateStatus } from './threat-chart-visuals'
 
 export const bossMeleeMarkerColor = '#ef4444'
 export const deathMarkerColor = '#dc2626'
+export const tranquilAirTotemMarkerColor = '#3b82f6'
 
 function formatThreatNumber(value: number): string {
   if (value < 0) {
@@ -238,6 +239,13 @@ function tooltipContent({ data }: { data: TooltipRenderData }): JSX.Element {
       ) : data.markerKind === 'death' ? (
         <div>
           Marker: <strong style={{ color: deathMarkerColor }}>Death</strong>
+        </div>
+      ) : data.markerKind === 'tranquilAirTotem' ? (
+        <div>
+          Marker:{' '}
+          <strong style={{ color: tranquilAirTotemMarkerColor }}>
+            Tranquil Air Totem
+          </strong>
         </div>
       ) : null}
       {data.spellId ? (

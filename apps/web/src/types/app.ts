@@ -2,6 +2,7 @@
  * Shared frontend app-level types.
  */
 import type { HitType, PlayerClass } from '@wow-threat/wcl-types'
+
 import type { ReportActorRole } from './api'
 
 export type WarcraftLogsHost =
@@ -83,7 +84,7 @@ export interface ThreatPointModifier {
   value: number
 }
 
-export type ThreatPointMarkerKind = 'bossMelee' | 'death'
+export type ThreatPointMarkerKind = 'bossMelee' | 'death' | 'tranquilAirTotem'
 
 export type ThreatStateVisualKind = 'fixate' | 'aggroLoss' | 'invulnerable'
 

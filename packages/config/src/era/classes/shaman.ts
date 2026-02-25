@@ -112,6 +112,19 @@ export const shamanConfig: ClassThreatConfig = {
     [Spells.EarthShockR5]: threat({ modifier: Mods.EarthShock }),
     [Spells.EarthShockR6]: threat({ modifier: Mods.EarthShock }),
     [Spells.EarthShockR7]: threat({ modifier: Mods.EarthShock }),
+
+    [Spells.TranquilAirTotem]: (ctx) => {
+      if (ctx.event.type === 'summon') {
+        // adds a marker on the chart only
+        return {
+          formula: 'tranquilAirSummon',
+          value: 0,
+          splitAmongEnemies: false,
+          effects: [{ type: 'eventMarker', marker: 'tranquilAirTotem' }],
+        }
+      }
+      return undefined
+    },
   },
 
   talentImplications: (ctx: TalentImplicationContext) => {

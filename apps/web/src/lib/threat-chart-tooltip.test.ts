@@ -100,6 +100,43 @@ describe('threat-chart-tooltip', () => {
     expect(tooltip).toContain('ID: 7386')
   })
 
+  it('renders tranquil air totem marker labels', () => {
+    const formatter = createThreatChartTooltipFormatter({
+      series: [baseSeries],
+      themeColors: {
+        border: '#d1d5db',
+        foreground: '#0f172a',
+        muted: '#64748b',
+        panel: '#ffffff',
+      },
+    })
+
+    const tooltip = formatter({
+      seriesName: 'Shaman',
+      data: {
+        actorId: 1,
+        actorColor: '#3b82f6',
+        abilityName: 'Tranquil Air Totem',
+        amount: 0,
+        baseThreat: 0,
+        eventType: 'summon',
+        formula: '0',
+        modifiedThreat: 0,
+        spellId: 25908,
+        spellSchool: null,
+        modifiers: [],
+        threatDelta: 0,
+        timeMs: 1000,
+        totalThreat: 500,
+        markerKind: 'tranquilAirTotem',
+      },
+    })
+
+    expect(tooltip).toContain(
+      'Marker: <strong style="color:#3b82f6">Tranquil Air Totem</strong>',
+    )
+  })
+
   it('renders resource labels and non-damage event suffixes', () => {
     const formatter = createThreatChartTooltipFormatter({
       series: [baseSeries],

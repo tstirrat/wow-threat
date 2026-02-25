@@ -17,6 +17,10 @@ export function resolvePointSize(point: SeriesChartPoint | undefined): number {
     return 8
   }
 
+  if (point.markerKind === 'tranquilAirTotem') {
+    return 9
+  }
+
   if (point.eventType === 'resourcechange' || point.eventType === 'energize') {
     return 4
   }

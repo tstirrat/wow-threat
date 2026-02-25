@@ -12,6 +12,20 @@ that shared state through a typed namespace.
 
 ## Current Built-ins
 
+- `party-detection`
+  - Active only when `inferThreatReduction` is enabled.
+  - Builds inferred party assignments from party-scoped spell hit events
+    (e.g. Prayer of Healing, Prayer of Fortitude, Circle of Healing, paladin
+    auras, shouts, and other party-bounded aura effects).
+  - Persists assignments to namespace as actor->group and group->members
+    lookups.
+  - Includes friendly pets in the owning player's inferred group.
+- `tranquil-air-emulation`
+  - Active only when `inferThreatReduction` is enabled.
+  - Watches Tranquil Air Totem summon events and emulates party aura state.
+  - Applies/removes Tranquil Air aura mutations for inferred party members
+    within 30 yards (6000 positional units) of the summon point.
+  - Uses shared party-assignment namespace data from `party-detection`.
 - `infer-initial-buffs`
   - Always active when a fight has friendly players or pets.
   - Infers start-of-fight buff auras from first observed

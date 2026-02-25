@@ -586,6 +586,119 @@ describe('threat-aggregation', () => {
     )
   })
 
+  it('adds tranquil air totem markers to the shaman series on summon events', () => {
+    const actors: ReportActorSummary[] = [
+      {
+        id: 1,
+        name: 'Shaman',
+        type: 'Player',
+        subType: 'Shaman',
+      },
+      {
+        id: 10,
+        name: 'Boss',
+        type: 'NPC',
+        subType: 'Boss',
+      },
+    ]
+    const abilities: ReportAbilitySummary[] = [
+      {
+        gameID: 100,
+        icon: null,
+        name: 'Earth Shock',
+        type: '1',
+      },
+      {
+        gameID: 25908,
+        icon: null,
+        name: 'Tranquil Air Totem',
+        type: '8',
+      },
+    ]
+    const events = [
+      {
+        timestamp: 1000,
+        type: 'damage',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 10,
+        targetIsFriendly: false,
+        abilityGameID: 100,
+        amount: 200,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 200,
+              total: 200,
+            },
+          ],
+          calculation: {
+            formula: 'damage',
+            amount: 200,
+            baseThreat: 200,
+            modifiedThreat: 200,
+            isSplit: false,
+            modifiers: [],
+          },
+        },
+      },
+      {
+        timestamp: 1200,
+        type: 'summon',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 777,
+        targetIsFriendly: true,
+        abilityGameID: 25908,
+        threat: {
+          changes: [],
+          calculation: {
+            formula: '0',
+            amount: 0,
+            baseThreat: 0,
+            modifiedThreat: 0,
+            isSplit: false,
+            modifiers: [],
+            effects: [
+              {
+                type: 'eventMarker',
+                marker: 'tranquilAirTotem',
+              },
+            ],
+          },
+        },
+      },
+    ]
+
+    const series = buildThreatSeries({
+      events: events as never,
+      actors,
+      abilities,
+      fightStartTime: 1000,
+      fightEndTime: 2000,
+      target: {
+        id: 10,
+        instance: 0,
+      },
+    })
+
+    const shamanSeries = series.find((entry) => entry.actorId === 1)
+    expect(shamanSeries?.points).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          timeMs: 200,
+          totalThreat: 200,
+          eventType: 'summon',
+          markerKind: 'tranquilAirTotem',
+        }),
+      ]),
+    )
+  })
+
   it('builds state visual segments and fixate windows for the selected target', () => {
     const actors: ReportActorSummary[] = [
       {

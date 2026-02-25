@@ -29,7 +29,8 @@ const trackableActorTypes = new Set(['Player', 'Pet'])
 const bossMeleeSpellId = 1
 const markerPriorityByKind: Record<ThreatPointMarkerKind, number> = {
   bossMelee: 1,
-  death: 2,
+  tranquilAirTotem: 2,
+  death: 3,
 }
 const spellSchoolByMask = {
   1: 'physical',
@@ -146,6 +147,20 @@ function isBossMeleeMarkerEventForTarget({
   )
 }
 
+function isTranquilAirTotemMarkerEvent(
+  event: AugmentedEventsResponse['events'][number],
+): boolean {
+  const hasTranquilAirTotemMarker = (
+    event.threat?.calculation.effects ?? []
+  ).some(
+    (effect) =>
+      effect.type === 'eventMarker' &&
+      String(effect.marker) === 'tranquilAirTotem',
+  )
+
+  return hasTranquilAirTotemMarker
+}
+
 function resolveEventPointMarkers({
   event,
   target,
@@ -195,6 +210,13 @@ function resolveEventPointMarkers({
     setMarker({
       actorId: event.targetID,
       markerKind: 'death',
+    })
+  }
+
+  if (isTranquilAirTotemMarkerEvent(event)) {
+    setMarker({
+      actorId: event.sourceID,
+      markerKind: 'tranquilAirTotem',
     })
   }
 

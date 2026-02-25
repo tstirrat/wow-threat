@@ -13,9 +13,9 @@ import {
   useState,
 } from 'react'
 
-import { useThreatChartZoom } from '../hooks/use-threat-chart-zoom'
 import { useThreatChartLegendState } from '../hooks/use-threat-chart-legend-state'
 import { useThreatChartThemeColors } from '../hooks/use-threat-chart-theme-colors'
+import { useThreatChartZoom } from '../hooks/use-threat-chart-zoom'
 import { formatTimelineTime } from '../lib/format'
 import { resolveSeriesWindowBounds } from '../lib/threat-aggregation'
 import { shouldRenderThreatPoint } from '../lib/threat-chart-event-visibility'
@@ -24,6 +24,7 @@ import {
   bossMeleeMarkerColor,
   createThreatChartTooltipFormatter,
   deathMarkerColor,
+  tranquilAirTotemMarkerColor,
 } from '../lib/threat-chart-tooltip'
 import type { SeriesChartPoint } from '../lib/threat-chart-types'
 import {
@@ -48,6 +49,10 @@ function resolvePointColor(
 
   if (point.markerKind === 'death') {
     return deathMarkerColor
+  }
+
+  if (point.markerKind === 'tranquilAirTotem') {
+    return tranquilAirTotemMarkerColor
   }
 
   return seriesColor
