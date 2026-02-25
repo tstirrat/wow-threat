@@ -15,7 +15,6 @@ import {
   addInitialAuraAddition,
   initialAuraAdditionsKey,
 } from '../event-processors'
-import { salvationInferenceMetadataKey } from './keys'
 
 const BLESSING_OF_SALVATION_ID = 1038
 const GREATER_BLESSING_OF_SALVATION_ID = 25895
@@ -120,7 +119,7 @@ function resolveFightThreatReductionBaselineAuraId(
 }
 
 /**
- * Infer threat-reduction aura seeds with Salvation edge-case precedence.
+ * Infer threat-reduction aura seeds for non-tanks missing Salvation.
  */
 export const createMinmaxSalvationProcessor: FightProcessorFactory = ({
   report,
@@ -152,14 +151,6 @@ export const createMinmaxSalvationProcessor: FightProcessorFactory = ({
       const initialAuraAdditionsByActor = ctx.namespace.get(
         initialAuraAdditionsKey,
       )
-      const salvationInference = ctx.namespace.get(
-        salvationInferenceMetadataKey,
-      )
-      const combatantInfoMinorSalvationPlayerIds =
-        salvationInference?.combatantInfoMinorSalvationPlayerIds ??
-        new Set<number>()
-      const minorSalvationRemovedPlayerIds =
-        salvationInference?.minorSalvationRemovedPlayerIds ?? new Set<number>()
 
       friendlyPlayerIds.forEach((actorId) => {
         if (tankActorIds.has(actorId)) {
@@ -170,25 +161,14 @@ export const createMinmaxSalvationProcessor: FightProcessorFactory = ({
           ...(ctx.initialAurasByActor.get(actorId) ?? []),
           ...(initialAuraAdditionsByActor?.get(actorId) ?? []),
         ])
-        const hasInitialMinorSalvation =
+        const hasAnySalvation =
           actorAuraIds.has(BLESSING_OF_SALVATION_ID) ||
-          combatantInfoMinorSalvationPlayerIds.has(actorId)
-        const hasMinorSalvationRemoval =
-          minorSalvationRemovedPlayerIds.has(actorId)
-
-        const inferredAuraId =
-          hasMinorSalvationRemoval && !hasInitialMinorSalvation
-            ? BLESSING_OF_SALVATION_ID
-            : baselineAuraId === GREATER_BLESSING_OF_SALVATION_ID &&
-                hasInitialMinorSalvation
-              ? null
-              : baselineAuraId
-
-        if (inferredAuraId === null || actorAuraIds.has(inferredAuraId)) {
+          actorAuraIds.has(GREATER_BLESSING_OF_SALVATION_ID)
+        if (hasAnySalvation) {
           return
         }
 
-        addInitialAuraAddition(ctx.namespace, actorId, inferredAuraId)
+        addInitialAuraAddition(ctx.namespace, actorId, baselineAuraId)
       })
     },
   }

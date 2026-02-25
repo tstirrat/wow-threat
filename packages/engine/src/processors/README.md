@@ -12,16 +12,19 @@ that shared state through a typed namespace.
 
 ## Current Built-ins
 
-- `infer-initial-salvation`
-  - Always active when a fight has friendly players.
-  - Infers start-of-fight Salvation auras from first observed
+- `infer-initial-buffs`
+  - Always active when a fight has friendly players or pets.
+  - Infers start-of-fight buff auras from first observed
     `applybuff`/`refreshbuff`/`removebuff` transitions.
-  - Stores metadata used by later processors.
+  - Adds combatantinfo aura snapshots into the canonical initial buff seed set.
+  - Skips inference when the aura is already present in seeded initial auras
+    or combatantinfo aura snapshots.
 - `minmax-salvation`
   - Active only when `inferThreatReduction` is enabled.
   - Uses `report.rankings` + fight composition to infer non-tank Salvation
     seeds.
-  - Applies edge-case precedence for `1038` vs `25895`.
+  - Checks canonical initial buffs (`seeded + inferred`) and only adds
+    Salvation for non-tanks missing both `1038` and `25895`.
 
 ## Registration Model
 

@@ -19,7 +19,6 @@ import {
   runFightPrepass,
 } from '../event-processors'
 import { createMockThreatConfig } from '../test/helpers/config'
-import { salvationInferenceMetadataKey } from './keys'
 import { createMinmaxSalvationProcessor } from './minmax-salvation'
 
 function createPlayerActor(
@@ -153,7 +152,7 @@ describe('createMinmaxSalvationProcessor', () => {
     expect(processor).toBeNull()
   })
 
-  it('applies baseline and edge-case salvation inference while excluding tanks', () => {
+  it('applies baseline salvation only for non-tanks missing both salvation buffs', () => {
     const fight = createFight(11, 1602, [1, 2, 3, 4])
     const report = createReport({
       actors: [
@@ -193,10 +192,10 @@ describe('createMinmaxSalvationProcessor', () => {
       inferThreatReduction: true,
       initialAurasByActor: new Map([[2, [1038]]]),
     })
-    context.namespace.set(salvationInferenceMetadataKey, {
-      combatantInfoMinorSalvationPlayerIds: new Set<number>(),
-      minorSalvationRemovedPlayerIds: new Set([3]),
-    })
+    context.namespace.set(
+      initialAuraAdditionsKey,
+      new Map([[3, new Set([1038])]]),
+    )
 
     runFightPrepass({
       rawEvents: [],
@@ -252,10 +251,6 @@ describe('createMinmaxSalvationProcessor', () => {
       report,
       fight,
       inferThreatReduction: true,
-    })
-    context.namespace.set(salvationInferenceMetadataKey, {
-      combatantInfoMinorSalvationPlayerIds: new Set<number>(),
-      minorSalvationRemovedPlayerIds: new Set<number>(),
     })
 
     runFightPrepass({
