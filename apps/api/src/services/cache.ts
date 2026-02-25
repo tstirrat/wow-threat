@@ -47,21 +47,6 @@ function resolveVisibilityScope(visibility: unknown, uid?: string): string {
   return `uid:${uid?.trim() || 'anonymous'}`
 }
 
-function normalizeTankActorIdsForCache(
-  tankActorIds: readonly number[] | null | undefined,
-): string {
-  if (tankActorIds == null) {
-    return 'auto'
-  }
-
-  const normalized = [...new Set(tankActorIds)]
-    .map((value) => Math.trunc(value))
-    .filter((value) => Number.isFinite(value) && value > 0)
-    .sort((left, right) => left - right)
-
-  return normalized.length > 0 ? normalized.join(',') : 'none'
-}
-
 function hasGzipPrefix(bytes: Uint8Array): boolean {
   return gzipValuePrefix.every((value, index) => bytes[index] === value)
 }
@@ -243,7 +228,7 @@ export function createCache(
 // Cache key builders
 export const CacheKeys = {
   wclToken: () => 'wcl:token',
-  reportSchemaVersion: 'v4',
+  reportSchemaVersion: 'v5',
   report: (code: string, visibility: unknown, uid?: string) =>
     `wcl:report:${CacheKeys.reportSchemaVersion}:${code}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
   fightsSchemaVersion: 'v2',
@@ -276,15 +261,14 @@ export const CacheKeys = {
     uid?: string,
   ) =>
     `wcl:encounter-actor-roles:${CacheKeys.encounterActorRolesSchemaVersion}:${code}:${encounterId}:${fightId}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
-  augmentedSchemaVersion: 'v12',
+  augmentedSchemaVersion: 'v13',
   augmentedEvents: (
     code: string,
     fightId: number,
     configVersion: string,
     inferThreatReduction: boolean,
-    tankActorIds: readonly number[] | null,
     visibility: unknown,
     uid?: string,
   ) =>
-    `augmented:${CacheKeys.augmentedSchemaVersion}:${code}:${fightId}:${configVersion}:inferThreatReduction:${inferThreatReduction ? 'true' : 'false'}:tankActorIds:${normalizeTankActorIdsForCache(tankActorIds)}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
+    `augmented:${CacheKeys.augmentedSchemaVersion}:${code}:${fightId}:${configVersion}:inferThreatReduction:${inferThreatReduction ? 'true' : 'false'}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
 }

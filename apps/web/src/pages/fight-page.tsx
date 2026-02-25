@@ -106,25 +106,12 @@ export const FightPage: FC = () => {
   )
   const fightQuery = useFightData(reportId, fightId)
   const fightData = fightQuery.data ?? null
-  const inferredTankActorIds = useMemo(() => {
-    if (!fightData) {
-      return null
-    }
-
-    return fightData.actors
-      .filter((actor) => actor.type === 'Player' && actor.role === 'Tank')
-      .map((actor) => actor.id)
-      .sort((left, right) => left - right)
-  }, [fightData])
-  const eventsQueryEnabled =
-    !isUserSettingsLoading &&
-    (!userSettings.inferThreatReduction || inferredTankActorIds !== null)
+  const eventsQueryEnabled = !isUserSettingsLoading
   const eventsQuery = useFightEvents(
     reportId,
     fightId,
     threatConfig?.version ?? null,
     userSettings.inferThreatReduction,
-    userSettings.inferThreatReduction ? inferredTankActorIds : null,
     eventsQueryEnabled,
   )
   const eventsData = eventsQuery.data ?? null

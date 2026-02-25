@@ -43,6 +43,11 @@ import {
 } from '@wow-threat/wcl-types'
 import { describe, expect, it, vi } from 'vitest'
 
+import {
+  addInitialAuraAddition,
+  createProcessorDataKey,
+  type FightProcessor,
+} from './event-processors'
 import { createMockThreatConfig } from './test/helpers/config'
 import {
   calculateModifiedThreat,
@@ -427,6 +432,160 @@ describe('processEvents', () => {
             targetId: bossEnemy.id,
             operator: 'set',
             total: 0,
+          }),
+        ]),
+      )
+    })
+  })
+
+  describe('fight processors', () => {
+    it('runs prepass once and merges processor-provided initial aura seeds', () => {
+      const visitCountKey = createProcessorDataKey<number>('test:visit-count')
+      let visitedEvents = 0
+      const events: WCLEvent[] = [
+        createDamageEvent({
+          sourceID: warriorActor.id,
+          targetID: bossEnemy.id,
+          amount: 100,
+        }),
+        createDamageEvent({
+          sourceID: warriorActor.id,
+          targetID: bossEnemy.id,
+          amount: 120,
+        }),
+      ]
+      const processor: FightProcessor = {
+        id: 'test/prepass-counter',
+        init(ctx) {
+          ctx.namespace.set(visitCountKey, 0)
+        },
+        visitPrepass(_, ctx) {
+          const previousCount = ctx.namespace.get(visitCountKey) ?? 0
+          ctx.namespace.set(visitCountKey, previousCount + 1)
+          visitedEvents += 1
+        },
+        finalizePrepass(ctx) {
+          addInitialAuraAddition(
+            ctx.namespace,
+            warriorActor.id,
+            SPELLS.MOCK_AURA_THREAT_UP,
+          )
+        },
+      }
+
+      const result = processEvents({
+        rawEvents: events,
+        actorMap: new Map<number, Actor>([[warriorActor.id, warriorActor]]),
+        enemies: [bossEnemy],
+        config: mockConfig,
+        processors: [processor],
+      })
+
+      expect(result.initialAurasByActor.get(warriorActor.id)).toEqual([
+        SPELLS.MOCK_AURA_THREAT_UP,
+      ])
+      const firstDamage = result.augmentedEvents[0]
+      expect(firstDamage?.threat?.calculation.modifiers).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: 'Test Threat Up' }),
+        ]),
+      )
+      expect(visitedEvents).toBe(events.length)
+    })
+
+    it('applies beforeFightState aura mutations to same-event threat calculations', () => {
+      const processor: FightProcessor = {
+        id: 'test/aura-mutation-before-state',
+        beforeFightState(ctx) {
+          ctx.addEffects({
+            type: 'auraMutation',
+            action: 'apply',
+            spellId: SPELLS.MOCK_AURA_THREAT_UP,
+            actorIds: [ctx.event.sourceID],
+          })
+        },
+      }
+      const result = processEvents({
+        rawEvents: [
+          createDamageEvent({
+            sourceID: warriorActor.id,
+            targetID: bossEnemy.id,
+            amount: 100,
+          }),
+        ],
+        actorMap: new Map<number, Actor>([[warriorActor.id, warriorActor]]),
+        enemies: [bossEnemy],
+        config: mockConfig,
+        processors: [processor],
+      })
+
+      const damage = result.augmentedEvents[0]
+      expect(damage?.threat?.calculation.modifiers).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: 'Test Threat Up' }),
+        ]),
+      )
+      expect(damage?.threat?.calculation.effects).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: 'auraMutation',
+            action: 'apply',
+            spellId: SPELLS.MOCK_AURA_THREAT_UP,
+          }),
+        ]),
+      )
+    })
+
+    it('applies pending aura mutations between afterFightState processors', () => {
+      const firstAfterProcessor: FightProcessor = {
+        id: 'test/after-aura-apply',
+        afterFightState(ctx) {
+          ctx.addEffects({
+            type: 'auraMutation',
+            action: 'apply',
+            spellId: SPELLS.MOCK_AURA_THREAT_DOWN,
+            actorIds: [ctx.event.sourceID],
+          })
+        },
+      }
+      const secondAfterProcessor: FightProcessor = {
+        id: 'test/after-read-state',
+        afterFightState(ctx) {
+          const sourceActor = ctx.fightState.getActor?.({
+            id: ctx.event.sourceID,
+            instanceId: ctx.event.sourceInstance,
+          })
+          if (sourceActor?.auras.has(SPELLS.MOCK_AURA_THREAT_DOWN)) {
+            ctx.addEffects({ type: 'eventMarker', marker: 'bossMelee' })
+          }
+        },
+      }
+
+      const result = processEvents({
+        rawEvents: [
+          createDamageEvent({
+            sourceID: warriorActor.id,
+            targetID: bossEnemy.id,
+            amount: 100,
+          }),
+        ],
+        actorMap: new Map<number, Actor>([[warriorActor.id, warriorActor]]),
+        enemies: [bossEnemy],
+        config: mockConfig,
+        processors: [firstAfterProcessor, secondAfterProcessor],
+      })
+
+      const damage = result.augmentedEvents[0]
+      expect(damage?.threat?.calculation.effects).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: 'auraMutation',
+            action: 'apply',
+            spellId: SPELLS.MOCK_AURA_THREAT_DOWN,
+          }),
+          expect.objectContaining({
+            type: 'eventMarker',
+            marker: 'bossMelee',
           }),
         ]),
       )

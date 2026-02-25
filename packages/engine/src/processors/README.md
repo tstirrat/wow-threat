@@ -1,0 +1,85 @@
+# Engine Fight Processors
+
+This directory contains built-in fight processors for `@wow-threat/engine`.
+
+Processors are lightweight plugins that participate in a two-pass lifecycle:
+
+1. Prepass (`init` -> `visitPrepass` -> `finalizePrepass`)
+2. Main event pass (`beforeFightState` -> fight state update -> `afterFightState`)
+
+The engine runs all registered processors in a shared request scope and exposes
+that shared state through a typed namespace.
+
+## Current Built-ins
+
+- `infer-initial-salvation`
+  - Always active when a fight has friendly players.
+  - Infers start-of-fight Salvation auras from first observed
+    `applybuff`/`refreshbuff`/`removebuff` transitions.
+  - Stores metadata used by later processors.
+- `minmax-salvation`
+  - Active only when `inferThreatReduction` is enabled.
+  - Uses `report.rankings` + fight composition to infer non-tank Salvation
+    seeds.
+  - Applies edge-case precedence for `1038` vs `25895`.
+
+## Registration Model
+
+`ThreatEngine` owns processor registration. Built-in factories are declared in
+`index.ts` and installed by default when a `ThreatEngine` instance is created.
+
+```ts
+const engine = new ThreatEngine()
+const output = engine.processEvents(input)
+```
+
+To add custom behavior in tests or experiments:
+
+```ts
+const engine = new ThreatEngine({
+  processorFactories: [myFactory],
+})
+```
+
+or register incrementally:
+
+```ts
+engine.registerProcessorFactory(myFactory)
+```
+
+## Shared Namespace
+
+Processors communicate through typed namespace keys from
+`../event-processors`:
+
+- `createProcessorDataKey<T>(id)`
+- `namespace.get(key)`
+- `namespace.set(key, value)`
+
+For initial-aura seed augmentation, use:
+
+- `addInitialAuraAddition(namespace, actorId, auraId)`
+- `initialAuraAdditionsKey`
+
+The engine merges seed additions before main pass processing.
+
+## Factory Context
+
+Factories receive request-scoped context:
+
+- `report`: full report metadata (or `null`)
+- `fight`: selected fight metadata (or `null`)
+- `inferThreatReduction`: flag from API/UI request
+
+Use this context to decide whether to return a processor instance or `null`.
+
+## Testing Strategy
+
+Processor tests in this directory focus on:
+
+- prepass inference behavior
+- namespace outputs and edge-case precedence
+- activation conditions (factory returns `null` when not applicable)
+
+Integration behavior across the full threat pipeline remains covered by
+`threat-engine.test.ts` and API route tests.

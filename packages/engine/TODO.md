@@ -1,0 +1,2 @@
+- [ ] ENG-001: minmax-salvation: for realism, it should only apply Salv if the current player has less Blessings than the total paladin count.
+- [ ] ENG-002: infer-initial-salvation: Apply this same inference for all buffs, not just Salvation. As long as it is performant

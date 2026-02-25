@@ -1,10 +1,10 @@
 /**
  * Tests for WCL client user-token fallback and visibility-aware behavior.
  */
+import type { Report } from '@wow-threat/wcl-types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { Report } from '@wow-threat/wcl-types'
-
+import encounterActorRolesResponse from '../../test/fixtures/wcl-responses/encounter-actor-roles-response.json'
 import { createMockBindings } from '../../test/setup'
 import { type AppError, ErrorCodes } from '../middleware/error'
 import { encryptSecret, importAesGcmKey } from './token-utils'
@@ -154,42 +154,44 @@ describe('WCLClient.getReport', () => {
     expect(result.reportData.report.visibility).toBe('public')
   })
 
-  it('keeps report metadata query free of rankings fields that require encounter ids', async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = typeof input === 'string' ? input : input.toString()
+  it('keeps report metadata query free of encounter-ranked character fields', async () => {
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString()
 
-      if (
-        url.includes('warcraftlogs.com/oauth/token') &&
-        init?.body?.toString().includes('client_credentials')
-      ) {
-        return new Response(
-          JSON.stringify({
-            access_token: 'client-token',
-            expires_in: 3600,
-            token_type: 'Bearer',
-          }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } },
-        )
-      }
+        if (
+          url.includes('warcraftlogs.com/oauth/token') &&
+          init?.body?.toString().includes('client_credentials')
+        ) {
+          return new Response(
+            JSON.stringify({
+              access_token: 'client-token',
+              expires_in: 3600,
+              token_type: 'Bearer',
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          )
+        }
 
-      if (url.includes('warcraftlogs.com/api/v2/client')) {
-        const body = init?.body ? JSON.parse(init.body.toString()) : {}
-        const query = body.query as string
+        if (url.includes('warcraftlogs.com/api/v2/client')) {
+          const body = init?.body ? JSON.parse(init.body.toString()) : {}
+          const query = body.query as string
 
-        expect(query).not.toContain('rankedCharacters')
-        expect(query).not.toContain('encounterRankings')
-        expect(query).not.toContain('\n            rankings')
+          expect(query).not.toContain('rankedCharacters')
+          expect(query).not.toContain('encounterRankings')
+          expect(query).toContain('\n            rankings')
 
-        return new Response(
-          JSON.stringify({
-            data: createWclReport({ visibility: 'public' }),
-          }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } },
-        )
-      }
+          return new Response(
+            JSON.stringify({
+              data: createWclReport({ visibility: 'public' }),
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          )
+        }
 
-      return new Response(null, { status: 404 })
-    })
+        return new Response(null, { status: 404 })
+      },
+    )
     vi.stubGlobal('fetch', fetchMock)
 
     const client = new WCLClient(createMockBindings(), 'wcl:12345')
@@ -316,23 +318,25 @@ describe('resolveFightTankActorIds', () => {
           },
         ],
       },
-      rankings: [
-        {
-          encounterID: 9001,
-          fightID: 11,
-          roles: {
-            tanks: {
-              characters: [{ id: 1, name: 'Tank' }],
-            },
-            healers: {
-              characters: [{ id: 3, name: 'Healer' }],
-            },
-            dps: {
-              characters: [{ id: 2, name: 'Dps' }],
+      rankings: {
+        data: [
+          {
+            encounterID: 9001,
+            fightID: 11,
+            roles: {
+              tanks: {
+                characters: [{ id: 1, name: 'Tank' }],
+              },
+              healers: {
+                characters: [{ id: 3, name: 'Healer' }],
+              },
+              dps: {
+                characters: [{ id: 2, name: 'Dps' }],
+              },
             },
           },
-        },
-      ],
+        ],
+      },
     }
 
     expect(resolveFightTankActorIds(report as unknown as Report, 11)).toEqual(
@@ -414,31 +418,10 @@ describe('WCLClient.getEncounterActorRoles', () => {
           const query = body.query as string
 
           if (query.includes('GetEncounterActorRoles')) {
-            return new Response(
-              JSON.stringify({
-                data: {
-                  reportData: {
-                    report: {
-                      rankings: [
-                        {
-                          encounterID: 1602,
-                          fightID: 9,
-                          roles: {
-                            tanks: {
-                              characters: [{ id: 1, name: 'Tank One' }],
-                            },
-                            healers: {
-                              characters: [{ id: 2, name: 'Heal One' }],
-                            },
-                          },
-                        },
-                      ],
-                    },
-                  },
-                },
-              }),
-              { status: 200, headers: { 'Content-Type': 'application/json' } },
-            )
+            return new Response(JSON.stringify(encounterActorRolesResponse), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            })
           }
         }
 
@@ -454,16 +437,17 @@ describe('WCLClient.getEncounterActorRoles', () => {
       9,
       'public',
       [
-        { id: 1, name: 'Tank One' },
-        { id: 2, name: 'Heal One' },
-        { id: 3, name: 'Dps One' },
+        { id: 102355392, name: 'Merryday' },
+        { id: 105947179, name: 'Musictwo' },
+        { id: 91613399, name: 'Benderheide' },
       ],
     )
 
     expect(actorRoles).toEqual(
       new Map<number, 'Tank' | 'Healer' | 'DPS'>([
-        [1, 'Tank'],
-        [2, 'Healer'],
+        [102355392, 'Tank'],
+        [105947179, 'Healer'],
+        [91613399, 'DPS'],
       ]),
     )
   })

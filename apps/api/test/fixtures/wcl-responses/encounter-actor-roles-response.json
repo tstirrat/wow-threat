@@ -1,0 +1,249 @@
+{
+  "data": {
+    "reportData": {
+      "report": {
+        "rankings": {
+          "data": [
+            {
+              "fightID": 9,
+              "partition": 1,
+              "zone": 1047,
+              "encounter": {
+                "id": 50652,
+                "name": "Attumen the Huntsman"
+              },
+              "difficulty": 3,
+              "size": 10,
+              "kill": 1,
+              "duration": 70672,
+              "bracketData": 108,
+              "deaths": 1,
+              "damageTakenExcludingTanks": 71602,
+              "roles": {
+                "tanks": {
+                  "name": "Tanks",
+                  "characters": [
+                    {
+                      "id": 102355392,
+                      "name": "Merryday",
+                      "server": {
+                        "id": 5212,
+                        "name": "Dreamscythe",
+                        "region": "US"
+                      },
+                      "class": "Paladin",
+                      "spec": "Protection",
+                      "amount": 562.2028526149,
+                      "bracketData": 108,
+                      "bracket": 0,
+                      "rank": 272,
+                      "best": 272,
+                      "totalParses": 3775,
+                      "rankPercent": 92
+                    }
+                  ]
+                },
+                "healers": {
+                  "name": "Healers",
+                  "characters": [
+                    {
+                      "id": 105947179,
+                      "name": "Musictwo",
+                      "server": {
+                        "id": 5212,
+                        "name": "Dreamscythe",
+                        "region": "US"
+                      },
+                      "class": "Priest",
+                      "spec": "Holy",
+                      "amount": 26.672515281866,
+                      "bracketData": 107,
+                      "bracket": 0,
+                      "rank": "~752",
+                      "best": "~752",
+                      "totalParses": 3959,
+                      "rankPercent": 81
+                    },
+                    {
+                      "id": 105947173,
+                      "name": "Atotemaso",
+                      "server": {
+                        "id": 5212,
+                        "name": "Dreamscythe",
+                        "region": "US"
+                      },
+                      "class": "Shaman",
+                      "spec": "Restoration",
+                      "amount": 0,
+                      "bracketData": 110,
+                      "bracket": 0,
+                      "rank": "~2201",
+                      "best": "~2201",
+                      "totalParses": 4403,
+                      "rankPercent": 50
+                    }
+                  ]
+                },
+                "dps": {
+                  "name": "Damage Dealers",
+                  "characters": [
+                    {
+                      "id": 91613399,
+                      "name": "Benderheide",
+                      "server": {
+                        "id": 5212,
+                        "name": "Dreamscythe",
+                        "region": "US"
+                      },
+                      "class": "Druid",
+                      "spec": "Balance",
+                      "amount": 1231.1240661082,
+                      "bracketData": 109,
+                      "bracket": 0,
+                      "rank": 7,
+                      "best": 7,
+                      "totalParses": 1099,
+                      "rankPercent": 99
+                    },
+                    {
+                      "id": 105947181,
+                      "name": "Domtastic",
+                      "server": {
+                        "id": 5212,
+                        "name": "Dreamscythe",
+                        "region": "US"
+                      },
+                      "class": "Hunter",
+                      "spec": "BeastMastery",
+                      "amount": 906.45517319448,
+                      "bracketData": 109,
+                      "bracket": 0,
+                      "rank": "~3941",
+                      "best": "~3941",
+                      "totalParses": 6462,
+                      "rankPercent": 39
+                    },
+                    {
+                      "id": 105947177,
+                      "name": "Billiewonka",
+                      "server": {
+                        "id": 5212,
+                        "name": "Dreamscythe",
+                        "region": "US"
+                      },
+                      "class": "Hunter",
+                      "spec": "Survival",
+                      "amount": 722.91713832918,
+                      "bracketData": 104,
+                      "bracket": 0,
+                      "rank": 375,
+                      "best": 375,
+                      "totalParses": 540,
+                      "rankPercent": 30
+                    },
+                    {
+                      "id": 105173765,
+                      "name": "Savaj",
+                      "server": {
+                        "id": 5212,
+                        "name": "Dreamscythe",
+                        "region": "US"
+                      },
+                      "class": "Mage",
+                      "spec": "Arcane",
+                      "amount": 2004.3298618972,
+                      "bracketData": 109,
+                      "bracket": 0,
+                      "rank": 2,
+                      "best": 2,
+                      "totalParses": 5154,
+                      "rankPercent": 99
+                    },
+                    {
+                      "id": 91765904,
+                      "name": "Myrdred",
+                      "server": {
+                        "id": 5212,
+                        "name": "Dreamscythe",
+                        "region": "US"
+                      },
+                      "class": "Priest",
+                      "spec": "Shadow",
+                      "amount": 1139.1357256056,
+                      "bracketData": 105,
+                      "bracket": 0,
+                      "rank": 101,
+                      "best": 101,
+                      "totalParses": 2017,
+                      "rankPercent": 94
+                    },
+                    {
+                      "id": 105171510,
+                      "name": "Moprefugee",
+                      "server": {
+                        "id": 5212,
+                        "name": "Dreamscythe",
+                        "region": "US"
+                      },
+                      "class": "Shaman",
+                      "spec": "Elemental",
+                      "amount": 1274.4368349559,
+                      "bracketData": 112,
+                      "bracket": 0,
+                      "rank": 102,
+                      "best": 102,
+                      "totalParses": 2267,
+                      "rankPercent": 95
+                    },
+                    {
+                      "id": 103592112,
+                      "name": "Phlebotomus",
+                      "server": {
+                        "id": 5212,
+                        "name": "Dreamscythe",
+                        "region": "US"
+                      },
+                      "class": "Warlock",
+                      "spec": "Destruction",
+                      "amount": 1749.3208059769,
+                      "bracketData": 107,
+                      "bracket": 0,
+                      "rank": 2,
+                      "best": 2,
+                      "totalParses": 6387,
+                      "rankPercent": 99
+                    }
+                  ]
+                }
+              },
+              "bracket": 0,
+              "guild": {
+                "id": 813511,
+                "name": "Problematic Mage Gap",
+                "faction": 0,
+                "server": {
+                  "id": 5212,
+                  "name": "Dreamscythe",
+                  "region": "US"
+                }
+              },
+              "reportsBlacklistForCharacters": [],
+              "speed": {
+                "rank": 24,
+                "best": 24,
+                "totalParses": 1993,
+                "rankPercent": 98
+              },
+              "execution": {
+                "rank": 1316,
+                "best": 1316,
+                "totalParses": 1993,
+                "rankPercent": 34
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

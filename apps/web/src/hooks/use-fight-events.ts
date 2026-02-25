@@ -12,7 +12,6 @@ export function useFightEvents(
   fightId: number,
   configVersion: string | null,
   inferThreatReduction: boolean,
-  tankActorIds: readonly number[] | null,
   enabled = true,
 ): {
   data: AugmentedEventsResponse | undefined
@@ -25,16 +24,9 @@ export function useFightEvents(
       fightId,
       configVersion,
       inferThreatReduction,
-      tankActorIds,
     ),
     queryFn: () =>
-      getFightEvents(
-        reportId,
-        fightId,
-        configVersion,
-        inferThreatReduction,
-        tankActorIds,
-      ),
+      getFightEvents(reportId, fightId, configVersion, inferThreatReduction),
     enabled: reportId.length > 0 && Number.isFinite(fightId) && enabled,
   })
 

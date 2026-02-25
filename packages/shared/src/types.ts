@@ -241,6 +241,12 @@ export interface ThreatStatePayload {
 
 export type ThreatEffect =
   | { type: 'modifyThreat'; multiplier: number; target: 'target' | 'all' }
+  | {
+      type: 'auraMutation'
+      action: 'apply' | 'remove'
+      spellId: number
+      actorIds: number[]
+    }
   | { type: 'state'; state: ThreatStatePayload }
   | { type: 'eventMarker'; marker: 'bossMelee' | 'death' }
   | { type: 'customThreat'; changes: ThreatChange[] }

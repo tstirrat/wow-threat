@@ -177,24 +177,28 @@ export type ReportRankingCompareType = 'Rankings' | 'Parses'
 export type ReportRankingTimeframeType = 'Today' | 'Historical'
 export type ReportRoleType = 'Any' | 'DPS' | 'Healer' | 'Tank'
 
-export interface ReportEncounterRankingNode {
-  encounterID?: number | null
-  encounterId?: number | null
-  fightID?: number | null
-  fightId?: number | null
-  role?: ReportRoleType | string | null
-  [key: string]: unknown
-}
-
 export interface ReportRankingsCharacter {
-  id?: number
-  name?: string
-  class?: string | null
-  spec?: string | null
+  id: number
+  name: string
+  server: {
+    id: number | null
+    name: string | null
+    region: 'US' | 'EU' | 'TW' | 'KR' | 'CN'
+  } | null
+  class: PlayerClass
+  spec: string
+  amount: number
+  rank: number
+  best: number
+  totalParses: number
+  rankPercent: number
+  bracketData: number
+  bracket: number
 }
 
 export interface ReportRankingsRoleGroup {
-  characters?: Array<ReportRankingsCharacter | null> | null
+  name: 'Tanks' | 'Healers' | 'Damage Dealers'
+  characters: ReportRankingsCharacter[]
 }
 
 export interface ReportRankingsRoles {
@@ -204,18 +208,23 @@ export interface ReportRankingsRoles {
 }
 
 export interface ReportEncounterRankingsEntry {
-  encounterID?: number | null
-  encounterId?: number | null
-  fightID?: number | null
-  fightId?: number | null
-  roles?: ReportRankingsRoles | null
+  fightID: number
+  partition: number
+  zone: number
+  difficulty: number
+  size: number
+  kill: number
+  duration: number
+  encounter: {
+    id: number
+    name: string
+  }
+  roles: ReportRankingsRoles
 }
 
-export type ReportEncounterRankings =
-  | ReportEncounterRankingNode
-  | ReportEncounterRankingNode[]
-  | Record<string, unknown>
-  | null
+export interface ReportEncounterRankings {
+  data: ReportEncounterRankingsEntry[]
+}
 
 export interface ReportRankedCharacter {
   canonicalID: number
@@ -228,7 +237,7 @@ export interface ReportRankedCharacter {
   level: number
   name: string
   server: ReportRankedCharacterServer
-  encounterRankings?: ReportEncounterRankings
+  encounterRankings?: unknown
   zoneRankings?: unknown
 }
 
@@ -247,7 +256,7 @@ export interface Report {
 
   // Report-root fields available by selection when needed
   rankedCharacters?: ReportRankedCharacter[] | null
-  rankings?: unknown
+  rankings: ReportEncounterRankings | unknown | null
   playerDetails?: unknown
   phases?: ReportEncounterPhases[] | null
 }

@@ -330,26 +330,37 @@ export type WCLSchemaRankingTimeframeType = 'Today' | 'Historical'
 export interface WCLSchemaReportRankingCharacter {
   id: number
   name: string
-  class?: string | null
-  spec?: string | null
+  server: {
+    id: number | null
+    name: string | null
+    region: 'US' | 'EU' | 'TW' | 'KR' | 'CN'
+  } | null
+  class: string
+  spec: string
+  amount: number
+  rank: number
+  best: number
+  totalParses: number
+  rankPercent: number
+  bracketData: number
+  bracket: number
 }
 
 export interface WCLSchemaReportRankingRoleGroup {
-  characters?: Array<WCLSchemaReportRankingCharacter | null> | null
+  characters: WCLSchemaReportRankingCharacter[]
 }
 
 export interface WCLSchemaReportRankingRoles {
-  tanks?: WCLSchemaReportRankingRoleGroup | null
-  healers?: WCLSchemaReportRankingRoleGroup | null
-  dps?: WCLSchemaReportRankingRoleGroup | null
+  tanks: WCLSchemaReportRankingRoleGroup
+  healers: WCLSchemaReportRankingRoleGroup
+  dps: WCLSchemaReportRankingRoleGroup
 }
 
 export interface WCLSchemaReportEncounterRanking {
   encounterID: number
   encounterId?: number | null
-  fightID?: number | null
-  fightId?: number | null
-  roles?: WCLSchemaReportRankingRoles | null
+  fightID: number | null
+  roles: WCLSchemaReportRankingRoles
 }
 
 export interface WCLSchemaRegion {
@@ -380,8 +391,41 @@ export interface WCLSchemaReport {
   /** Args: difficulty: number | null, encounterID: number | null, endTime: number | null, fightIDs: Array<number | null> | null, killType: WCLSchemaKillType | null, startTime: number | null, translate: boolean | null, includeCombatantInfo: boolean | null */
   playerDetails: unknown | null
   rankedCharacters: Array<WCLSchemaCharacter | null> | null
-  /** Args: compare: WCLSchemaRankingCompareType | null, difficulty: number | null, encounterID: number | null, fightIDs: Array<number | null> | null, playerMetric: WCLSchemaReportRankingMetricType | null, timeframe: WCLSchemaRankingTimeframeType | null */
-  rankings: unknown | null
+  /**
+   * Rankings information for a report, filterable to specific fights, bosses,
+   * metrics, etc. This data is not considered frozen, and it can change without
+   * notice. Use at your own risk.
+   *
+   * Arguments
+   * - compare: Optional. Whether or not to compare against rankings
+   *   (best scores across the entire tier) or two weeks worth of parses (more
+   *   representative of real-world performance).
+   *
+   * - difficulty: Optional. Whether or not to filter the fights to a
+   *   specific difficulty. By default all fights are included.
+   *
+   * - encounterID: Optional. Whether or not to filter the fights to a
+   *   specific boss. By default all fights are included.
+   *
+   * - fightIDs: Optional. A list of fight ids to include. Fights with
+   *   any other id will be excluded.
+   *
+   * - playerMetric: Optional. You can filter to a specific player
+   *   metric like dps or hps.
+   *
+   * - timeframe: Optional. Whether or not the returned report
+   *   rankings should be compared against today's rankings or historical rankings
+   *   around the time the fight occurred.
+   *
+   * Args: compare: WCLSchemaRankingCompareType | null, difficulty: number | null, encounterID: number | null, fightIDs: Array<number | null> | null, playerMetric: WCLSchemaReportRankingMetricType | null, timeframe: WCLSchemaRankingTimeframeType | null
+   */
+  rankings: {
+    data:
+      | WCLSchemaRankingCompareType[]
+      | WCLSchemaReportEncounterRanking[]
+      | WCLSchemaReportRankingMetricType[]
+      | WCLSchemaRankingTimeframeType[]
+  } | null
   region: WCLSchemaRegion | null
   revision: number
   segments: number

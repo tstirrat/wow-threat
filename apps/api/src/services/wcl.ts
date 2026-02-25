@@ -3,6 +3,10 @@
  */
 import type {
   Report,
+  ReportEncounterRankings,
+  ReportEncounterRankingsEntry,
+  ReportRankingsCharacter,
+  ReportRankingsRoleGroup,
   WCLEventsResponse,
   WCLReportResponse,
 } from '@wow-threat/wcl-types'
@@ -134,33 +138,10 @@ interface WclFriendlyBuffBandsData {
   } | null
 }
 
-interface WclReportRankingsCharacter {
-  id?: number | string | null
-  name?: string | null
-}
-
-interface WclReportRankingsRoleGroup {
-  characters?: Array<WclReportRankingsCharacter | null> | null
-}
-
-interface WclReportRankingsRoles {
-  tanks?: WclReportRankingsRoleGroup | null
-  healers?: WclReportRankingsRoleGroup | null
-  dps?: WclReportRankingsRoleGroup | null
-}
-
-interface WclReportRankingEntry {
-  encounterID?: number | string | null
-  encounterId?: number | string | null
-  fightID?: number | string | null
-  fightId?: number | string | null
-  roles?: WclReportRankingsRoles | null
-}
-
-interface WclReportRankingsData {
+interface WclEncounterActorRolesData {
   reportData?: {
     report?: {
-      rankings?: unknown
+      rankings?: ReportEncounterRankings | null
     } | null
   } | null
 }
@@ -232,115 +213,14 @@ function parseGuildFaction(value: unknown): string | null {
   return null
 }
 
-function parseReportRankingCharacters(
-  value: unknown,
-): Array<WclReportRankingsCharacter | null> {
-  if (!Array.isArray(value)) {
+function normalizeReportRankings(
+  value: ReportEncounterRankings | null | undefined,
+): ReportEncounterRankingsEntry[] {
+  if (!Array.isArray(value?.data)) {
     return []
   }
 
-  return value.flatMap((character) => {
-    if (!character || typeof character !== 'object') {
-      return []
-    }
-
-    const record = character as Record<string, unknown>
-    const id = parseNumericId(record.id)
-    const name = typeof record.name === 'string' ? record.name : null
-
-    return [{ id, name }]
-  })
-}
-
-function parseReportRankingRoleGroups(
-  value: unknown,
-): WclReportRankingsRoles | null {
-  if (!value || typeof value !== 'object') {
-    return null
-  }
-
-  const record = value as Record<string, unknown>
-  const parseRoleGroup = (
-    roleValue: unknown,
-  ): WclReportRankingsRoleGroup | null => {
-    if (!roleValue || typeof roleValue !== 'object') {
-      return null
-    }
-
-    const roleRecord = roleValue as Record<string, unknown>
-    const rawCharacters = roleRecord.characters
-    const characters = parseReportRankingCharacters(rawCharacters)
-    if (characters.length === 0) {
-      return null
-    }
-
-    return { characters }
-  }
-
-  const tanks = parseRoleGroup(record.tanks)
-  const healers = parseRoleGroup(record.healers)
-  const dps = parseRoleGroup(record.dps)
-  if (!tanks && !healers && !dps) {
-    return null
-  }
-
-  return {
-    tanks: tanks ?? null,
-    healers: healers ?? null,
-    dps: dps ?? null,
-  }
-}
-
-function parseReportRankingEntry(value: unknown): WclReportRankingEntry | null {
-  if (!value || typeof value !== 'object') {
-    return null
-  }
-
-  const record = value as Record<string, unknown>
-  const encounterID = parseNumericId(
-    record.encounterID ?? record.encounterId,
-  )
-  const fightID = parseNumericId(record.fightID ?? record.fightId)
-  const roles = parseReportRankingRoleGroups(record.roles)
-
-  const hasRoles = roles !== null
-  if (!hasRoles && encounterID === null && fightID === null) {
-    return null
-  }
-
-  return {
-    encounterID,
-    encounterId: encounterID,
-    fightID,
-    fightId: fightID,
-    roles: roles ?? undefined,
-  }
-}
-
-function parseReportRankings(value: unknown): WclReportRankingEntry[] {
-  if (!value) {
-    return []
-  }
-
-  if (Array.isArray(value)) {
-    return value.flatMap((entry) => {
-      const normalized = parseReportRankingEntry(entry)
-      return normalized === null ? [] : [normalized]
-    })
-  }
-
-  if (typeof value !== 'object') {
-    return []
-  }
-
-  const normalized = parseReportRankingEntry(value)
-  if (normalized !== null) {
-    return [normalized]
-  }
-
-  return Object.values(value as Record<string, unknown>).flatMap((nestedValue) => {
-    return parseReportRankings(nestedValue)
-  })
+  return value.data
 }
 
 function buildFriendlyPlayerIdsByNormalizedName(
@@ -371,7 +251,7 @@ function parseRoleEntriesToActorRoles({
   reportActorNameLookup,
   friendlyPlayerIds,
 }: {
-  rankingEntries: WclReportRankingEntry[]
+  rankingEntries: ReportEncounterRankingsEntry[]
   encounterTarget: EncounterRankingTarget
   reportActorNameLookup: Map<string, Set<number>>
   friendlyPlayerIds: Set<number>
@@ -381,30 +261,14 @@ function parseRoleEntriesToActorRoles({
       return actorRoles
     }
 
-    const rankingFightId = parseNumericId(
-      rankingEntry.fightID ?? rankingEntry.fightId,
-    )
-    const rankingEncounterId = parseNumericId(
-      rankingEntry.encounterID ?? rankingEntry.encounterId,
-    )
-    if (
-      rankingFightId !== null &&
-      rankingFightId !== encounterTarget.fightId
-    ) {
-      return actorRoles
-    }
-    if (
-      encounterTarget.encounterId !== null &&
-      rankingEncounterId !== null &&
-      rankingEncounterId !== encounterTarget.encounterId
-    ) {
+    const rankingFightId = rankingEntry.fightID ?? null
+    if (rankingFightId !== null && rankingFightId !== encounterTarget.fightId) {
       return actorRoles
     }
 
-    const rolesByBucket: Array<[
-      'Tank' | 'Healer' | 'DPS',
-      WclReportRankingsRoleGroup | null | undefined,
-    ]> = [
+    const rolesByBucket: Array<
+      ['Tank' | 'Healer' | 'DPS', ReportRankingsRoleGroup | null | undefined]
+    > = [
       ['Tank', rankingEntry.roles?.tanks],
       ['Healer', rankingEntry.roles?.healers],
       ['DPS', rankingEntry.roles?.dps],
@@ -449,12 +313,12 @@ function buildFriendlyPlayerIdsByName(
 }
 
 function parseReportRankingCharacterActorIds(
-  character: WclReportRankingsCharacter | null | undefined,
+  character: ReportRankingsCharacter | null | undefined,
   reportActorNameLookup: Map<string, Set<number>>,
   friendlyPlayerIds: Set<number>,
 ): Set<number> {
   const actorIds = new Set<number>()
-  const actorId = parseNumericId(character?.id)
+  const actorId = character?.id ?? null
   if (actorId !== null && friendlyPlayerIds.has(actorId)) {
     actorIds.add(actorId)
   }
@@ -491,7 +355,9 @@ function resolveFightActorRolesFromReportRankings(
     friendlyPlayerIds,
   )
   return parseRoleEntriesToActorRoles({
-    rankingEntries: parseReportRankings(report.rankings),
+    rankingEntries: normalizeReportRankings(
+      report.rankings as ReportEncounterRankings,
+    ),
     encounterTarget,
     reportActorNameLookup,
     friendlyPlayerIds,
@@ -961,6 +827,7 @@ export class WCLClient {
                 type
               }
             }
+            rankings
           }
         }
       }
@@ -1018,13 +885,17 @@ export class WCLClient {
       normalizedVisibility,
       normalizedVisibility === 'private' ? this.uid : undefined,
     )
-    const friendlyPlayerIds = new Set(friendlyPlayers.map((player) => player.id))
+    const friendlyPlayerIds = new Set(
+      friendlyPlayers.map((player) => player.id),
+    )
 
     if (!bypassCache) {
-      const cached = await this.cache.get<Array<{
-        actorId: number
-        role: ReportActorRole
-      }>>(cacheKey)
+      const cached = await this.cache.get<
+        Array<{
+          actorId: number
+          role: ReportActorRole
+        }>
+      >(cacheKey)
       if (cached) {
         return new Map(
           cached
@@ -1047,7 +918,7 @@ export class WCLClient {
         }
       }
     `
-    const data = await this.query<WclReportRankingsData>(
+    const data = await this.query<WclEncounterActorRolesData>(
       query,
       {
         code,
@@ -1060,14 +931,15 @@ export class WCLClient {
     )
 
     const actorRoles = parseRoleEntriesToActorRoles({
-      rankingEntries: parseReportRankings(data.reportData?.report?.rankings),
+      rankingEntries: normalizeReportRankings(
+        data.reportData?.report?.rankings,
+      ),
       encounterTarget: {
         encounterId,
         fightId,
       },
-      reportActorNameLookup: buildFriendlyPlayerIdsByNameFromEntries(
-        friendlyPlayers,
-      ),
+      reportActorNameLookup:
+        buildFriendlyPlayerIdsByNameFromEntries(friendlyPlayers),
       friendlyPlayerIds,
     })
     await this.cache.set(

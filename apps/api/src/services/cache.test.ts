@@ -228,7 +228,7 @@ describe('CacheKeys', () => {
 
   it('generates correct report key', () => {
     expect(CacheKeys.report('ABC123', 'public')).toBe(
-      'wcl:report:v4:ABC123:visibility:public:scope:shared',
+      'wcl:report:v5:ABC123:visibility:public:scope:shared',
     )
   })
 
@@ -258,13 +258,7 @@ describe('CacheKeys', () => {
 
   it('generates correct encounter actor roles key', () => {
     expect(
-      CacheKeys.encounterActorRoles(
-        'ABC123',
-        1602,
-        9,
-        'private',
-        'uid-1',
-      ),
+      CacheKeys.encounterActorRoles('ABC123', 1602, 9, 'private', 'uid-1'),
     ).toBe(
       'wcl:encounter-actor-roles:v1:ABC123:1602:9:visibility:private:scope:uid:uid-1',
     )
@@ -277,12 +271,11 @@ describe('CacheKeys', () => {
         5,
         'v1.2.0',
         true,
-        [1, 3, 2, 3],
         'private',
         'uid-1',
       ),
     ).toBe(
-      'augmented:v12:ABC123:5:v1.2.0:inferThreatReduction:true:tankActorIds:1,2,3:visibility:private:scope:uid:uid-1',
+      'augmented:v13:ABC123:5:v1.2.0:inferThreatReduction:true:visibility:private:scope:uid:uid-1',
     )
   })
 
@@ -306,7 +299,6 @@ describe('CacheKeys', () => {
       5,
       'v1.2.0',
       true,
-      null,
       'public',
     )
     const standardKey = CacheKeys.augmentedEvents(
@@ -314,47 +306,15 @@ describe('CacheKeys', () => {
       5,
       'v1.2.0',
       false,
-      null,
       'public',
     )
 
     expect(inferredKey).not.toBe(standardKey)
   })
 
-  it('does not collide inferred augmented event keys by tank actor id mode', () => {
-    const autoResolvedKey = CacheKeys.augmentedEvents(
-      'ABC123',
-      5,
-      'v1.2.0',
-      true,
-      null,
-      'public',
-    )
-    const explicitNoneKey = CacheKeys.augmentedEvents(
-      'ABC123',
-      5,
-      'v1.2.0',
-      true,
-      [],
-      'public',
-    )
-    const explicitTankKey = CacheKeys.augmentedEvents(
-      'ABC123',
-      5,
-      'v1.2.0',
-      true,
-      [1],
-      'public',
-    )
-
-    expect(autoResolvedKey).not.toBe(explicitNoneKey)
-    expect(autoResolvedKey).not.toBe(explicitTankKey)
-    expect(explicitNoneKey).not.toBe(explicitTankKey)
-  })
-
   it('treats invalid visibility values as private', () => {
     expect(CacheKeys.report('ABC123', 'internal')).toBe(
-      'wcl:report:v4:ABC123:visibility:private:scope:uid:anonymous',
+      'wcl:report:v5:ABC123:visibility:private:scope:uid:anonymous',
     )
   })
 })

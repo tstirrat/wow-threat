@@ -77,8 +77,9 @@ describe('FightPage inferThreatReduction startup behavior', () => {
 
   it('gates first events request until user settings finish loading', () => {
     let isFightLoading = true
-    let fightData: { actors: Array<{ id: number; role?: string; type: string }> } | null =
-      null
+    let fightData: {
+      actors: Array<{ id: number; role?: string; type: string }>
+    } | null = null
     useFightDataMock.mockImplementation(() => ({
       data: fightData,
       error: null,
@@ -118,7 +119,6 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       9,
       null,
       true,
-      null,
       false,
     )
     expect(
@@ -156,7 +156,6 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       9,
       null,
       true,
-      [1],
       true,
     )
     expect(

@@ -27,10 +27,23 @@ import type {
   ThreatStateKind,
   WowClass,
 } from '@wow-threat/shared'
-import type { WCLEvent } from '@wow-threat/wcl-types'
+import type { Report, ReportFight, WCLEvent } from '@wow-threat/wcl-types'
 
+import {
+  createProcessorNamespace,
+  initialAuraAdditionsKey,
+  mergeInitialAurasWithAdditions,
+  runFightPrepass,
+} from './event-processors'
+import type {
+  FightProcessor,
+  FightProcessorFactory,
+  MainPassEventContext,
+  ProcessorBaseContext,
+} from './event-processors'
 import { FightState } from './fight-state'
 import { InterceptorTracker } from './interceptor-tracker'
+import { defaultFightProcessorFactories } from './processors'
 import { getActiveModifiers, getTotalMultiplier } from './utils'
 
 const ENVIRONMENT_TARGET_ID = -1
@@ -127,8 +140,16 @@ export interface ProcessEventsInput {
   enemies: Enemy[]
   /** Encounter ID for encounter-scoped behavior */
   encounterId?: number | null
+  /** Optional full report metadata for processor decisions. */
+  report?: Report | null
+  /** Optional fight metadata for processor decisions. */
+  fight?: ReportFight | null
+  /** Enable request-scoped threat-reduction minmax processors. */
+  inferThreatReduction?: boolean
   /** Threat configuration for the game version */
   config: ThreatConfig
+  /** Optional request-scoped event processors. */
+  processors?: FightProcessor[]
 }
 
 export interface ProcessEventsOutput {
@@ -136,12 +157,57 @@ export interface ProcessEventsOutput {
   augmentedEvents: AugmentedEvent[]
   /** Count of each event type processed */
   eventCounts: Record<string, number>
+  /** Effective initial aura seeds used by the fight state. */
+  initialAurasByActor: Map<number, number[]>
 }
 
 type FriendlyResolvedEvent = WCLEvent & {
   sourceIsFriendly: boolean
   targetIsFriendly: boolean
 }
+
+export interface ThreatEngineOptions {
+  processorFactories?: FightProcessorFactory[]
+}
+
+/**
+ * Class-based threat engine with built-in processor registry.
+ */
+export class ThreatEngine {
+  private readonly processorFactories: FightProcessorFactory[]
+
+  constructor(options: ThreatEngineOptions = {}) {
+    this.processorFactories = [
+      ...(options.processorFactories ?? defaultFightProcessorFactories),
+    ]
+  }
+
+  /** Register a processor factory on this engine instance. */
+  registerProcessorFactory(factory: FightProcessorFactory): this {
+    this.processorFactories.push(factory)
+    return this
+  }
+
+  /** Process a fight event stream and return augmented threat results. */
+  processEvents(input: ProcessEventsInput): ProcessEventsOutput {
+    const processorFactoryContext = {
+      report: input.report ?? null,
+      fight: input.fight ?? null,
+      inferThreatReduction: input.inferThreatReduction ?? false,
+    }
+    const builtInProcessors = this.processorFactories.flatMap((factory) => {
+      const processor = factory(processorFactoryContext)
+      return processor ? [processor] : []
+    })
+
+    return processEventsWithProcessors({
+      ...input,
+      processors: [...builtInProcessors, ...(input.processors ?? [])],
+    })
+  }
+}
+
+const defaultThreatEngine = new ThreatEngine()
 
 /**
  * Process raw WCL events and calculate threat
@@ -153,6 +219,12 @@ type FriendlyResolvedEvent = WCLEvent & {
  * 4. Build augmented events with threat data
  */
 export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
+  return defaultThreatEngine.processEvents(input)
+}
+
+function processEventsWithProcessors(
+  input: ProcessEventsInput,
+): ProcessEventsOutput {
   const {
     rawEvents,
     initialAurasByActor,
@@ -161,11 +233,40 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
     abilitySchoolMap,
     enemies,
     encounterId: inputEncounterId,
+    report,
+    fight,
+    inferThreatReduction = false,
     config,
+    processors = [],
   } = input
 
+  const normalizedInitialAurasByActor =
+    normalizeInitialAurasByActor(initialAurasByActor)
+  const processorNamespace = createProcessorNamespace()
+  const processorBaseContext: ProcessorBaseContext = {
+    namespace: processorNamespace,
+    actorMap,
+    friendlyActorIds,
+    enemies,
+    encounterId: inputEncounterId ?? null,
+    config,
+    report: report ?? null,
+    fight: fight ?? null,
+    inferThreatReduction,
+    initialAurasByActor: normalizedInitialAurasByActor,
+  }
+  runFightPrepass({
+    rawEvents,
+    processors,
+    baseContext: processorBaseContext,
+  })
+  const effectiveInitialAurasByActor = mergeInitialAurasWithAdditions(
+    normalizedInitialAurasByActor,
+    processorNamespace.get(initialAuraAdditionsKey),
+  )
+
   const fightState = new FightState(actorMap, config, enemies)
-  seedInitialAuras(fightState, initialAurasByActor)
+  seedInitialAuras(fightState, effectiveInitialAurasByActor)
   const interceptorTracker = new InterceptorTracker()
   const stateSpellSets = buildStateSpellSets(config)
   const augmentedEvents: AugmentedEvent[] = []
@@ -184,20 +285,53 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
         })
       : undefined
 
-  for (const rawEvent of rawEvents) {
+  for (const [eventIndex, rawEvent] of rawEvents.entries()) {
     const event = resolveEventFriendliness({
       event: rawEvent,
       actorMap,
       friendlyActorIds,
     })
+    const processorEffects: ThreatEffect[] = []
+    const mainPassContext: MainPassEventContext = {
+      ...processorBaseContext,
+      event,
+      eventIndex,
+      fightState,
+      effects: processorEffects,
+      addEffects: (...effects) => {
+        processorEffects.push(...effects)
+      },
+    }
+    let appliedAuraMutationEffectIndex = 0
+
+    processors.forEach((processor) => {
+      processor.beforeFightState?.(mainPassContext)
+    })
 
     // Update fight state (auras, gear, combatant info)
     fightState.processEvent(event, config)
+    appliedAuraMutationEffectIndex = applyAuraMutationEffects(
+      fightState,
+      processorEffects,
+      appliedAuraMutationEffectIndex,
+    )
+    processors.forEach((processor) => {
+      processor.afterFightState?.(mainPassContext)
+      appliedAuraMutationEffectIndex = applyAuraMutationEffects(
+        fightState,
+        processorEffects,
+        appliedAuraMutationEffectIndex,
+      )
+    })
 
     // Count event types
     eventCounts[event.type] = (eventCounts[event.type] ?? 0) + 1
 
     if (isTrackedBossMeleeEvent(event)) {
+      const bossMeleeEffects: ThreatEffect[] = [
+        ...processorEffects,
+        { type: 'eventMarker', marker: 'bossMelee' },
+      ]
       const zeroCalculation: ThreatCalculation = {
         formula: '0 (boss melee marker)',
         amount: event.amount,
@@ -205,7 +339,7 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
         modifiedThreat: 0,
         isSplit: false,
         modifiers: [],
-        effects: [{ type: 'eventMarker', marker: 'bossMelee' }],
+        effects: bossMeleeEffects,
       }
       augmentedEvents.push(buildAugmentedEvent(event, zeroCalculation, []))
       continue
@@ -229,6 +363,8 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
         modifiedThreat: 0,
         isSplit: false,
         modifiers: [],
+        effects:
+          processorEffects.length > 0 ? [...processorEffects] : undefined,
       }
       augmentedEvents.push(buildAugmentedEvent(event, zeroCalculation, []))
       continue
@@ -296,6 +432,7 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
       ...(baseCalculation.effects ?? []),
       ...encounterEffects,
       ...interceptorEffects,
+      ...processorEffects,
       ...(stateEffect ? [stateEffect] : []),
       ...(deathMarkerEffect ? [deathMarkerEffect] : []),
     ]
@@ -330,7 +467,23 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
   return {
     augmentedEvents,
     eventCounts,
+    initialAurasByActor: effectiveInitialAurasByActor,
   }
+}
+
+function normalizeInitialAurasByActor(
+  initialAurasByActor: Map<number, readonly number[]> | undefined,
+): Map<number, readonly number[]> {
+  if (!initialAurasByActor || initialAurasByActor.size === 0) {
+    return new Map()
+  }
+
+  return new Map(
+    [...initialAurasByActor.entries()].map(([actorId, auraIds]) => [
+      actorId,
+      [...new Set(auraIds)].sort((left, right) => left - right),
+    ]),
+  )
 }
 
 function seedInitialAuras(
@@ -346,6 +499,31 @@ function seedInitialAuras(
       fightState.setAura(actorId, auraId)
     }
   }
+}
+
+function applyAuraMutationEffects(
+  fightState: FightState,
+  effects: readonly ThreatEffect[],
+  startIndex: number,
+): number {
+  for (let index = startIndex; index < effects.length; index += 1) {
+    const effect = effects[index]
+    if (!effect || effect.type !== 'auraMutation') {
+      continue
+    }
+
+    const uniqueActorIds = [...new Set(effect.actorIds)]
+    uniqueActorIds.forEach((actorId) => {
+      if (effect.action === 'apply') {
+        fightState.setAura(actorId, effect.spellId)
+        return
+      }
+
+      fightState.removeAura(actorId, effect.spellId)
+    })
+  }
+
+  return effects.length
 }
 
 /** Apply threat to relevant enemies in the fight state */

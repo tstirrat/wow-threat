@@ -5,6 +5,50 @@
  */
 import { vi } from 'vitest'
 
+interface MockRankingEntry {
+  fightID?: number | null
+  partition?: number | null
+  zone?: number | null
+  difficulty?: number | null
+  size?: number | null
+  kill?: number | null
+  duration?: number | null
+  encounter?: {
+    id?: number | null
+    name?: string | null
+  } | null
+  roles?: {
+    tanks?: {
+      name?: string | null
+      characters?: Array<{
+        id?: number | null
+        name?: string | null
+      } | null> | null
+    } | null
+    healers?: {
+      name?: string | null
+      characters?: Array<{
+        id?: number | null
+        name?: string | null
+      } | null> | null
+    } | null
+    dps?: {
+      name?: string | null
+      characters?: Array<{
+        id?: number | null
+        name?: string | null
+      } | null> | null
+    } | null
+  } | null
+  [key: string]: unknown
+}
+
+type MockRankingsPayload =
+  | {
+      data?: MockRankingEntry[] | null
+    }
+  | MockRankingEntry[]
+
 export interface MockWCLResponses {
   token?: {
     access_token: string
@@ -84,32 +128,7 @@ export interface MockWCLResponses {
         type: string | null
       }>
     }
-    rankings?: Array<{
-      encounterID?: number | null
-      encounterId?: number | null
-      fightID?: number | null
-      fightId?: number | null
-      roles?: {
-        tanks?: {
-          characters?: Array<{
-            id?: number | null
-            name?: string | null
-          } | null> | null
-        } | null
-        healers?: {
-          characters?: Array<{
-            id?: number | null
-            name?: string | null
-          } | null> | null
-        } | null
-        dps?: {
-          characters?: Array<{
-            id?: number | null
-            name?: string | null
-          } | null> | null
-        } | null
-      } | null
-    }>
+    rankings?: MockRankingsPayload
   }
   events?: unknown[]
   eventsPages?: Array<{
@@ -118,32 +137,7 @@ export interface MockWCLResponses {
     nextPageTimestamp: number | null
   }>
   friendlyBuffBandsByActor?: unknown
-  encounterActorRoles?: Array<{
-    encounterID?: number | null
-    encounterId?: number | null
-    fightID?: number | null
-    fightId?: number | null
-    roles?: {
-      tanks?: {
-        characters?: Array<{
-          id?: number | null
-          name?: string | null
-        } | null> | null
-      } | null
-      healers?: {
-        characters?: Array<{
-          id?: number | null
-          name?: string | null
-        } | null> | null
-      } | null
-      dps?: {
-        characters?: Array<{
-          id?: number | null
-          name?: string | null
-        } | null> | null
-      } | null
-    } | null
-  }>
+  encounterActorRoles?: MockRankingsPayload
 }
 
 const defaultTokenResponse = {
@@ -195,15 +189,18 @@ export function createMockFetch(responses: MockWCLResponses = {}) {
 
         // Encounter actor role rankings query
         if (query?.includes('GetEncounterActorRoles')) {
+          const rankingsPayload =
+            responses.encounterActorRoles ?? responses.report?.rankings ?? []
+          const rankings = Array.isArray(rankingsPayload)
+            ? { data: rankingsPayload }
+            : rankingsPayload
+
           return new Response(
             JSON.stringify({
               data: {
                 reportData: {
                   report: {
-                    rankings:
-                      responses.encounterActorRoles ??
-                      responses.report?.rankings ??
-                      [],
+                    rankings,
                   },
                 },
               },

@@ -1,8 +1,8 @@
 /**
  * Unit tests for fight events query hook wiring.
  */
-import { renderHook } from '@testing-library/react'
 import { useQuery } from '@tanstack/react-query'
+import { renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { fightEventsQueryKey, getFightEvents } from '../api/reports'
@@ -30,9 +30,7 @@ describe('useFightEvents', () => {
   })
 
   it('keeps query disabled when enabled flag is false', () => {
-    renderHook(() =>
-      useFightEvents('ABC123xyz', 12, '1.3.1', true, [1], false),
-    )
+    renderHook(() => useFightEvents('ABC123xyz', 12, '1.3.1', true, false))
 
     expect(useQuery).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -42,9 +40,7 @@ describe('useFightEvents', () => {
   })
 
   it('enables query when enabled flag is true and inputs are valid', () => {
-    renderHook(() =>
-      useFightEvents('ABC123xyz', 12, '1.3.1', true, [1], true),
-    )
+    renderHook(() => useFightEvents('ABC123xyz', 12, '1.3.1', true, true))
 
     expect(useQuery).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -54,12 +50,8 @@ describe('useFightEvents', () => {
   })
 
   it('passes inferThreatReduction through query key generation', () => {
-    renderHook(() =>
-      useFightEvents('ABC123xyz', 12, '1.3.1', false, null, true),
-    )
-    renderHook(() =>
-      useFightEvents('ABC123xyz', 12, '1.3.1', true, [2, 1], true),
-    )
+    renderHook(() => useFightEvents('ABC123xyz', 12, '1.3.1', false, true))
+    renderHook(() => useFightEvents('ABC123xyz', 12, '1.3.1', true, true))
 
     expect(fightEventsQueryKey).toHaveBeenNthCalledWith(
       1,
@@ -67,7 +59,6 @@ describe('useFightEvents', () => {
       12,
       '1.3.1',
       false,
-      null,
     )
     expect(fightEventsQueryKey).toHaveBeenNthCalledWith(
       2,
@@ -75,7 +66,6 @@ describe('useFightEvents', () => {
       12,
       '1.3.1',
       true,
-      [2, 1],
     )
   })
 })

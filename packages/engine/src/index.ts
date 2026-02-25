@@ -8,3 +8,5 @@
 export * from './threat-engine'
 
 export * from './wcl-input'
+export * from './event-processors'
+export * from './processors'

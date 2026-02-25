@@ -15,9 +15,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import anniversaryReport from '../../test/fixtures/wcl-responses/anniversary-report.json'
 import {
+  type MockWCLResponses,
   mockFetch,
   restoreFetch,
-  type MockWCLResponses,
 } from '../../test/helpers/mock-fetch'
 import { createMockBindings } from '../../test/setup'
 import app from '../index'
@@ -147,29 +147,35 @@ function buildInferThreatReductionReport({
       ],
       abilities: reportData.masterData.abilities ?? [],
     },
-    rankings: [
-      {
-        encounterID: encounterId,
-        fightID: fightId,
-        roles: {
-          tanks: {
-            characters: tankPlayerIds.map((tankPlayerId) => {
-              const player = players.find((candidate) => candidate.id === tankPlayerId)
-              return player
-                ? { id: player.id, name: player.name }
-                : null
-            }).filter((character): character is { id: number; name: string } => {
-              return character !== null
-            }),
-          },
-          dps: {
-            characters: players
-              .filter((player) => !tankPlayerIds.includes(player.id))
-              .map((player) => ({ id: player.id, name: player.name })),
+    rankings: {
+      data: [
+        {
+          encounterID: encounterId,
+          fightID: fightId,
+          roles: {
+            tanks: {
+              characters: tankPlayerIds
+                .map((tankPlayerId) => {
+                  const player = players.find(
+                    (candidate) => candidate.id === tankPlayerId,
+                  )
+                  return player ? { id: player.id, name: player.name } : null
+                })
+                .filter(
+                  (character): character is { id: number; name: string } => {
+                    return character !== null
+                  },
+                ),
+            },
+            dps: {
+              characters: players
+                .filter((player) => !tankPlayerIds.includes(player.id))
+                .map((player) => ({ id: player.id, name: player.name })),
+            },
           },
         },
-      },
-    ],
+      ],
+    },
   } as NonNullable<MockWCLResponses['report']>
 }
 
@@ -676,7 +682,7 @@ describe('Events API', () => {
       expect(data.initialAurasByActor?.['3']).toBeUndefined()
     })
 
-    it('accepts explicit tankActorIds to avoid encounter role lookups in inference mode', async () => {
+    it('resolves tank roles from report rankings in inference mode', async () => {
       const inferFightId = 17
       const inferReport = buildInferThreatReductionReport({
         code: 'INFERTANKIDS',
@@ -687,7 +693,7 @@ describe('Events API', () => {
           { id: 2, name: 'Rogueone', subType: 'Rogue' },
           { id: 3, name: 'Palastar', subType: 'Paladin' },
         ],
-        tankPlayerIds: [],
+        tankPlayerIds: [1],
       })
       const fetchMock = mockFetch({
         report: inferReport,
@@ -710,7 +716,7 @@ describe('Events API', () => {
       })
 
       const response = await app.request(
-        `http://localhost/v1/reports/INFERTANKIDS/fights/${inferFightId}/events?inferThreatReduction=true&tankActorIds=1`,
+        `http://localhost/v1/reports/INFERTANKIDS/fights/${inferFightId}/events?inferThreatReduction=true`,
         {},
         createMockBindings(),
       )
@@ -748,24 +754,29 @@ describe('Events API', () => {
         ],
         tankPlayerIds: [1],
       })
-      inferReport.rankings = (inferReport.rankings ?? []).map((ranking) => {
-        if (!ranking?.roles?.dps?.characters) {
-          return ranking
-        }
+      const rankingEntries = Array.isArray(inferReport.rankings)
+        ? inferReport.rankings
+        : (inferReport.rankings?.data ?? [])
+      inferReport.rankings = {
+        data: rankingEntries.map((ranking) => {
+          if (!ranking?.roles?.dps?.characters) {
+            return ranking
+          }
 
-        return {
-          ...ranking,
-          roles: {
-            ...ranking.roles,
-            dps: {
-              ...ranking.roles.dps,
-              characters: ranking.roles.dps.characters.filter(
-                (character) => character?.id !== 3,
-              ),
+          return {
+            ...ranking,
+            roles: {
+              ...ranking.roles,
+              dps: {
+                ...ranking.roles.dps,
+                characters: ranking.roles.dps.characters.filter(
+                  (character) => character?.id !== 3,
+                ),
+              },
             },
-          },
-        }
-      })
+          }
+        }),
+      }
 
       mockFetch({
         report: inferReport,
