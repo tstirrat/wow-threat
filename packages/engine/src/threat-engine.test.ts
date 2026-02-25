@@ -38,6 +38,7 @@ import {
   type AbsorbedEvent,
   type DamageEvent,
   type GearItem,
+  HitTypeCode,
   ResourceTypeCode,
   type WCLEvent,
 } from '@wow-threat/wcl-types'
@@ -2968,7 +2969,7 @@ describe('augmented event structure', () => {
       blocked: 200,
       mitigated: 50,
       overkill: 0,
-      hitType: 'hit',
+      hitType: HitTypeCode.Hit,
       tick: false,
       multistrike: false,
     }
@@ -2994,7 +2995,7 @@ describe('augmented event structure', () => {
     expect(augmented?.absorbed).toBe(100)
     expect(augmented?.blocked).toBe(200)
     expect(augmented?.mitigated).toBe(50)
-    expect(augmented?.hitType).toBe('hit')
+    expect(augmented?.hitType).toBe(HitTypeCode.Hit)
     expect(augmented?.tick).toBe(false)
   })
 

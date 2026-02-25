@@ -162,6 +162,7 @@ function buildEnemies(
       return {
         id,
         name: allActors.get(id)?.name ?? 'Unknown',
+        gameID: allActors.get(id)?.gameID,
         instance,
       }
     })

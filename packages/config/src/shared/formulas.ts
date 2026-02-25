@@ -5,7 +5,11 @@
  * in class configurations.
  */
 import type { ThreatContext, ThreatFormulaResult } from '@wow-threat/shared'
-import type { EventType, HitType } from '@wow-threat/wcl-types'
+import {
+  type EventType,
+  type HitType,
+  HitTypeCode,
+} from '@wow-threat/wcl-types'
 
 export type FormulaFn = (ctx: ThreatContext) => ThreatFormulaResult | undefined
 
@@ -46,27 +50,27 @@ const tauntAuraEventTypes: EventType[] = [
   ...debuffAuraEventTypes,
 ]
 const castRollbackHitTypes = new Set<HitType>([
-  'miss',
-  'dodge',
-  'parry',
-  'immune',
-  'resist',
+  HitTypeCode.Miss,
+  HitTypeCode.Dodge,
+  HitTypeCode.Parry,
+  HitTypeCode.Immune,
+  HitTypeCode.Resist,
 ])
 const modifyThreatOnHitHitTypes = new Set<HitType>([
-  'hit',
-  'crit',
-  'block',
-  'glancing',
-  'crushing',
-  'immune',
-  'resist',
+  HitTypeCode.Hit,
+  HitTypeCode.Crit,
+  HitTypeCode.Block,
+  HitTypeCode.Glancing,
+  HitTypeCode.Crushing,
+  HitTypeCode.Immune,
+  HitTypeCode.Resist,
 ])
 const successfulDamageHitTypes = new Set<HitType>([
-  'hit',
-  'crit',
-  'block',
-  'glancing',
-  'crushing',
+  HitTypeCode.Hit,
+  HitTypeCode.Crit,
+  HitTypeCode.Block,
+  HitTypeCode.Glancing,
+  HitTypeCode.Crushing,
 ])
 
 function isEventTypeAllowed(
@@ -152,23 +156,14 @@ export function threatOnSuccessfulHit(options: ThreatOptions = {}): FormulaFn {
       return undefined
     }
 
-    const hitType = ctx.event.hitType
-
-    if (typeof hitType === 'number') {
-      if (hitType <= 0 || hitType > 6) {
-        return undefined
-      }
-      return baseFormula(ctx)
+    if (
+      ctx.event.hitType !== undefined &&
+      !successfulDamageHitTypes.has(ctx.event.hitType)
+    ) {
+      return undefined
     }
 
-    if (typeof hitType === 'string') {
-      if (!successfulDamageHitTypes.has(hitType)) {
-        return undefined
-      }
-      return baseFormula(ctx)
-    }
-
-    if (ctx.amount <= 0) {
+    if (ctx.event.hitType === undefined && ctx.amount <= 0) {
       return undefined
     }
 

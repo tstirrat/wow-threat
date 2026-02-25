@@ -2,6 +2,7 @@
  * Threat data transformation helpers for report rankings and fight chart series.
  */
 import type { AugmentedEvent, SpellId, ThreatConfig } from '@wow-threat/shared'
+import { HitTypeCode } from '@wow-threat/wcl-types'
 import type { CombatantInfoAura, PlayerClass } from '@wow-threat/wcl-types'
 
 import type {
@@ -1105,13 +1106,9 @@ export function buildThreatSeries({
     const modifiedThreat = event.threat?.calculation.modifiedThreat ?? 0
     const resourceType = event.resourceChangeType ?? null
     const hitType =
-      typeof event.hitType === 'number'
-        ? event.hitType === 1
-          ? undefined
-          : event.hitType
-        : event.hitType !== 'hit'
-          ? event.hitType
-          : undefined
+      event.hitType !== undefined && event.hitType !== HitTypeCode.Hit
+        ? event.hitType
+        : undefined
     const timeMs = resolveRelativeTimeMs(
       event.timestamp,
       fightStartTime,

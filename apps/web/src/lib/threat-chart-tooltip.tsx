@@ -1,7 +1,7 @@
 /**
  * Threat chart tooltip formatter and tooltip-specific helpers.
  */
-import { ResourceTypeCode } from '@wow-threat/wcl-types'
+import { HitTypeCode, ResourceTypeCode } from '@wow-threat/wcl-types'
 import { renderToString } from 'react-dom/server'
 
 import type { ThreatChartThemeColors } from '../hooks/use-threat-chart-theme-colors'
@@ -92,13 +92,8 @@ function resolveTooltipHitTypeLabel(
     return null
   }
 
-  if (typeof hitType === 'string') {
-    const normalized = hitType.toLowerCase()
-    return normalized === 'hit' ? null : normalized
-  }
-
   const normalized = hitTypeLabelByCode[hitType]
-  if (!normalized || normalized === 'hit') {
+  if (!normalized || hitType === HitTypeCode.Hit) {
     return null
   }
 

@@ -71,7 +71,7 @@ export interface ThreatPoint {
   eventType: string
   abilityName: string
   targetName?: string | null
-  hitType?: HitType | number
+  hitType?: HitType
   isTick?: boolean
   formula: string
   modifiers: ThreatPointModifier[]

@@ -14,7 +14,7 @@ export interface TooltipPointPayload {
   amount: number
   baseThreat: number
   eventType: string
-  hitType?: HitType | number
+  hitType?: HitType
   isTick?: boolean
   formula: string
   modifiedThreat: number

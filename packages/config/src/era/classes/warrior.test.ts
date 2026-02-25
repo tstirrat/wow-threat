@@ -13,7 +13,7 @@ import type {
   TalentImplicationContext,
   ThreatContext,
 } from '@wow-threat/shared/src/types'
-import { ResourceTypeCode } from '@wow-threat/wcl-types'
+import { HitTypeCode, ResourceTypeCode } from '@wow-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
 import { SetIds, Spells, exclusiveAuras, warriorConfig } from './warrior'
@@ -379,7 +379,7 @@ describe('era warrior config', () => {
         const missResult = assertDefined(
           formula!(
             createMockContext({
-              event: createDamageEvent({ hitType: 'miss' }),
+              event: createDamageEvent({ hitType: HitTypeCode.Miss }),
               amount: 0,
             }),
           ),
@@ -406,7 +406,7 @@ describe('era warrior config', () => {
         const missResult = assertDefined(
           formula!(
             createMockContext({
-              event: createDamageEvent({ hitType: 'miss' }),
+              event: createDamageEvent({ hitType: HitTypeCode.Miss }),
               amount: 0,
             }),
           ),
@@ -436,7 +436,7 @@ describe('era warrior config', () => {
         expect(formula).toBeDefined()
 
         const ctx = createMockContext({
-          event: createDamageEvent({ hitType: 'miss' }),
+          event: createDamageEvent({ hitType: HitTypeCode.Miss }),
           amount: 0,
         })
 
@@ -461,7 +461,7 @@ describe('era warrior config', () => {
         expect(formula).toBeDefined()
 
         const ctx = createMockContext({
-          event: createDamageEvent({ hitType: 'miss' }),
+          event: createDamageEvent({ hitType: HitTypeCode.Miss }),
           amount: 0,
         })
 
@@ -588,7 +588,7 @@ describe('era warrior config', () => {
 
         const result = formula!(
           createMockContext({
-            event: createDamageEvent({ hitType: 'miss' }),
+            event: createDamageEvent({ hitType: HitTypeCode.Miss }),
             amount: 0,
           }),
         )

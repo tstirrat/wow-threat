@@ -11,6 +11,7 @@ import {
   createRefreshBuffEvent,
   createRemoveBuffEvent,
 } from '@wow-threat/shared'
+import { HitTypeCode } from '@wow-threat/wcl-types'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import anniversaryReport from '../../test/fixtures/wcl-responses/anniversary-report.json'
@@ -35,7 +36,7 @@ const mockEvents = [
     blocked: 0,
     mitigated: 0,
     overkill: 0,
-    hitType: 'hit',
+    hitType: HitTypeCode.Hit,
     tick: false,
     multistrike: false,
   }),
@@ -551,7 +552,7 @@ describe('Events API', () => {
             blocked: 0,
             mitigated: 0,
             overkill: 0,
-            hitType: 'hit',
+            hitType: HitTypeCode.Hit,
             tick: false,
             multistrike: false,
           }),
@@ -721,7 +722,7 @@ describe('Events API', () => {
             blocked: 0,
             mitigated: 0,
             overkill: 0,
-            hitType: 'hit',
+            hitType: HitTypeCode.Hit,
             tick: false,
             multistrike: false,
           }),
@@ -804,7 +805,7 @@ describe('Events API', () => {
             blocked: 0,
             mitigated: 0,
             overkill: 0,
-            hitType: 'hit',
+            hitType: HitTypeCode.Hit,
             tick: false,
             multistrike: false,
           }),
@@ -868,7 +869,7 @@ describe('Events API', () => {
             blocked: 0,
             mitigated: 0,
             overkill: 0,
-            hitType: 'hit',
+            hitType: HitTypeCode.Hit,
             tick: false,
             multistrike: false,
           }),

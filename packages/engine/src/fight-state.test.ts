@@ -30,7 +30,11 @@ import type {
   ThreatConfig,
   ThreatContext,
 } from '@wow-threat/shared'
-import type { GearItem, WCLEvent } from '@wow-threat/wcl-types'
+import {
+  type GearItem,
+  HitTypeCode,
+  type WCLEvent,
+} from '@wow-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
 import { FightState } from './fight-state'
@@ -848,7 +852,7 @@ describe('FightState', () => {
           blocked: 0,
           mitigated: 0,
           overkill: 0,
-          hitType: 'hit',
+          hitType: HitTypeCode.Hit,
           tick: false,
           multistrike: false,
           x: 55,

@@ -2,16 +2,16 @@
  * Shared hateful/hurtful strike raid formulas.
  */
 import type { ThreatChange, ThreatFormula } from '@wow-threat/shared'
-import type { HitType } from '@wow-threat/wcl-types'
+import { type HitType, HitTypeCode } from '@wow-threat/wcl-types'
 
 const HITTABLE_HIT_TYPES = new Set<HitType>([
-  'hit',
-  'crit',
-  'block',
-  'glancing',
-  'crushing',
-  'immune',
-  'resist',
+  HitTypeCode.Hit,
+  HitTypeCode.Crit,
+  HitTypeCode.Block,
+  HitTypeCode.Glancing,
+  HitTypeCode.Crushing,
+  HitTypeCode.Immune,
+  HitTypeCode.Resist,
 ])
 
 function isThreatfulDamageEvent(
@@ -23,11 +23,7 @@ function isThreatfulDamageEvent(
   }
 
   const hitType = event.hitType
-  if (typeof hitType === 'number') {
-    return hitType > 0 && hitType <= 6
-  }
-
-  if (typeof hitType === 'string') {
+  if (hitType !== undefined) {
     return HITTABLE_HIT_TYPES.has(hitType)
   }
 

@@ -27,18 +27,24 @@ export type EventType =
   | 'summon'
   | 'combatantinfo'
 
-export type HitType =
-  | 'hit'
-  | 'crit'
-  | 'miss'
-  | 'dodge'
-  | 'parry'
-  | 'block'
-  | 'glancing'
-  | 'crushing'
-  | 'immune'
-  | 'resist'
-  | 'absorb'
+export const HitTypeCode = {
+  Miss: 0,
+  Hit: 1,
+  Crit: 2,
+  Absorb: 3,
+  Block: 4,
+  CritBlock: 5,
+  Glancing: 6,
+  Dodge: 7,
+  Parry: 8,
+  Immune: 10,
+  Resist: 14,
+  Crushing: 15,
+  PartialResist: 16,
+  CritPartialResist: 17,
+} as const
+
+export type HitType = (typeof HitTypeCode)[keyof typeof HitTypeCode]
 
 export const ResourceTypeCode = {
   Mana: 0,

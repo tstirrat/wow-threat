@@ -11,6 +11,7 @@ import type {
   TalentImplicationContext,
   ThreatContext,
 } from '@wow-threat/shared/src/types'
+import { HitTypeCode } from '@wow-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
 import { Spells, druidConfig, exclusiveAuras } from './druid'
@@ -174,7 +175,7 @@ describe('Druid Config', () => {
         )
         const missResult = formula!(
           createMockContext({
-            event: createDamageEvent({ hitType: 'miss' }),
+            event: createDamageEvent({ hitType: HitTypeCode.Miss }),
           }),
         )
 

@@ -1,7 +1,7 @@
 /**
  * Unit tests for threat chart tooltip formatter output.
  */
-import { ResourceTypeCode } from '@wow-threat/wcl-types'
+import { HitTypeCode, ResourceTypeCode } from '@wow-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
 import type { ThreatSeries } from '../types/app'
@@ -229,7 +229,7 @@ describe('threat-chart-tooltip', () => {
         amount: 400,
         baseThreat: 400,
         eventType: 'damage',
-        hitType: 'crit',
+        hitType: HitTypeCode.Crit,
         formula: 'damage',
         modifiedThreat: 400,
         spellSchool: 'Physical',

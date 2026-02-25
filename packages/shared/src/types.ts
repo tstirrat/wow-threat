@@ -159,6 +159,7 @@ export interface RuntimeActorView {
 
 export interface Enemy {
   id: number
+  gameID?: number
   name: string
   instance: number
 }

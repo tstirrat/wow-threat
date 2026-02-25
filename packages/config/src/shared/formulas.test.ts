@@ -13,6 +13,7 @@ import {
   createRefreshDebuffEvent,
 } from '@wow-threat/shared'
 import type { ThreatContext } from '@wow-threat/shared/src/types'
+import { HitTypeCode } from '@wow-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
 import {
@@ -188,7 +189,7 @@ describe('calculateThreatOnSuccessfulHit', () => {
     const result = assertDefined(
       formula(
         createMockContext({
-          event: createDamageEvent({ hitType: 'hit' }),
+          event: createDamageEvent({ hitType: HitTypeCode.Hit }),
           amount: 1000,
         }),
       ),
@@ -202,7 +203,7 @@ describe('calculateThreatOnSuccessfulHit', () => {
     const formula = threatOnSuccessfulHit({ bonus: 175 })
     const result = formula(
       createMockContext({
-        event: createDamageEvent({ hitType: 'miss' }),
+        event: createDamageEvent({ hitType: HitTypeCode.Miss }),
         amount: 0,
       }),
     )
@@ -442,7 +443,7 @@ describe('modifyThreatOnHit', () => {
   it('applies threat modification on matching damage hit types', () => {
     const formula = modifyThreatOnHit(0.5)
     const ctx = createMockContext({
-      event: createDamageEvent({ hitType: 'hit' }),
+      event: createDamageEvent({ hitType: HitTypeCode.Hit }),
     })
 
     const result = assertDefined(formula(ctx))
@@ -456,7 +457,7 @@ describe('modifyThreatOnHit', () => {
   it('ignores non-matching hit types', () => {
     const formula = modifyThreatOnHit(0.5)
     const ctx = createMockContext({
-      event: createDamageEvent({ hitType: 'dodge' }),
+      event: createDamageEvent({ hitType: HitTypeCode.Dodge }),
     })
 
     expect(formula(ctx)).toBeUndefined()
@@ -677,7 +678,7 @@ describe('threatOnCastRollbackOnMiss', () => {
   it('returns negative threat on miss damage events', () => {
     const formula = threatOnCastRollbackOnMiss(301)
     const ctx = createMockContext({
-      event: createDamageEvent({ hitType: 'miss' }),
+      event: createDamageEvent({ hitType: HitTypeCode.Miss }),
     })
 
     const result = assertDefined(formula(ctx))
@@ -689,7 +690,7 @@ describe('threatOnCastRollbackOnMiss', () => {
   it('returns negative threat on immune damage events', () => {
     const formula = threatOnCastRollbackOnMiss(301)
     const ctx = createMockContext({
-      event: createDamageEvent({ hitType: 'immune' }),
+      event: createDamageEvent({ hitType: HitTypeCode.Immune }),
     })
 
     const result = assertDefined(formula(ctx))
@@ -701,7 +702,7 @@ describe('threatOnCastRollbackOnMiss', () => {
   it('returns negative threat on resist damage events', () => {
     const formula = threatOnCastRollbackOnMiss(301)
     const ctx = createMockContext({
-      event: createDamageEvent({ hitType: 'resist' }),
+      event: createDamageEvent({ hitType: HitTypeCode.Resist }),
     })
 
     const result = assertDefined(formula(ctx))
@@ -713,7 +714,7 @@ describe('threatOnCastRollbackOnMiss', () => {
   it('returns undefined for non-miss damage events', () => {
     const formula = threatOnCastRollbackOnMiss(301)
     const ctx = createMockContext({
-      event: createDamageEvent({ hitType: 'hit' }),
+      event: createDamageEvent({ hitType: HitTypeCode.Hit }),
     })
 
     const result = formula(ctx)
@@ -746,7 +747,7 @@ describe('threatOnCastRollbackOnMiss', () => {
     const rollbackResult = assertDefined(
       formula(
         createMockContext({
-          event: createDamageEvent({ hitType: 'miss' }),
+          event: createDamageEvent({ hitType: HitTypeCode.Miss }),
         }),
       ),
     )
