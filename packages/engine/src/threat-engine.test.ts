@@ -44,9 +44,9 @@ import {
 import { describe, expect, it, vi } from 'vitest'
 
 import {
+  type FightProcessor,
   addInitialAuraAddition,
   createProcessorDataKey,
-  type FightProcessor,
 } from './event-processors'
 import { createMockThreatConfig } from './test/helpers/config'
 import {
@@ -270,6 +270,66 @@ describe('processEvents', () => {
       expect(result.eventCounts.refreshbuff).toBe(1)
       expect(result.eventCounts.applydebuffstack).toBe(1)
     })
+  })
+
+  it('applies flattened class ability formulas to classless pet aura events', () => {
+    const PET_SCREECH = 24579
+    const petActor: Actor = {
+      id: 46,
+      name: 'Wind Serpent',
+      class: null,
+    }
+    const addTarget: Enemy = { id: 78, name: 'Add', instance: 0 }
+    const actorMap = new Map<number, Actor>([
+      [petActor.id, petActor],
+      [addTarget.id, { id: addTarget.id, name: addTarget.name, class: null }],
+    ])
+    const config = createMockThreatConfig({
+      classes: {
+        hunter: {
+          baseThreatFactor: 1.0,
+          auraModifiers: {},
+          abilities: {
+            [PET_SCREECH]: (ctx) =>
+              ctx.event.type === 'applydebuff'
+                ? {
+                    formula: '100',
+                    value: 100,
+                    splitAmongEnemies: false,
+                  }
+                : undefined,
+          },
+        },
+      },
+    })
+
+    const result = processEvents({
+      rawEvents: [
+        createApplyDebuffEvent({
+          sourceID: petActor.id,
+          targetID: addTarget.id,
+          abilityGameID: PET_SCREECH,
+        }),
+      ],
+      actorMap,
+      friendlyActorIds: new Set([petActor.id]),
+      enemies: [addTarget],
+      config,
+    })
+
+    expect(result.augmentedEvents).toHaveLength(1)
+    expect(result.augmentedEvents[0]?.threat?.calculation.formula).toBe('100')
+    expect(result.augmentedEvents[0]?.threat?.calculation.baseThreat).toBe(100)
+    expect(result.augmentedEvents[0]?.threat?.changes).toEqual([
+      {
+        sourceId: petActor.id,
+        targetId: addTarget.id,
+        targetInstance: 0,
+        operator: 'add',
+        amount: 100,
+        total: 100,
+      },
+    ])
   })
 
   it('uses abilitySchoolMap for school-scoped modifiers', () => {

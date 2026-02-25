@@ -56,8 +56,7 @@ const NO_THREAT_FORMULA_RESULT: ThreatFormulaResult = {
 }
 
 interface PreparedThreatConfig {
-  abilitiesByClass: Partial<Record<WowClass, Record<number, ThreatFormula>>>
-  globalAbilities: Record<number, ThreatFormula>
+  mergedAbilities: Record<number, ThreatFormula>
   mergedAuraModifiers: Record<number, (ctx: ThreatContext) => ThreatModifier>
   classModifiers: Partial<Record<WowClass, ThreatModifier>>
 }
@@ -77,8 +76,9 @@ function prepareThreatConfig(config: ThreatConfig): PreparedThreatConfig {
     return cached
   }
 
-  const globalAbilities = config.abilities ?? {}
-  const abilitiesByClass: PreparedThreatConfig['abilitiesByClass'] = {}
+  const mergedAbilities: PreparedThreatConfig['mergedAbilities'] = {
+    ...(config.abilities ?? {}),
+  }
   const mergedAuraModifiers: PreparedThreatConfig['mergedAuraModifiers'] = {
     ...config.auraModifiers,
   }
@@ -88,10 +88,7 @@ function prepareThreatConfig(config: ThreatConfig): PreparedThreatConfig {
     config.classes,
   ) as Array<[WowClass, ClassThreatConfig | undefined]>) {
     if (classConfig?.abilities) {
-      abilitiesByClass[className] = {
-        ...globalAbilities,
-        ...classConfig.abilities,
-      }
+      Object.assign(mergedAbilities, classConfig.abilities)
     }
 
     if (classConfig?.auraModifiers) {
@@ -111,8 +108,7 @@ function prepareThreatConfig(config: ThreatConfig): PreparedThreatConfig {
   }
 
   const prepared: PreparedThreatConfig = {
-    abilitiesByClass,
-    globalAbilities,
+    mergedAbilities,
     mergedAuraModifiers,
     classModifiers,
   }
@@ -381,24 +377,18 @@ function processEventsWithProcessors(
       (augmentation) => augmentation.effects ?? [],
     )
 
-    const sourceActor = fightState.getActor({
-      id: event.sourceID,
-      instanceId: event.sourceInstance,
-    }) ??
-      actorMap.get(event.sourceID) ?? {
-        id: event.sourceID,
-        name: 'Unknown',
-        class: null,
-      }
-    const targetActor = fightState.getActor({
-      id: event.targetID,
-      instanceId: event.targetInstance,
-    }) ??
-      actorMap.get(event.targetID) ?? {
-        id: event.targetID,
-        name: 'Unknown',
-        class: null,
-      }
+    const sourceActor = resolveEventActor({
+      actorId: event.sourceID,
+      actorInstance: event.sourceInstance,
+      actorMap,
+      fightState,
+    })
+    const targetActor = resolveEventActor({
+      actorId: event.targetID,
+      actorInstance: event.targetInstance,
+      actorMap,
+      fightState,
+    })
 
     const threatOptions: CalculateThreatOptions = {
       sourceAuras: fightState.getAurasForActor({
@@ -468,6 +458,41 @@ function processEventsWithProcessors(
     augmentedEvents,
     eventCounts,
     initialAurasByActor: effectiveInitialAurasByActor,
+  }
+}
+
+function resolveEventActor({
+  actorId,
+  actorInstance,
+  actorMap,
+  fightState,
+}: {
+  actorId: number
+  actorInstance: number | undefined
+  actorMap: Map<number, Actor>
+  fightState: FightState
+}): Actor {
+  const actorProfile = actorMap.get(actorId)
+  if (actorProfile) {
+    return actorProfile
+  }
+
+  const runtimeActor = fightState.getActor({
+    id: actorId,
+    instanceId: actorInstance,
+  })
+  if (runtimeActor) {
+    return {
+      id: runtimeActor.id,
+      name: runtimeActor.name,
+      class: runtimeActor.class,
+    }
+  }
+
+  return {
+    id: actorId,
+    name: 'Unknown',
+    class: null,
   }
 }
 
@@ -1227,15 +1252,10 @@ function getFormulaResult(
 ) {
   const event = ctx.event
 
-  // Merge abilities: global first, then class.
-  // Class abilities override global abilities on duplicate spell IDs.
+  // Resolve ability formulas from one flattened map:
+  // global abilities + all class abilities (class entries overwrite globals).
   if ('abilityGameID' in event && typeof event.abilityGameID === 'number') {
-    const classAbilities = ctx.sourceActor.class
-      ? (preparedConfig.abilitiesByClass[ctx.sourceActor.class] ??
-        preparedConfig.globalAbilities)
-      : preparedConfig.globalAbilities
-
-    const abilityFormula = classAbilities[event.abilityGameID]
+    const abilityFormula = preparedConfig.mergedAbilities[event.abilityGameID]
     if (abilityFormula) {
       // Ability formulas override base formulas; undefined means this phase has no threat.
       return abilityFormula(ctx) ?? NO_THREAT_FORMULA_RESULT

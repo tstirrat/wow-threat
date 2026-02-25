@@ -281,7 +281,7 @@ describe('CacheKeys', () => {
         'uid-1',
       ),
     ).toBe(
-      'augmented:v13:ABC123:5:v1.2.0:inferThreatReduction:true:visibility:private:scope:uid:uid-1',
+      'augmented:v14:ABC123:5:v1.2.0:inferThreatReduction:true:visibility:private:scope:uid:uid-1',
     )
   })
 
