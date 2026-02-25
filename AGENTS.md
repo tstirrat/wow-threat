@@ -29,18 +29,18 @@ git worktree list
 
 ## Task Routing (Open These Files First)
 
-| Task | Package(s) | Open these files first |
-| --- | --- | --- |
-| Add or change API route/handler | `@wow-threat/api` | `apps/api/src/index.ts`, `apps/api/src/routes/*.ts`, `apps/api/src/types/api.ts` |
-| API middleware or error behavior | `@wow-threat/api` | `apps/api/src/middleware/*.ts`, `apps/api/src/middleware/error.ts`, `apps/api/src/types/bindings.ts` |
+| Task                                   | Package(s)                                 | Open these files first                                                                                                                                     |
+| -------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add or change API route/handler        | `@wow-threat/api`                          | `apps/api/src/index.ts`, `apps/api/src/routes/*.ts`, `apps/api/src/types/api.ts`                                                                           |
+| API middleware or error behavior       | `@wow-threat/api`                          | `apps/api/src/middleware/*.ts`, `apps/api/src/middleware/error.ts`, `apps/api/src/types/bindings.ts`                                                       |
 | Warcraft Logs fetch/auth/rate limiting | `@wow-threat/api`, `@wow-threat/wcl-types` | `apps/api/src/services/wcl.ts`, `apps/api/src/services/wcl-oauth.ts`, `apps/api/src/services/wcl-rate-limit.ts`, `packages/wcl-types/src/report-schema.ts` |
-| Web routing/page flow | `@wow-threat/web` | `apps/web/src/routes/router.tsx`, `apps/web/src/pages/*.tsx`, `apps/web/src/app.tsx` |
-| Web chart/threat presentation | `@wow-threat/web` | `apps/web/src/components/threat-chart.tsx`, `apps/web/src/lib/threat-aggregation.ts`, `apps/web/src/hooks/use-fight-events.ts` |
-| Web auth/session | `@wow-threat/web`, `@wow-threat/api` | `apps/web/src/auth/*`, `apps/api/src/routes/auth.ts`, `apps/api/src/services/firebase-auth.ts` |
-| Threat rules/config changes | `@wow-threat/config` | `packages/config/src/era/**`, `packages/config/src/sod/**`, `packages/config/src/tbc/**`, `packages/config/src/*/index.ts` |
-| Threat engine behavior | `@wow-threat/engine` | `packages/engine/src/threat-engine.ts`, `packages/engine/src/fight-state.ts`, `packages/engine/src/actor-state.ts` |
-| Cross-package shared types/helpers | `@wow-threat/shared` | `packages/shared/src/types.ts`, `packages/shared/src/index.ts`, `packages/shared/src/utils.ts` |
-| WCL schema/type alignment | `@wow-threat/wcl-types` | `packages/wcl-types/src/report-schema.ts`, `packages/wcl-types/src/events.ts`, `packages/wcl-types/src/reports.ts` |
+| Web routing/page flow                  | `@wow-threat/web`                          | `apps/web/src/routes/router.tsx`, `apps/web/src/pages/*.tsx`, `apps/web/src/app.tsx`                                                                       |
+| Web chart/threat presentation          | `@wow-threat/web`                          | `apps/web/src/components/threat-chart.tsx`, `apps/web/src/lib/threat-aggregation.ts`, `apps/web/src/hooks/use-fight-events.ts`                             |
+| Web auth/session                       | `@wow-threat/web`, `@wow-threat/api`       | `apps/web/src/auth/*`, `apps/api/src/routes/auth.ts`, `apps/api/src/services/firebase-auth.ts`                                                             |
+| Threat rules/config changes            | `@wow-threat/config`                       | `packages/config/src/era/**`, `packages/config/src/sod/**`, `packages/config/src/tbc/**`, `packages/config/src/*/index.ts`                                 |
+| Threat engine behavior                 | `@wow-threat/engine`                       | `packages/engine/src/threat-engine.ts`, `packages/engine/src/fight-state.ts`, `packages/engine/src/actor-state.ts`                                         |
+| Cross-package shared types/helpers     | `@wow-threat/shared`                       | `packages/shared/src/types.ts`, `packages/shared/src/index.ts`, `packages/shared/src/utils.ts`                                                             |
+| WCL schema/type alignment              | `@wow-threat/wcl-types`                    | `packages/wcl-types/src/report-schema.ts`, `packages/wcl-types/src/events.ts`, `packages/wcl-types/src/reports.ts`                                         |
 
 ## Repo Landmarks
 
@@ -153,11 +153,12 @@ git -C /path/to/main-worktree merge --ff-only <feature-branch>
 
 ## Config Versioning Rule
 
-- Any effective threat-config change under `packages/config/src/**` must bump the owning config version in its index file:
-  - Era: `packages/config/src/era/index.ts`
-  - SoD: `packages/config/src/sod/index.ts`
-  - Anniversary/TBC: `packages/config/src/tbc/index.ts`
-- If a change is made in Era config code, also bump SoD and Anniversary/TBC config versions, because those configs import and inherit Era behavior.
+- Any effective threat-config change under `packages/config/src/**` must bump the owning numeric `version` value in:
+  - `packages/config/src/era/index.ts`
+  - `packages/config/src/sod/index.ts`
+  - `packages/config/src/tbc/index.ts`
+- Events cache-busting is automatic: `packages/config/src/version.ts` concatenates
+  the three top-level config versions into `configCacheVersion`.
 
 ## Testing
 
