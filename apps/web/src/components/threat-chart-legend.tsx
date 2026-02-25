@@ -70,7 +70,8 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
             <ul className="py-1">
               {series.map((item) => {
                 const isVisible = isActorVisible(item.actorId)
-                const isTank = item.actorType === 'Player' && item.actorRole === 'Tank'
+                const isTank =
+                  item.actorType === 'Player' && item.actorRole === 'Tank'
                 const label =
                   item.actorType === 'Pet' ? item.actorName : item.label
                 return (
@@ -122,25 +123,23 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
                           ) : null}
                         </span>
                       </Button>
-                      {item.actorType === 'Player' ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              aria-label={`Focus ${label}`}
-                              className="h-6 w-6 cursor-pointer"
-                              size="icon-xs"
-                              type="button"
-                              variant="ghost"
-                              onClick={() => {
-                                onActorFocus(item.actorId)
-                              }}
-                            >
-                              <Eye />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top">{`Focus ${label}`}</TooltipContent>
-                        </Tooltip>
-                      ) : null}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            aria-label={`Focus ${label}`}
+                            className="h-6 w-6 cursor-pointer"
+                            size="icon-xs"
+                            type="button"
+                            variant="ghost"
+                            onClick={() => {
+                              onActorFocus(item.actorId)
+                            }}
+                          >
+                            <Eye />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">{`Focus ${label}`}</TooltipContent>
+                      </Tooltip>
                     </div>
                   </li>
                 )
