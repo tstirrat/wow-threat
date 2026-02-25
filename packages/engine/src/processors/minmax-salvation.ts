@@ -18,6 +18,33 @@ import {
 
 const BLESSING_OF_SALVATION_ID = 1038
 const GREATER_BLESSING_OF_SALVATION_ID = 25895
+const LONG_TERM_BLESSING_AURA_ID_LOOKUP: Readonly<Record<number, true>> = {
+  [BLESSING_OF_SALVATION_ID]: true,
+  [GREATER_BLESSING_OF_SALVATION_ID]: true,
+
+  // Era paladin blessings
+  20217: true, // Blessing of Kings
+  25291: true, // Blessing of Might (Rank 7)
+  25290: true, // Blessing of Wisdom (Rank 6)
+  20914: true, // Blessing of Sanctuary (Rank 4)
+  19979: true, // Blessing of Light (Rank 3)
+  25894: true, // Greater Blessing of Kings
+  25896: true, // Greater Blessing of Might
+  25918: true, // Greater Blessing of Wisdom
+  25899: true, // Greater Blessing of Sanctuary
+  25890: true, // Greater Blessing of Light
+
+  // TBC paladin blessing ranks
+  25782: true, // Greater Blessing of Might (Rank 2)
+  27140: true, // Blessing of Might (Rank 8)
+  27141: true, // Greater Blessing of Might (Rank 3)
+  27142: true, // Blessing of Wisdom (Rank 7)
+  27143: true, // Greater Blessing of Wisdom (Rank 3)
+  27144: true, // Blessing of Light (Rank 4)
+  27145: true, // Greater Blessing of Light (Rank 2)
+  27168: true, // Blessing of Sanctuary (Rank 5)
+  27169: true, // Greater Blessing of Sanctuary (Rank 2)
+}
 
 function normalizeFightRankingEntries(
   rankings: ReportEncounterRankings | undefined,
@@ -104,18 +131,25 @@ function resolveFightTankActorIdsFromRankings(
 }
 
 function resolveFightThreatReductionBaselineAuraId(
-  report: Report,
-  fight: ReportFight,
+  paladinCount: number,
 ): number | null {
+  return paladinCount > 0 ? GREATER_BLESSING_OF_SALVATION_ID : null
+}
+
+function resolveFightPaladinCount(report: Report, fight: ReportFight): number {
   const fightFriendlyPlayerIds = new Set(fight.friendlyPlayers ?? [])
-  const hasPaladin = report.masterData.actors.some(
+
+  return report.masterData.actors.filter(
     (actor) =>
       actor.type === 'Player' &&
       fightFriendlyPlayerIds.has(actor.id) &&
       actor.subType === 'Paladin',
-  )
-
-  return hasPaladin ? GREATER_BLESSING_OF_SALVATION_ID : null
+  ).length
+}
+function countActiveBlessingsForActor(actorAuraIds: Set<number>): number {
+  return [...actorAuraIds].filter(
+    (auraId) => LONG_TERM_BLESSING_AURA_ID_LOOKUP[auraId] === true,
+  ).length
 }
 
 /**
@@ -130,10 +164,8 @@ export const createMinmaxSalvationProcessor: FightProcessorFactory = ({
     return null
   }
 
-  const baselineAuraId = resolveFightThreatReductionBaselineAuraId(
-    report,
-    fight,
-  )
+  const paladinCount = resolveFightPaladinCount(report, fight)
+  const baselineAuraId = resolveFightThreatReductionBaselineAuraId(paladinCount)
   if (baselineAuraId === null) {
     return null
   }
@@ -165,6 +197,10 @@ export const createMinmaxSalvationProcessor: FightProcessorFactory = ({
           actorAuraIds.has(BLESSING_OF_SALVATION_ID) ||
           actorAuraIds.has(GREATER_BLESSING_OF_SALVATION_ID)
         if (hasAnySalvation) {
+          return
+        }
+        const activeBlessingCount = countActiveBlessingsForActor(actorAuraIds)
+        if (activeBlessingCount >= paladinCount) {
           return
         }
 

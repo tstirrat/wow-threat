@@ -268,4 +268,121 @@ describe('createMinmaxSalvationProcessor', () => {
     expect(mergedInitialAurasByActor.get(2)).toEqual([25895])
     expect(mergedInitialAurasByActor.get(3)).toEqual([25895])
   })
+
+  it('skips salvation when a non-tank already has blessings equal to paladin count', () => {
+    const blessingOfWisdomId = 25290
+    const fight = createFight(18, 1602, [1, 2, 3])
+    const report = createReport({
+      actors: [
+        createPlayerActor(1, 'Tanky', 'Warrior'),
+        createPlayerActor(2, 'Roguey', 'Rogue'),
+        createPlayerActor(3, 'Palatank', 'Paladin'),
+      ],
+      fight,
+      rankings: [
+        {
+          encounter: { id: 1602, name: 'Test Encounter' },
+          fightID: 18,
+          roles: {
+            tanks: {
+              name: 'Tanks',
+              characters: [
+                { id: 1, name: 'Tanky' } as ReportRankingsCharacter,
+                { id: 3, name: 'Palatank' } as ReportRankingsCharacter,
+              ],
+            },
+          },
+        } as ReportEncounterRankingsEntry,
+      ],
+    })
+    const processor = createMinmaxSalvationProcessor({
+      report,
+      fight,
+      inferThreatReduction: true,
+    })
+
+    expect(processor).not.toBeNull()
+    if (!processor) {
+      return
+    }
+
+    const context = createPrepassContext({
+      report,
+      fight,
+      inferThreatReduction: true,
+      initialAurasByActor: new Map([[2, [blessingOfWisdomId]]]),
+    })
+
+    runFightPrepass({
+      rawEvents: [],
+      processors: [processor],
+      baseContext: context,
+    })
+
+    const mergedInitialAurasByActor = mergeInitialAurasWithAdditions(
+      context.initialAurasByActor,
+      context.namespace.get(initialAuraAdditionsKey),
+    )
+
+    expect(mergedInitialAurasByActor.get(2)).toEqual([blessingOfWisdomId])
+  })
+
+  it('applies salvation when at least one paladin blessing slot is available', () => {
+    const blessingOfWisdomId = 25290
+    const fight = createFight(19, 1602, [1, 2, 3, 4])
+    const report = createReport({
+      actors: [
+        createPlayerActor(1, 'Tanky', 'Warrior'),
+        createPlayerActor(2, 'Roguey', 'Rogue'),
+        createPlayerActor(3, 'Palastar', 'Paladin'),
+        createPlayerActor(4, 'Paladps', 'Paladin'),
+      ],
+      fight,
+      rankings: [
+        {
+          encounter: { id: 1602, name: 'Test Encounter' },
+          fightID: 19,
+          roles: {
+            tanks: {
+              name: 'Tanks',
+              characters: [{ id: 1, name: 'Tanky' } as ReportRankingsCharacter],
+            },
+          },
+        } as ReportEncounterRankingsEntry,
+      ],
+    })
+    const processor = createMinmaxSalvationProcessor({
+      report,
+      fight,
+      inferThreatReduction: true,
+    })
+
+    expect(processor).not.toBeNull()
+    if (!processor) {
+      return
+    }
+
+    const context = createPrepassContext({
+      report,
+      fight,
+      inferThreatReduction: true,
+      initialAurasByActor: new Map([[2, [blessingOfWisdomId]]]),
+    })
+
+    runFightPrepass({
+      rawEvents: [],
+      processors: [processor],
+      baseContext: context,
+    })
+
+    const mergedInitialAurasByActor = mergeInitialAurasWithAdditions(
+      context.initialAurasByActor,
+      context.namespace.get(initialAuraAdditionsKey),
+    )
+
+    expect(mergedInitialAurasByActor.get(2)).toEqual([
+      blessingOfWisdomId,
+      25895,
+    ])
+  })
 })

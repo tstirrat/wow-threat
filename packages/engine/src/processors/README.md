@@ -25,6 +25,8 @@ that shared state through a typed namespace.
     seeds.
   - Checks canonical initial buffs (`seeded + inferred`) and only adds
     Salvation for non-tanks missing both `1038` and `25895`.
+  - Applies Salvation only when the actor has fewer long-term Blessings than
+    the total paladin count in the fight.
 
 ## Registration Model
 
