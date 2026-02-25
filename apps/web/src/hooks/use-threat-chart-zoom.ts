@@ -1,23 +1,12 @@
 /**
- * Drag-to-zoom fisheye interaction for the threat chart using x-axis breaks.
+ * Drag-to-select chart window interaction for the threat chart.
  */
 import * as echarts from 'echarts'
 import type ReactEChartsCore from 'echarts-for-react/lib/core'
 import type { MutableRefObject } from 'react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
-const fisheyeDragMinWidthPx = 8
-const fisheyeCollapsedGap = '80%'
-
-interface AxisBreakRange {
-  end: number
-  start: number
-}
-
-interface AxisBreakConfig extends AxisBreakRange {
-  gap: string
-  isExpanded: false
-}
+const dragZoomMinWidthPx = 8
 
 interface PointerEventLike {
   offsetX?: number
@@ -26,15 +15,12 @@ interface PointerEventLike {
   zrY?: number
 }
 
-const createAxisBreak = (start: number, end: number): AxisBreakConfig => ({
-  start,
-  end,
-  gap: fisheyeCollapsedGap,
-  isExpanded: false,
-})
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value))
+}
 
-/** Attach drag and double-click handlers that control threat chart fisheye zoom. */
-export function useThreatChartFisheye({
+/** Attach drag and double-click handlers that control threat chart window selection. */
+export function useThreatChartZoom({
   bounds,
   borderColor,
   chartRef,
@@ -49,29 +35,14 @@ export function useThreatChartFisheye({
   onWindowChange: (startMs: number | null, endMs: number | null) => void
   renderer: 'canvas' | 'svg'
 }): {
-  axisBreaks: AxisBreakConfig[]
   consumeSuppressedSeriesClick: () => boolean
   resetZoom: () => void
 } {
-  const [xAxisBreakRange, setXAxisBreakRange] = useState<AxisBreakRange | null>(
-    null,
-  )
   const suppressNextSeriesClickRef = useRef(false)
 
   const resetZoom = useCallback((): void => {
-    const chart = chartRef.current?.getEchartsInstance()
-    if (!chart) {
-      return
-    }
-
-    chart.setOption({
-      xAxis: {
-        breaks: [],
-      },
-    })
-    setXAxisBreakRange(null)
     onWindowChange(null, null)
-  }, [chartRef, onWindowChange])
+  }, [onWindowChange])
 
   const consumeSuppressedSeriesClick = useCallback((): boolean => {
     if (!suppressNextSeriesClickRef.current) {
@@ -81,39 +52,6 @@ export function useThreatChartFisheye({
     suppressNextSeriesClickRef.current = false
     return true
   }, [])
-
-  const resolvedXAxisBreakRange = useMemo(() => {
-    if (!xAxisBreakRange) {
-      return null
-    }
-
-    const start = Math.max(
-      bounds.min,
-      Math.min(xAxisBreakRange.start, bounds.max),
-    )
-    const end = Math.max(bounds.min, Math.min(xAxisBreakRange.end, bounds.max))
-    if (end - start < 1) {
-      return null
-    }
-
-    return {
-      start,
-      end,
-    }
-  }, [bounds.max, bounds.min, xAxisBreakRange])
-
-  const axisBreaks = useMemo(() => {
-    if (!resolvedXAxisBreakRange) {
-      return []
-    }
-
-    return [
-      createAxisBreak(
-        resolvedXAxisBreakRange.start,
-        resolvedXAxisBreakRange.end,
-      ),
-    ]
-  }, [resolvedXAxisBreakRange])
 
   useEffect(() => {
     if (!isChartReady) {
@@ -129,9 +67,6 @@ export function useThreatChartFisheye({
     let brushRect: echarts.graphic.Rect | null = null
     let dragStartPoint: [number, number] | null = null
     let lastPointer: [number, number] | null = null
-
-    const clamp = (value: number, min: number, max: number): number =>
-      Math.min(max, Math.max(min, value))
 
     const resolvePointer = (
       event: PointerEventLike,
@@ -209,26 +144,12 @@ export function useThreatChartFisheye({
       lastPointer = null
       clearBrushRect()
 
-      if (Math.abs(endPoint[0] - startPoint[0]) < fisheyeDragMinWidthPx) {
+      if (Math.abs(endPoint[0] - startPoint[0]) < dragZoomMinWidthPx) {
         return
       }
 
-      const minPixel = Number(
-        chart.convertToPixel({ xAxisIndex: 0 }, bounds.min),
-      )
-      const maxPixel = Number(
-        chart.convertToPixel({ xAxisIndex: 0 }, bounds.max),
-      )
-      const hasAxisPixelRange =
-        Number.isFinite(minPixel) && Number.isFinite(maxPixel)
-      const axisMinPixel = hasAxisPixelRange
-        ? Math.min(minPixel, maxPixel)
-        : Math.min(startPoint[0], endPoint[0])
-      const axisMaxPixel = hasAxisPixelRange
-        ? Math.max(minPixel, maxPixel)
-        : Math.max(startPoint[0], endPoint[0])
-      const clampedStartX = clamp(startPoint[0], axisMinPixel, axisMaxPixel)
-      const clampedEndX = clamp(endPoint[0], axisMinPixel, axisMaxPixel)
+      const clampedStartX = clamp(startPoint[0], 0, chart.getWidth())
+      const clampedEndX = clamp(endPoint[0], 0, chart.getWidth())
 
       const startValue = Number(
         chart.convertFromPixel({ xAxisIndex: 0 }, clampedStartX),
@@ -240,29 +161,23 @@ export function useThreatChartFisheye({
         return
       }
 
+      const activeWindowStartMs = bounds.min
+      const activeWindowEndMs = bounds.max
       const clampedStart = clamp(
         Math.min(startValue, endValue),
-        bounds.min,
-        bounds.max,
+        activeWindowStartMs,
+        activeWindowEndMs,
       )
       const clampedEnd = clamp(
         Math.max(startValue, endValue),
-        bounds.min,
-        bounds.max,
+        activeWindowStartMs,
+        activeWindowEndMs,
       )
       if (clampedEnd - clampedStart < 1) {
         return
       }
 
-      chart.setOption({
-        xAxis: {
-          breaks: [createAxisBreak(clampedStart, clampedEnd)],
-        },
-      })
-      setXAxisBreakRange({
-        start: clampedStart,
-        end: clampedEnd,
-      })
+      onWindowChange(Math.round(clampedStart), Math.round(clampedEnd))
       suppressNextSeriesClickRef.current = true
     }
 
@@ -339,12 +254,12 @@ export function useThreatChartFisheye({
     bounds.min,
     chartRef,
     isChartReady,
+    onWindowChange,
     renderer,
     resetZoom,
   ])
 
   return {
-    axisBreaks,
     consumeSuppressedSeriesClick,
     resetZoom,
   }

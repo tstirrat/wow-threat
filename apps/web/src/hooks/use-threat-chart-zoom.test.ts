@@ -1,11 +1,11 @@
 /**
- * Unit tests for the threat chart fisheye interaction hook.
+ * Unit tests for the threat chart drag-to-window interaction hook.
  */
 import { act, renderHook } from '@testing-library/react'
 import type ReactEChartsCore from 'echarts-for-react/lib/core'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { useThreatChartFisheye } from './use-threat-chart-fisheye'
+import { useThreatChartZoom } from './use-threat-chart-zoom'
 
 vi.mock('echarts', () => {
   class Rect {
@@ -142,7 +142,7 @@ function createMockChart(bounds: { max: number; min: number }): {
   }
 }
 
-function renderFisheyeHook({
+function renderZoomHook({
   bounds = { min: 0, max: 1000 },
   isChartReady = true,
 }: {
@@ -158,7 +158,7 @@ function renderFisheyeHook({
   }
 
   const hook = renderHook(() =>
-    useThreatChartFisheye({
+    useThreatChartZoom({
       bounds,
       borderColor: '#94a3b8',
       chartRef,
@@ -180,9 +180,9 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-describe('use-threat-chart-fisheye', () => {
-  it('applies an axis break from in-grid drag selection', () => {
-    const { result, setOption, zr } = renderFisheyeHook()
+describe('use-threat-chart-zoom', () => {
+  it('applies a selected chart window from in-grid drag selection', () => {
+    const { onWindowChange, result, setOption, zr } = renderZoomHook()
 
     act(() => {
       zr.trigger('mousedown', { offsetX: 160, offsetY: 80 })
@@ -190,26 +190,15 @@ describe('use-threat-chart-fisheye', () => {
       zr.trigger('mouseup', { offsetX: 460, offsetY: 80 })
     })
 
-    expect(result.current.axisBreaks).toHaveLength(1)
-    expect(result.current.axisBreaks[0]).toMatchObject({
-      gap: '80%',
-      isExpanded: false,
-    })
-    expect(result.current.axisBreaks[0]?.start).toBeCloseTo(111.11, 2)
-    expect(result.current.axisBreaks[0]?.end).toBeCloseTo(444.44, 2)
-
-    const lastSetOptionCall = setOption.mock.calls.at(-1)?.[0] as {
-      xAxis: { breaks: Array<{ end: number; start: number }> }
-    }
-    expect(lastSetOptionCall.xAxis.breaks[0]?.start).toBeCloseTo(111.11, 2)
-    expect(lastSetOptionCall.xAxis.breaks[0]?.end).toBeCloseTo(444.44, 2)
+    expect(onWindowChange).toHaveBeenCalledWith(111, 444)
+    expect(setOption).not.toHaveBeenCalled()
 
     expect(result.current.consumeSuppressedSeriesClick()).toBe(true)
     expect(result.current.consumeSuppressedSeriesClick()).toBe(false)
   })
 
   it('finalizes drag selection from window mouseup', () => {
-    const { result, zr } = renderFisheyeHook()
+    const { onWindowChange, zr } = renderZoomHook()
 
     act(() => {
       zr.trigger('mousedown', { offsetX: 120, offsetY: 100 })
@@ -222,43 +211,36 @@ describe('use-threat-chart-fisheye', () => {
       )
     })
 
-    expect(result.current.axisBreaks).toHaveLength(1)
-    expect(result.current.axisBreaks[0]?.start).toBeCloseTo(66.67, 2)
-    expect(result.current.axisBreaks[0]?.end).toBeCloseTo(733.33, 2)
+    expect(onWindowChange).toHaveBeenCalledWith(67, 733)
   })
 
   it('ignores drag selections smaller than the minimum width', () => {
-    const { result, setOption, zr } = renderFisheyeHook()
+    const { onWindowChange, setOption, zr } = renderZoomHook()
 
     act(() => {
       zr.trigger('mousedown', { offsetX: 200, offsetY: 50 })
       zr.trigger('mouseup', { offsetX: 206, offsetY: 60 })
     })
 
-    expect(result.current.axisBreaks).toEqual([])
+    expect(onWindowChange).not.toHaveBeenCalled()
     expect(setOption).not.toHaveBeenCalled()
   })
 
-  it('clears breaks and reports full window on double click reset', () => {
-    const { onWindowChange, result, setOption, zr } = renderFisheyeHook()
+  it('reports full window on double click reset', () => {
+    const { onWindowChange, result, setOption, zr } = renderZoomHook()
 
     act(() => {
       zr.trigger('mousedown', { offsetX: 180, offsetY: 80 })
       zr.trigger('mouseup', { offsetX: 540, offsetY: 80 })
     })
 
-    expect(result.current.axisBreaks).toHaveLength(1)
+    expect(onWindowChange).toHaveBeenCalledWith(133, 533)
 
     act(() => {
       zr.trigger('dblclick', { offsetX: 320, offsetY: 140 })
     })
 
-    expect(result.current.axisBreaks).toEqual([])
-    expect(setOption).toHaveBeenLastCalledWith({
-      xAxis: {
-        breaks: [],
-      },
-    })
+    expect(setOption).not.toHaveBeenCalled()
     expect(onWindowChange).toHaveBeenCalledWith(null, null)
     expect(result.current.consumeSuppressedSeriesClick()).toBe(true)
     expect(result.current.consumeSuppressedSeriesClick()).toBe(false)

@@ -8,4 +8,4 @@
 - [x] WEB-006: Priest threat reduction talents (era)
 - [x] WEB-007: Show hit type in the tooltip if it's something other than a hit e.g. glancing, crit, parry
 - [x] WEB-008: Fix a bug where pet's do not seem to accumulate threat on boss adds
-- [ ] WEB-009: Stop the "fisheye" zoom, and use a real start/end zoom so that the focus player table below is windowed to the selected time range
+- [x] WEB-009: Stop the "fisheye" zoom, and use a real start/end zoom so that the focus player table below is windowed to the selected time range

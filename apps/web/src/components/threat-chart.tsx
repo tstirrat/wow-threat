@@ -13,7 +13,7 @@ import {
   useState,
 } from 'react'
 
-import { useThreatChartFisheye } from '../hooks/use-threat-chart-fisheye'
+import { useThreatChartZoom } from '../hooks/use-threat-chart-zoom'
 import { useThreatChartLegendState } from '../hooks/use-threat-chart-legend-state'
 import { useThreatChartThemeColors } from '../hooks/use-threat-chart-theme-colors'
 import { formatTimelineTime } from '../lib/format'
@@ -74,6 +74,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   series,
   selectedPlayerIds = [],
   renderer = 'canvas',
+  windowStartMs,
+  windowEndMs,
   onWindowChange,
   onSeriesClick,
   onVisiblePlayerIdsChange,
@@ -96,15 +98,30 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   } = useThreatChartLegendState(series, selectedPlayerIds)
 
   const bounds = resolveSeriesWindowBounds(series)
-  const { axisBreaks, consumeSuppressedSeriesClick, resetZoom } =
-    useThreatChartFisheye({
-      bounds,
-      borderColor: themeColors.border,
-      chartRef,
-      isChartReady,
-      onWindowChange,
-      renderer,
-    })
+  const selectedWindow = useMemo(() => {
+    if (windowStartMs === null || windowEndMs === null) {
+      return null
+    }
+
+    const start = Math.max(bounds.min, Math.min(windowStartMs, bounds.max))
+    const end = Math.max(bounds.min, Math.min(windowEndMs, bounds.max))
+    if (end - start < 1) {
+      return null
+    }
+
+    return {
+      start,
+      end,
+    }
+  }, [bounds.max, bounds.min, windowEndMs, windowStartMs])
+  const { consumeSuppressedSeriesClick, resetZoom } = useThreatChartZoom({
+    bounds,
+    borderColor: themeColors.border,
+    chartRef,
+    isChartReady,
+    onWindowChange,
+    renderer,
+  })
 
   const actorIdByLabel = new Map(
     series.map((item) => [item.label, item.actorId]),
@@ -196,20 +213,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     },
     xAxis: {
       type: 'value',
-      min: bounds.min,
-      max: bounds.max,
-      breaks: axisBreaks,
-      breakArea: {
-        expandOnClick: false,
-        zigzagAmplitude: 0,
-        zigzagZ: 200,
-        itemStyle: {
-          color: themeColors.border,
-          borderColor: themeColors.border,
-          borderWidth: 1,
-          opacity: 0.12,
-        },
-      },
+      min: selectedWindow?.start ?? bounds.min,
+      max: selectedWindow?.end ?? bounds.max,
       axisLabel: {
         color: themeColors.muted,
         formatter: (value: number) => formatTimelineTime(value),
