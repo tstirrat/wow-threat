@@ -1151,12 +1151,19 @@ export function buildThreatSeries({
         if (!accumulator) {
           return
         }
+        const pointAmount =
+          markerKind === 'bossMelee'
+            ? Math.max(0, event.amount ?? 0)
+            : amount
 
         const pointIndex = pointIndexByActorId.get(actorId)
         if (pointIndex !== undefined) {
           const existingPoint = accumulator.points[pointIndex]
           if (existingPoint) {
             existingPoint.markerKind = markerKind
+            if (markerKind === 'bossMelee') {
+              existingPoint.amount = pointAmount
+            }
           }
           return
         }
@@ -1167,7 +1174,7 @@ export function buildThreatSeries({
           timeMs,
           totalThreat: accumulator.totalThreat,
           threatDelta: 0,
-          amount,
+          amount: pointAmount,
           baseThreat,
           modifiedThreat,
           ...(spellId ? { spellId } : {}),

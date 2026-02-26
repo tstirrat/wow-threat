@@ -57,6 +57,7 @@ test.describe('fight page', () => {
     await expect(fightPage.chart.legendToggle('Wolfie')).toHaveCount(0)
 
     await expect(fightPage.chart.showEnergizeEventsCheckbox()).not.toBeChecked()
+    await expect(fightPage.chart.showBossMeleeCheckbox()).toBeChecked()
     await expect(
       fightPage.chart.inferThreatReductionCheckbox(),
     ).not.toBeChecked()
@@ -166,34 +167,39 @@ test.describe('fight page', () => {
     await expect.poll(() => fightPage.searchString()).toBe('')
   })
 
-  test('persists show pets, show energize, and infer threat reduction toggles across fight switches', async ({
+  test('persists show pets, show energize, show boss melee, and infer threat reduction toggles across fight switches', async ({
     page,
   }) => {
     const fightPage = new FightPageObject(page)
 
     await fightPage.goto(svgFightUrl)
     await expect(fightPage.chart.showEnergizeEventsCheckbox()).not.toBeChecked()
+    await expect(fightPage.chart.showBossMeleeCheckbox()).toBeChecked()
     await expect(
       fightPage.chart.inferThreatReductionCheckbox(),
     ).not.toBeChecked()
     await expect(fightPage.chart.showPetsCheckbox()).not.toBeChecked()
 
     await fightPage.chart.setShowEnergizeEvents(true)
+    await fightPage.chart.setShowBossMelee(false)
     await fightPage.chart.setInferThreatReduction(true)
     await fightPage.chart.setShowPets(true)
     await expect(fightPage.chart.showEnergizeEventsCheckbox()).toBeChecked()
+    await expect(fightPage.chart.showBossMeleeCheckbox()).not.toBeChecked()
     await expect(fightPage.chart.inferThreatReductionCheckbox()).toBeChecked()
     await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
 
     await fightPage.quickSwitch.clickFight('Grobbulus')
     await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}/fight/30$`))
     await expect(fightPage.chart.showEnergizeEventsCheckbox()).toBeChecked()
+    await expect(fightPage.chart.showBossMeleeCheckbox()).not.toBeChecked()
     await expect(fightPage.chart.inferThreatReductionCheckbox()).toBeChecked()
     await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
 
     await fightPage.quickSwitch.clickFight('Patchwerk')
     await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}/fight/26$`))
     await expect(fightPage.chart.showEnergizeEventsCheckbox()).toBeChecked()
+    await expect(fightPage.chart.showBossMeleeCheckbox()).not.toBeChecked()
     await expect(fightPage.chart.inferThreatReductionCheckbox()).toBeChecked()
     await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
   })

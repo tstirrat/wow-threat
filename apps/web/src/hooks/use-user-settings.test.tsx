@@ -64,6 +64,7 @@ function createSnapshot({
     data: () =>
       settings ?? {
         inferThreatReduction: false,
+        showBossMelee: true,
         showEnergizeEvents: false,
         showPets: false,
         starredReports: [],
@@ -204,6 +205,7 @@ describe('UserSettingsProvider', () => {
           exists: true,
           settings: {
             inferThreatReduction: true,
+            showBossMelee: true,
             showEnergizeEvents: false,
             showPets: false,
             starredReports: [],
@@ -351,6 +353,7 @@ describe('UserSettingsProvider', () => {
           exists: true,
           settings: {
             inferThreatReduction: false,
+            showBossMelee: true,
             showEnergizeEvents: false,
             showPets: false,
             starredReports: [existingStarred],
@@ -378,6 +381,7 @@ describe('UserSettingsProvider', () => {
       expect.objectContaining({
         showPets: false,
         showEnergizeEvents: false,
+        showBossMelee: true,
         inferThreatReduction: false,
         starredReports: expect.arrayContaining([
           expect.objectContaining({

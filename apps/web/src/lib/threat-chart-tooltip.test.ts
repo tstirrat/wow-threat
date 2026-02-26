@@ -74,7 +74,7 @@ describe('threat-chart-tooltip', () => {
         threatDelta: 100,
         timeMs: 15000,
         totalThreat: 1200,
-        markerKind: 'bossMelee',
+        markerKind: 'death',
       },
     })
 
@@ -95,9 +95,50 @@ describe('threat-chart-tooltip', () => {
       'Aura: <strong style="color:#ffa500">fixate (Mocking Blow)</strong>',
     )
     expect(tooltip).toContain(
-      'Marker: <strong style="color:#ef4444">Boss melee</strong>',
+      'Marker: <strong style="color:#dc2626">Death</strong>',
     )
     expect(tooltip).toContain('ID: 7386')
+  })
+
+  it('hides threat rows for boss melee marker tooltips', () => {
+    const formatter = createThreatChartTooltipFormatter({
+      series: [baseSeries],
+      themeColors: {
+        border: '#d1d5db',
+        foreground: '#0f172a',
+        muted: '#64748b',
+        panel: '#ffffff',
+      },
+    })
+
+    const tooltip = formatter({
+      seriesName: 'Tank',
+      data: {
+        actorId: 1,
+        actorColor: '#a855f7',
+        abilityName: 'Melee',
+        amount: 700,
+        baseThreat: 0,
+        eventType: 'damage',
+        formula: 'bossMelee',
+        modifiedThreat: 0,
+        spellId: 1,
+        spellSchool: null,
+        modifiers: [{ name: 'Defensive Stance', schoolLabels: [], value: 1.3 }],
+        threatDelta: 0,
+        timeMs: 15000,
+        totalThreat: 1200,
+        markerKind: 'bossMelee',
+      },
+    })
+
+    expect(tooltip).toContain('Amt: 700.00')
+    expect(tooltip).toContain(
+      'Marker: <strong style="color:#ef4444">Boss melee</strong>',
+    )
+    expect(tooltip).not.toContain('Threat:')
+    expect(tooltip).not.toContain('Multipliers:')
+    expect(tooltip).not.toContain('&sum;')
   })
 
   it('renders tranquil air totem marker labels', () => {

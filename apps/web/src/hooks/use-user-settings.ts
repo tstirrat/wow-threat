@@ -30,6 +30,7 @@ import type {
 export interface UserSettings {
   showPets: boolean
   showEnergizeEvents: boolean
+  showBossMelee: boolean
   inferThreatReduction: boolean
   starredReports: StarredReportEntry[]
   starredEntities: StarredEntityEntry[]
@@ -38,6 +39,7 @@ export interface UserSettings {
 const defaultUserSettings: UserSettings = {
   showPets: false,
   showEnergizeEvents: false,
+  showBossMelee: true,
   inferThreatReduction: false,
   starredReports: [],
   starredEntities: [],
@@ -46,6 +48,7 @@ const defaultUserSettings: UserSettings = {
 interface StoredUserSettings {
   showPets?: boolean
   showEnergizeEvents?: boolean
+  showBossMelee?: boolean
   inferThreatReduction?: boolean
   starredReports?: unknown
   starredEntities?: unknown
@@ -258,6 +261,7 @@ const userSettingsConverter: FirestoreDataConverter<UserSettings> = {
     return {
       showPets: settings.showPets,
       showEnergizeEvents: settings.showEnergizeEvents,
+      showBossMelee: settings.showBossMelee,
       inferThreatReduction: settings.inferThreatReduction,
       starredReports: settings.starredReports,
       starredEntities: settings.starredEntities,
@@ -274,6 +278,10 @@ const userSettingsConverter: FirestoreDataConverter<UserSettings> = {
         typeof data.showEnergizeEvents === 'boolean'
           ? data.showEnergizeEvents
           : defaultUserSettings.showEnergizeEvents,
+      showBossMelee:
+        typeof data.showBossMelee === 'boolean'
+          ? data.showBossMelee
+          : defaultUserSettings.showBossMelee,
       inferThreatReduction:
         typeof data.inferThreatReduction === 'boolean'
           ? data.inferThreatReduction
@@ -287,6 +295,7 @@ const userSettingsConverter: FirestoreDataConverter<UserSettings> = {
 export interface UpdateUserSettingsRequest {
   showPets?: boolean
   showEnergizeEvents?: boolean
+  showBossMelee?: boolean
   inferThreatReduction?: boolean
   starredReports?: StarredReportEntry[]
   starredEntities?: StarredEntityEntry[]

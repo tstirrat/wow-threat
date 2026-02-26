@@ -93,6 +93,7 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       isSaving: false,
       settings: {
         inferThreatReduction: true,
+        showBossMelee: true,
         showEnergizeEvents: false,
         showPets: false,
       },

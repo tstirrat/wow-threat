@@ -36,6 +36,10 @@ export class ThreatChartObject {
     return this.section.getByRole('checkbox', { name: 'Show energize events' })
   }
 
+  showBossMeleeCheckbox(): Locator {
+    return this.section.getByRole('checkbox', { name: 'Show boss melee' })
+  }
+
   inferThreatReductionCheckbox(): Locator {
     return this.section.getByRole('checkbox', {
       name: 'Infer threat reduction buffs',
@@ -144,6 +148,17 @@ export class ThreatChartObject {
     }
 
     await showEnergizeEventsCheckbox.click()
+  }
+
+  async setShowBossMelee(checked: boolean): Promise<void> {
+    const showBossMeleeCheckbox = this.showBossMeleeCheckbox()
+    const isChecked = await showBossMeleeCheckbox.isChecked()
+
+    if (isChecked === checked) {
+      return
+    }
+
+    await showBossMeleeCheckbox.click()
   }
 
   async setInferThreatReduction(checked: boolean): Promise<void> {

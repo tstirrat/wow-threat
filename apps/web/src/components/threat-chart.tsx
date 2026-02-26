@@ -6,7 +6,6 @@ import * as echarts from 'echarts'
 import ReactEChartsCore from 'echarts-for-react/lib/core'
 import {
   type FC,
-  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -18,7 +17,10 @@ import { useThreatChartThemeColors } from '../hooks/use-threat-chart-theme-color
 import { useThreatChartZoom } from '../hooks/use-threat-chart-zoom'
 import { formatTimelineTime } from '../lib/format'
 import { resolveSeriesWindowBounds } from '../lib/threat-aggregation'
-import { shouldRenderThreatPoint } from '../lib/threat-chart-event-visibility'
+import {
+  shouldRenderThreatPoint,
+  sortThreatPointsForRendering,
+} from '../lib/threat-chart-event-visibility'
 import { resolvePointSize } from '../lib/threat-chart-point-size'
 import {
   bossMeleeMarkerColor,
@@ -71,6 +73,8 @@ export type ThreatChartProps = {
   onShowPetsChange: (showPets: boolean) => void
   showEnergizeEvents: boolean
   onShowEnergizeEventsChange: (showEnergizeEvents: boolean) => void
+  showBossMelee: boolean
+  onShowBossMeleeChange: (showBossMelee: boolean) => void
   inferThreatReduction: boolean
   onInferThreatReductionChange: (inferThreatReduction: boolean) => void
 }
@@ -88,6 +92,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   onShowPetsChange,
   showEnergizeEvents,
   onShowEnergizeEventsChange,
+  showBossMelee,
+  onShowBossMeleeChange,
   inferThreatReduction,
   onInferThreatReductionChange,
 }) => {
@@ -136,29 +142,45 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   const chartSeries = useMemo(
     () =>
       visibleSeries.map((item) => {
-        const toDataPoint = (
-          point: ThreatSeries['points'][number],
-        ): SeriesChartPoint => ({
-          ...point,
-          actorId: item.actorId,
-          actorColor: item.color,
-          focusedActorId: item.actorId,
-          value: [point.timeMs, point.totalThreat],
-        })
+        const toDataPoint = (point: ThreatSeries['points'][number]) => {
+          const pointColor = resolvePointColor(point, item.color)
+
+          return {
+            ...point,
+            actorId: item.actorId,
+            actorColor: item.color,
+            focusedActorId: item.actorId,
+            value: [point.timeMs, point.totalThreat] as [number, number],
+            itemStyle: {
+              color: pointColor,
+              borderColor: pointColor,
+            },
+            emphasis: {
+              itemStyle: {
+                color: pointColor,
+                borderColor: pointColor,
+              },
+            },
+          }
+        }
 
         return {
           actorId: item.actorId,
           actorType: item.actorType,
           color: item.color,
-          data: item.points
-            .filter((point) =>
-              shouldRenderThreatPoint({ point, showEnergizeEvents }),
+          data: sortThreatPointsForRendering(
+            item.points.filter((point) =>
+              shouldRenderThreatPoint({
+                point,
+                showEnergizeEvents,
+                showBossMelee,
+              }),
             )
-            .map(toDataPoint),
+          ).map(toDataPoint),
           name: item.label,
         }
       }),
-    [showEnergizeEvents, visibleSeries],
+    [showBossMelee, showEnergizeEvents, visibleSeries],
   )
 
   const visiblePlayerIds = useMemo(
@@ -275,14 +297,16 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         triggerLineEvent: true,
         animation: false,
         itemStyle: {
-          color: (params: { data?: SeriesChartPoint }) =>
-            resolvePointColor(params.data as SeriesChartPoint, item.color),
-          borderColor: (params: { data?: SeriesChartPoint }) =>
-            resolvePointColor(params.data as SeriesChartPoint, item.color),
+          color: item.color,
+          borderColor: item.color,
         },
         emphasis: {
           focus: 'series',
           scale: true,
+          itemStyle: {
+            color: item.color,
+            borderColor: item.color,
+          },
           lineStyle: {
             width: 3,
           },
@@ -308,6 +332,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         onClearIsolate={handleClearIsolate}
         showEnergizeEvents={showEnergizeEvents}
         onShowEnergizeEventsChange={onShowEnergizeEventsChange}
+        showBossMelee={showBossMelee}
+        onShowBossMeleeChange={onShowBossMeleeChange}
         inferThreatReduction={inferThreatReduction}
         onInferThreatReductionChange={onInferThreatReductionChange}
       />

@@ -356,6 +356,14 @@ export const FightPage: FC = () => {
     },
     [updateUserSettings],
   )
+  const handleShowBossMeleeChange = useCallback(
+    (showBossMelee: boolean) => {
+      void updateUserSettings({
+        showBossMelee,
+      })
+    },
+    [updateUserSettings],
+  )
   const handleInferThreatReductionChange = useCallback(
     (inferThreatReduction: boolean) => {
       void updateUserSettings({
@@ -460,6 +468,8 @@ export const FightPage: FC = () => {
             onShowPetsChange={handleShowPetsChange}
             showEnergizeEvents={userSettings.showEnergizeEvents}
             onShowEnergizeEventsChange={handleShowEnergizeEventsChange}
+            showBossMelee={userSettings.showBossMelee}
+            onShowBossMeleeChange={handleShowBossMeleeChange}
             inferThreatReduction={userSettings.inferThreatReduction}
             onInferThreatReductionChange={handleInferThreatReductionChange}
           />

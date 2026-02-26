@@ -465,6 +465,7 @@ describe('threat-aggregation', () => {
     expect(tankSeries?.points).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
+          amount: 700,
           timeMs: 200,
           totalThreat: 200,
           markerKind: 'bossMelee',
@@ -474,6 +475,7 @@ describe('threat-aggregation', () => {
     expect(healerSeries?.points).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
+          amount: 550,
           timeMs: 300,
           totalThreat: 0,
           markerKind: 'bossMelee',

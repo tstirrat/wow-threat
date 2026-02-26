@@ -20,6 +20,8 @@ export interface ThreatChartControlsProps {
   onClearIsolate: () => void
   showEnergizeEvents: boolean
   onShowEnergizeEventsChange: (showEnergizeEvents: boolean) => void
+  showBossMelee: boolean
+  onShowBossMeleeChange: (showBossMelee: boolean) => void
   inferThreatReduction: boolean
   onInferThreatReductionChange: (inferThreatReduction: boolean) => void
 }
@@ -30,10 +32,13 @@ export const ThreatChartControls: FC<ThreatChartControlsProps> = ({
   onClearIsolate,
   showEnergizeEvents,
   onShowEnergizeEventsChange,
+  showBossMelee,
+  onShowBossMeleeChange,
   inferThreatReduction,
   onInferThreatReductionChange,
 }) => {
   const showEnergizeEventsId = useId()
+  const showBossMeleeId = useId()
   const inferThreatReductionId = useId()
 
   return (
@@ -65,6 +70,18 @@ export const ThreatChartControls: FC<ThreatChartControlsProps> = ({
             htmlFor={showEnergizeEventsId}
           >
             Show energize events
+          </Label>
+        </div>
+        <div className="flex items-center gap-2">
+          <Checkbox
+            checked={showBossMelee}
+            id={showBossMeleeId}
+            onCheckedChange={(checked) => {
+              onShowBossMeleeChange(checked === true)
+            }}
+          />
+          <Label className="cursor-pointer text-sm" htmlFor={showBossMeleeId}>
+            Show boss melee
           </Label>
         </div>
         <div className="flex items-center gap-1">

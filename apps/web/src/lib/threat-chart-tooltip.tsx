@@ -135,6 +135,7 @@ function formatThreatValue(data: TooltipRenderData): string {
 }
 
 function tooltipContent({ data }: { data: TooltipRenderData }): JSX.Element {
+  const isBossMeleeMarker = data.markerKind === 'bossMelee'
   const rowStyle = {
     display: 'flex',
     justifyContent: 'space-between',
@@ -179,7 +180,7 @@ function tooltipContent({ data }: { data: TooltipRenderData }): JSX.Element {
         </span>
         <span>{data.formula}</span>
       </div>
-      {data.visibleModifiers.length > 0 ? (
+      {!isBossMeleeMarker && data.visibleModifiers.length > 0 ? (
         <>
           <div style={rowStyle}>
             <span>Multipliers:</span>
@@ -214,10 +215,12 @@ function tooltipContent({ data }: { data: TooltipRenderData }): JSX.Element {
           </div>
         </>
       ) : null}
-      <div style={rowStyle}>
-        <span>Threat: {formatThreatValue(data)}</span>
-        <span>&sum; {formatTooltipNumber(data.totalThreat)}</span>
-      </div>
+      {!isBossMeleeMarker ? (
+        <div style={rowStyle}>
+          <span>Threat: {formatThreatValue(data)}</span>
+          <span>&sum; {formatTooltipNumber(data.totalThreat)}</span>
+        </div>
+      ) : null}
       {data.auraLabel && data.auraStatusColor ? (
         <div>
           Aura:{' '}
