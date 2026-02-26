@@ -83,9 +83,9 @@ export const LandingPage: FC = () => {
         </section>
       ) : null}
 
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className="grid gap-5 md:grid-cols-3">
         <SectionCard
-          title="Recently viewed"
+          title="Recent logs"
           subtitle="Most recently loaded report codes in this browser context."
         >
           <RecentReportsList
@@ -94,6 +94,14 @@ export const LandingPage: FC = () => {
             }}
             reports={recentReports}
           />
+        </SectionCard>
+        <SectionCard
+          title="Guild logs"
+          subtitle="Shared guild report history is coming soon."
+        >
+          <p className="text-sm text-muted-foreground">
+            Guild log tracking and quick access will be available here.
+          </p>
         </SectionCard>
         {shouldShowAccountReports ? (
           <SectionCard
@@ -110,8 +118,8 @@ export const LandingPage: FC = () => {
                 {isRefreshingAccountReports ? 'Refreshing...' : 'Refresh'}
               </Button>
             }
-            title="Recent Warcraft Logs"
-            subtitle="Latest personal and guild logs for your signed-in account."
+            title="Personal logs"
+            subtitle="Latest logs for your signed-in account."
           >
             {isLoadingAccountReports ? (
               <p aria-live="polite" className="text-sm text-muted-foreground">
