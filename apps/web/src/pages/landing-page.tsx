@@ -1,29 +1,27 @@
 /**
- * Landing page for report loading via URL, history, and examples.
+ * Landing page for report loading via history and examples.
  */
 import { useAuth } from '@/auth/auth-provider'
+import { ArrowUp, X } from 'lucide-react'
 import { type FC, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 
-import { getReport } from '../api/reports'
 import { AccountRecentReportsList } from '../components/account-recent-reports-list'
 import { ExampleReportList } from '../components/example-report-list'
 import { RecentReportsList } from '../components/recent-reports-list'
-import { ReportUrlForm } from '../components/report-url-form'
 import { SectionCard } from '../components/section-card'
 import { Alert, AlertDescription } from '../components/ui/alert'
 import { Button } from '../components/ui/button'
+import { Kbd, KbdGroup } from '../components/ui/kbd'
 import { useRecentReports } from '../hooks/use-recent-reports'
 import { useUserRecentReports } from '../hooks/use-user-recent-reports'
-import { defaultHost, exampleReports } from '../lib/constants'
-import { buildBossKillNavigationFights } from '../lib/fight-navigation'
-import { parseReportInput } from '../lib/wcl-url'
+import { exampleReports } from '../lib/constants'
+import { superKey } from '../lib/keyboard-shortcut'
+
+const reportHintDismissedStorageKey = 'landing-report-hint-dismissed'
 
 export const LandingPage: FC = () => {
-  const navigate = useNavigate()
   const { authEnabled, user } = useAuth()
-  const { recentReports, addRecentReport, removeRecentReport } =
-    useRecentReports()
+  const { recentReports, removeRecentReport } = useRecentReports()
   const {
     reports: accountRecentReports,
     isLoading: isLoadingAccountReports,
@@ -31,81 +29,59 @@ export const LandingPage: FC = () => {
     error: accountRecentReportsError,
     refresh: refreshAccountReports,
   } = useUserRecentReports(10)
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const shouldShowAccountReports = authEnabled && Boolean(user)
-  const handleReportSubmit = async (input: string): Promise<void> => {
-    const parsed = parseReportInput(input, defaultHost)
-    if (!parsed) {
-      setErrorMessage(
-        'Unable to parse report input. Use a fresh/sod/vanilla report URL or a report code.',
-      )
-      return
+  const [isReportHintDismissed, setIsReportHintDismissed] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false
     }
 
-    setIsSubmitting(true)
-    try {
-      const report = await getReport(parsed.reportId)
-      const isArchived = report.archiveStatus?.isArchived ?? false
-      const isAccessible = report.archiveStatus?.isAccessible ?? true
-
-      addRecentReport({
-        reportId: parsed.reportId,
-        title: report.title,
-        sourceHost: parsed.host,
-        lastOpenedAt: Date.now(),
-        zoneName: report.zone?.name,
-        startTime: report.startTime,
-        bossKillCount: buildBossKillNavigationFights(report.fights).length,
-        guildName: report.guild?.name ?? null,
-        guildFaction: report.guild?.faction ?? null,
-        isArchived,
-        isAccessible,
-        archiveDate: report.archiveStatus?.archiveDate ?? null,
-      })
-
-      if (isArchived || !isAccessible) {
-        setErrorMessage(
-          'This report is archived or inaccessible, so it cannot be opened here.',
-        )
-        return
-      }
-
-      setErrorMessage(null)
-      navigate(`/report/${parsed.reportId}`, {
-        state: {
-          host: parsed.host,
-        },
-      })
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Unable to load report metadata.'
-      setErrorMessage(message)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+    return window.localStorage.getItem(reportHintDismissedStorageKey) === 'true'
+  })
 
   return (
     <div className="space-y-5">
-      <SectionCard
-        title="Load report"
-        subtitle="Paste a Warcraft Logs report URL or report ID to open threat views."
-      >
-        <ReportUrlForm
-          isSubmitting={isSubmitting}
-          onSubmit={(input) => {
-            void handleReportSubmit(input)
-          }}
-        />
-        {errorMessage ? (
-          <Alert aria-live="polite" className="mt-3" variant="destructive">
-            <AlertDescription>{errorMessage}</AlertDescription>
-          </Alert>
-        ) : null}
-      </SectionCard>
+      {!isReportHintDismissed ? (
+        <section aria-label="Report input guidance">
+          <div className="relative overflow-hidden rounded-lg border border-border/80 bg-gradient-to-r from-panel via-panel to-primary/5 p-4 sm:p-5">
+            <div className="pointer-events-none absolute left-10 top-0 h-4 w-4 -translate-y-1/2 rotate-45 border-l border-t border-border/80 bg-panel" />
+            <Button
+              aria-label="Dismiss report input guidance"
+              className="absolute right-2 top-2"
+              size="icon-sm"
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                window.localStorage.setItem(
+                  reportHintDismissedStorageKey,
+                  'true',
+                )
+                setIsReportHintDismissed(true)
+              }}
+            >
+              <X aria-hidden="true" className="size-4" />
+            </Button>
+
+            <div className="pr-8">
+              <p className="inline-flex items-center gap-2 text-sm font-medium text-foreground">
+                <ArrowUp
+                  aria-hidden="true"
+                  className="size-4 text-primary motion-safe:animate-bounce"
+                />
+                Paste a report into the input above
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                <span>or use</span>
+                <KbdGroup>
+                  <Kbd>{superKey()}</Kbd>
+                  <span>+</span>
+                  <Kbd>O</Kbd>
+                </KbdGroup>
+                <span>to focus it instantly.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <div className="grid gap-5 xl:grid-cols-2">
         <SectionCard

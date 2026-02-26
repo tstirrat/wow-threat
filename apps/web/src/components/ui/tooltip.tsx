@@ -21,10 +21,14 @@ function TooltipTrigger({
 }
 
 function TooltipContent({
+  children,
   className,
   sideOffset = 6,
+  withArrow = false,
   ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+}: React.ComponentProps<typeof TooltipPrimitive.Content> & {
+  withArrow?: boolean
+}) {
   return (
     <TooltipPrimitive.Portal>
       <TooltipPrimitive.Content
@@ -35,7 +39,12 @@ function TooltipContent({
           className,
         )}
         {...props}
-      />
+      >
+        {children}
+        {withArrow ? (
+          <TooltipPrimitive.Arrow className="fill-popover" />
+        ) : null}
+      </TooltipPrimitive.Content>
     </TooltipPrimitive.Portal>
   )
 }

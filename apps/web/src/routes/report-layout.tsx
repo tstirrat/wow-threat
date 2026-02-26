@@ -107,4 +107,5 @@ export const ReportLayout: FC = () => {
   )
 }
 
+// for chunking, to make these both use the same chunk
 export { ReportPage } from '../pages/report-page'
