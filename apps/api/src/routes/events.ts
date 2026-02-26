@@ -22,7 +22,7 @@ import {
 } from '../middleware/error'
 import { CacheKeys, createCache, normalizeVisibility } from '../services/cache'
 import { WCLClient } from '../services/wcl'
-import type { AugmentedEventsResponse } from '../types/api'
+import type { AugmentedEventsResponse, ReportActorRole } from '../types/api'
 import type { Bindings, Variables } from '../types/bindings'
 
 export const eventsRoutes = new Hono<{
@@ -85,10 +85,7 @@ eventsRoutes.get('/', async (c) => {
   const wcl = new WCLClient(c.env, uid)
 
   // Get report to find game version and fight info
-  const reportData = await wcl.getReport(
-    code,
-    inferThreatReduction ? { rankingFightIds: [fightId] } : undefined,
-  )
+  const reportData = await wcl.getReport(code)
   if (!reportData?.reportData?.report) {
     throw reportNotFound(code)
   }
@@ -172,8 +169,24 @@ eventsRoutes.get('/', async (c) => {
     ...(fight.friendlyPlayers ?? []),
     ...(fight.friendlyPets ?? []).map((pet) => pet.id),
   ])
+  const fightFriendlyPlayers = report.masterData.actors.flatMap((actor) =>
+    actor.type === 'Player' && (fight.friendlyPlayers ?? []).includes(actor.id)
+      ? [
+          {
+            id: actor.id,
+            name: actor.name,
+          },
+        ]
+      : [],
+  )
+  const friendlyPlayerRolesPromise = inferThreatReduction
+    ? wcl.getFightPlayerRoles(code, fightId, visibility, fightFriendlyPlayers, {
+        bypassCache: bypassAugmentedCache,
+      })
+    : Promise.resolve(new Map<number, ReportActorRole>())
 
-  const [rawEvents, initialAurasByActor] = await Promise.all([
+  const [rawEvents, initialAurasByActor, friendlyPlayerRoles] =
+    await Promise.all([
     wcl.getEvents(code, fightId, visibility, fight.startTime, fight.endTime, {
       bypassCache: bypassAugmentedCache,
     }) as Promise<WCLEvent[]>,
@@ -187,14 +200,22 @@ eventsRoutes.get('/', async (c) => {
         bypassCache: bypassAugmentedCache,
       },
     ),
+    friendlyPlayerRolesPromise,
   ])
+  const tankActorIds = new Set(
+    [...friendlyPlayerRoles.entries()]
+      .filter(([, role]) => role === 'Tank')
+      .map(([actorId]) => actorId),
+  )
 
   console.info('[Events] Loaded fight events and initial aura seeds', {
     code,
     fightId,
     rawEvents: rawEvents.length,
     fightFriendlyActors: fightFriendlyActorIds.size,
+    fightFriendlyPlayers: fightFriendlyPlayers.length,
     inferThreatReduction,
+    inferredTankActors: tankActorIds.size,
     initialAuraActorsBeforeProcessors: initialAurasByActor.size,
     initialAuraIdsBeforeProcessors: countInitialAuraIds(initialAurasByActor),
   })
@@ -222,6 +243,7 @@ eventsRoutes.get('/', async (c) => {
     report,
     fight,
     inferThreatReduction,
+    tankActorIds,
     config,
   })
   const serializedInitialAurasByActor = Object.fromEntries(

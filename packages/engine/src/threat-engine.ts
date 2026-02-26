@@ -135,6 +135,8 @@ export interface ProcessEventsInput {
   fight?: ReportFight | null
   /** Enable request-scoped threat-reduction minmax processors. */
   inferThreatReduction?: boolean
+  /** Optional pre-resolved tank actor IDs for fight-scoped processors. */
+  tankActorIds?: Set<number>
   /** Threat configuration for the game version */
   config: ThreatConfig
   /** Optional request-scoped event processors. */
@@ -183,6 +185,7 @@ export class ThreatEngine {
       report: input.report ?? null,
       fight: input.fight ?? null,
       inferThreatReduction: input.inferThreatReduction ?? false,
+      tankActorIds: input.tankActorIds,
     }
     const builtInProcessors = this.processorFactories.flatMap((factory) => {
       const processor = factory(processorFactoryContext)
@@ -225,6 +228,7 @@ function processEventsWithProcessors(
     report,
     fight,
     inferThreatReduction = false,
+    tankActorIds,
     config,
     processors = [],
   } = input
@@ -236,6 +240,7 @@ function processEventsWithProcessors(
     namespace: processorNamespace,
     actorMap,
     friendlyActorIds,
+    tankActorIds,
     enemies,
     encounterId: inputEncounterId ?? null,
     config,

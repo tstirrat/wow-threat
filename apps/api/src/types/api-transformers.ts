@@ -20,8 +20,13 @@ import type {
 /** Convert a WCL actor to a stable frontend-facing actor summary. */
 export function toReportActorSummary(
   actor: ReportActor,
-  role?: ReportActorRole,
+  options: {
+    role?: ReportActorRole
+    spec?: string
+  } = {},
 ): ReportActorSummary {
+  const { role, spec } = options
+
   if (actor.type === 'Pet') {
     return {
       id: actor.id,
@@ -39,6 +44,7 @@ export function toReportActorSummary(
     name: actor.name,
     type: actor.type,
     subType: actor.subType,
+    ...(spec ? { spec } : {}),
     ...(role ? { role } : {}),
   }
 }

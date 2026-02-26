@@ -251,6 +251,31 @@ export interface ReportRankedCharacter {
   zoneRankings?: unknown
 }
 
+export interface ReportPlayerDetailsSpec {
+  spec: string
+  count: number
+}
+
+export interface ReportPlayerDetailEntry {
+  id: number
+  name: string
+  type: string
+  icon?: string | null
+  specs: ReportPlayerDetailsSpec[]
+}
+
+export interface ReportPlayerDetailsByRole {
+  tanks?: ReportPlayerDetailEntry[]
+  healers?: ReportPlayerDetailEntry[]
+  dps?: ReportPlayerDetailEntry[]
+}
+
+export interface ReportPlayerDetails {
+  data?: {
+    playerDetails?: ReportPlayerDetailsByRole | null
+  } | null
+}
+
 export interface Report {
   code: string
   title: string
@@ -267,7 +292,7 @@ export interface Report {
   // Report-root fields available by selection when needed
   rankedCharacters?: ReportRankedCharacter[] | null
   rankings: ReportEncounterRankings | unknown | null
-  playerDetails?: unknown
+  playerDetails?: ReportPlayerDetails | null
   phases?: ReportEncounterPhases[] | null
 }
 

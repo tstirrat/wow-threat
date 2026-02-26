@@ -11,7 +11,7 @@ export const cacheSchemaVersions = {
   fights: 'v3',
   events: 'v3',
   friendlyBuffBandsByFight: 'v5',
-  encounterActorRoles: 'v1',
+  fightPlayerRoles: 'v1',
   augmentedEvents: 'v17',
 } as const
 
@@ -26,5 +26,5 @@ function stripVersionPrefix(version: string): string {
 
 export const immutableApiCacheVersions = {
   report: `report-v${stripVersionPrefix(immutableApiRouteVersions.report)}${stripVersionPrefix(cacheSchemaVersions.report)}`,
-  fight: `fight-v${stripVersionPrefix(immutableApiRouteVersions.fight)}${stripVersionPrefix(cacheSchemaVersions.fights)}${stripVersionPrefix(cacheSchemaVersions.encounterActorRoles)}`,
+  fight: `fight-v${stripVersionPrefix(immutableApiRouteVersions.fight)}${stripVersionPrefix(cacheSchemaVersions.fights)}${stripVersionPrefix(cacheSchemaVersions.fightPlayerRoles)}`,
 } as const

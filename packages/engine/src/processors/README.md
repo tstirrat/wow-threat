@@ -35,7 +35,7 @@ that shared state through a typed namespace.
     or combatantinfo aura snapshots.
 - `minmax-salvation`
   - Active only when `inferThreatReduction` is enabled.
-  - Uses `report.rankings` + fight composition to infer non-tank Salvation
+  - Uses fight-scoped `tankActorIds` + fight composition to infer non-tank Salvation
     seeds.
   - Checks canonical initial buffs (`seeded + inferred`) and only adds
     Salvation for non-tanks missing both `1038` and `25895`.

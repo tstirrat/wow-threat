@@ -3,10 +3,7 @@
  */
 import type {
   Report,
-  ReportEncounterRankings,
-  ReportEncounterRankingsEntry,
-  ReportRankingsCharacter,
-  ReportRankingsRoleGroup,
+  ReportPlayerDetailsByRole,
   WCLEventsResponse,
   WCLReportResponse,
 } from '@wow-threat/wcl-types'
@@ -176,14 +173,6 @@ interface WclFriendlyBuffBandsData {
   } | null
 }
 
-interface WclEncounterActorRolesData {
-  reportData?: {
-    report?: {
-      rankings?: ReportEncounterRankings | null
-    } | null
-  } | null
-}
-
 interface FriendlyBuffBand {
   startTime: number
   endTime: number | null
@@ -207,45 +196,28 @@ interface ActorScopedFriendlyBuffQuery {
   query: string
 }
 
-interface EncounterRankingTarget {
-  encounterId: number | null
-  fightId: number | null
-}
-
 interface EncounterFriendlyPlayer {
   id: number
   name: string
 }
 
-type ReportWithFightRankings = Pick<
+type ReportWithFightPlayerDetails = Pick<
   Report,
-  'fights' | 'masterData' | 'rankings'
+  'fights' | 'masterData' | 'playerDetails'
 >
-
-interface GetReportOptions {
-  rankingFightIds?: number[]
-}
 
 interface WclFightDetailsData {
   reportData?: {
     report?:
-      | (ReportWithFightRankings & Pick<Report, 'code' | 'visibility'>)
+      | (ReportWithFightPlayerDetails & Pick<Report, 'code' | 'visibility'>)
       | null
   } | null
 }
 
-function normalizeRankingFightIds(fightIds: number[] = []): number[] {
-  return [...new Set(fightIds.map((fightId) => Math.trunc(fightId)))]
-    .filter(Number.isFinite)
-    .sort((left, right) => left - right)
-}
-
-function buildReportRankingScope(rankingFightIds: number[]): string {
-  if (rankingFightIds.length === 0) {
-    return 'none'
-  }
-
-  return `fights-${rankingFightIds.join('_')}`
+interface WclFightPlayerDetailsData {
+  reportData?: {
+    report?: Pick<Report, 'playerDetails'> | null
+  } | null
 }
 
 function extractGraphQLOperationName(graphqlQuery: string): string {
@@ -377,128 +349,100 @@ function toGuildWclReference(node: WclGuildNode): GuildWclReference | null {
   }
 }
 
-function normalizeReportRankings(
-  value: ReportEncounterRankings | null | undefined,
-): ReportEncounterRankingsEntry[] {
-  if (!Array.isArray(value?.data)) {
-    return []
+const roleByPlayerDetailsBucket = {
+  dps: 'DPS',
+  healers: 'Healer',
+  tanks: 'Tank',
+} as const satisfies Record<keyof ReportPlayerDetailsByRole, ReportActorRole>
+
+function normalizePlayerDetailsBuckets(
+  value: Report['playerDetails'] | null | undefined,
+): ReportPlayerDetailsByRole {
+  return value?.data?.playerDetails ?? {}
+}
+
+function resolvePrimarySpecName(
+  playerSpecs: Array<{ spec: string; count: number }>,
+): string | undefined {
+  if (playerSpecs.length === 0) {
+    return undefined
   }
 
-  return value.data
-}
-
-function buildFriendlyPlayerIdsByNormalizedName(
-  friendlyPlayers: EncounterFriendlyPlayer[],
-): Map<string, Set<number>> {
-  return friendlyPlayers.reduce((map, player) => {
-    const normalizedName = player.name.toLowerCase().trim()
-    if (normalizedName.length === 0) {
-      return map
+  const sortedByCount = [...playerSpecs].sort((left, right) => {
+    if (right.count !== left.count) {
+      return right.count - left.count
     }
 
-    const actorIds = map.get(normalizedName) ?? new Set<number>()
-    actorIds.add(player.id)
-    map.set(normalizedName, actorIds)
-    return map
-  }, new Map<string, Set<number>>())
+    return left.spec.localeCompare(right.spec)
+  })
+
+  return sortedByCount[0]?.spec
 }
 
-function buildFriendlyPlayerIdsByNameFromEntries(
-  friendlyPlayers: EncounterFriendlyPlayer[],
-): Map<string, Set<number>> {
-  return buildFriendlyPlayerIdsByNormalizedName(friendlyPlayers)
-}
-
-function parseRoleEntriesToActorRoles({
-  rankingEntries,
-  encounterTarget,
-  reportActorNameLookup,
+function resolveRolesFromPlayerDetails({
   friendlyPlayerIds,
+  playerDetails,
 }: {
-  rankingEntries: ReportEncounterRankingsEntry[]
-  encounterTarget: EncounterRankingTarget
-  reportActorNameLookup: Map<string, Set<number>>
   friendlyPlayerIds: Set<number>
+  playerDetails: Report['playerDetails'] | null | undefined
 }): Map<number, ReportActorRole> {
-  return rankingEntries.reduce((actorRoles, rankingEntry) => {
-    if (!rankingEntry) {
-      return actorRoles
+  const roleMap = new Map<number, ReportActorRole>()
+  const buckets = normalizePlayerDetailsBuckets(playerDetails)
+
+  for (const roleBucket of ['tanks', 'healers', 'dps'] as const) {
+    const players = buckets[roleBucket]
+    if (!Array.isArray(players)) {
+      continue
     }
 
-    const rankingFightId = rankingEntry.fightID ?? null
-    if (rankingFightId !== null && rankingFightId !== encounterTarget.fightId) {
-      return actorRoles
-    }
-
-    const rolesByBucket: Array<
-      ['Tank' | 'Healer' | 'DPS', ReportRankingsRoleGroup | null | undefined]
-    > = [
-      ['Tank', rankingEntry.roles?.tanks],
-      ['Healer', rankingEntry.roles?.healers],
-      ['DPS', rankingEntry.roles?.dps],
-    ]
-
-    rolesByBucket.forEach(([role, roleBucket]) => {
-      if (!Array.isArray(roleBucket?.characters)) {
+    players.forEach((player) => {
+      const actorId = parseNumericId(player.id)
+      if (actorId === null || !friendlyPlayerIds.has(actorId)) {
         return
       }
 
-      roleBucket.characters.forEach((character) => {
-        parseReportRankingCharacterActorIds(
-          character,
-          reportActorNameLookup,
-          friendlyPlayerIds,
-        ).forEach((actorId) => {
-          actorRoles.set(actorId, role)
-        })
-      })
+      roleMap.set(actorId, roleByPlayerDetailsBucket[roleBucket])
     })
+  }
 
-    return actorRoles
-  }, new Map<number, ReportActorRole>())
+  return roleMap
 }
 
-function buildFriendlyPlayerIdsByName(
-  reportActors: Map<number, Report['masterData']['actors'][number]>,
-  friendlyPlayerIds: Set<number>,
-): Map<string, Set<number>> {
-  return [...friendlyPlayerIds].reduce((map, actorId) => {
-    const actor = reportActors.get(actorId)
-    if (!actor || actor.type !== 'Player' || !actor.name) {
-      return map
+function resolveSpecsFromPlayerDetails({
+  friendlyPlayerIds,
+  playerDetails,
+}: {
+  friendlyPlayerIds: Set<number>
+  playerDetails: Report['playerDetails'] | null | undefined
+}): Map<number, string> {
+  const specMap = new Map<number, string>()
+  const buckets = normalizePlayerDetailsBuckets(playerDetails)
+
+  for (const roleBucket of ['tanks', 'healers', 'dps'] as const) {
+    const players = buckets[roleBucket]
+    if (!Array.isArray(players)) {
+      continue
     }
 
-    const normalizedName = actor.name.toLowerCase().trim()
-    const actorIds = map.get(normalizedName) ?? new Set()
-    actorIds.add(actorId)
-    map.set(normalizedName, actorIds)
-    return map
-  }, new Map<string, Set<number>>())
-}
+    players.forEach((player) => {
+      const actorId = parseNumericId(player.id)
+      if (actorId === null || !friendlyPlayerIds.has(actorId)) {
+        return
+      }
 
-function parseReportRankingCharacterActorIds(
-  character: ReportRankingsCharacter | null | undefined,
-  reportActorNameLookup: Map<string, Set<number>>,
-  friendlyPlayerIds: Set<number>,
-): Set<number> {
-  const actorIds = new Set<number>()
-  const actorId = character?.id ?? null
-  if (actorId !== null && friendlyPlayerIds.has(actorId)) {
-    actorIds.add(actorId)
+      const primarySpec = resolvePrimarySpecName(player.specs)
+      if (primarySpec) {
+        specMap.set(actorId, primarySpec)
+      }
+    })
   }
 
-  const normalizedName = character?.name?.toLowerCase().trim()
-  if (normalizedName) {
-    reportActorNameLookup
-      .get(normalizedName)
-      ?.forEach((matchingActorId) => actorIds.add(matchingActorId))
-  }
-
-  return actorIds
+  return specMap
 }
 
-function resolveFightActorRolesFromReportRankings(
-  report: ReportWithFightRankings,
+/** Resolve fight actor roles from report playerDetails metadata. */
+export function resolveFightActorRoles(
+  report: ReportWithFightPlayerDetails,
   fightId: number,
 ): Map<number, ReportActorRole> {
   const fight = report.fights.find((entry) => entry.id === fightId)
@@ -506,47 +450,39 @@ function resolveFightActorRolesFromReportRankings(
     return new Map()
   }
 
-  const encounterTarget: EncounterRankingTarget = {
-    encounterId: fight.encounterID ?? null,
-    fightId,
-  }
-  const friendlyPlayerIds = new Set(fight.friendlyPlayers ?? [])
-  const reportActors = new Map(
-    report.masterData.actors.map((actor) => [actor.id, actor]),
-  )
-  const reportActorNameLookup = buildFriendlyPlayerIdsByName(
-    reportActors,
-    friendlyPlayerIds,
-  )
-  return parseRoleEntriesToActorRoles({
-    rankingEntries: normalizeReportRankings(
-      report.rankings as ReportEncounterRankings,
-    ),
-    encounterTarget,
-    reportActorNameLookup,
-    friendlyPlayerIds,
+  return resolveRolesFromPlayerDetails({
+    friendlyPlayerIds: new Set(fight.friendlyPlayers ?? []),
+    playerDetails: report.playerDetails,
   })
 }
 
-/** Resolve fight actor roles from report encounter ranking metadata. */
-export function resolveFightActorRoles(
-  report: ReportWithFightRankings,
+/** Resolve fight actor specs from report playerDetails metadata. */
+export function resolveFightActorSpecs(
+  report: ReportWithFightPlayerDetails,
   fightId: number,
-): Map<number, ReportActorRole> {
-  return resolveFightActorRolesFromReportRankings(report, fightId)
+): Map<number, string> {
+  const fight = report.fights.find((entry) => entry.id === fightId)
+  if (!fight) {
+    return new Map()
+  }
+
+  return resolveSpecsFromPlayerDetails({
+    friendlyPlayerIds: new Set(fight.friendlyPlayers ?? []),
+    playerDetails: report.playerDetails,
+  })
 }
 
-/** Resolve fight tank actor IDs from report ranking metadata. */
+/** Resolve fight tank actor IDs from report playerDetails metadata. */
 export function resolveFightTankActorIds(
-  report: ReportWithFightRankings,
+  report: ReportWithFightPlayerDetails,
   fightId: number,
 ): Set<number> {
   const tankActorIds = new Set<number>()
-  for (const [actorId, role] of resolveFightActorRoles(report, fightId)) {
+  resolveFightActorRoles(report, fightId).forEach((role, actorId) => {
     if (role === 'Tank') {
       tankActorIds.add(actorId)
     }
-  }
+  })
   return tankActorIds
 }
 
@@ -927,14 +863,12 @@ export class WCLClient {
   private async cacheReport(
     code: string,
     data: WCLReportResponse['data'],
-    rankingScope: string,
   ): Promise<void> {
     const visibility = normalizeVisibility(data.reportData.report.visibility)
     const cacheKey = CacheKeys.report(
       code,
       visibility,
       visibility === 'private' ? this.uid : undefined,
-      rankingScope,
     )
     await this.cache.set(cacheKey, data)
   }
@@ -942,24 +876,9 @@ export class WCLClient {
   /**
    * Get report metadata, including visibility, with client-token fallback to user-token.
    */
-  async getReport(
-    code: string,
-    options: GetReportOptions = {},
-  ): Promise<WCLReportResponse['data']> {
-    const rankingFightIds = normalizeRankingFightIds(options.rankingFightIds)
-    const rankingScope = buildReportRankingScope(rankingFightIds)
-    const privateCacheKey = CacheKeys.report(
-      code,
-      'private',
-      this.uid,
-      rankingScope,
-    )
-    const publicCacheKey = CacheKeys.report(
-      code,
-      'public',
-      undefined,
-      rankingScope,
-    )
+  async getReport(code: string): Promise<WCLReportResponse['data']> {
+    const privateCacheKey = CacheKeys.report(code, 'private', this.uid)
+    const publicCacheKey = CacheKeys.report(code, 'public', undefined)
 
     const privateCached =
       await this.cache.get<WCLReportResponse['data']>(privateCacheKey)
@@ -973,14 +892,8 @@ export class WCLClient {
       return publicCached
     }
 
-    const rankingVariablesDefinition =
-      rankingFightIds.length > 0 ? ', $rankingFightIDs: [Int!]' : ''
-    const rankingsField =
-      rankingFightIds.length > 0
-        ? '\n            rankings(fightIDs: $rankingFightIDs)'
-        : ''
     const query = `
-      query GetReport($code: String!${rankingVariablesDefinition}) {
+      query GetReport($code: String!) {
         reportData {
           report(code: $code) {
             code
@@ -1063,19 +976,13 @@ export class WCLClient {
                 name
                 type
               }
-            }${rankingsField}
+            }
           }
         }
       }
     `
-    const variables: {
-      code: string
-      rankingFightIDs?: number[]
-    } = {
+    const variables = {
       code,
-    }
-    if (rankingFightIds.length > 0) {
-      variables.rankingFightIDs = rankingFightIds
     }
 
     try {
@@ -1084,7 +991,7 @@ export class WCLClient {
         variables,
       )
       if (clientData.reportData.report) {
-        await this.cacheReport(code, clientData, rankingScope)
+        await this.cacheReport(code, clientData)
         return clientData
       }
     } catch (error) {
@@ -1105,7 +1012,7 @@ export class WCLClient {
       throw wclApiError('Report not found')
     }
 
-    await this.cacheReport(code, userData, rankingScope)
+    await this.cacheReport(code, userData)
     return userData
   }
 
@@ -1192,7 +1099,7 @@ export class WCLClient {
                 petOwner
               }
             }
-            rankings(fightIDs: $fightIDs)
+            playerDetails(fightIDs: $fightIDs, includeCombatantInfo: false)
           }
         }
       }
@@ -1227,24 +1134,22 @@ export class WCLClient {
     return userData
   }
 
-  /** Resolve fight actor roles from encounter rankings for a specific fight. */
-  async getEncounterActorRoles(
+  /** Resolve fight actor roles from fight-scoped player details. */
+  async getFightPlayerRoles(
     code: string,
-    encounterId: number | null,
     fightId: number,
     visibility: unknown,
     friendlyPlayers: EncounterFriendlyPlayer[],
     options: { bypassCache?: boolean } = {},
   ): Promise<Map<number, ReportActorRole>> {
-    if (encounterId === null || friendlyPlayers.length === 0) {
+    if (friendlyPlayers.length === 0) {
       return new Map()
     }
 
     const { bypassCache = false } = options
     const normalizedVisibility = normalizeVisibility(visibility)
-    const cacheKey = CacheKeys.encounterActorRoles(
+    const cacheKey = CacheKeys.fightPlayerRoles(
       code,
-      encounterId,
       fightId,
       normalizedVisibility,
       normalizedVisibility === 'private' ? this.uid : undefined,
@@ -1273,39 +1178,35 @@ export class WCLClient {
       normalizedVisibility === 'private'
         ? await this.getUserAccessToken()
         : undefined
+
     const query = `
-      query GetEncounterActorRoles($code: String!, $encounterID: Int!, $fightIDs: [Int!]) {
+      query GetFightPlayerDetails($code: String!, $fightIDs: [Int!], $includeCombatantInfo: Boolean) {
         reportData {
           report(code: $code) {
-            rankings(encounterID: $encounterID, fightIDs: $fightIDs)
+            playerDetails(
+              fightIDs: $fightIDs
+              includeCombatantInfo: $includeCombatantInfo
+            )
           }
         }
       }
     `
-    const data = await this.query<WclEncounterActorRolesData>(
+    const data = await this.query<WclFightPlayerDetailsData>(
       query,
       {
         code,
-        encounterID: encounterId,
         fightIDs: [fightId],
+        includeCombatantInfo: false,
       },
       {
         accessToken,
       },
     )
-
-    const actorRoles = parseRoleEntriesToActorRoles({
-      rankingEntries: normalizeReportRankings(
-        data.reportData?.report?.rankings,
-      ),
-      encounterTarget: {
-        encounterId,
-        fightId,
-      },
-      reportActorNameLookup:
-        buildFriendlyPlayerIdsByNameFromEntries(friendlyPlayers),
+    const actorRoles = resolveRolesFromPlayerDetails({
       friendlyPlayerIds,
+      playerDetails: data.reportData?.report?.playerDetails,
     })
+
     await this.cache.set(
       cacheKey,
       [...actorRoles.entries()].map(([actorId, role]) => ({ actorId, role })),

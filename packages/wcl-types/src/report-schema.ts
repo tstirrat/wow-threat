@@ -363,6 +363,31 @@ export interface WCLSchemaReportEncounterRanking {
   roles: WCLSchemaReportRankingRoles
 }
 
+export interface WCLSchemaReportPlayerDetailSpec {
+  spec: string
+  count: number
+}
+
+export interface WCLSchemaReportPlayerDetailEntry {
+  id: number
+  name: string
+  type: string
+  icon?: string | null
+  specs: WCLSchemaReportPlayerDetailSpec[]
+}
+
+export interface WCLSchemaReportPlayerDetailsByRole {
+  tanks?: WCLSchemaReportPlayerDetailEntry[]
+  healers?: WCLSchemaReportPlayerDetailEntry[]
+  dps?: WCLSchemaReportPlayerDetailEntry[]
+}
+
+export interface WCLSchemaReportPlayerDetails {
+  data?: {
+    playerDetails?: WCLSchemaReportPlayerDetailsByRole | null
+  } | null
+}
+
 export interface WCLSchemaRegion {
   id: number
   compactName: string
@@ -389,7 +414,7 @@ export interface WCLSchemaReport {
   /** Args: translate: boolean | null */
   masterData: WCLSchemaReportMasterData | null
   /** Args: difficulty: number | null, encounterID: number | null, endTime: number | null, fightIDs: Array<number | null> | null, killType: WCLSchemaKillType | null, startTime: number | null, translate: boolean | null, includeCombatantInfo: boolean | null */
-  playerDetails: unknown | null
+  playerDetails: WCLSchemaReportPlayerDetails | null
   rankedCharacters: Array<WCLSchemaCharacter | null> | null
   /**
    * Rankings information for a report, filterable to specific fights, bosses,

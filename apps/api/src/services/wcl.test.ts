@@ -4,7 +4,6 @@
 import type { Report } from '@wow-threat/wcl-types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import encounterActorRolesResponse from '../../test/fixtures/wcl-responses/encounter-actor-roles-response.json'
 import { createMockBindings } from '../../test/setup'
 import { type AppError, ErrorCodes } from '../middleware/error'
 import { encryptSecret, importAesGcmKey } from './token-utils'
@@ -198,49 +197,6 @@ describe('WCLClient.getReport', () => {
     await client.getReport('ABC123')
   })
 
-  it('requests fight-scoped rankings when ranking fight ids are provided', async () => {
-    const fetchMock = vi.fn(
-      async (input: RequestInfo | URL, init?: RequestInit) => {
-        const url = typeof input === 'string' ? input : input.toString()
-
-        if (
-          url.includes('warcraftlogs.com/oauth/token') &&
-          init?.body?.toString().includes('client_credentials')
-        ) {
-          return new Response(
-            JSON.stringify({
-              access_token: 'client-token',
-              expires_in: 3600,
-              token_type: 'Bearer',
-            }),
-            { status: 200, headers: { 'Content-Type': 'application/json' } },
-          )
-        }
-
-        if (url.includes('warcraftlogs.com/api/v2/client')) {
-          const body = init?.body ? JSON.parse(init.body.toString()) : {}
-          const query = body.query as string
-
-          expect(query).toContain('rankings(fightIDs: $rankingFightIDs)')
-          expect(body.variables.rankingFightIDs).toEqual([32])
-
-          return new Response(
-            JSON.stringify({
-              data: createWclReport({ visibility: 'public' }),
-            }),
-            { status: 200, headers: { 'Content-Type': 'application/json' } },
-          )
-        }
-
-        return new Response(null, { status: 404 })
-      },
-    )
-    vi.stubGlobal('fetch', fetchMock)
-
-    const client = new WCLClient(createMockBindings(), 'wcl:12345')
-    await client.getReport('ABC123', { rankingFightIds: [32, 32] })
-  })
-
   it('falls back to user token when client token gets permission error', async () => {
     const mockFetch = createWclFetchMock({ clientTokenFails: true })
     vi.stubGlobal('fetch', mockFetch)
@@ -318,7 +274,7 @@ describe('WCLClient.getFightDetails', () => {
     vi.unstubAllGlobals()
   })
 
-  it('requests fight-scoped report metadata with fight-scoped rankings', async () => {
+  it('requests fight-scoped report metadata with fight-scoped player details', async () => {
     const fetchMock = vi.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = typeof input === 'string' ? input : input.toString()
@@ -340,7 +296,9 @@ describe('WCLClient.getFightDetails', () => {
 
           expect(query).toContain('query GetFightDetails')
           expect(query).toContain('fights(fightIDs: $fightIDs)')
-          expect(query).toContain('rankings(fightIDs: $fightIDs)')
+          expect(query).toContain(
+            'playerDetails(fightIDs: $fightIDs, includeCombatantInfo: false)',
+          )
           expect(body.variables.fightIDs).toEqual([32])
 
           return new Response(
@@ -363,8 +321,14 @@ describe('WCLClient.getFightDetails', () => {
                     friendlyPets: [],
                   },
                 ],
-                rankings: {
-                  data: [],
+                playerDetails: {
+                  data: {
+                    playerDetails: {
+                      tanks: [],
+                      healers: [],
+                      dps: [],
+                    },
+                  },
                 },
               }),
             }),
@@ -385,7 +349,7 @@ describe('WCLClient.getFightDetails', () => {
 })
 
 describe('resolveFightTankActorIds', () => {
-  it('returns tank actor ids when encounter rankings include a matching tank role', () => {
+  it('returns tank actor ids when player details include tank bucket entries', () => {
     const report = {
       code: 'ABC123',
       title: 'Tank roles',
@@ -438,24 +402,35 @@ describe('resolveFightTankActorIds', () => {
           },
         ],
       },
-      rankings: {
-        data: [
-          {
-            encounterID: 9001,
-            fightID: 11,
-            roles: {
-              tanks: {
-                characters: [{ id: 1, name: 'Tank' }],
+      playerDetails: {
+        data: {
+          playerDetails: {
+            tanks: [
+              {
+                id: 1,
+                name: 'Tank',
+                type: 'Warrior',
+                specs: [{ count: 1, spec: 'Protection' }],
               },
-              healers: {
-                characters: [{ id: 3, name: 'Healer' }],
+            ],
+            healers: [
+              {
+                id: 3,
+                name: 'Healer',
+                type: 'Priest',
+                specs: [{ count: 1, spec: 'Discipline' }],
               },
-              dps: {
-                characters: [{ id: 2, name: 'Dps' }],
+            ],
+            dps: [
+              {
+                id: 2,
+                name: 'Dps',
+                type: 'Rogue',
+                specs: [{ count: 1, spec: 'Combat' }],
               },
-            },
+            ],
           },
-        ],
+        },
       },
     }
 
@@ -464,10 +439,10 @@ describe('resolveFightTankActorIds', () => {
     )
   })
 
-  it('returns an empty set when fight or rankings are missing', () => {
+  it('returns an empty set when fight or player details are missing', () => {
     const report = {
       code: 'ABC123',
-      title: 'No rankings',
+      title: 'No player details',
       owner: { name: 'Owner' },
       visibility: 'public',
       guild: null,
@@ -506,7 +481,7 @@ describe('resolveFightTankActorIds', () => {
   })
 })
 
-describe('WCLClient.getEncounterActorRoles', () => {
+describe('WCLClient.getFightPlayerRoles', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-01-15T00:00:00Z'))
@@ -517,7 +492,7 @@ describe('WCLClient.getEncounterActorRoles', () => {
     vi.unstubAllGlobals()
   })
 
-  it('returns mapped friendly actor roles from encounter rankings', async () => {
+  it('returns mapped friendly actor roles from fight player details', async () => {
     const fetchMock = vi.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = typeof input === 'string' ? input : input.toString()
@@ -537,11 +512,51 @@ describe('WCLClient.getEncounterActorRoles', () => {
           const body = init?.body ? JSON.parse(init.body.toString()) : {}
           const query = body.query as string
 
-          if (query.includes('GetEncounterActorRoles')) {
-            return new Response(JSON.stringify(encounterActorRolesResponse), {
-              status: 200,
-              headers: { 'Content-Type': 'application/json' },
-            })
+          if (query.includes('GetFightPlayerDetails')) {
+            return new Response(
+              JSON.stringify({
+                data: {
+                  reportData: {
+                    report: {
+                      playerDetails: {
+                        data: {
+                          playerDetails: {
+                            tanks: [
+                              {
+                                id: 102355392,
+                                name: 'Merryday',
+                                type: 'Warrior',
+                                specs: [{ count: 1, spec: 'Protection' }],
+                              },
+                            ],
+                            healers: [
+                              {
+                                id: 105947179,
+                                name: 'Musictwo',
+                                type: 'Priest',
+                                specs: [{ count: 1, spec: 'Discipline' }],
+                              },
+                            ],
+                            dps: [
+                              {
+                                id: 91613399,
+                                name: 'Benderheide',
+                                type: 'Rogue',
+                                specs: [{ count: 1, spec: 'Combat' }],
+                              },
+                            ],
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              }),
+              {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            )
           }
         }
 
@@ -551,9 +566,8 @@ describe('WCLClient.getEncounterActorRoles', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     const client = new WCLClient(createMockBindings(), 'wcl:12345')
-    const actorRoles = await client.getEncounterActorRoles(
+    const actorRoles = await client.getFightPlayerRoles(
       'ABC123',
-      1602,
       9,
       'public',
       [

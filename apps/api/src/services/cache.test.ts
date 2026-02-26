@@ -228,13 +228,13 @@ describe('CacheKeys', () => {
 
   it('generates correct report key', () => {
     expect(CacheKeys.report('ABC123', 'public')).toBe(
-      'wcl:report:v6:ABC123:visibility:public:scope:shared:rankings:none',
+      'wcl:report:v6:ABC123:visibility:public:scope:shared',
     )
   })
 
-  it('generates report key with ranking scope', () => {
-    expect(CacheKeys.report('ABC123', 'private', 'uid-1', 'fights-32')).toBe(
-      'wcl:report:v6:ABC123:visibility:private:scope:uid:uid-1:rankings:fights-32',
+  it('generates private report key scoped by uid', () => {
+    expect(CacheKeys.report('ABC123', 'private', 'uid-1')).toBe(
+      'wcl:report:v6:ABC123:visibility:private:scope:uid:uid-1',
     )
   })
 
@@ -262,11 +262,11 @@ describe('CacheKeys', () => {
     )
   })
 
-  it('generates correct encounter actor roles key', () => {
+  it('generates correct fight player roles key', () => {
     expect(
-      CacheKeys.encounterActorRoles('ABC123', 1602, 9, 'private', 'uid-1'),
+      CacheKeys.fightPlayerRoles('ABC123', 9, 'private', 'uid-1'),
     ).toBe(
-      'wcl:encounter-actor-roles:v1:ABC123:1602:9:visibility:private:scope:uid:uid-1',
+      'wcl:fight-player-roles:v1:ABC123:9:visibility:private:scope:uid:uid-1',
     )
   })
 
@@ -320,7 +320,7 @@ describe('CacheKeys', () => {
 
   it('treats invalid visibility values as private', () => {
     expect(CacheKeys.report('ABC123', 'internal')).toBe(
-      'wcl:report:v6:ABC123:visibility:private:scope:uid:anonymous:rankings:none',
+      'wcl:report:v6:ABC123:visibility:private:scope:uid:anonymous',
     )
   })
 })

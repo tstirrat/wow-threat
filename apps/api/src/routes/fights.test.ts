@@ -86,7 +86,7 @@ describe('Fights API', () => {
       ).toBe(true)
     })
 
-    it('returns player roles when encounter rankings are available', async () => {
+    it('returns player roles when fight player details are available', async () => {
       const roleReportCode = 'ROLE123xyz'
       mockFetch({
         report: {
@@ -95,21 +95,30 @@ describe('Fights API', () => {
           fights: reportData.fights.map((fight) =>
             fight.id === 1 ? { ...fight, encounterID: 111 } : fight,
           ),
-        },
-        encounterActorRoles: [
-          {
-            encounterID: 111,
-            fightID: 1,
-            roles: {
-              tanks: {
-                characters: [{ id: 1, name: 'Tankwarrior' }],
-              },
-              healers: {
-                characters: [{ id: 2, name: 'Healpriest' }],
+          playerDetails: {
+            data: {
+              playerDetails: {
+                tanks: [
+                  {
+                    id: 1,
+                    name: 'Tankwarrior',
+                    type: 'Warrior',
+                    specs: [{ count: 1, spec: 'Protection' }],
+                  },
+                ],
+                healers: [
+                  {
+                    id: 2,
+                    name: 'Healpriest',
+                    type: 'Priest',
+                    specs: [{ count: 1, spec: 'Discipline' }],
+                  },
+                ],
+                dps: [],
               },
             },
           },
-        ],
+        },
       })
 
       const res = await app.request(
@@ -122,11 +131,17 @@ describe('Fights API', () => {
       const data = await res.json<FightsResponse>()
 
       expect(data.actors.find((actor) => actor.id === 1)?.role).toBe('Tank')
+      expect(data.actors.find((actor) => actor.id === 1)?.spec).toBe(
+        'Protection',
+      )
       expect(data.actors.find((actor) => actor.id === 2)?.role).toBe('Healer')
+      expect(data.actors.find((actor) => actor.id === 2)?.spec).toBe(
+        'Discipline',
+      )
       expect(data.actors.find((actor) => actor.id === 3)?.role).toBeUndefined()
     })
 
-    it('uses fight-scoped report rankings without encounter-role fallback query', async () => {
+    it('uses fight-scoped player details from the main fight query', async () => {
       const roleReportCode = 'ROLE456xyz'
       const fetchMock = createMockFetch({
         report: {
@@ -135,18 +150,21 @@ describe('Fights API', () => {
           fights: reportData.fights.map((fight) =>
             fight.id === 1 ? { ...fight, encounterID: 111 } : fight,
           ),
-          rankings: {
-            data: [
-              {
-                encounterID: 111,
-                fightID: 1,
-                roles: {
-                  tanks: {
-                    characters: [{ id: 1, name: 'Tankwarrior' }],
+          playerDetails: {
+            data: {
+              playerDetails: {
+                tanks: [
+                  {
+                    id: 1,
+                    name: 'Tankwarrior',
+                    type: 'Warrior',
+                    specs: [{ count: 1, spec: 'Protection' }],
                   },
-                },
+                ],
+                healers: [],
+                dps: [],
               },
-            ],
+            },
           },
         },
       })
@@ -162,16 +180,16 @@ describe('Fights API', () => {
       const data = await res.json<FightsResponse>()
       expect(data.actors.find((actor) => actor.id === 1)?.role).toBe('Tank')
 
-      const encounterRoleCalls = fetchMock.mock.calls.filter((call) => {
+      const followupRoleCalls = fetchMock.mock.calls.filter((call) => {
         const body = call[1]?.body
         if (!body) {
           return false
         }
 
         const query = JSON.parse(body.toString()).query as string
-        return query.includes('GetEncounterActorRoles')
+        return query.includes('GetFightPlayerDetails')
       })
-      expect(encounterRoleCalls).toHaveLength(0)
+      expect(followupRoleCalls).toHaveLength(0)
     })
 
     it('returns wipe fight correctly', async () => {

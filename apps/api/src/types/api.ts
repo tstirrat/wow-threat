@@ -16,6 +16,7 @@ export interface ReportActorSummary {
   name: string
   type: ReportActorType
   subType?: ReportActorSubType
+  spec?: string
   petOwner?: number | null
   role?: ReportActorRole
 }

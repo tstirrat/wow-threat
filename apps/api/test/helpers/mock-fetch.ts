@@ -43,6 +43,27 @@ interface MockRankingEntry {
   [key: string]: unknown
 }
 
+interface MockPlayerDetailsEntry {
+  id: number
+  name: string
+  type: string
+  icon?: string
+  specs?: Array<{
+    count: number
+    spec: string
+  }>
+}
+
+interface MockPlayerDetailsPayload {
+  data?: {
+    playerDetails?: {
+      tanks?: MockPlayerDetailsEntry[]
+      healers?: MockPlayerDetailsEntry[]
+      dps?: MockPlayerDetailsEntry[]
+    }
+  }
+}
+
 type MockRankingsPayload =
   | {
       data?: MockRankingEntry[] | null
@@ -129,6 +150,7 @@ export interface MockWCLResponses {
       }>
     }
     rankings?: MockRankingsPayload
+    playerDetails?: MockPlayerDetailsPayload
   }
   events?: unknown[]
   eventsPages?: Array<{

@@ -5,9 +5,7 @@ import type {
   PlayerClass,
   Report,
   ReportActor,
-  ReportEncounterRankingsEntry,
   ReportFight,
-  ReportRankingsCharacter,
 } from '@wow-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
@@ -59,11 +57,9 @@ function createFight(
 function createReport({
   actors,
   fight,
-  rankings,
 }: {
   actors: ReportActor[]
   fight: ReportFight
-  rankings: ReportEncounterRankingsEntry[]
 }): Report {
   return {
     code: 'PROCESSORTEST',
@@ -79,9 +75,7 @@ function createReport({
       actors,
       abilities: [],
     },
-    rankings: {
-      data: rankings,
-    },
+    rankings: null,
   }
 }
 
@@ -89,11 +83,13 @@ function createPrepassContext({
   report,
   fight,
   inferThreatReduction,
+  tankActorIds = new Set<number>(),
   initialAurasByActor = new Map<number, readonly number[]>(),
 }: {
   report: Report
   fight: ReportFight
   inferThreatReduction: boolean
+  tankActorIds?: Set<number>
   initialAurasByActor?: Map<number, readonly number[]>
 }): ProcessorBaseContext {
   return {
@@ -106,6 +102,7 @@ function createPrepassContext({
     report,
     fight,
     inferThreatReduction,
+    tankActorIds,
     initialAurasByActor,
   }
 }
@@ -119,7 +116,6 @@ describe('createMinmaxSalvationProcessor', () => {
         createPlayerActor(2, 'Paladps', 'Paladin'),
       ],
       fight,
-      rankings: [],
     })
 
     const processor = createMinmaxSalvationProcessor({
@@ -140,7 +136,6 @@ describe('createMinmaxSalvationProcessor', () => {
         createPlayerActor(3, 'Priesty', 'Priest'),
       ],
       fight,
-      rankings: [],
     })
 
     const processor = createMinmaxSalvationProcessor({
@@ -162,23 +157,12 @@ describe('createMinmaxSalvationProcessor', () => {
         createPlayerActor(4, 'Paladps', 'Paladin'),
       ],
       fight,
-      rankings: [
-        {
-          encounter: { id: 1602, name: 'Test Encounter' },
-          fightID: 11,
-          roles: {
-            tanks: {
-              name: 'Tanks',
-              characters: [{ id: 1, name: 'Tanky' } as ReportRankingsCharacter],
-            },
-          },
-        } as ReportEncounterRankingsEntry,
-      ],
     })
     const processor = createMinmaxSalvationProcessor({
       report,
       fight,
       inferThreatReduction: true,
+      tankActorIds: new Set([1]),
     })
 
     expect(processor).not.toBeNull()
@@ -214,7 +198,7 @@ describe('createMinmaxSalvationProcessor', () => {
     expect(mergedInitialAurasByActor.get(4)).toEqual([25895])
   })
 
-  it('resolves tank actor ids from ranking character names when ids are missing', () => {
+  it('resolves tank actor ids from processor context', () => {
     const fight = createFight(11, 1602, [1, 2, 3])
     const report = createReport({
       actors: [
@@ -223,23 +207,12 @@ describe('createMinmaxSalvationProcessor', () => {
         createPlayerActor(3, 'Paladps', 'Paladin'),
       ],
       fight,
-      rankings: [
-        {
-          encounter: { id: 1602, name: 'Test Encounter' },
-          fightID: 11,
-          roles: {
-            tanks: {
-              name: 'Tanks',
-              characters: [{ name: 'Tanky' } as ReportRankingsCharacter],
-            },
-          },
-        } as ReportEncounterRankingsEntry,
-      ],
     })
     const processor = createMinmaxSalvationProcessor({
       report,
       fight,
       inferThreatReduction: true,
+      tankActorIds: new Set([1]),
     })
 
     expect(processor).not.toBeNull()
@@ -279,26 +252,12 @@ describe('createMinmaxSalvationProcessor', () => {
         createPlayerActor(3, 'Palatank', 'Paladin'),
       ],
       fight,
-      rankings: [
-        {
-          encounter: { id: 1602, name: 'Test Encounter' },
-          fightID: 18,
-          roles: {
-            tanks: {
-              name: 'Tanks',
-              characters: [
-                { id: 1, name: 'Tanky' } as ReportRankingsCharacter,
-                { id: 3, name: 'Palatank' } as ReportRankingsCharacter,
-              ],
-            },
-          },
-        } as ReportEncounterRankingsEntry,
-      ],
     })
     const processor = createMinmaxSalvationProcessor({
       report,
       fight,
       inferThreatReduction: true,
+      tankActorIds: new Set([1, 3]),
     })
 
     expect(processor).not.toBeNull()
@@ -338,23 +297,12 @@ describe('createMinmaxSalvationProcessor', () => {
         createPlayerActor(4, 'Paladps', 'Paladin'),
       ],
       fight,
-      rankings: [
-        {
-          encounter: { id: 1602, name: 'Test Encounter' },
-          fightID: 19,
-          roles: {
-            tanks: {
-              name: 'Tanks',
-              characters: [{ id: 1, name: 'Tanky' } as ReportRankingsCharacter],
-            },
-          },
-        } as ReportEncounterRankingsEntry,
-      ],
     })
     const processor = createMinmaxSalvationProcessor({
       report,
       fight,
       inferThreatReduction: true,
+      tankActorIds: new Set([1]),
     })
 
     expect(processor).not.toBeNull()

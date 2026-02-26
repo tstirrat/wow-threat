@@ -148,34 +148,40 @@ function buildInferThreatReductionReport({
       ],
       abilities: reportData.masterData.abilities ?? [],
     },
-    rankings: {
-      data: [
-        {
-          encounterID: encounterId,
-          fightID: fightId,
-          roles: {
-            tanks: {
-              characters: tankPlayerIds
-                .map((tankPlayerId) => {
-                  const player = players.find(
-                    (candidate) => candidate.id === tankPlayerId,
-                  )
-                  return player ? { id: player.id, name: player.name } : null
-                })
-                .filter(
-                  (character): character is { id: number; name: string } => {
-                    return character !== null
-                  },
-                ),
-            },
-            dps: {
-              characters: players
-                .filter((player) => !tankPlayerIds.includes(player.id))
-                .map((player) => ({ id: player.id, name: player.name })),
-            },
-          },
+    playerDetails: {
+      data: {
+        playerDetails: {
+          tanks: players
+            .filter((player) => tankPlayerIds.includes(player.id))
+            .map((player) => ({
+              id: player.id,
+              name: player.name,
+              type: player.subType,
+              icon: `${player.subType}-tank`,
+              specs: [
+                {
+                  count: 1,
+                  spec: 'Protection',
+                },
+              ],
+            })),
+          dps: players
+            .filter((player) => !tankPlayerIds.includes(player.id))
+            .map((player) => ({
+              id: player.id,
+              name: player.name,
+              type: player.subType,
+              icon: `${player.subType}-dps`,
+              specs: [
+                {
+                  count: 1,
+                  spec: 'Damage',
+                },
+              ],
+            })),
+          healers: [],
         },
-      ],
+      },
     },
   } as NonNullable<MockWCLResponses['report']>
 }
@@ -696,7 +702,7 @@ describe('Events API', () => {
       expect(data.initialAurasByActor?.['3']).toBeUndefined()
     })
 
-    it('resolves tank roles from report rankings in inference mode', async () => {
+    it('resolves tank roles from player details in inference mode', async () => {
       const inferFightId = 17
       const inferReport = buildInferThreatReductionReport({
         code: 'INFERTANKIDS',
@@ -749,10 +755,10 @@ describe('Events API', () => {
         const body =
           'body' in init && init.body ? JSON.parse(String(init.body)) : null
         return typeof body?.query === 'string'
-          ? body.query.includes('GetEncounterActorRoles')
+          ? body.query.includes('GetFightPlayerDetails')
           : false
       })
-      expect(encounterRoleCalls).toHaveLength(0)
+      expect(encounterRoleCalls).toHaveLength(1)
     })
 
     it('applies minor salvation edge-case precedence while inferring', async () => {
@@ -768,28 +774,17 @@ describe('Events API', () => {
         ],
         tankPlayerIds: [1],
       })
-      const rankingEntries = Array.isArray(inferReport.rankings)
-        ? inferReport.rankings
-        : (inferReport.rankings?.data ?? [])
-      inferReport.rankings = {
-        data: rankingEntries.map((ranking) => {
-          if (!ranking?.roles?.dps?.characters) {
-            return ranking
-          }
-
-          return {
-            ...ranking,
-            roles: {
-              ...ranking.roles,
-              dps: {
-                ...ranking.roles.dps,
-                characters: ranking.roles.dps.characters.filter(
-                  (character) => character?.id !== 3,
-                ),
-              },
+      const dpsPlayers =
+        inferReport.playerDetails?.data?.playerDetails?.dps ?? []
+      if (Array.isArray(dpsPlayers)) {
+        inferReport.playerDetails = {
+          data: {
+            playerDetails: {
+              ...(inferReport.playerDetails?.data?.playerDetails ?? {}),
+              dps: dpsPlayers.filter((player) => player.id !== 3),
             },
-          }
-        }),
+          },
+        }
       }
 
       mockFetch({

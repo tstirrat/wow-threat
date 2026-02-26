@@ -1,14 +1,7 @@
 /**
  * Processor that infers threat-reduction initial auras for non-tanks.
  */
-import type {
-  Report,
-  ReportActor,
-  ReportEncounterRankings,
-  ReportEncounterRankingsEntry,
-  ReportFight,
-  ReportRankingsCharacter,
-} from '@wow-threat/wcl-types'
+import type { Report, ReportFight } from '@wow-threat/wcl-types'
 
 import {
   type FightProcessorFactory,
@@ -46,88 +39,20 @@ const LONG_TERM_BLESSING_AURA_ID_LOOKUP: Readonly<Record<number, true>> = {
   27169: true, // Greater Blessing of Sanctuary (Rank 2)
 }
 
-function normalizeFightRankingEntries(
-  rankings: ReportEncounterRankings | undefined,
-): ReportEncounterRankingsEntry[] {
-  if (!Array.isArray(rankings?.data)) {
-    return []
-  }
-
-  return rankings.data
-}
-
-function buildFriendlyPlayerNameLookup(
-  reportActors: ReportActor[],
-  friendlyPlayerIds: Set<number>,
-): Map<string, Set<number>> {
-  return reportActors.reduce((result, actor) => {
-    if (actor.type !== 'Player' || !friendlyPlayerIds.has(actor.id)) {
-      return result
-    }
-
-    const normalizedName = actor.name.toLowerCase().trim()
-    if (normalizedName.length === 0) {
-      return result
-    }
-
-    const actorIds = result.get(normalizedName) ?? new Set<number>()
-    actorIds.add(actor.id)
-    result.set(normalizedName, actorIds)
-    return result
-  }, new Map<string, Set<number>>())
-}
-
-function resolveFightTankActorIdsFromRankings(
-  report: Report,
+function resolveFightTankActorIds(
   fight: ReportFight,
+  tankActorIdsFromContext: Set<number> | undefined,
 ): Set<number> {
   const friendlyPlayerIds = new Set(fight.friendlyPlayers ?? [])
-  if (friendlyPlayerIds.size === 0) {
+  if (friendlyPlayerIds.size === 0 || !tankActorIdsFromContext) {
     return new Set()
   }
 
-  const friendlyPlayerNameLookup = buildFriendlyPlayerNameLookup(
-    report.masterData.actors,
-    friendlyPlayerIds,
+  return new Set(
+    [...tankActorIdsFromContext].filter((actorId) =>
+      friendlyPlayerIds.has(actorId),
+    ),
   )
-  const rankingEntries = normalizeFightRankingEntries(
-    report.rankings as ReportEncounterRankings,
-  )
-
-  return rankingEntries.reduce((tankActorIds, entry) => {
-    const rankingFightId = entry.fightID ?? null
-    const rankingEncounterId = entry.encounter?.id ?? null
-    if (rankingFightId !== null && rankingFightId !== fight.id) {
-      return tankActorIds
-    }
-    if (
-      fight.encounterID !== null &&
-      fight.encounterID !== undefined &&
-      rankingEncounterId !== null &&
-      rankingEncounterId !== fight.encounterID
-    ) {
-      return tankActorIds
-    }
-
-    const tankCharacters = entry.roles?.tanks?.characters ?? []
-    tankCharacters.forEach((character: ReportRankingsCharacter | null) => {
-      const characterId = character?.id ?? null
-      if (characterId !== null && friendlyPlayerIds.has(characterId)) {
-        tankActorIds.add(characterId)
-      }
-
-      const normalizedName = character?.name?.toLowerCase().trim()
-      if (!normalizedName) {
-        return
-      }
-
-      friendlyPlayerNameLookup
-        .get(normalizedName)
-        ?.forEach((actorId) => tankActorIds.add(actorId))
-    })
-
-    return tankActorIds
-  }, new Set<number>())
 }
 
 function resolveFightThreatReductionBaselineAuraId(
@@ -137,12 +62,12 @@ function resolveFightThreatReductionBaselineAuraId(
 }
 
 function resolveFightPaladinCount(report: Report, fight: ReportFight): number {
-  const fightFriendlyPlayerIds = new Set(fight.friendlyPlayers ?? [])
+  const friendlyPlayerIds = new Set(fight.friendlyPlayers ?? [])
 
   return report.masterData.actors.filter(
     (actor) =>
       actor.type === 'Player' &&
-      fightFriendlyPlayerIds.has(actor.id) &&
+      friendlyPlayerIds.has(actor.id) &&
       actor.subType === 'Paladin',
   ).length
 }
@@ -159,6 +84,7 @@ export const createMinmaxSalvationProcessor: FightProcessorFactory = ({
   report,
   fight,
   inferThreatReduction,
+  tankActorIds,
 }) => {
   if (!inferThreatReduction || !report || !fight) {
     return null
@@ -175,7 +101,7 @@ export const createMinmaxSalvationProcessor: FightProcessorFactory = ({
     return null
   }
 
-  const tankActorIds = resolveFightTankActorIdsFromRankings(report, fight)
+  const resolvedTankActorIds = resolveFightTankActorIds(fight, tankActorIds)
 
   return {
     id: 'engine/minmax-salvation',
@@ -185,7 +111,7 @@ export const createMinmaxSalvationProcessor: FightProcessorFactory = ({
       )
 
       friendlyPlayerIds.forEach((actorId) => {
-        if (tankActorIds.has(actorId)) {
+        if (resolvedTankActorIds.has(actorId)) {
           return
         }
 

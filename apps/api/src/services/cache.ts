@@ -231,13 +231,8 @@ export function createCache(
 export const CacheKeys = {
   wclToken: () => 'wcl:token',
   reportSchemaVersion: cacheSchemaVersions.report,
-  report: (
-    code: string,
-    visibility: unknown,
-    uid?: string,
-    rankingScope = 'none',
-  ) =>
-    `wcl:report:${CacheKeys.reportSchemaVersion}:${code}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}:rankings:${rankingScope}`,
+  report: (code: string, visibility: unknown, uid?: string) =>
+    `wcl:report:${CacheKeys.reportSchemaVersion}:${code}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
   fightsSchemaVersion: cacheSchemaVersions.fights,
   fights: (code: string, fightId: number, visibility: unknown, uid?: string) =>
     `wcl:fights:${CacheKeys.fightsSchemaVersion}:${code}:${fightId}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
@@ -259,15 +254,14 @@ export const CacheKeys = {
     uid?: string,
   ) =>
     `wcl:friendly-buff-bands-by-fight:${CacheKeys.friendlyBuffBandsSchemaVersion}:${code}:${fightId}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
-  encounterActorRolesSchemaVersion: cacheSchemaVersions.encounterActorRoles,
-  encounterActorRoles: (
+  fightPlayerRolesSchemaVersion: cacheSchemaVersions.fightPlayerRoles,
+  fightPlayerRoles: (
     code: string,
-    encounterId: number,
     fightId: number,
     visibility: unknown,
     uid?: string,
   ) =>
-    `wcl:encounter-actor-roles:${CacheKeys.encounterActorRolesSchemaVersion}:${code}:${encounterId}:${fightId}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
+    `wcl:fight-player-roles:${CacheKeys.fightPlayerRolesSchemaVersion}:${code}:${fightId}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}`,
   augmentedSchemaVersion: cacheSchemaVersions.augmentedEvents,
   augmentedEvents: (
     code: string,

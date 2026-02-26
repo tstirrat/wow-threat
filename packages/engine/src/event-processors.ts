@@ -54,6 +54,7 @@ export interface ProcessorBaseContext {
   namespace: ProcessorNamespace
   actorMap: Map<number, Actor>
   friendlyActorIds?: Set<number>
+  tankActorIds?: Set<number>
   enemies: Enemy[]
   encounterId: number | null
   config: ThreatConfig
@@ -67,6 +68,7 @@ export interface FightProcessorFactoryContext {
   report: Report | null
   fight: ReportFight | null
   inferThreatReduction: boolean
+  tankActorIds?: Set<number>
 }
 
 export type FightProcessorFactory = (
