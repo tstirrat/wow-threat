@@ -12,12 +12,24 @@ import { RootLayout } from './root-layout'
 
 const useAuthMock = vi.fn()
 const useWclRateLimitMock = vi.fn()
+const addRecentReportMock = vi.fn()
+const getReportMock = vi.fn()
 
 vi.mock('@/auth/auth-provider', () => ({
   useAuth: () => useAuthMock(),
 }))
 vi.mock('@/hooks/use-wcl-rate-limit', () => ({
   useWclRateLimit: () => useWclRateLimitMock(),
+}))
+vi.mock('@/hooks/use-recent-reports', () => ({
+  useRecentReports: () => ({
+    addRecentReport: addRecentReportMock,
+    recentReports: [],
+    removeRecentReport: vi.fn(),
+  }),
+}))
+vi.mock('@/api/reports', () => ({
+  getReport: (...args: unknown[]) => getReportMock(...args),
 }))
 
 function createMockAuthValue(
@@ -60,6 +72,7 @@ function renderLayout(pathname = '/'): void {
       <Routes>
         <Route path="/" element={<RootLayout />}>
           <Route index element={<p>child outlet</p>} />
+          <Route path="report/:reportId" element={<p>report route</p>} />
         </Route>
       </Routes>
     </MemoryRouter>,
@@ -120,6 +133,16 @@ describe('RootLayout', () => {
     expect(screen.getByRole('button', { name: /TestUser/i })).toBeTruthy()
   })
 
+  it('shows home link icon and label', () => {
+    useWclRateLimitMock.mockReturnValue(createMockWclRateLimitValue())
+    useAuthMock.mockReturnValue(createMockAuthValue({ isBusy: false }))
+
+    renderLayout('/')
+
+    expect(screen.getByRole('link', { name: 'Go to home' })).toBeTruthy()
+    expect(screen.getByText('WoW Threat')).toBeTruthy()
+  })
+
   it('shows wcl api rate limit details inside the account dropdown', async () => {
     const refreshMock = vi.fn(async () => {})
     useWclRateLimitMock.mockReturnValue(
@@ -155,5 +178,37 @@ describe('RootLayout', () => {
       }),
     )
     expect(refreshMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('shows report input by default on the landing page', () => {
+    useWclRateLimitMock.mockReturnValue(createMockWclRateLimitValue())
+    useAuthMock.mockReturnValue(createMockAuthValue({ isBusy: false }))
+
+    renderLayout('/')
+
+    expect(screen.getByLabelText('Open report')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Open report input' })).toBeNull()
+  })
+
+  it('opens hidden report input from icon outside the landing page', async () => {
+    useWclRateLimitMock.mockReturnValue(createMockWclRateLimitValue())
+    useAuthMock.mockReturnValue(createMockAuthValue({ isBusy: false }))
+
+    renderLayout('/report/abc123')
+
+    expect(screen.queryByLabelText('Open report')).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: 'Open report input' }))
+    expect(screen.getByLabelText('Open report')).toBeTruthy()
+  })
+
+  it('opens report input with cmd/ctrl+o shortcut', async () => {
+    useWclRateLimitMock.mockReturnValue(createMockWclRateLimitValue())
+    useAuthMock.mockReturnValue(createMockAuthValue({ isBusy: false }))
+
+    renderLayout('/report/abc123')
+
+    await userEvent.keyboard('{Meta>}o{/Meta}')
+
+    expect(screen.getByLabelText('Open report')).toBeTruthy()
   })
 })

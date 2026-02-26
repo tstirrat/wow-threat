@@ -24,7 +24,8 @@
     "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "react-hotkeys-hook": ["./src/lib/react-hotkeys-hook.ts"]
     }
   },
   "include": ["src", "*.config.ts"]

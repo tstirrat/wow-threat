@@ -1,29 +1,22 @@
 /**
- * Landing page for report loading via URL, history, and examples.
+ * Landing page for report loading via history and examples.
  */
 import { useAuth } from '@/auth/auth-provider'
-import { type FC, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { type FC } from 'react'
 
-import { getReport } from '../api/reports'
 import { AccountRecentReportsList } from '../components/account-recent-reports-list'
 import { ExampleReportList } from '../components/example-report-list'
 import { RecentReportsList } from '../components/recent-reports-list'
-import { ReportUrlForm } from '../components/report-url-form'
 import { SectionCard } from '../components/section-card'
 import { Alert, AlertDescription } from '../components/ui/alert'
 import { Button } from '../components/ui/button'
 import { useRecentReports } from '../hooks/use-recent-reports'
 import { useUserRecentReports } from '../hooks/use-user-recent-reports'
-import { defaultHost, exampleReports } from '../lib/constants'
-import { buildBossKillNavigationFights } from '../lib/fight-navigation'
-import { parseReportInput } from '../lib/wcl-url'
+import { exampleReports } from '../lib/constants'
 
 export const LandingPage: FC = () => {
-  const navigate = useNavigate()
   const { authEnabled, user } = useAuth()
-  const { recentReports, addRecentReport, removeRecentReport } =
-    useRecentReports()
+  const { recentReports, removeRecentReport } = useRecentReports()
   const {
     reports: accountRecentReports,
     isLoading: isLoadingAccountReports,
@@ -31,80 +24,18 @@ export const LandingPage: FC = () => {
     error: accountRecentReportsError,
     refresh: refreshAccountReports,
   } = useUserRecentReports(10)
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const shouldShowAccountReports = authEnabled && Boolean(user)
-  const handleReportSubmit = async (input: string): Promise<void> => {
-    const parsed = parseReportInput(input, defaultHost)
-    if (!parsed) {
-      setErrorMessage(
-        'Unable to parse report input. Use a fresh/sod/vanilla report URL or a report code.',
-      )
-      return
-    }
-
-    setIsSubmitting(true)
-    try {
-      const report = await getReport(parsed.reportId)
-      const isArchived = report.archiveStatus?.isArchived ?? false
-      const isAccessible = report.archiveStatus?.isAccessible ?? true
-
-      addRecentReport({
-        reportId: parsed.reportId,
-        title: report.title,
-        sourceHost: parsed.host,
-        lastOpenedAt: Date.now(),
-        zoneName: report.zone?.name,
-        startTime: report.startTime,
-        bossKillCount: buildBossKillNavigationFights(report.fights).length,
-        guildName: report.guild?.name ?? null,
-        guildFaction: report.guild?.faction ?? null,
-        isArchived,
-        isAccessible,
-        archiveDate: report.archiveStatus?.archiveDate ?? null,
-      })
-
-      if (isArchived || !isAccessible) {
-        setErrorMessage(
-          'This report is archived or inaccessible, so it cannot be opened here.',
-        )
-        return
-      }
-
-      setErrorMessage(null)
-      navigate(`/report/${parsed.reportId}`, {
-        state: {
-          host: parsed.host,
-        },
-      })
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Unable to load report metadata.'
-      setErrorMessage(message)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
 
   return (
     <div className="space-y-5">
       <SectionCard
-        title="Load report"
-        subtitle="Paste a Warcraft Logs report URL or report ID to open threat views."
+        title="Open a report"
+        subtitle="Use the header input above to paste a Warcraft Logs URL or report code."
       >
-        <ReportUrlForm
-          isSubmitting={isSubmitting}
-          onSubmit={(input) => {
-            void handleReportSubmit(input)
-          }}
-        />
-        {errorMessage ? (
-          <Alert aria-live="polite" className="mt-3" variant="destructive">
-            <AlertDescription>{errorMessage}</AlertDescription>
-          </Alert>
-        ) : null}
+        <p className="text-sm text-muted-foreground">
+          Quick shortcut: press Cmd/Ctrl+O to focus the report input from
+          anywhere.
+        </p>
       </SectionCard>
 
       <div className="grid gap-5 xl:grid-cols-2">

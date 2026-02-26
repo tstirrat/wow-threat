@@ -8,6 +8,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      'react-hotkeys-hook': fileURLToPath(
+        new URL('./src/lib/react-hotkeys-hook.ts', import.meta.url),
+      ),
     },
   },
   test: {

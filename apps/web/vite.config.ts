@@ -42,6 +42,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      'react-hotkeys-hook': path.resolve(
+        __dirname,
+        './src/lib/react-hotkeys-hook.ts',
+      ),
     },
   },
   build: {

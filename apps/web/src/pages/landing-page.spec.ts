@@ -24,7 +24,7 @@ test.describe('landing page', () => {
     await page.goto('/')
     await expect(recentReports.recentReportsSection()).toBeVisible()
     await expect(recentReports.noRecentReportsText()).toBeVisible()
-    await page.getByLabel('Report URL or ID').fill(e2eValidFreshReportUrl)
+    await page.getByLabel('Open report').fill(e2eValidFreshReportUrl)
     await page.getByRole('button', { name: 'Load report' }).click()
 
     await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}`))
@@ -33,7 +33,7 @@ test.describe('landing page', () => {
   test('pasting an invalid link shows a parse error', async ({ page }) => {
     await page.goto('/')
     await page
-      .getByLabel('Report URL or ID')
+      .getByLabel('Open report')
       .fill('https://www.warcraftlogs.com/reports/not-supported-host')
     await page.getByRole('button', { name: 'Load report' }).click()
 
@@ -43,13 +43,14 @@ test.describe('landing page', () => {
     )
   })
 
-  test('empty state shows sample links and opens a report when clicked', async ({
+  test('empty state shows sample links, header guidance, and opens a report when clicked', async ({
     page,
   }) => {
     const recentReports = new RecentReportsObject(page)
 
     await page.goto('/')
 
+    await expect(page.getByText('Use the header input above to paste a Warcraft Logs URL or report code.')).toBeVisible()
     await expect(recentReports.exampleReportsSection()).toBeVisible()
     await expect(recentReports.exampleReportsList()).toBeVisible()
     await recentReports.exampleReportLink('Fresh Example').click()
@@ -63,7 +64,7 @@ test.describe('landing page', () => {
     const recentReports = new RecentReportsObject(page)
 
     await page.goto('/')
-    await page.getByLabel('Report URL or ID').fill(e2eValidFreshReportUrl)
+    await page.getByLabel('Open report').fill(e2eValidFreshReportUrl)
     await page.getByRole('button', { name: 'Load report' }).click()
 
     await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}`))
@@ -83,7 +84,7 @@ test.describe('landing page', () => {
     const recentReports = new RecentReportsObject(page)
 
     await page.goto('/')
-    await page.getByLabel('Report URL or ID').fill(e2eValidFreshReportUrl)
+    await page.getByLabel('Open report').fill(e2eValidFreshReportUrl)
     await page.getByRole('button', { name: 'Load report' }).click()
     await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}`))
     await expect(

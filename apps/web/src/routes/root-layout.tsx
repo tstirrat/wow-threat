@@ -3,6 +3,7 @@
  */
 import { useAuth } from '@/auth/auth-provider'
 import { ModeToggle } from '@/components/mode-toggle'
+import { ReportUrlForm } from '@/components/report-url-form'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
@@ -13,10 +14,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useRecentReports } from '@/hooks/use-recent-reports'
 import { useWclRateLimit } from '@/hooks/use-wcl-rate-limit'
-import { ChevronDown, Loader2, RefreshCw } from 'lucide-react'
-import { type FC, useState } from 'react'
-import { Link, Outlet } from 'react-router-dom'
+import { getReport } from '@/api/reports'
+import { defaultHost } from '@/lib/constants'
+import { buildBossKillNavigationFights } from '@/lib/fight-navigation'
+import { parseReportInput } from '@/lib/wcl-url'
+import {
+  ChevronDown,
+  Home,
+  Loader2,
+  RefreshCw,
+  Search,
+  X,
+} from 'lucide-react'
+import { type FC, useEffect, useRef, useState } from 'react'
+import { useHotkeys } from 'react-hotkeys-hook'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 const warcraftLogsHomeUrl = 'https://www.warcraftlogs.com'
 
@@ -42,6 +56,14 @@ function formatSpentPoints(pointsSpentThisHour: number): string {
 
 export const RootLayout: FC = () => {
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false)
+  const [reportErrorMessage, setReportErrorMessage] = useState<string | null>(null)
+  const [isReportInputOpen, setIsReportInputOpen] = useState(false)
+  const reportInputRef = useRef<HTMLInputElement>(null)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const isLandingPage = location.pathname === '/'
+  const { addRecentReport } = useRecentReports()
   const {
     authEnabled,
     authError,
@@ -60,6 +82,30 @@ export const RootLayout: FC = () => {
     error: rateLimitError,
     refresh: refreshRateLimit,
   } = useWclRateLimit()
+
+  useEffect(() => {
+    if (isLandingPage) {
+      setIsReportInputOpen(true)
+      return
+    }
+
+    setIsReportInputOpen(false)
+  }, [isLandingPage])
+
+  useHotkeys(
+    'meta+o,ctrl+o',
+    (event) => {
+      event.preventDefault()
+      setIsReportInputOpen(true)
+      requestAnimationFrame(() => {
+        reportInputRef.current?.focus()
+      })
+    },
+    {
+      enableOnFormTags: false,
+    },
+  )
+
   const shouldShowAuthGate = authEnabled && !isInitializing && !user
   const isSignInInProgress = shouldShowAuthGate && isBusy
   const displayUserName =
@@ -70,15 +116,127 @@ export const RootLayout: FC = () => {
       void refreshRateLimit()
     }
   }
+  const handleReportSubmit = async (input: string): Promise<void> => {
+    const parsed = parseReportInput(input, defaultHost)
+    if (!parsed) {
+      setReportErrorMessage(
+        'Unable to parse report input. Use a fresh/sod/vanilla report URL or a report code.',
+      )
+      return
+    }
+
+    setIsSubmittingReport(true)
+    try {
+      const report = await getReport(parsed.reportId)
+      const isArchived = report.archiveStatus?.isArchived ?? false
+      const isAccessible = report.archiveStatus?.isAccessible ?? true
+
+      addRecentReport({
+        reportId: parsed.reportId,
+        title: report.title,
+        sourceHost: parsed.host,
+        lastOpenedAt: Date.now(),
+        zoneName: report.zone?.name,
+        startTime: report.startTime,
+        bossKillCount: buildBossKillNavigationFights(report.fights).length,
+        guildName: report.guild?.name ?? null,
+        guildFaction: report.guild?.faction ?? null,
+        isArchived,
+        isAccessible,
+        archiveDate: report.archiveStatus?.archiveDate ?? null,
+      })
+
+      if (isArchived || !isAccessible) {
+        setReportErrorMessage(
+          'This report is archived or inaccessible, so it cannot be opened here.',
+        )
+        return
+      }
+
+      setReportErrorMessage(null)
+      navigate(`/report/${parsed.reportId}`, {
+        state: {
+          host: parsed.host,
+        },
+      })
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Unable to load report metadata.'
+      setReportErrorMessage(message)
+    } finally {
+      setIsSubmittingReport(false)
+    }
+  }
 
   return (
     <div className="min-h-screen text-text">
       <header className="border-b border-border bg-panel">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3">
+        <div className="mx-auto grid w-full max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3">
           <h1 className="text-lg font-semibold">
-            <Link to="/">WoW Threat</Link>
+            <Link
+              aria-label="Go to home"
+              className="inline-flex items-center gap-2"
+              to="/"
+            >
+              <Home aria-hidden="true" className="size-4" />
+              <span>WoW Threat</span>
+            </Link>
           </h1>
-          <div className="flex items-center gap-2">
+
+          <div className="flex justify-center">
+            {isLandingPage || isReportInputOpen ? (
+              <div
+                className={`w-full max-w-xl transition-all duration-200 ${
+                  isReportInputOpen ? 'opacity-100' : 'opacity-0'
+                }`}
+              >
+                <ReportUrlForm
+                  className="flex w-full items-end gap-2"
+                  inputRef={reportInputRef}
+                  isSubmitting={isSubmittingReport}
+                  label="Open report"
+                  placeholder="Paste Warcraft Logs report URL or report ID (Cmd/Ctrl+O)"
+                  submitIconOnly={!isLandingPage}
+                  onSubmit={(input) => {
+                    void handleReportSubmit(input)
+                  }}
+                />
+              </div>
+            ) : (
+              <Button
+                aria-label="Open report input"
+                size="icon"
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsReportInputOpen(true)
+                  requestAnimationFrame(() => {
+                    reportInputRef.current?.focus()
+                  })
+                }}
+              >
+                <Search aria-hidden="true" className="size-4" />
+              </Button>
+            )}
+            {!isLandingPage && isReportInputOpen ? (
+              <Button
+                aria-label="Close report input"
+                className="ml-2"
+                size="icon"
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setIsReportInputOpen(false)
+                }}
+              >
+                <X aria-hidden="true" className="size-4" />
+              </Button>
+            ) : null}
+          </div>
+
+          <div className="flex items-center justify-end gap-2">
             <ModeToggle />
             {!authEnabled ? (
               <span className="text-sm text-muted-foreground">
@@ -195,6 +353,11 @@ export const RootLayout: FC = () => {
         </div>
       </header>
       <main className="mx-auto w-full max-w-7xl px-4 py-6">
+        {reportErrorMessage ? (
+          <Alert aria-live="polite" className="mb-4" variant="destructive">
+            <AlertDescription>{reportErrorMessage}</AlertDescription>
+          </Alert>
+        ) : null}
         {authEnabled && authError ? (
           <Alert aria-live="assertive" className="mb-4" variant="destructive">
             <AlertDescription>{authError}</AlertDescription>

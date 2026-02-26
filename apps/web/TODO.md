@@ -9,3 +9,6 @@
 - [x] WEB-007: Show hit type in the tooltip if it's something other than a hit e.g. glancing, crit, parry
 - [x] WEB-008: Fix a bug where pet's do not seem to accumulate threat on boss adds
 - [x] WEB-009: Stop the "fisheye" zoom, and use a real start/end zoom so that the focus player table below is windowed to the selected time range
+
+- [x] WEB-010: Allow entering a new url from anywhere, perhaps in the nav header
+- [x] WEB-011: Make the home link more obvious, perhaps a home icon.
