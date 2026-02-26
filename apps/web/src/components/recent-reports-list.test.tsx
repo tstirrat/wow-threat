@@ -105,6 +105,43 @@ describe('RecentReportsList', () => {
     expect(onRemoveReport).toHaveBeenCalledWith(baseEntry.reportId)
   })
 
+  it('calls onToggleStarReport when star button is clicked', async () => {
+    const onRemoveReport = vi.fn()
+    const onToggleStarReport = vi.fn()
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <RecentReportsList
+          onRemoveReport={onRemoveReport}
+          onToggleStarReport={onToggleStarReport}
+          reports={[
+            {
+              ...baseEntry,
+              guildFaction: 'Alliance',
+            },
+          ]}
+        />
+      </MemoryRouter>,
+    )
+
+    await user.click(
+      screen.getByRole('button', {
+        name: `Star report ${baseEntry.title}`,
+      }),
+    )
+
+    expect(onToggleStarReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reportId: baseEntry.reportId,
+        title: baseEntry.title,
+        sourceHost: baseEntry.sourceHost,
+      }),
+    )
+  })
+
   it('renders archived entries as disabled with an archived badge', () => {
     const onRemoveReport = vi.fn()
 

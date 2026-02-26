@@ -6,7 +6,7 @@ import type { UseWclRateLimitResult } from '@/hooks/use-wcl-rate-limit'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { RootLayout } from './root-layout'
 
@@ -14,6 +14,7 @@ const useAuthMock = vi.fn()
 const useWclRateLimitMock = vi.fn()
 const addRecentReportMock = vi.fn()
 const getReportMock = vi.fn()
+const useUserSettingsMock = vi.fn()
 
 vi.mock('@/auth/auth-provider', () => ({
   useAuth: () => useAuthMock(),
@@ -27,6 +28,9 @@ vi.mock('@/hooks/use-recent-reports', () => ({
     recentReports: [],
     removeRecentReport: vi.fn(),
   }),
+}))
+vi.mock('@/hooks/use-user-settings', () => ({
+  useUserSettings: () => useUserSettingsMock(),
 }))
 vi.mock('@/api/reports', () => ({
   getReport: (...args: unknown[]) => getReportMock(...args),
@@ -80,6 +84,18 @@ function renderLayout(pathname = '/'): void {
 }
 
 describe('RootLayout', () => {
+  beforeEach(() => {
+    useUserSettingsMock.mockReturnValue({
+      settings: {
+        showPets: false,
+        showEnergizeEvents: false,
+        inferThreatReduction: false,
+        starredReports: [],
+      },
+      isLoading: false,
+    })
+  })
+
   it('shows sign-in required state when idle and signed out', () => {
     useWclRateLimitMock.mockReturnValue(createMockWclRateLimitValue())
     useAuthMock.mockReturnValue(createMockAuthValue({ isBusy: false }))
@@ -216,6 +232,38 @@ describe('RootLayout', () => {
       'false',
     )
     expect(screen.getByLabelText('Open report')).toBeTruthy()
+  })
+
+  it('shows starred reports dropdown on non-landing routes for signed-in users', async () => {
+    useWclRateLimitMock.mockReturnValue(createMockWclRateLimitValue())
+    useAuthMock.mockReturnValue(
+      createMockAuthValue({
+        user: {
+          uid: 'wcl:12345',
+        } as AuthContextValue['user'],
+      }),
+    )
+    useUserSettingsMock.mockReturnValue({
+      settings: {
+        showPets: false,
+        showEnergizeEvents: false,
+        inferThreatReduction: false,
+        starredReports: [
+          {
+            reportId: 'ABC123',
+            title: 'Pinned report',
+            sourceHost: 'fresh.warcraftlogs.com',
+            starredAt: 1,
+          },
+        ],
+      },
+      isLoading: false,
+    })
+
+    renderLayout('/report/abc123')
+
+    await userEvent.click(screen.getByRole('button', { name: /Starred/i }))
+    expect(screen.getByText('Pinned report')).toBeTruthy()
   })
 
   it('opens report input with cmd/ctrl+o shortcut', async () => {

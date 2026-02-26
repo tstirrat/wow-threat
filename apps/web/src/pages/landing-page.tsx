@@ -3,17 +3,19 @@
  */
 import { useAuth } from '@/auth/auth-provider'
 import { ArrowUp, X } from 'lucide-react'
-import { type FC, useState } from 'react'
+import { type FC, useMemo, useState } from 'react'
 
 import { AccountRecentReportsList } from '../components/account-recent-reports-list'
 import { ExampleReportList } from '../components/example-report-list'
 import { RecentReportsList } from '../components/recent-reports-list'
 import { SectionCard } from '../components/section-card'
+import { StarredReportsList } from '../components/starred-reports-list'
 import { Alert, AlertDescription } from '../components/ui/alert'
 import { Button } from '../components/ui/button'
 import { Kbd, KbdGroup } from '../components/ui/kbd'
 import { useRecentReports } from '../hooks/use-recent-reports'
 import { useUserRecentReports } from '../hooks/use-user-recent-reports'
+import { useUserSettings } from '../hooks/use-user-settings'
 import { exampleReports } from '../lib/constants'
 import { superKey } from '../lib/keyboard-shortcut'
 
@@ -22,6 +24,7 @@ const reportHintDismissedStorageKey = 'landing-report-hint-dismissed'
 export const LandingPage: FC = () => {
   const { authEnabled, user } = useAuth()
   const { recentReports, removeRecentReport } = useRecentReports()
+  const { settings, toggleStarredReport, unstarReport } = useUserSettings()
   const {
     reports: accountRecentReports,
     isLoading: isLoadingAccountReports,
@@ -30,6 +33,15 @@ export const LandingPage: FC = () => {
     refresh: refreshAccountReports,
   } = useUserRecentReports(10)
   const shouldShowAccountReports = authEnabled && Boolean(user)
+  const starredReportIds = useMemo(
+    () => new Set(settings.starredReports.map((report) => report.reportId)),
+    [settings.starredReports],
+  )
+  const unstarredRecentReports = useMemo(
+    () =>
+      recentReports.filter((report) => !starredReportIds.has(report.reportId)),
+    [recentReports, starredReportIds],
+  )
   const [isReportHintDismissed, setIsReportHintDismissed] = useState(() => {
     if (typeof window === 'undefined') {
       return false
@@ -86,14 +98,36 @@ export const LandingPage: FC = () => {
       <div className="grid gap-5 md:grid-cols-3">
         <SectionCard
           title="Recent logs"
-          subtitle="Most recently loaded report codes in this browser context."
+          subtitle="Starred reports are pinned first. Recent reports are shown below."
         >
-          <RecentReportsList
-            onRemoveReport={(reportId) => {
-              removeRecentReport(reportId)
-            }}
-            reports={recentReports}
-          />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Starred
+              </h3>
+              <StarredReportsList
+                reports={settings.starredReports}
+                onToggleStarReport={(reportId) => {
+                  void unstarReport(reportId)
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Recent
+              </h3>
+              <RecentReportsList
+                onRemoveReport={(reportId) => {
+                  removeRecentReport(reportId)
+                }}
+                onToggleStarReport={(report) => {
+                  void toggleStarredReport(report)
+                }}
+                reports={unstarredRecentReports}
+                starredReportIds={starredReportIds}
+              />
+            </div>
+          </div>
         </SectionCard>
         <SectionCard
           title="Guild logs"

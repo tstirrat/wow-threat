@@ -6,13 +6,18 @@ import { Link } from 'react-router-dom'
 
 import { formatReportHeaderDate } from '../lib/format'
 import { cn } from '../lib/utils'
-import type { RecentReportEntry } from '../types/app'
+import type { RecentReportEntry, StarredReportEntry } from '../types/app'
+import { ReportStarButton } from './report-star-button'
 import { Badge } from './ui/badge'
 import { Card, CardContent } from './ui/card'
 
 export type RecentReportsListProps = {
   reports: RecentReportEntry[]
   onRemoveReport: (reportId: string) => void
+  starredReportIds?: Set<string>
+  onToggleStarReport?: (
+    report: Omit<StarredReportEntry, 'starredAt'> & { starredAt?: number },
+  ) => void
 }
 
 type ReportGuildFaction = 'alliance' | 'horde' | null
@@ -55,6 +60,8 @@ function resolveSourceLabel(report: RecentReportEntry): string {
 export const RecentReportsList: FC<RecentReportsListProps> = ({
   reports,
   onRemoveReport,
+  starredReportIds,
+  onToggleStarReport,
 }) => {
   if (reports.length === 0) {
     return (
@@ -122,16 +129,39 @@ export const RecentReportsList: FC<RecentReportsListProps> = ({
                       {firstLine}
                     </Link>
                   )}
-                  <button
-                    aria-label={`Remove recent report ${report.title || report.reportId}`}
-                    className="cursor-pointer text-xs leading-none text-muted-foreground hover:text-foreground"
-                    onClick={() => {
-                      onRemoveReport(report.reportId)
-                    }}
-                    type="button"
-                  >
-                    ✕
-                  </button>
+                  <div className="flex items-center gap-1">
+                    {onToggleStarReport ? (
+                      <ReportStarButton
+                        ariaLabel={`${starredReportIds?.has(report.reportId) ? 'Unstar' : 'Star'} report ${report.title || report.reportId}`}
+                        isDisabled={isDisabled}
+                        isStarred={
+                          starredReportIds?.has(report.reportId) ?? false
+                        }
+                        onToggle={() => {
+                          onToggleStarReport({
+                            reportId: report.reportId,
+                            title: report.title,
+                            sourceHost: report.sourceHost,
+                            zoneName: report.zoneName ?? null,
+                            startTime: report.startTime ?? null,
+                            bossKillCount: report.bossKillCount ?? null,
+                            guildName: report.guildName ?? null,
+                            guildFaction: report.guildFaction ?? null,
+                          })
+                        }}
+                      />
+                    ) : null}
+                    <button
+                      aria-label={`Remove recent report ${report.title || report.reportId}`}
+                      className="cursor-pointer text-xs leading-none text-muted-foreground hover:text-foreground"
+                      onClick={() => {
+                        onRemoveReport(report.reportId)
+                      }}
+                      type="button"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {zoneLabel} - {startLabel} - {bossesLabel}

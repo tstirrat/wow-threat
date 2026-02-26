@@ -7,9 +7,9 @@ import type { User } from 'firebase/auth'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  type UserSettings,
   UserSettingsProvider,
   useUserSettings,
-  type UserSettings,
 } from './use-user-settings'
 
 const useAuthMock = vi.fn()
@@ -66,13 +66,15 @@ function createSnapshot({
         inferThreatReduction: false,
         showEnergizeEvents: false,
         showPets: false,
+        starredReports: [],
       },
     exists: () => exists,
   }
 }
 
 function Harness(): JSX.Element {
-  const { settings, isLoading, error, updateSettings } = useUserSettings()
+  const { settings, isLoading, error, updateSettings, toggleStarredReport } =
+    useUserSettings()
 
   return (
     <div>
@@ -81,6 +83,9 @@ function Harness(): JSX.Element {
         {String(settings.inferThreatReduction)}
       </p>
       <p data-testid="error">{error?.message ?? ''}</p>
+      <p data-testid="starred-count">
+        {String(settings.starredReports.length)}
+      </p>
       <button
         type="button"
         onClick={() => {
@@ -90,6 +95,18 @@ function Harness(): JSX.Element {
         }}
       >
         toggle infer threat reduction
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          void toggleStarredReport({
+            reportId: 'ABC123',
+            title: 'Test report',
+            sourceHost: 'fresh.warcraftlogs.com',
+          })
+        }}
+      >
+        toggle starred report
       </button>
     </div>
   )
@@ -166,6 +183,7 @@ describe('UserSettingsProvider', () => {
             inferThreatReduction: true,
             showEnergizeEvents: false,
             showPets: false,
+            starredReports: [],
           },
         }),
       )
@@ -256,14 +274,101 @@ describe('UserSettingsProvider', () => {
     })
 
     await act(async () => {
-      screen.getByRole('button', {
-        name: 'toggle infer threat reduction',
-      }).click()
+      screen
+        .getByRole('button', {
+          name: 'toggle infer threat reduction',
+        })
+        .click()
     })
 
     expect(screen.getByTestId('infer-threat-reduction')).toHaveTextContent(
       'false',
     )
     expect(screen.getByTestId('error')).toHaveTextContent('write failed')
+  })
+
+  it('toggles starred reports and writes full settings payload', async () => {
+    useAuthMock.mockReturnValue(
+      createAuthValue({
+        user: {
+          uid: 'wcl:12345',
+        } as User,
+      }),
+    )
+
+    let nextSnapshot:
+      | ((snapshot: ReturnType<typeof createSnapshot>) => void)
+      | undefined
+    onSnapshotMock.mockImplementation(
+      (
+        _documentRef: unknown,
+        onNext: (snapshot: ReturnType<typeof createSnapshot>) => void,
+      ) => {
+        nextSnapshot = onNext
+        return vi.fn()
+      },
+    )
+
+    render(
+      <UserSettingsProvider>
+        <Harness />
+      </UserSettingsProvider>,
+    )
+
+    const existingStarred = {
+      reportId: 'OLD123',
+      title: 'Older report',
+      sourceHost: 'sod.warcraftlogs.com',
+      starredAt: 10,
+    }
+    act(() => {
+      nextSnapshot?.(
+        createSnapshot({
+          exists: true,
+          settings: {
+            inferThreatReduction: false,
+            showEnergizeEvents: false,
+            showPets: false,
+            starredReports: [existingStarred],
+          },
+        }),
+      )
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('is-loading')).toHaveTextContent('false')
+    })
+
+    await act(async () => {
+      screen
+        .getByRole('button', {
+          name: 'toggle starred report',
+        })
+        .click()
+    })
+
+    expect(screen.getByTestId('starred-count')).toHaveTextContent('2')
+    expect(setDocMock).toHaveBeenCalledWith(
+      'settings-doc-ref',
+      expect.objectContaining({
+        showPets: false,
+        showEnergizeEvents: false,
+        inferThreatReduction: false,
+        starredReports: expect.arrayContaining([
+          expect.objectContaining({
+            reportId: 'ABC123',
+            title: 'Test report',
+            sourceHost: 'fresh.warcraftlogs.com',
+          }),
+          expect.objectContaining({
+            reportId: 'OLD123',
+            title: 'Older report',
+          }),
+        ]),
+      }),
+      {
+        merge: true,
+      },
+    )
   })
 })

@@ -9,6 +9,7 @@ import { formatReportHeaderDate } from '../lib/format'
 import { buildReportUrl } from '../lib/wcl-url'
 import type { ReportResponse } from '../types/api'
 import type { WarcraftLogsHost } from '../types/app'
+import { ReportStarButton } from './report-star-button'
 import { Card, CardHeader, CardTitle } from './ui/card'
 
 type ReportGuildFaction = 'alliance' | 'horde' | null
@@ -19,6 +20,9 @@ export type ReportSummaryHeaderProps = {
   reportHost: WarcraftLogsHost
   threatConfigLabel: string
   selectedFightId?: number | null
+  isStarred: boolean
+  onToggleStar: () => void
+  isStarToggleDisabled?: boolean
 }
 
 function normalizeGuildFaction(
@@ -57,6 +61,9 @@ export const ReportSummaryHeader: FC<ReportSummaryHeaderProps> = ({
   reportHost,
   threatConfigLabel,
   selectedFightId = null,
+  isStarred,
+  onToggleStar,
+  isStarToggleDisabled = false,
 }) => {
   const reportPlayers = report.actors.filter((actor) => actor.type === 'Player')
   const reportPlayerIds = new Set(reportPlayers.map((actor) => actor.id))
@@ -96,6 +103,13 @@ export const ReportSummaryHeader: FC<ReportSummaryHeaderProps> = ({
               ) : null}
               <span className="text-muted-foreground">|</span>
               <span className="text-muted-foreground">{report.zone?.name}</span>
+              <ReportStarButton
+                ariaLabel={`${isStarred ? 'Unstar' : 'Star'} report ${report.title || reportId}`}
+                className="ml-1"
+                isDisabled={isStarToggleDisabled}
+                isStarred={isStarred}
+                onToggle={onToggleStar}
+              />
             </CardTitle>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
               <span>{formatReportHeaderDate(report.startTime)}</span>

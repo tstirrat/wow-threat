@@ -90,6 +90,8 @@ describe('ReportSummaryHeader', () => {
 
     render(
       <ReportSummaryHeader
+        isStarred={false}
+        onToggleStar={() => {}}
         report={report}
         reportHost="fresh.warcraftlogs.com"
         reportId={report.code}
@@ -105,6 +107,8 @@ describe('ReportSummaryHeader', () => {
 
     render(
       <ReportSummaryHeader
+        isStarred={false}
+        onToggleStar={() => {}}
         report={report}
         reportHost="fresh.warcraftlogs.com"
         reportId={report.code}
@@ -122,6 +126,8 @@ describe('ReportSummaryHeader', () => {
 
     render(
       <ReportSummaryHeader
+        isStarred={false}
+        onToggleStar={() => {}}
         report={report}
         reportHost="fresh.warcraftlogs.com"
         reportId={report.code}

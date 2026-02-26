@@ -25,6 +25,18 @@ export interface RecentReportEntry {
   archiveDate?: number | null
 }
 
+export interface StarredReportEntry {
+  reportId: string
+  title: string
+  sourceHost: WarcraftLogsHost
+  starredAt: number
+  zoneName?: string | null
+  startTime?: number | null
+  bossKillCount?: number | null
+  guildName?: string | null
+  guildFaction?: string | null
+}
+
 export interface ExampleReportLink {
   label: string
   reportId: string

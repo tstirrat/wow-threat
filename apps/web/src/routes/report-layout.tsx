@@ -11,6 +11,7 @@ import { ReportSummaryHeader } from '../components/report-summary-header'
 import { useRecentReports } from '../hooks/use-recent-reports'
 import { useReportData } from '../hooks/use-report-data'
 import { useReportHost } from '../hooks/use-report-host'
+import { useUserSettings } from '../hooks/use-user-settings'
 import { buildBossKillNavigationFights } from '../lib/fight-navigation'
 import { resolveCurrentThreatConfig } from '../lib/threat-config'
 import type { WarcraftLogsHost } from '../types/app'
@@ -30,6 +31,12 @@ export const ReportLayout: FC = () => {
   const locationState = location.state as LocationState | null
 
   const { recentReports, addRecentReport } = useRecentReports()
+  const {
+    isLoading: isUserSettingsLoading,
+    isSaving: isSavingUserSettings,
+    isReportStarred,
+    toggleStarredReport,
+  } = useUserSettings()
   const fallbackHost = useReportHost(reportId, recentReports)
   const reportHost = locationState?.host ?? fallbackHost
   const { data, isLoading, error } = useReportData(reportId)
@@ -91,6 +98,20 @@ export const ReportLayout: FC = () => {
   return (
     <div className="space-y-5">
       <ReportSummaryHeader
+        isStarToggleDisabled={isUserSettingsLoading || isSavingUserSettings}
+        isStarred={isReportStarred(reportId)}
+        onToggleStar={() => {
+          void toggleStarredReport({
+            reportId,
+            title: data.title || reportId,
+            sourceHost: reportHost,
+            zoneName: data.zone?.name ?? null,
+            startTime: data.startTime,
+            bossKillCount: buildBossKillNavigationFights(data.fights).length,
+            guildName: data.guild?.name ?? null,
+            guildFaction: data.guild?.faction ?? null,
+          })
+        }}
         report={data}
         reportHost={reportHost}
         reportId={reportId}

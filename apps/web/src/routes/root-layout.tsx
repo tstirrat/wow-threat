@@ -23,12 +23,20 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { useRecentReports } from '@/hooks/use-recent-reports'
+import { useUserSettings } from '@/hooks/use-user-settings'
 import { useWclRateLimit } from '@/hooks/use-wcl-rate-limit'
 import { defaultHost } from '@/lib/constants'
 import { buildBossKillNavigationFights } from '@/lib/fight-navigation'
 import { superKey } from '@/lib/keyboard-shortcut'
 import { parseReportInput } from '@/lib/wcl-url'
-import { ChevronDown, Home, Loader2, RefreshCw, Search } from 'lucide-react'
+import {
+  ChevronDown,
+  Home,
+  Loader2,
+  RefreshCw,
+  Search,
+  Star,
+} from 'lucide-react'
 import { type FC, useEffect, useRef, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
@@ -67,6 +75,7 @@ export const RootLayout: FC = () => {
   const location = useLocation()
   const isLandingPage = location.pathname === '/'
   const { addRecentReport } = useRecentReports()
+  const { settings, isLoading: isUserSettingsLoading } = useUserSettings()
   const {
     authEnabled,
     authError,
@@ -112,6 +121,7 @@ export const RootLayout: FC = () => {
   const shouldShowAuthGate = authEnabled && !isInitializing && !user
   const isReportInputVisible = isLandingPage || isReportInputOpen
   const isSignInInProgress = shouldShowAuthGate && isBusy
+  const shouldShowStarredDropdown = Boolean(user) && !isLandingPage
   const displayUserName =
     wclUserName ?? user?.displayName ?? user?.uid ?? 'Warcraft Logs user'
   const handleAccountMenuOpenChange = (nextOpen: boolean): void => {
@@ -271,6 +281,46 @@ export const RootLayout: FC = () => {
                   </div>
                 </div>
               </TooltipProvider>
+            ) : null}
+            {shouldShowStarredDropdown ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    className="ml-2"
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    <Star aria-hidden="true" className="size-3.5" />
+                    Starred
+                    <ChevronDown aria-hidden="true" className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-72">
+                  <DropdownMenuLabel>Starred reports</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {isUserSettingsLoading ? (
+                    <DropdownMenuItem disabled>
+                      Loading starred reports...
+                    </DropdownMenuItem>
+                  ) : settings.starredReports.length === 0 ? (
+                    <DropdownMenuItem disabled>
+                      No starred reports yet
+                    </DropdownMenuItem>
+                  ) : (
+                    settings.starredReports.map((report) => (
+                      <DropdownMenuItem asChild key={report.reportId}>
+                        <Link
+                          state={{ host: report.sourceHost }}
+                          to={`/report/${report.reportId}`}
+                        >
+                          {report.title || report.reportId}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : null}
           </div>
 
