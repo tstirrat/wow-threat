@@ -18,8 +18,7 @@ import { buildVisibleSeriesForLegend } from '../lib/fight-page-series'
 import { formatClockDuration } from '../lib/format'
 import {
   buildFightTargetOptions,
-  buildFocusedPlayerSummary,
-  buildFocusedPlayerThreatRows,
+  buildFocusedPlayerAggregation,
   buildInitialAurasDisplay,
   buildThreatSeries,
   resolveSeriesWindowBounds,
@@ -254,40 +253,15 @@ export const FightPage: FC = () => {
     return hasVisibleSeries ? candidatePlayerId : null
   }, [queryState.state.focusId, queryState.state.players, visibleSeries])
 
-  const focusedPlayerSummary = useMemo(() => {
+  const focusedPlayerAggregation = useMemo(() => {
     if (selectedTarget === null) {
-      return null
+      return {
+        summary: null,
+        rows: [],
+      }
     }
 
-    return buildFocusedPlayerSummary({
-      events: eventsData?.events ?? [],
-      actors: fightData?.actors ?? [],
-      abilities: reportData.abilities,
-      threatConfig,
-      fightStartTime: fightData?.startTime ?? 0,
-      target: selectedTarget,
-      focusedPlayerId,
-      windowStartMs: selectedWindowStartMs,
-      windowEndMs: selectedWindowEndMs,
-    })
-  }, [
-    eventsData?.events,
-    fightData?.actors,
-    fightData?.startTime,
-    focusedPlayerId,
-    reportData.abilities,
-    selectedTarget,
-    selectedWindowEndMs,
-    selectedWindowStartMs,
-    threatConfig,
-  ])
-
-  const focusedPlayerRows = useMemo(() => {
-    if (selectedTarget === null) {
-      return []
-    }
-
-    return buildFocusedPlayerThreatRows({
+    return buildFocusedPlayerAggregation({
       events: eventsData?.events ?? [],
       actors: fightData?.actors ?? [],
       abilities: reportData.abilities,
@@ -307,6 +281,8 @@ export const FightPage: FC = () => {
     selectedWindowEndMs,
     selectedWindowStartMs,
   ])
+  const focusedPlayerSummary = focusedPlayerAggregation.summary
+  const focusedPlayerRows = focusedPlayerAggregation.rows
 
   const initialAuras = useMemo(
     () =>

@@ -9,6 +9,7 @@ import type { ThreatSeries } from '../types/app'
 import { getClassColor } from './class-colors'
 import {
   buildFightTargetOptions,
+  buildFocusedPlayerAggregation,
   buildFocusedPlayerSummary,
   buildFocusedPlayerThreatRows,
   buildInitialAurasDisplay,
@@ -1740,6 +1741,78 @@ describe('threat-aggregation', () => {
         modifierBreakdown: [],
       },
     ])
+  })
+
+  it('builds focused player summary and rows in a single aggregation call', () => {
+    const actors: ReportActorSummary[] = [
+      {
+        id: 1,
+        name: 'Warrior',
+        type: 'Player',
+        subType: 'Warrior',
+      },
+    ]
+    const abilities: ReportAbilitySummary[] = [
+      {
+        gameID: 100,
+        icon: null,
+        name: 'Shield Slam',
+        type: 'ability',
+      },
+    ]
+    const events = [
+      {
+        timestamp: 1000,
+        type: 'damage',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 10,
+        targetIsFriendly: false,
+        abilityGameID: 100,
+        amount: 300,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 150,
+              total: 150,
+            },
+          ],
+          calculation: {
+            formula: 'damage',
+            amount: 300,
+            baseThreat: 300,
+            modifiedThreat: 150,
+            isSplit: false,
+            modifiers: [],
+          },
+        },
+      },
+    ]
+
+    const args = {
+      events: events as never,
+      actors,
+      abilities,
+      fightStartTime: 1000,
+      target: {
+        id: 10,
+        instance: 0,
+      },
+      focusedPlayerId: 1,
+      windowStartMs: 0,
+      windowEndMs: 1000,
+    }
+
+    const aggregation = buildFocusedPlayerAggregation(args)
+    const summary = buildFocusedPlayerSummary(args)
+    const rows = buildFocusedPlayerThreatRows(args)
+
+    expect(aggregation.summary).toEqual(summary)
+    expect(aggregation.rows).toEqual(rows)
   })
 
   it('builds focused player threat rows with modifier totals and breakdown', () => {

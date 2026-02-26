@@ -72,6 +72,11 @@ export interface ReportPlayerRanking {
   perFight: Record<number, number>
 }
 
+export interface FocusedPlayerAggregation {
+  summary: FocusedPlayerSummary | null
+  rows: FocusedPlayerThreatRow[]
+}
+
 interface ThreatStateTransition {
   actorId: number
   kind: ThreatStateVisualKind
@@ -102,7 +107,69 @@ interface ModifierVariantAccumulator {
   totalThreat: number
 }
 
+type ThreatEvent = AugmentedEventsResponse['events'][number]
+type ThreatChange = NonNullable<
+  NonNullable<ThreatEvent['threat']>['changes']
+>[number]
+
+interface OrderedEventVisitContext {
+  event: ThreatEvent
+  timeMs: number
+}
+
+interface SeriesEventVisitContext extends OrderedEventVisitContext {
+  clampedTimeMs: number
+  matchingTargetChanges: ThreatChange[]
+  markersByActorId: Map<number, ThreatPointMarkerKind>
+  invulnerabilityStartActorIds: Set<number>
+}
+
+interface VisibleThreatModifierEntry {
+  modifier: ThreatPointModifier
+  sourceId: number | null
+}
+
+interface FocusedEventVisitContext extends OrderedEventVisitContext {
+  isWithinWindow: boolean
+  hasMatchingSource: boolean
+  matchingThreat: number
+  visibleModifierEntries: VisibleThreatModifierEntry[]
+}
+
+interface OrderedEventVisitor<TContext extends OrderedEventVisitContext> {
+  visit: (context: TContext) => void
+}
+
 const defaultTargetInstance = 0
+
+function visitOrderedEvents<TContext extends OrderedEventVisitContext>({
+  events,
+  fightStartTime,
+  firstTimestamp,
+  createContext,
+  visitors,
+}: {
+  events: AugmentedEventsResponse['events']
+  fightStartTime: number
+  firstTimestamp: number
+  createContext: (context: OrderedEventVisitContext) => TContext
+  visitors: OrderedEventVisitor<TContext>[]
+}): void {
+  events.forEach((event) => {
+    const context = createContext({
+      event,
+      timeMs: resolveRelativeTimeMs(
+        event.timestamp,
+        fightStartTime,
+        firstTimestamp,
+      ),
+    })
+
+    visitors.forEach((visitor) => {
+      visitor.visit(context)
+    })
+  })
+}
 
 function ensureEncounterStartPoint(
   accumulator: SeriesAccumulator,
@@ -128,41 +195,7 @@ function ensureEncounterStartPoint(
   })
 }
 
-function isBossMeleeMarkerEventForTarget({
-  event,
-  target,
-}: {
-  event: AugmentedEventsResponse['events'][number]
-  target: FightTarget
-}): boolean {
-  const hasBossMeleeMarker = (event.threat?.calculation.effects ?? []).some(
-    (effect) => effect.type === 'eventMarker' && effect.marker === 'bossMelee',
-  )
-  const isLegacyBossMeleeEvent =
-    event.type === 'damage' && event.abilityGameID === bossMeleeSpellId
-
-  return (
-    (hasBossMeleeMarker || isLegacyBossMeleeEvent) &&
-    event.sourceID === target.id &&
-    (event.sourceInstance ?? defaultTargetInstance) === target.instance
-  )
-}
-
-function isTranquilAirTotemMarkerEvent(
-  event: AugmentedEventsResponse['events'][number],
-): boolean {
-  const hasTranquilAirTotemMarker = (
-    event.threat?.calculation.effects ?? []
-  ).some(
-    (effect) =>
-      effect.type === 'eventMarker' &&
-      String(effect.marker) === 'tranquilAirTotem',
-  )
-
-  return hasTranquilAirTotemMarker
-}
-
-function resolveEventPointMarkers({
+function resolveEventPointDecorations({
   event,
   target,
   actorsById,
@@ -170,9 +203,15 @@ function resolveEventPointMarkers({
   event: AugmentedEventsResponse['events'][number]
   target: FightTarget
   actorsById: Map<number, ReportActorSummary>
-}): Map<number, ThreatPointMarkerKind> {
+}): {
+  markersByActorId: Map<number, ThreatPointMarkerKind>
+  invulnerabilityStartActorIds: Set<number>
+} {
   const markersByActorId = new Map<number, ThreatPointMarkerKind>()
-  const eventEffects = event.threat?.calculation.effects ?? []
+  const invulnerabilityStartActorIds = new Set<number>()
+  let hasBossMeleeMarker = false
+  let hasDeathMarker = false
+  let hasTranquilAirTotemMarker = false
 
   const setMarker = ({
     actorId,
@@ -197,16 +236,43 @@ function resolveEventPointMarkers({
     markersByActorId.set(actorId, markerKind)
   }
 
-  if (isBossMeleeMarkerEventForTarget({ event, target })) {
+  ;(event.threat?.calculation.effects ?? []).forEach((effect) => {
+    if (effect.type === 'eventMarker') {
+      hasBossMeleeMarker = hasBossMeleeMarker || effect.marker === 'bossMelee'
+      hasDeathMarker = hasDeathMarker || effect.marker === 'death'
+      hasTranquilAirTotemMarker =
+        hasTranquilAirTotemMarker ||
+        String(effect.marker) === 'tranquilAirTotem'
+      return
+    }
+
+    if (
+      effect.type === 'state' &&
+      effect.state.kind === 'invulnerable' &&
+      effect.state.phase === 'start'
+    ) {
+      const actor = actorsById.get(effect.state.actorId)
+      if (!actor || !trackableActorTypes.has(actor.type)) {
+        return
+      }
+
+      invulnerabilityStartActorIds.add(effect.state.actorId)
+    }
+  })
+
+  const isLegacyBossMeleeEvent =
+    event.type === 'damage' && event.abilityGameID === bossMeleeSpellId
+  if (
+    (hasBossMeleeMarker || isLegacyBossMeleeEvent) &&
+    event.sourceID === target.id &&
+    (event.sourceInstance ?? defaultTargetInstance) === target.instance
+  ) {
     setMarker({
       actorId: event.targetID,
       markerKind: 'bossMelee',
     })
   }
 
-  const hasDeathMarker = eventEffects.some(
-    (effect) => effect.type === 'eventMarker' && effect.marker === 'death',
-  )
   if (hasDeathMarker || event.type === 'death') {
     setMarker({
       actorId: event.targetID,
@@ -214,46 +280,17 @@ function resolveEventPointMarkers({
     })
   }
 
-  if (isTranquilAirTotemMarkerEvent(event)) {
+  if (hasTranquilAirTotemMarker) {
     setMarker({
       actorId: event.sourceID,
       markerKind: 'tranquilAirTotem',
     })
   }
 
-  return markersByActorId
-}
-
-function resolveInvulnerabilityStartActorIds({
-  event,
-  actorsById,
-}: {
-  event: AugmentedEventsResponse['events'][number]
-  actorsById: Map<number, ReportActorSummary>
-}): Set<number> {
-  const actorIds = new Set<number>()
-
-  ;(event.threat?.calculation.effects ?? []).forEach((effect) => {
-    if (effect.type !== 'state') {
-      return
-    }
-
-    if (
-      effect.state.kind !== 'invulnerable' ||
-      effect.state.phase !== 'start'
-    ) {
-      return
-    }
-
-    const actor = actorsById.get(effect.state.actorId)
-    if (!actor || !trackableActorTypes.has(actor.type)) {
-      return
-    }
-
-    actorIds.add(effect.state.actorId)
-  })
-
-  return actorIds
+  return {
+    markersByActorId,
+    invulnerabilityStartActorIds,
+  }
 }
 
 function getAuraSpellId(aura: CombatantInfoAura): number | null {
@@ -378,34 +415,40 @@ function normalizeThreatModifiers(
     return []
   }
 
-  return modifiers.map((modifier) => {
-    const fromSchoolMaskField = (() => {
-      const value = Number(modifier.schoolMask)
-      if (!Number.isFinite(value)) {
-        return []
-      }
+  return modifiers.map(normalizeThreatModifier)
+}
 
-      return resolveSchoolLabelsFromMask(value)
-    })()
-
-    const schoolMatch = modifier.name.match(/\((?<school>[^)]+)\)$/i)
-    const fromName =
-      schoolMatch?.groups?.school &&
-      knownSpellSchools.has(schoolMatch.groups.school.trim().toLowerCase())
-        ? [schoolMatch.groups.school.trim().toLowerCase()]
-        : []
-    const schoolLabels = [...new Set([...fromSchoolMaskField, ...fromName])]
-    const normalizedName =
-      schoolMatch && fromName.length > 0
-        ? modifier.name.slice(0, schoolMatch.index).trim()
-        : modifier.name
-
-    return {
-      name: normalizedName,
-      schoolLabels,
-      value: modifier.value,
+function normalizeThreatModifier(modifier: {
+  name: string
+  value: number
+  schoolMask?: unknown
+}): ThreatPointModifier {
+  const fromSchoolMaskField = (() => {
+    const value = Number(modifier.schoolMask)
+    if (!Number.isFinite(value)) {
+      return []
     }
-  })
+
+    return resolveSchoolLabelsFromMask(value)
+  })()
+
+  const schoolMatch = modifier.name.match(/\((?<school>[^)]+)\)$/i)
+  const fromName =
+    schoolMatch?.groups?.school &&
+    knownSpellSchools.has(schoolMatch.groups.school.trim().toLowerCase())
+      ? [schoolMatch.groups.school.trim().toLowerCase()]
+      : []
+  const schoolLabels = [...new Set([...fromSchoolMaskField, ...fromName])]
+  const normalizedName =
+    schoolMatch && fromName.length > 0
+      ? modifier.name.slice(0, schoolMatch.index).trim()
+      : modifier.name
+
+  return {
+    name: normalizedName,
+    schoolLabels,
+    value: modifier.value,
+  }
 }
 
 function createAbilityMap(
@@ -476,62 +519,14 @@ function createModifierVariantKey(modifiers: ThreatPointModifier[]): string {
     .join('||')
 }
 
-function buildAppliedModifiersForFocusedActor({
-  events,
-  sourceIds,
-}: {
-  events: AugmentedEventsResponse['events']
-  sourceIds: Set<number>
-}): FocusedPlayerSummary['modifiers'] {
-  const modifierCountsByKey = new Map<
+function finalizeAppliedModifiers(
+  modifierCountsByKey: Map<
     string,
     FocusedPlayerSummary['modifiers'][number] & {
       count: number
     }
-  >()
-
-  events.forEach((event) => {
-    const hasMatchingSource = (event.threat?.changes ?? []).some((change) =>
-      sourceIds.has(change.sourceId),
-    )
-    if (!hasMatchingSource) {
-      return
-    }
-
-    ;(event.threat?.calculation.modifiers ?? []).forEach((rawModifier) => {
-      const modifier = normalizeThreatModifiers([rawModifier])[0]
-      if (!modifier || !isVisibleModifierValue(modifier.value)) {
-        return
-      }
-
-      const key = createModifierSignature(modifier)
-      const existing = modifierCountsByKey.get(key)
-
-      if (existing) {
-        existing.count += 1
-        if (
-          !existing.spellId &&
-          typeof rawModifier.sourceId === 'number' &&
-          rawModifier.sourceId > 0
-        ) {
-          existing.spellId = rawModifier.sourceId
-        }
-        return
-      }
-
-      modifierCountsByKey.set(key, {
-        key,
-        name: modifier.name,
-        ...(typeof rawModifier.sourceId === 'number' && rawModifier.sourceId > 0
-          ? { spellId: rawModifier.sourceId }
-          : {}),
-        schoolLabels: modifier.schoolLabels,
-        value: modifier.value,
-        count: 1,
-      })
-    })
-  })
-
+  >,
+): FocusedPlayerSummary['modifiers'] {
   return [...modifierCountsByKey.values()]
     .sort((left, right) => {
       const byCount = right.count - left.count
@@ -657,68 +652,62 @@ function resolveWinningState(
   return winner
 }
 
-function collectStateTransitionsByActor({
-  sortedEvents,
-  fightStartTime,
-  firstTimestamp,
-  fightEndMs,
+function createStateTransitionCollectorVisitor({
   target,
   abilityById,
 }: {
-  sortedEvents: AugmentedEventsResponse['events']
-  fightStartTime: number
-  firstTimestamp: number
-  fightEndMs: number
   target: FightTarget
   abilityById: Map<number, ReportAbilitySummary>
-}): Map<number, ThreatStateTransition[]> {
+}): {
+  transitionsByActor: Map<number, ThreatStateTransition[]>
+  visitor: OrderedEventVisitor<SeriesEventVisitContext>
+} {
   const transitionsByActor = new Map<number, ThreatStateTransition[]>()
   let sequence = 0
 
-  sortedEvents.forEach((event) => {
-    const timeMs = clampTimeMs(
-      resolveRelativeTimeMs(event.timestamp, fightStartTime, firstTimestamp),
-      fightEndMs,
-    )
-    ;(event.threat?.calculation.effects ?? []).forEach((effect) => {
-      if (effect.type !== 'state') {
-        return
-      }
+  return {
+    transitionsByActor,
+    visitor: {
+      visit: ({ event, clampedTimeMs }) => {
+        ;(event.threat?.calculation.effects ?? []).forEach((effect) => {
+          if (effect.type !== 'state') {
+            return
+          }
 
-      if (!isThreatStateVisualKind(effect.state.kind)) {
-        return
-      }
-      if (effect.state.phase !== 'start' && effect.state.phase !== 'end') {
-        return
-      }
+          if (!isThreatStateVisualKind(effect.state.kind)) {
+            return
+          }
+          if (effect.state.phase !== 'start' && effect.state.phase !== 'end') {
+            return
+          }
 
-      if (
-        effect.state.kind === 'fixate' &&
-        (effect.state.targetId !== target.id ||
-          (effect.state.targetInstance ?? defaultTargetInstance) !==
-            target.instance)
-      ) {
-        return
-      }
+          if (
+            effect.state.kind === 'fixate' &&
+            (effect.state.targetId !== target.id ||
+              (effect.state.targetInstance ?? defaultTargetInstance) !==
+                target.instance)
+          ) {
+            return
+          }
 
-      const transition: ThreatStateTransition = {
-        actorId: effect.state.actorId,
-        kind: effect.state.kind,
-        phase: effect.state.phase,
-        spellId: effect.state.spellId,
-        spellName: resolveStateSpellName(effect.state.spellId, abilityById),
-        timeMs,
-        sequence,
-      }
-      sequence += 1
+          const transition: ThreatStateTransition = {
+            actorId: effect.state.actorId,
+            kind: effect.state.kind,
+            phase: effect.state.phase,
+            spellId: effect.state.spellId,
+            spellName: resolveStateSpellName(effect.state.spellId, abilityById),
+            timeMs: clampedTimeMs,
+            sequence,
+          }
+          sequence += 1
 
-      const existing = transitionsByActor.get(transition.actorId) ?? []
-      existing.push(transition)
-      transitionsByActor.set(transition.actorId, existing)
-    })
-  })
-
-  return transitionsByActor
+          const existing = transitionsByActor.get(transition.actorId) ?? []
+          existing.push(transition)
+          transitionsByActor.set(transition.actorId, existing)
+        })
+      },
+    },
+  }
 }
 
 function buildActorStateVisuals(
@@ -733,9 +722,7 @@ function buildActorStateVisuals(
     }
   }
 
-  const sorted = [...transitions].sort(
-    (a, b) => a.timeMs - b.timeMs || a.sequence - b.sequence,
-  )
+  const orderedTransitions = transitions
   const activeStates = new Map<string, ActiveThreatState>()
   const windowsByKind = {
     fixate: [] as ThreatStateWindow[],
@@ -759,8 +746,8 @@ function buildActorStateVisuals(
     })
   }
 
-  while (index < sorted.length) {
-    const timestamp = sorted[index]?.timeMs ?? 0
+  while (index < orderedTransitions.length) {
+    const timestamp = orderedTransitions[index]?.timeMs ?? 0
     if (
       currentWinner &&
       currentSegmentStart !== null &&
@@ -776,8 +763,8 @@ function buildActorStateVisuals(
     }
 
     const timestampTransitions: ThreatStateTransition[] = []
-    while ((sorted[index]?.timeMs ?? -1) === timestamp) {
-      const transition = sorted[index]
+    while ((orderedTransitions[index]?.timeMs ?? -1) === timestamp) {
+      const transition = orderedTransitions[index]
       if (transition) {
         timestampTransitions.push(transition)
       }
@@ -1029,19 +1016,13 @@ export function buildThreatSeries({
 }): ThreatSeries[] {
   const actorsById = new Map(actors.map((actor) => [actor.id, actor]))
   const abilityById = createAbilityMap(abilities)
-  const sortedEvents = [...events].sort((a, b) => a.timestamp - b.timestamp)
-  const firstTimestamp = sortedEvents[0]?.timestamp ?? fightStartTime
-  const lastTimestamp =
-    sortedEvents[sortedEvents.length - 1]?.timestamp ?? fightEndTime
+  const firstTimestamp = events[0]?.timestamp ?? fightStartTime
+  const lastTimestamp = events[events.length - 1]?.timestamp ?? fightEndTime
   const fightEndMs = Math.max(
     resolveRelativeTimeMs(fightEndTime, fightStartTime, firstTimestamp),
     resolveRelativeTimeMs(lastTimestamp, fightStartTime, firstTimestamp),
   )
-  const stateTransitionsByActor = collectStateTransitionsByActor({
-    sortedEvents,
-    fightStartTime,
-    firstTimestamp,
-    fightEndMs,
+  const stateTransitionCollector = createStateTransitionCollectorVisitor({
     target,
     abilityById,
   })
@@ -1070,199 +1051,229 @@ export function buildThreatSeries({
       })
     })
 
-  sortedEvents.forEach((event) => {
-    const abilityId = event.abilityGameID ?? null
-    const spellId = abilityId ?? undefined
-    const abilityName =
-      abilityId !== null
-        ? (abilityById.get(abilityId)?.name ?? `Ability #${abilityId}`)
-        : event.type === 'death'
-          ? 'Death'
-          : 'Unknown ability'
-    const spellSchool =
-      event.type === 'damage' || event.type === 'heal'
-        ? (() => {
-            const abilitySchoolMask =
-              abilityId !== null
-                ? parseAbilitySchoolMask(
-                    abilityById.get(abilityId)?.type ?? null,
-                  )
-                : 0
-            const abilitySchoolLabels =
-              resolveSchoolLabelsFromMask(abilitySchoolMask)
-            return abilitySchoolLabels.length > 0
-              ? abilitySchoolLabels.join('/')
-              : null
-          })()
-        : null
-    const formula = event.threat?.calculation.formula ?? 'n/a'
-    const modifiers = normalizeThreatModifiers(
-      event.threat?.calculation.modifiers,
-    )
-    const targetName = actorsById.get(event.targetID)?.name ?? null
-    const isTick = event.tick === true
-    const amount = event.threat?.calculation.amount ?? 0
-    const baseThreat = event.threat?.calculation.baseThreat ?? 0
-    const modifiedThreat = event.threat?.calculation.modifiedThreat ?? 0
-    const resourceType = event.resourceChangeType ?? null
-    const hitType =
-      event.hitType !== undefined && event.hitType !== HitTypeCode.Hit
-        ? event.hitType
-        : undefined
-    const timeMs = resolveRelativeTimeMs(
-      event.timestamp,
-      fightStartTime,
-      firstTimestamp,
-    )
-    const damageDone =
-      event.type === 'damage' ? Math.max(0, event.amount ?? 0) : 0
-    const healingDone =
-      event.type === 'heal' ? Math.max(0, event.amount ?? 0) : 0
-    const eventMarkersByActorId = resolveEventPointMarkers({
+  const seriesPointVisitor: OrderedEventVisitor<SeriesEventVisitContext> = {
+    visit: ({
       event,
-      target,
-      actorsById,
-    })
-    const invulnerabilityStartActorIds = resolveInvulnerabilityStartActorIds({
-      event,
-      actorsById,
-    })
-    const actorsWithEventPoint = new Set<number>()
-
-    event.threat?.changes?.forEach((change) => {
+      timeMs,
+      matchingTargetChanges,
+      markersByActorId,
+      invulnerabilityStartActorIds,
+    }) => {
       if (
-        change.targetId !== target.id ||
-        (change.targetInstance ?? defaultTargetInstance) !== target.instance
+        matchingTargetChanges.length === 0 &&
+        markersByActorId.size === 0 &&
+        invulnerabilityStartActorIds.size === 0
       ) {
         return
       }
 
-      const accumulator = accumulators.get(change.sourceId)
-      if (!accumulator) {
-        return
-      }
+      const abilityId = event.abilityGameID ?? null
+      const spellId = abilityId ?? undefined
+      const abilityName =
+        abilityId !== null
+          ? (abilityById.get(abilityId)?.name ?? `Ability #${abilityId}`)
+          : event.type === 'death'
+            ? 'Death'
+            : 'Unknown ability'
+      const spellSchool =
+        event.type === 'damage' || event.type === 'heal'
+          ? (() => {
+              const abilitySchoolMask =
+                abilityId !== null
+                  ? parseAbilitySchoolMask(
+                      abilityById.get(abilityId)?.type ?? null,
+                    )
+                  : 0
+              const abilitySchoolLabels =
+                resolveSchoolLabelsFromMask(abilitySchoolMask)
+              return abilitySchoolLabels.length > 0
+                ? abilitySchoolLabels.join('/')
+                : null
+            })()
+          : null
+      const formula = event.threat?.calculation.formula ?? 'n/a'
+      const modifiers = normalizeThreatModifiers(
+        event.threat?.calculation.modifiers,
+      )
+      const targetName = actorsById.get(event.targetID)?.name ?? null
+      const isTick = event.tick === true
+      const amount = event.threat?.calculation.amount ?? 0
+      const baseThreat = event.threat?.calculation.baseThreat ?? 0
+      const modifiedThreat = event.threat?.calculation.modifiedThreat ?? 0
+      const resourceType = event.resourceChangeType ?? null
+      const hitType =
+        event.hitType !== undefined && event.hitType !== HitTypeCode.Hit
+          ? event.hitType
+          : undefined
+      const damageDone =
+        event.type === 'damage' ? Math.max(0, event.amount ?? 0) : 0
+      const healingDone =
+        event.type === 'heal' ? Math.max(0, event.amount ?? 0) : 0
+      const pointIndexByActorId = new Map<number, number>()
 
-      accumulator.totalThreat = change.total
-      accumulator.maxThreat = Math.max(accumulator.maxThreat, change.total)
-      accumulator.totalDamage += damageDone
-      accumulator.totalHealing += healingDone
-
-      ensureEncounterStartPoint(accumulator, fightStartTime)
-
-      accumulator.points.push({
-        timestamp: event.timestamp,
-        timeMs,
-        totalThreat: change.total,
-        threatDelta: change.amount,
-        amount,
-        baseThreat,
-        modifiedThreat,
-        ...(spellId ? { spellId } : {}),
-        resourceType,
-        spellSchool,
-        eventType: event.type,
-        abilityName,
-        targetName,
-        ...(hitType ? { hitType } : {}),
-        isTick,
-        formula,
-        modifiers,
-      })
-      actorsWithEventPoint.add(change.sourceId)
-    })
-
-    eventMarkersByActorId.forEach((markerKind, actorId) => {
-      const accumulator = accumulators.get(actorId)
-      if (!accumulator) {
-        return
-      }
-
-      if (actorsWithEventPoint.has(actorId)) {
-        for (
-          let index = accumulator.points.length - 1;
-          index >= 0;
-          index -= 1
-        ) {
-          const point = accumulator.points[index]
-          if (!point || point.timestamp !== event.timestamp) {
-            continue
-          }
-
-          point.markerKind = markerKind
+      matchingTargetChanges.forEach((change) => {
+        const accumulator = accumulators.get(change.sourceId)
+        if (!accumulator) {
           return
         }
-      }
 
-      ensureEncounterStartPoint(accumulator, fightStartTime)
-      accumulator.points.push({
-        timestamp: event.timestamp,
-        timeMs,
-        totalThreat: accumulator.totalThreat,
-        threatDelta: 0,
-        amount,
-        baseThreat,
-        modifiedThreat,
-        ...(spellId ? { spellId } : {}),
-        resourceType,
-        spellSchool,
-        eventType: event.type,
-        abilityName,
-        targetName,
-        ...(hitType ? { hitType } : {}),
-        isTick,
-        formula,
-        modifiers,
-        markerKind,
+        accumulator.totalThreat = change.total
+        accumulator.maxThreat = Math.max(accumulator.maxThreat, change.total)
+        accumulator.totalDamage += damageDone
+        accumulator.totalHealing += healingDone
+
+        ensureEncounterStartPoint(accumulator, fightStartTime)
+
+        accumulator.points.push({
+          timestamp: event.timestamp,
+          timeMs,
+          totalThreat: change.total,
+          threatDelta: change.amount,
+          amount,
+          baseThreat,
+          modifiedThreat,
+          ...(spellId ? { spellId } : {}),
+          resourceType,
+          spellSchool,
+          eventType: event.type,
+          abilityName,
+          targetName,
+          ...(hitType ? { hitType } : {}),
+          isTick,
+          formula,
+          modifiers,
+        })
+        pointIndexByActorId.set(change.sourceId, accumulator.points.length - 1)
       })
-      actorsWithEventPoint.add(actorId)
-    })
 
-    invulnerabilityStartActorIds.forEach((actorId) => {
-      if (actorsWithEventPoint.has(actorId)) {
-        return
+      markersByActorId.forEach((markerKind, actorId) => {
+        const accumulator = accumulators.get(actorId)
+        if (!accumulator) {
+          return
+        }
+
+        const pointIndex = pointIndexByActorId.get(actorId)
+        if (pointIndex !== undefined) {
+          const existingPoint = accumulator.points[pointIndex]
+          if (existingPoint) {
+            existingPoint.markerKind = markerKind
+          }
+          return
+        }
+
+        ensureEncounterStartPoint(accumulator, fightStartTime)
+        accumulator.points.push({
+          timestamp: event.timestamp,
+          timeMs,
+          totalThreat: accumulator.totalThreat,
+          threatDelta: 0,
+          amount,
+          baseThreat,
+          modifiedThreat,
+          ...(spellId ? { spellId } : {}),
+          resourceType,
+          spellSchool,
+          eventType: event.type,
+          abilityName,
+          targetName,
+          ...(hitType ? { hitType } : {}),
+          isTick,
+          formula,
+          modifiers,
+          markerKind,
+        })
+        pointIndexByActorId.set(actorId, accumulator.points.length - 1)
+      })
+
+      invulnerabilityStartActorIds.forEach((actorId) => {
+        if (pointIndexByActorId.has(actorId)) {
+          return
+        }
+
+        const accumulator = accumulators.get(actorId)
+        if (!accumulator) {
+          return
+        }
+
+        ensureEncounterStartPoint(accumulator, fightStartTime)
+        accumulator.points.push({
+          timestamp: event.timestamp,
+          timeMs,
+          totalThreat: accumulator.totalThreat,
+          threatDelta: 0,
+          amount,
+          baseThreat,
+          modifiedThreat,
+          ...(spellId ? { spellId } : {}),
+          resourceType,
+          spellSchool,
+          eventType: event.type,
+          abilityName,
+          targetName,
+          ...(hitType ? { hitType } : {}),
+          isTick,
+          formula,
+          modifiers,
+        })
+        pointIndexByActorId.set(actorId, accumulator.points.length - 1)
+      })
+    },
+  }
+
+  visitOrderedEvents<SeriesEventVisitContext>({
+    events,
+    fightStartTime,
+    firstTimestamp,
+    createContext: ({ event, timeMs }) => {
+      const matchingTargetChanges: ThreatChange[] = []
+      ;(event.threat?.changes ?? []).forEach((change) => {
+        if (
+          change.targetId !== target.id ||
+          (change.targetInstance ?? defaultTargetInstance) !== target.instance
+        ) {
+          return
+        }
+
+        if (!accumulators.has(change.sourceId)) {
+          return
+        }
+
+        matchingTargetChanges.push(change)
+      })
+
+      const { markersByActorId, invulnerabilityStartActorIds } =
+        resolveEventPointDecorations({
+          event,
+          target,
+          actorsById,
+        })
+
+      return {
+        event,
+        timeMs,
+        clampedTimeMs: clampTimeMs(timeMs, fightEndMs),
+        matchingTargetChanges,
+        markersByActorId,
+        invulnerabilityStartActorIds,
       }
+    },
+    visitors: [stateTransitionCollector.visitor, seriesPointVisitor],
+  })
 
+  stateTransitionCollector.transitionsByActor.forEach(
+    (transitions, actorId) => {
       const accumulator = accumulators.get(actorId)
       if (!accumulator) {
         return
       }
 
-      ensureEncounterStartPoint(accumulator, fightStartTime)
-      accumulator.points.push({
-        timestamp: event.timestamp,
-        timeMs,
-        totalThreat: accumulator.totalThreat,
-        threatDelta: 0,
-        amount,
-        baseThreat,
-        modifiedThreat,
-        ...(spellId ? { spellId } : {}),
-        resourceType,
-        spellSchool,
-        eventType: event.type,
-        abilityName,
-        targetName,
-        ...(hitType ? { hitType } : {}),
-        isTick,
-        formula,
-        modifiers,
-      })
-      actorsWithEventPoint.add(actorId)
-    })
-  })
-
-  stateTransitionsByActor.forEach((transitions, actorId) => {
-    const accumulator = accumulators.get(actorId)
-    if (!accumulator) {
-      return
-    }
-
-    const actorStateVisuals = buildActorStateVisuals(transitions, fightEndMs)
-    accumulator.stateVisualSegments = actorStateVisuals.stateVisualSegments
-    accumulator.fixateWindows = actorStateVisuals.fixateWindows
-    accumulator.invulnerabilityWindows =
-      actorStateVisuals.invulnerabilityWindows
-  })
+      const actorStateVisuals = buildActorStateVisuals(transitions, fightEndMs)
+      accumulator.stateVisualSegments = actorStateVisuals.stateVisualSegments
+      accumulator.fixateWindows = actorStateVisuals.fixateWindows
+      accumulator.invulnerabilityWindows =
+        actorStateVisuals.invulnerabilityWindows
+    },
+  )
 
   return [...accumulators.values()]
     .filter((series) => series.points.length > 0)
@@ -1398,136 +1409,14 @@ function resolveFocusedThreatEventSuffix(eventCategory: string): string | null {
   return eventCategory
 }
 
-/** Build totals/class metadata for the currently focused player. */
-export function buildFocusedPlayerSummary({
-  events,
-  actors,
-  fightStartTime,
-  target,
-  focusedPlayerId,
-  windowStartMs,
-  windowEndMs,
-}: {
-  events: AugmentedEventsResponse['events']
-  actors: ReportActorSummary[]
-  abilities?: ReportAbilitySummary[]
-  threatConfig?: ThreatConfig | null
-  fightStartTime: number
-  target: FightTarget
-  focusedPlayerId: number | null
-  windowStartMs: number
-  windowEndMs: number
-}): FocusedPlayerSummary | null {
-  if (focusedPlayerId === null) {
-    return null
-  }
-
-  const actorsById = new Map(actors.map((actor) => [actor.id, actor]))
-  const focusedPlayer = actorsById.get(focusedPlayerId)
-  if (!focusedPlayer || !trackableActorTypes.has(focusedPlayer.type)) {
-    return null
-  }
-
-  const sourceIds = resolveFocusedActorSourceIds(actors, focusedPlayerId)
-  if (sourceIds.size === 0) {
-    return null
-  }
-
-  const sortedEvents = [...events].sort((a, b) => a.timestamp - b.timestamp)
-  const firstTimestamp = sortedEvents[0]?.timestamp ?? fightStartTime
-  const windowDurationSeconds = Math.max(1, windowEndMs - windowStartMs) / 1000
-  const actorClass = resolveActorClass(focusedPlayer, actorsById)
-  const modifiers = buildAppliedModifiersForFocusedActor({
-    events: sortedEvents,
-    sourceIds,
-  })
-
-  const totals = sortedEvents.reduce(
-    (acc, event) => {
-      const timeMs = resolveRelativeTimeMs(
-        event.timestamp,
-        fightStartTime,
-        firstTimestamp,
-      )
-      if (timeMs < windowStartMs || timeMs > windowEndMs) {
-        return acc
-      }
-
-      const hasMatchingChange = (event.threat?.changes ?? []).some(
-        (change) =>
-          change.targetId === target.id &&
-          (change.targetInstance ?? defaultTargetInstance) ===
-            target.instance &&
-          sourceIds.has(change.sourceId),
-      )
-      if (!hasMatchingChange) {
-        return acc
-      }
-
-      const threatDelta = (event.threat?.changes ?? [])
-        .filter(
-          (change) =>
-            change.targetId === target.id &&
-            (change.targetInstance ?? defaultTargetInstance) ===
-              target.instance &&
-            sourceIds.has(change.sourceId),
-        )
-        .reduce((sum, change) => sum + change.amount, 0)
-
-      return {
-        totalThreat: acc.totalThreat + threatDelta,
-        totalDamage:
-          acc.totalDamage +
-          (event.type === 'damage' ? Math.max(0, event.amount ?? 0) : 0),
-        totalHealing:
-          acc.totalHealing +
-          (event.type === 'heal' ? Math.max(0, event.amount ?? 0) : 0),
-      }
-    },
-    {
-      totalThreat: 0,
-      totalDamage: 0,
-      totalHealing: 0,
-    },
-  )
-
-  // Extract talent points from combatant info
-  const talentPoints =
-    focusedPlayer.type === 'Player'
-      ? extractTalentPoints(events, focusedPlayerId)
-      : undefined
-
-  return {
-    actorId: focusedPlayerId,
-    label: buildActorLabel(focusedPlayer, actorsById),
-    actorClass,
-    talentPoints,
-    totalThreat: totals.totalThreat,
-    totalTps: totals.totalThreat / windowDurationSeconds,
-    totalDamage: totals.totalDamage,
-    totalHealing: totals.totalHealing,
-    color: getActorColor(focusedPlayer, actorsById),
-    modifiers,
-  }
-}
-
-/** Extract talent points array from combatant info event */
-function extractTalentPoints(
-  events: AugmentedEvent[],
-  actorId: number,
+function extractTalentPointsFromCombatantInfoEvent(
+  event: ThreatEvent,
 ): [number, number, number] | undefined {
-  const combatantInfoEvent = events.find(
-    (event) => event.type === 'combatantinfo' && event.sourceID === actorId,
-  )
-
-  if (!combatantInfoEvent) {
+  if (event.type !== 'combatantinfo') {
     return
   }
 
-  // WCL API returns talents as an array of {id: number, icon: string}
-  // where id is the number of talent points in each tree
-  const talents = combatantInfoEvent.talents
-
+  const talents = event.talents
   if (!talents || talents.length !== 3) {
     return
   }
@@ -1558,8 +1447,7 @@ function isFixateThreatEvent({
   })
 }
 
-/** Build per-ability threat breakdown rows for a focused player in the selected chart window. */
-export function buildFocusedPlayerThreatRows({
+function buildFocusedPlayerAggregationInternal({
   events,
   actors,
   abilities,
@@ -1577,125 +1465,258 @@ export function buildFocusedPlayerThreatRows({
   focusedPlayerId: number | null
   windowStartMs: number
   windowEndMs: number
-}): FocusedPlayerThreatRow[] {
+}): FocusedPlayerAggregation {
   if (focusedPlayerId === null) {
-    return []
+    return {
+      summary: null,
+      rows: [],
+    }
   }
 
   const actorsById = new Map(actors.map((actor) => [actor.id, actor]))
   const focusedPlayer = actorsById.get(focusedPlayerId)
   if (!focusedPlayer || !trackableActorTypes.has(focusedPlayer.type)) {
-    return []
+    return {
+      summary: null,
+      rows: [],
+    }
   }
 
   const sourceIds = resolveFocusedActorSourceIds(actors, focusedPlayerId)
   if (sourceIds.size === 0) {
-    return []
+    return {
+      summary: null,
+      rows: [],
+    }
   }
 
   const abilityById = createAbilityMap(abilities)
-  const sortedEvents = [...events].sort((a, b) => a.timestamp - b.timestamp)
-  const firstTimestamp = sortedEvents[0]?.timestamp ?? fightStartTime
+  const firstTimestamp = events[0]?.timestamp ?? fightStartTime
   const windowDurationSeconds = Math.max(1, windowEndMs - windowStartMs) / 1000
+  const actorClass = resolveActorClass(focusedPlayer, actorsById)
   const rowsByAbility = new Map<string, FocusedPlayerThreatRow>()
   const modifierVariantsByRowKey = new Map<
     string,
     Map<string, ModifierVariantAccumulator>
   >()
-
-  sortedEvents.forEach((event) => {
-    const timeMs = resolveRelativeTimeMs(
-      event.timestamp,
-      fightStartTime,
-      firstTimestamp,
-    )
-    if (timeMs < windowStartMs || timeMs > windowEndMs) {
-      return
+  const modifierCountsByKey = new Map<
+    string,
+    FocusedPlayerSummary['modifiers'][number] & {
+      count: number
     }
+  >()
+  const totals = {
+    totalThreat: 0,
+    totalDamage: 0,
+    totalHealing: 0,
+  }
+  let talentPoints: [number, number, number] | undefined
 
-    const matchingThreat = (event.threat?.changes ?? [])
-      .filter(
-        (change) =>
-          change.targetId === target.id &&
-          (change.targetInstance ?? defaultTargetInstance) ===
-            target.instance &&
-          sourceIds.has(change.sourceId),
-      )
-      .reduce((sum, change) => sum + change.amount, 0)
-    if (matchingThreat === 0) {
-      return
-    }
+  const modifierVisitor: OrderedEventVisitor<FocusedEventVisitContext> = {
+    visit: ({ hasMatchingSource, visibleModifierEntries }) => {
+      if (!hasMatchingSource || visibleModifierEntries.length === 0) {
+        return
+      }
 
-    const eventType = event.type.toLowerCase()
-    const eventCategory = resolveFocusedThreatEventCategory(eventType)
-    const abilityId = event.abilityGameID ?? null
-    const abilityName = resolveAbilityName(abilityId, abilityById)
-    const eventSuffix = resolveFocusedThreatEventSuffix(eventCategory)
-    const rowAbilityName = eventSuffix
-      ? `${abilityName} (${eventSuffix})`
-      : abilityName
-    const keyBase =
-      abilityId === null ? `unknown:${abilityName}` : String(abilityId)
-    const key = `${keyBase}:${eventCategory}`
-    const spellSchool = resolveFocusedThreatRowSpellSchool(
-      abilityId,
-      abilityById,
-    )
-    const rowAmount =
-      eventType === 'damage' || eventType === 'heal'
-        ? Math.max(0, event.amount ?? 0)
-        : eventType === 'resourcechange' || eventType === 'energize'
-          ? (event.threat?.calculation.amount ?? 0)
-          : 0
-    const isHealEvent = event.type === 'heal'
-    const isFixateEvent = isFixateThreatEvent({
+      visibleModifierEntries.forEach(({ modifier, sourceId }) => {
+        const key = createModifierSignature(modifier)
+        const existing = modifierCountsByKey.get(key)
+        if (existing) {
+          existing.count += 1
+          if (!existing.spellId && sourceId) {
+            existing.spellId = sourceId
+          }
+          return
+        }
+
+        modifierCountsByKey.set(key, {
+          key,
+          name: modifier.name,
+          ...(sourceId ? { spellId: sourceId } : {}),
+          schoolLabels: modifier.schoolLabels,
+          value: modifier.value,
+          count: 1,
+        })
+      })
+    },
+  }
+
+  const totalVisitor: OrderedEventVisitor<FocusedEventVisitContext> = {
+    visit: ({ event, isWithinWindow, matchingThreat }) => {
+      if (!isWithinWindow || matchingThreat === 0) {
+        return
+      }
+
+      totals.totalThreat += matchingThreat
+      totals.totalDamage +=
+        event.type === 'damage' ? Math.max(0, event.amount ?? 0) : 0
+      totals.totalHealing +=
+        event.type === 'heal' ? Math.max(0, event.amount ?? 0) : 0
+    },
+  }
+
+  const rowVisitor: OrderedEventVisitor<FocusedEventVisitContext> = {
+    visit: ({
       event,
-      target,
-      sourceIds,
-    })
-    const visibleModifiers = normalizeThreatModifiers(
-      event.threat?.calculation.modifiers,
-    ).filter((modifier) => isVisibleModifierValue(modifier.value))
-    if (visibleModifiers.length > 0) {
-      const variantKey = createModifierVariantKey(visibleModifiers)
-      const rowVariants = modifierVariantsByRowKey.get(key) ?? new Map()
-      const existingVariant = rowVariants.get(variantKey)
-      if (existingVariant) {
-        existingVariant.totalThreat += Math.abs(matchingThreat)
-      } else {
-        rowVariants.set(variantKey, {
-          modifiers: visibleModifiers,
-          totalThreat: Math.abs(matchingThreat),
+      isWithinWindow,
+      matchingThreat,
+      visibleModifierEntries,
+    }) => {
+      if (!isWithinWindow || matchingThreat === 0) {
+        return
+      }
+
+      const eventType = event.type.toLowerCase()
+      const eventCategory = resolveFocusedThreatEventCategory(eventType)
+      const abilityId = event.abilityGameID ?? null
+      const abilityName = resolveAbilityName(abilityId, abilityById)
+      const eventSuffix = resolveFocusedThreatEventSuffix(eventCategory)
+      const rowAbilityName = eventSuffix
+        ? `${abilityName} (${eventSuffix})`
+        : abilityName
+      const keyBase =
+        abilityId === null ? `unknown:${abilityName}` : String(abilityId)
+      const key = `${keyBase}:${eventCategory}`
+      const spellSchool = resolveFocusedThreatRowSpellSchool(
+        abilityId,
+        abilityById,
+      )
+      const rowAmount =
+        eventType === 'damage' || eventType === 'heal'
+          ? Math.max(0, event.amount ?? 0)
+          : eventType === 'resourcechange' || eventType === 'energize'
+            ? (event.threat?.calculation.amount ?? 0)
+            : 0
+      const isHealEvent = event.type === 'heal'
+      const isFixateEvent = isFixateThreatEvent({
+        event,
+        target,
+        sourceIds,
+      })
+      const visibleModifiers = visibleModifierEntries.map(
+        ({ modifier }) => modifier,
+      )
+      if (visibleModifiers.length > 0) {
+        const variantKey = createModifierVariantKey(visibleModifiers)
+        const rowVariants = modifierVariantsByRowKey.get(key) ?? new Map()
+        const existingVariant = rowVariants.get(variantKey)
+        if (existingVariant) {
+          existingVariant.totalThreat += Math.abs(matchingThreat)
+        } else {
+          rowVariants.set(variantKey, {
+            modifiers: visibleModifiers,
+            totalThreat: Math.abs(matchingThreat),
+          })
+        }
+        modifierVariantsByRowKey.set(key, rowVariants)
+      }
+
+      const existing = rowsByAbility.get(key)
+      if (existing) {
+        existing.amount += rowAmount
+        existing.threat += matchingThreat
+        existing.isHeal = existing.isHeal || isHealEvent
+        existing.isFixate = existing.isFixate || isFixateEvent
+        return
+      }
+
+      rowsByAbility.set(key, {
+        key,
+        abilityId,
+        abilityName: rowAbilityName,
+        amount: rowAmount,
+        threat: matchingThreat,
+        tps: 0,
+        isHeal: isHealEvent,
+        isFixate: isFixateEvent,
+        ...(spellSchool ? { spellSchool } : {}),
+        modifierTotal: 1,
+        modifierBreakdown: [],
+      })
+    },
+  }
+
+  const talentVisitor: OrderedEventVisitor<FocusedEventVisitContext> = {
+    visit: ({ event }) => {
+      if (talentPoints) {
+        return
+      }
+      if (event.sourceID !== focusedPlayerId) {
+        return
+      }
+
+      talentPoints = extractTalentPointsFromCombatantInfoEvent(event)
+    },
+  }
+
+  visitOrderedEvents<FocusedEventVisitContext>({
+    events,
+    fightStartTime,
+    firstTimestamp,
+    createContext: ({ event, timeMs }) => {
+      const isWithinWindow = timeMs >= windowStartMs && timeMs <= windowEndMs
+      let hasMatchingSource = false
+      let matchingThreat = 0
+
+      ;(event.threat?.changes ?? []).forEach((change) => {
+        if (!sourceIds.has(change.sourceId)) {
+          return
+        }
+
+        hasMatchingSource = true
+        if (
+          change.targetId === target.id &&
+          (change.targetInstance ?? defaultTargetInstance) === target.instance
+        ) {
+          matchingThreat += change.amount
+        }
+      })
+
+      const visibleModifierEntries: VisibleThreatModifierEntry[] = []
+      if (hasMatchingSource) {
+        ;(event.threat?.calculation.modifiers ?? []).forEach((rawModifier) => {
+          const normalizedModifier = normalizeThreatModifier(rawModifier)
+          if (!isVisibleModifierValue(normalizedModifier.value)) {
+            return
+          }
+
+          visibleModifierEntries.push({
+            modifier: normalizedModifier,
+            sourceId:
+              typeof rawModifier.sourceId === 'number' &&
+              rawModifier.sourceId > 0
+                ? rawModifier.sourceId
+                : null,
+          })
         })
       }
-      modifierVariantsByRowKey.set(key, rowVariants)
-    }
 
-    const existing = rowsByAbility.get(key)
-    if (existing) {
-      existing.amount += rowAmount
-      existing.threat += matchingThreat
-      existing.isHeal = existing.isHeal || isHealEvent
-      existing.isFixate = existing.isFixate || isFixateEvent
-      return
-    }
-
-    rowsByAbility.set(key, {
-      key,
-      abilityId,
-      abilityName: rowAbilityName,
-      amount: rowAmount,
-      threat: matchingThreat,
-      tps: 0,
-      isHeal: isHealEvent,
-      isFixate: isFixateEvent,
-      ...(spellSchool ? { spellSchool } : {}),
-      modifierTotal: 1,
-      modifierBreakdown: [],
-    })
+      return {
+        event,
+        timeMs,
+        isWithinWindow,
+        hasMatchingSource,
+        matchingThreat,
+        visibleModifierEntries,
+      }
+    },
+    visitors: [modifierVisitor, totalVisitor, rowVisitor, talentVisitor],
   })
 
-  return [...rowsByAbility.values()]
+  const summary: FocusedPlayerSummary = {
+    actorId: focusedPlayerId,
+    label: buildActorLabel(focusedPlayer, actorsById),
+    actorClass,
+    talentPoints: focusedPlayer.type === 'Player' ? talentPoints : undefined,
+    totalThreat: totals.totalThreat,
+    totalTps: totals.totalThreat / windowDurationSeconds,
+    totalDamage: totals.totalDamage,
+    totalHealing: totals.totalHealing,
+    color: getActorColor(focusedPlayer, actorsById),
+    modifiers: finalizeAppliedModifiers(modifierCountsByKey),
+  }
+
+  const rows = [...rowsByAbility.values()]
     .map((row) => {
       const dominantVariant = [
         ...(modifierVariantsByRowKey.get(row.key)?.values() ?? []),
@@ -1729,6 +1750,108 @@ export function buildFocusedPlayerThreatRows({
 
       return a.abilityName.localeCompare(b.abilityName)
     })
+
+  return {
+    summary,
+    rows,
+  }
+}
+
+/** Build totals/class metadata and rows for the currently focused player. */
+export function buildFocusedPlayerAggregation({
+  events,
+  actors,
+  abilities,
+  fightStartTime,
+  target,
+  focusedPlayerId,
+  windowStartMs,
+  windowEndMs,
+}: {
+  events: AugmentedEventsResponse['events']
+  actors: ReportActorSummary[]
+  abilities: ReportAbilitySummary[]
+  fightStartTime: number
+  target: FightTarget
+  focusedPlayerId: number | null
+  windowStartMs: number
+  windowEndMs: number
+}): FocusedPlayerAggregation {
+  return buildFocusedPlayerAggregationInternal({
+    events,
+    actors,
+    abilities,
+    fightStartTime,
+    target,
+    focusedPlayerId,
+    windowStartMs,
+    windowEndMs,
+  })
+}
+
+/** Build totals/class metadata for the currently focused player. */
+export function buildFocusedPlayerSummary({
+  events,
+  actors,
+  abilities,
+  fightStartTime,
+  target,
+  focusedPlayerId,
+  windowStartMs,
+  windowEndMs,
+}: {
+  events: AugmentedEventsResponse['events']
+  actors: ReportActorSummary[]
+  abilities?: ReportAbilitySummary[]
+  threatConfig?: ThreatConfig | null
+  fightStartTime: number
+  target: FightTarget
+  focusedPlayerId: number | null
+  windowStartMs: number
+  windowEndMs: number
+}): FocusedPlayerSummary | null {
+  return buildFocusedPlayerAggregationInternal({
+    events,
+    actors,
+    abilities: abilities ?? [],
+    fightStartTime,
+    target,
+    focusedPlayerId,
+    windowStartMs,
+    windowEndMs,
+  }).summary
+}
+
+/** Build per-ability threat breakdown rows for a focused player in the selected chart window. */
+export function buildFocusedPlayerThreatRows({
+  events,
+  actors,
+  abilities,
+  fightStartTime,
+  target,
+  focusedPlayerId,
+  windowStartMs,
+  windowEndMs,
+}: {
+  events: AugmentedEventsResponse['events']
+  actors: ReportActorSummary[]
+  abilities: ReportAbilitySummary[]
+  fightStartTime: number
+  target: FightTarget
+  focusedPlayerId: number | null
+  windowStartMs: number
+  windowEndMs: number
+}): FocusedPlayerThreatRow[] {
+  return buildFocusedPlayerAggregationInternal({
+    events,
+    actors,
+    abilities,
+    fightStartTime,
+    target,
+    focusedPlayerId,
+    windowStartMs,
+    windowEndMs,
+  }).rows
 }
 
 function resolveRankingOwnerId(actor: ReportActorSummary): number | null {
