@@ -136,6 +136,7 @@ function formatThreatValue(data: TooltipRenderData): string {
 
 function tooltipContent({ data }: { data: TooltipRenderData }): JSX.Element {
   const isBossMeleeMarker = data.markerKind === 'bossMelee'
+  const isDeathMarker = data.markerKind === 'death'
   const rowStyle = {
     display: 'flex',
     justifyContent: 'space-between',
@@ -152,35 +153,46 @@ function tooltipContent({ data }: { data: TooltipRenderData }): JSX.Element {
       }}
     >
       <div style={rowStyle}>
-        <strong
-          style={
-            data.abilityTitleColor
-              ? { color: data.abilityTitleColor }
-              : undefined
-          }
-        >
-          {data.abilityName}
-          {data.hitTypeLabel ? ` [${data.hitTypeLabel}]` : ''}
-          {data.abilityEventSuffix}
-        </strong>
-        <strong style={{ color: data.actorColor }}>{data.actorName}</strong>
+        {isDeathMarker ? (
+          <strong style={{ color: data.actorColor }}>
+            <span style={{ textDecoration: 'line-through' }}>{data.actorName}</span>{' '}
+            <span>(death)</span>
+          </strong>
+        ) : (
+          <>
+            <strong
+              style={
+                data.abilityTitleColor
+                  ? { color: data.abilityTitleColor }
+                  : undefined
+              }
+            >
+              {data.abilityName}
+              {data.hitTypeLabel ? ` [${data.hitTypeLabel}]` : ''}
+              {data.abilityEventSuffix}
+            </strong>
+            <strong style={{ color: data.actorColor }}>{data.actorName}</strong>
+          </>
+        )}
       </div>
       <div style={{ lineHeight: 1.2 }}>
         T: {formatTimelineTime(data.timeMs)}
       </div>
-      <div
-        style={{
-          ...rowStyle,
-          ...(data.amountColor ? { color: data.amountColor } : {}),
-        }}
-      >
-        <span>
-          {data.amountLabel}: {formatTooltipNumber(data.amount)}
-          {data.amountSchool}
-        </span>
-        <span>{data.formula}</span>
-      </div>
-      {!isBossMeleeMarker && data.visibleModifiers.length > 0 ? (
+      {!isDeathMarker ? (
+        <div
+          style={{
+            ...rowStyle,
+            ...(data.amountColor ? { color: data.amountColor } : {}),
+          }}
+        >
+          <span>
+            {data.amountLabel}: {formatTooltipNumber(data.amount)}
+            {data.amountSchool}
+          </span>
+          <span>{data.formula}</span>
+        </div>
+      ) : null}
+      {!isBossMeleeMarker && !isDeathMarker && data.visibleModifiers.length > 0 ? (
         <>
           <div style={rowStyle}>
             <span>Multipliers:</span>
@@ -215,7 +227,7 @@ function tooltipContent({ data }: { data: TooltipRenderData }): JSX.Element {
           </div>
         </>
       ) : null}
-      {!isBossMeleeMarker ? (
+      {!isBossMeleeMarker && !isDeathMarker ? (
         <div style={rowStyle}>
           <span>Threat: {formatThreatValue(data)}</span>
           <span>&sum; {formatTooltipNumber(data.totalThreat)}</span>
@@ -300,6 +312,7 @@ export function createThreatChartTooltipFormatter({
     const isAbsorbedEvent = rawEventType === 'absorbed'
     const isResourceEvent =
       rawEventType === 'resourcechange' || rawEventType === 'energize'
+    const isDeathMarker = markerKind === 'death'
     const abilityEventSuffix = isHealEvent
       ? `${targetName ? ` → ${targetName}` : ''} (${isTickEvent ? 'tick' : 'heal'})`
       : isAbsorbedEvent
@@ -352,8 +365,8 @@ export function createThreatChartTooltipFormatter({
     const html = renderToString(
       tooltipContent({
         data: {
-          abilityEventSuffix,
-          abilityName: payload.abilityName ?? 'Unknown ability',
+          abilityEventSuffix: isDeathMarker ? '' : abilityEventSuffix,
+          abilityName: isDeathMarker ? '' : (payload.abilityName ?? 'Unknown ability'),
           abilityTitleColor,
           actorColor: String(payload.actorColor ?? '#94a3b8'),
           actorName: String(entry.seriesName ?? 'Unknown actor'),

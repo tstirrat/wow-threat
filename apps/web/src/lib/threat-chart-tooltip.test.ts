@@ -74,7 +74,7 @@ describe('threat-chart-tooltip', () => {
         threatDelta: 100,
         timeMs: 15000,
         totalThreat: 1200,
-        markerKind: 'death',
+        markerKind: 'tranquilAirTotem',
       },
     })
 
@@ -95,7 +95,7 @@ describe('threat-chart-tooltip', () => {
       'Aura: <strong style="color:#ffa500">fixate (Mocking Blow)</strong>',
     )
     expect(tooltip).toContain(
-      'Marker: <strong style="color:#dc2626">Death</strong>',
+      'Marker: <strong style="color:#3b82f6">Tranquil Air Totem</strong>',
     )
     expect(tooltip).toContain('ID: 7386')
   })
@@ -136,6 +136,50 @@ describe('threat-chart-tooltip', () => {
     expect(tooltip).toContain(
       'Marker: <strong style="color:#ef4444">Boss melee</strong>',
     )
+    expect(tooltip).not.toContain('Threat:')
+    expect(tooltip).not.toContain('Multipliers:')
+    expect(tooltip).not.toContain('&sum;')
+  })
+
+  it('renders death marker tooltips with only title, time, and marker', () => {
+    const formatter = createThreatChartTooltipFormatter({
+      series: [baseSeries],
+      themeColors: {
+        border: '#d1d5db',
+        foreground: '#0f172a',
+        muted: '#64748b',
+        panel: '#ffffff',
+      },
+    })
+
+    const tooltip = formatter({
+      seriesName: 'Tank',
+      data: {
+        actorId: 1,
+        actorColor: '#a855f7',
+        abilityName: 'Unknown ability',
+        amount: 0,
+        baseThreat: 0,
+        eventType: 'death',
+        formula: 'n/a',
+        modifiedThreat: 0,
+        spellSchool: null,
+        modifiers: [{ name: 'Defensive Stance', schoolLabels: [], value: 1.3 }],
+        threatDelta: 0,
+        timeMs: 15000,
+        totalThreat: 1200,
+        markerKind: 'death',
+      },
+    })
+
+    expect(tooltip).toContain(
+      '<span style="text-decoration:line-through">Tank</span> <span>(death)</span>',
+    )
+    expect(tooltip).toContain('text-decoration:line-through')
+    expect(tooltip).toContain('T: 0:15.000')
+    expect(tooltip).toContain('Marker: <strong style="color:#dc2626">Death</strong>')
+    expect(tooltip).not.toContain('Unknown ability')
+    expect(tooltip).not.toContain('Amt:')
     expect(tooltip).not.toContain('Threat:')
     expect(tooltip).not.toContain('Multipliers:')
     expect(tooltip).not.toContain('&sum;')
