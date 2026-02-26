@@ -11,6 +11,7 @@ const summary: FocusedPlayerSummary = {
   actorId: 1,
   label: 'Aegistank',
   actorClass: 'Warrior',
+  actorSpec: 'Protection',
   talentPoints: [8, 5, 38],
   totalThreat: 1200,
   totalTps: 10,
@@ -36,6 +37,22 @@ const rows: FocusedPlayerThreatRow[] = [
 ]
 
 describe('PlayerSummaryTable', () => {
+  it('renders focused actor details as spec class with talent points', () => {
+    render(
+      <PlayerSummaryTable
+        summary={summary}
+        rows={rows}
+        initialAuras={[]}
+        wowhead={{
+          domain: 'tbc',
+        }}
+      />,
+    )
+
+    expect(screen.getByText('Protection Warrior (8/5/38)')).toBeInTheDocument()
+    expect(screen.queryByText(/Class:/)).not.toBeInTheDocument()
+  })
+
   it('uses configured wowhead domain for ability and aura links', () => {
     render(
       <PlayerSummaryTable

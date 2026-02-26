@@ -169,6 +169,7 @@ export interface FocusedPlayerSummary {
   actorId: number
   label: string
   actorClass: PlayerClass | null
+  actorSpec?: string
   talentPoints: [number, number, number] | undefined
   totalThreat: number
   totalTps: number

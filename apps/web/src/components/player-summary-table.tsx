@@ -155,6 +155,18 @@ function formatAbilitySchoolLabel(
   return spellSchool.replaceAll('/', '')
 }
 
+function formatFocusedActorDetails(summary: FocusedPlayerSummary): string {
+  const classLabel = summary.actorClass ?? 'Unknown'
+  const specClassLabel = summary.actorSpec
+    ? `${summary.actorSpec} ${classLabel}`
+    : classLabel
+  const talentLabel = summary.talentPoints
+    ? ` (${summary.talentPoints[0]}/${summary.talentPoints[1]}/${summary.talentPoints[2]})`
+    : ''
+
+  return `${specClassLabel}${talentLabel}`
+}
+
 export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
   summary,
   rows,
@@ -182,9 +194,7 @@ export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
             <PlayerName color={summary.color} label={summary.label} />
           </div>
           <div className="text-sm text-muted-foreground">
-            Class: {summary.actorClass ?? 'Unknown'}
-            {summary.talentPoints &&
-              ` (${summary.talentPoints[0]}/${summary.talentPoints[1]}/${summary.talentPoints[2]})`}
+            {formatFocusedActorDetails(summary)}
           </div>
           <div className="space-y-2 text-sm">
             <div>

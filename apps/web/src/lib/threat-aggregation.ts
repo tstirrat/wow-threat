@@ -1714,6 +1714,9 @@ function buildFocusedPlayerAggregationInternal({
     actorId: focusedPlayerId,
     label: buildActorLabel(focusedPlayer, actorsById),
     actorClass,
+    ...(focusedPlayer.type === 'Player' && focusedPlayer.spec
+      ? { actorSpec: focusedPlayer.spec }
+      : {}),
     talentPoints: focusedPlayer.type === 'Player' ? talentPoints : undefined,
     totalThreat: totals.totalThreat,
     totalTps: totals.totalThreat / windowDurationSeconds,
