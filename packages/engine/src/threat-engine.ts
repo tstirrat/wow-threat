@@ -21,7 +21,6 @@ import type {
   ThreatContext,
   ThreatEffect,
   ThreatFormula,
-  ThreatFormulaResult,
   ThreatModifier,
   ThreatResult,
   ThreatStateKind,
@@ -48,12 +47,6 @@ import { getActiveModifiers, getTotalMultiplier } from './utils'
 
 const ENVIRONMENT_TARGET_ID = -1
 const BOSS_MELEE_SPELL_ID = 1
-
-const NO_THREAT_FORMULA_RESULT: ThreatFormulaResult = {
-  formula: '0',
-  value: 0,
-  splitAmongEnemies: false,
-}
 
 interface PreparedThreatConfig {
   mergedAbilities: Record<number, ThreatFormula>
@@ -329,7 +322,7 @@ function processEventsWithProcessors(
         { type: 'eventMarker', marker: 'bossMelee' },
       ]
       const zeroCalculation: ThreatCalculation = {
-        formula: '0 (boss melee marker)',
+        formula: 'bossMelee',
         amount: event.amount,
         baseThreat: 0,
         modifiedThreat: 0,
@@ -353,7 +346,7 @@ function processEventsWithProcessors(
     if (shouldSkip) {
       // Create zero-threat augmented event
       const zeroCalculation: ThreatCalculation = {
-        formula: '0 (suppressed by effect)',
+        formula: '(skipped by processor)',
         amount: 0,
         baseThreat: 0,
         modifiedThreat: 0,
@@ -414,28 +407,46 @@ function processEventsWithProcessors(
       config,
       preparedConfig,
     )
+
     const encounterEffects =
       encounterPreprocessor?.(threatContext)?.effects ?? []
+
     const stateEffect = buildStateEffectFromAuraEvent(event, stateSpellSets)
     const deathMarkerEffect = buildDeathEventMarker(event)
     const effects = [
-      ...(baseCalculation.effects ?? []),
+      ...(baseCalculation?.effects ?? []),
       ...encounterEffects,
       ...interceptorEffects,
       ...processorEffects,
       ...(stateEffect ? [stateEffect] : []),
       ...(deathMarkerEffect ? [deathMarkerEffect] : []),
     ]
-    const calculation: ThreatCalculation = {
-      ...baseCalculation,
-      effects: effects.length > 0 ? effects : undefined,
+
+    if (!baseCalculation && effects.length === 0) {
+      augmentedEvents.push(buildAugmentedEvent(event, undefined, undefined))
+      continue
     }
 
-    for (const effect of effects) {
-      if (effect.type === 'installInterceptor') {
+    effects
+      .filter((e) => e.type === 'installInterceptor')
+      .forEach((effect) => {
         interceptorTracker.install(effect.interceptor, event.timestamp)
-      }
-    }
+      })
+
+    const calculation: ThreatCalculation = baseCalculation
+      ? {
+          ...baseCalculation,
+          effects: effects.length > 0 ? effects : undefined,
+        }
+      : {
+          formula: '(effects only)',
+          amount: 0,
+          baseThreat: 0,
+          modifiedThreat: 0,
+          isSplit: false,
+          modifiers: [],
+          effects,
+        }
 
     const changes = applyThreat(
       fightState,
@@ -694,34 +705,7 @@ function applyCustomThreatEffect(
   fightState: FightState,
   effect: Extract<ThreatEffect, { type: 'customThreat' }>,
 ): ThreatChange[] {
-  for (const change of effect.changes) {
-    if (change.operator === 'set') {
-      fightState.setThreat(
-        change.sourceId,
-        {
-          id: change.targetId,
-          instanceId: change.targetInstance,
-        },
-        change.total,
-      )
-    } else {
-      const currentThreat = fightState.getThreat(change.sourceId, {
-        id: change.targetId,
-        instanceId: change.targetInstance,
-      })
-      const delta = change.total - currentThreat
-      fightState.addThreat(
-        change.sourceId,
-        {
-          id: change.targetId,
-          instanceId: change.targetInstance,
-        },
-        delta,
-      )
-    }
-  }
-
-  return [...effect.changes]
+  return effect.changes.map((c) => fightState.applyChange(c))
 }
 
 /** Apply threat multipliers to either a single target or all actors on an enemy */
@@ -1155,11 +1139,15 @@ export function calculateModifiedThreat(
   options: CalculateThreatOptions,
   config: ThreatConfig,
   preparedConfig: PreparedThreatConfig = prepareThreatConfig(config),
-): ThreatCalculation {
+): ThreatCalculation | undefined {
   const ctx = buildThreatContext(event, options)
 
   // Get the threat formula result
   const formulaResult = getFormulaResult(ctx, config, preparedConfig)
+
+  if (!formulaResult) {
+    return
+  }
 
   // Ability formulas can explicitly opt in/out of player multipliers.
   // Default keeps existing energize behavior (no multipliers) unless overridden.
@@ -1258,23 +1246,23 @@ function getFormulaResult(
     const abilityFormula = preparedConfig.mergedAbilities[event.abilityGameID]
     if (abilityFormula) {
       // Ability formulas override base formulas; undefined means this phase has no threat.
-      return abilityFormula(ctx) ?? NO_THREAT_FORMULA_RESULT
+      return abilityFormula(ctx)
     }
   }
 
   // Fall back to base threat formulas by event type
   switch (event.type) {
     case 'damage':
-      return config.baseThreat.damage(ctx) ?? NO_THREAT_FORMULA_RESULT
+      return config.baseThreat.damage(ctx)
     case 'absorbed':
-      return config.baseThreat.absorbed(ctx) ?? NO_THREAT_FORMULA_RESULT
+      return config.baseThreat.absorbed(ctx)
     case 'heal':
-      return config.baseThreat.heal(ctx) ?? NO_THREAT_FORMULA_RESULT
+      return config.baseThreat.heal(ctx)
     case 'energize':
     case 'resourcechange':
-      return config.baseThreat.energize(ctx) ?? NO_THREAT_FORMULA_RESULT
+      return config.baseThreat.energize(ctx)
     default:
-      return NO_THREAT_FORMULA_RESULT
+      return
   }
 }
 

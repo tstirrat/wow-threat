@@ -1,7 +1,11 @@
 /**
  * Shared hateful/hurtful strike raid formulas.
  */
-import type { ThreatChange, ThreatFormula } from '@wow-threat/shared'
+import type {
+  ThreatChange,
+  ThreatChangeRequest,
+  ThreatFormula,
+} from '@wow-threat/shared'
 import { type HitType, HitTypeCode } from '@wow-threat/wcl-types'
 
 const HITTABLE_HIT_TYPES = new Set<HitType>([
@@ -31,25 +35,22 @@ function isThreatfulDamageEvent(
 }
 
 function appendThreatChange(
-  changes: ThreatChange[],
+  changes: ThreatChangeRequest[],
   sourceId: number,
   targetId: number,
   targetInstance: number,
   amount: number,
-  currentThreat: number,
 ): void {
   if (sourceId <= 0 || amount === 0) {
     return
   }
 
-  const total = currentThreat + amount
   changes.push({
     sourceId,
     targetId,
     targetInstance,
     operator: 'add',
     amount,
-    total,
   })
 }
 
@@ -79,27 +80,23 @@ export function createHurtfulStrikeFormula(
 
     const changes: ThreatChange[] = []
     if (mainTankId !== null) {
-      const currentThreat = ctx.actors.getThreat(mainTankId, enemy)
       appendThreatChange(
         changes,
         mainTankId,
         enemy.id,
         enemy.instanceId,
         mainTankThreat,
-        currentThreat,
       )
     }
 
     const targetId = ctx.event.targetID
     if (targetId > 0) {
-      const currentThreat = ctx.actors.getThreat(targetId, enemy)
       appendThreatChange(
         changes,
         targetId,
         enemy.id,
         enemy.instanceId,
         targetThreat,
-        currentThreat,
       )
     }
 

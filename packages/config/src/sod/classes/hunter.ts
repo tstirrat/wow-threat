@@ -25,7 +25,7 @@ export const hunterConfig: ClassThreatConfig = {
   abilities: {
     ...eraHunterConfig.abilities,
     [Spells.Misdirection]: (ctx) => ({
-      formula: '0',
+      formula: 'misdirection',
       value: 0,
       splitAmongEnemies: false,
       effects: [

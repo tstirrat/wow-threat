@@ -208,9 +208,9 @@ describe('Druid Config', () => {
         expect(formula).toBeDefined()
 
         const ctx = createMockContext()
-        const result = assertDefined(formula!(ctx))
+        const result = formula!(ctx)
 
-        expect(result.value).toBe(0)
+        expect(result).toBeUndefined()
       })
     })
   })

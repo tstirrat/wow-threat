@@ -390,20 +390,18 @@ describe('sod config', () => {
         ),
       ),
     )
-    const noThreat = checkExists(
-      sodConfig.abilities?.[20007]?.(
-        createContext(
-          createCastEvent({
-            timestamp: 1900,
-            sourceID: 1,
-            sourceIsFriendly: true,
-            sourceInstance: 0,
-            targetID: 2,
-            targetIsFriendly: false,
-            targetInstance: 0,
-            abilityGameID: 20007,
-          }),
-        ),
+    const noThreat = sodConfig.abilities?.[20007]?.(
+      createContext(
+        createCastEvent({
+          timestamp: 1900,
+          sourceID: 1,
+          sourceIsFriendly: true,
+          sourceInstance: 0,
+          targetID: 2,
+          targetIsFriendly: false,
+          targetInstance: 0,
+          abilityGameID: 20007,
+        }),
       ),
     )
 
@@ -412,8 +410,7 @@ describe('sod config', () => {
     expect(thunderfuryDamage.value).toBe(100)
     expect(dragonbreath.value).toBe(225)
     expect(razorbramble.value).toBe(200)
-    expect(noThreat.formula).toBe('0')
-    expect(noThreat.value).toBe(0)
+    expect(noThreat).toBeUndefined()
   })
 
   it('keeps inherited nefarian class-call handlers from era bwl abilities', () => {

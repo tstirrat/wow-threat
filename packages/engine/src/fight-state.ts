@@ -10,6 +10,8 @@ import type {
   AuraImplications,
   Enemy,
   RuntimeActorView,
+  ThreatChange,
+  ThreatChangeRequest,
   ThreatConfig,
   WowClass,
 } from '@wow-threat/shared'
@@ -278,6 +280,9 @@ function mergeSyntheticAuras(parts: Array<number[] | undefined>): number[] {
   return dedupeIds(merged)
 }
 
+/** The spellId for a melee attack. Used to determine actor's currentTarget */
+const MELEE = 1
+
 /** Top-level state container for a fight */
 export class FightState {
   private actorStates = new Map<ActorKey, ActorState>()
@@ -403,6 +408,13 @@ export class FightState {
       case 'damage':
         if (event.overkill > 0) {
           targetState?.markDead()
+        }
+
+        if (event.abilityGameID === MELEE) {
+          sourceState.setTarget({
+            targetId: event.targetID,
+            targetInstance: normalizeInstanceId(event.targetInstance),
+          })
         }
         this.processPetAuraImplications(event, config, sourceState)
         break
@@ -756,6 +768,33 @@ export class FightState {
     const sourceKey = this.getThreatSourceKey(actorId)
 
     enemyState.setThreatFrom(sourceKey, amount)
+  }
+
+  applyChange(change: ThreatChangeRequest): ThreatChange {
+    if (change.operator === 'set') {
+      this.setThreat(
+        change.sourceId,
+        {
+          id: change.targetId,
+          instanceId: change.targetInstance,
+        },
+        change.amount,
+      )
+      return { ...change, total: change.amount }
+    }
+
+    this.addThreat(
+      change.sourceId,
+      { id: change.targetId, instanceId: change.targetInstance },
+      change.amount,
+    )
+    return {
+      ...change,
+      total: this.getThreat(change.sourceId, {
+        id: change.targetId,
+        instanceId: change.targetInstance,
+      }),
+    }
   }
 
   // Actor alive/dead tracking methods

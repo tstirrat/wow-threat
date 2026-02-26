@@ -250,7 +250,7 @@ export type ThreatEffect =
     }
   | { type: 'state'; state: ThreatStatePayload }
   | { type: 'eventMarker'; marker: 'bossMelee' | 'death' | 'tranquilAirTotem' }
-  | { type: 'customThreat'; changes: ThreatChange[] }
+  | { type: 'customThreat'; changes: ThreatChangeRequest[] }
   | { type: 'installInterceptor'; interceptor: EventInterceptor }
 
 export interface ThreatFormulaResult {
@@ -428,6 +428,14 @@ export interface ThreatChange {
   operator: ThreatChangeOperator
   amount: number
   total: number
+}
+
+export interface ThreatChangeRequest {
+  sourceId: number
+  targetId: number
+  targetInstance: number
+  operator: ThreatChangeOperator
+  amount: number
 }
 
 export interface ThreatCalculation {

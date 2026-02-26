@@ -62,23 +62,20 @@ describe('sod warrior config', () => {
 
   it('marks gladiator stance cast as no threat', () => {
     const formula = warriorConfig.abilities[Spells.GladiatorStance]
-    const result = checkExists(
-      formula?.(
-        createCastContext({
-          timestamp: 1000,
-          sourceID: 1,
-          sourceIsFriendly: true,
-          sourceInstance: 0,
-          targetID: 99,
-          targetIsFriendly: false,
-          targetInstance: 0,
-          abilityGameID: Spells.GladiatorStance,
-        }),
-      ),
+    const result = formula?.(
+      createCastContext({
+        timestamp: 1000,
+        sourceID: 1,
+        sourceIsFriendly: true,
+        sourceInstance: 0,
+        targetID: 99,
+        targetIsFriendly: false,
+        targetInstance: 0,
+        abilityGameID: Spells.GladiatorStance,
+      }),
     )
 
-    expect(result.formula).toBe('0')
-    expect(result.value).toBe(0)
+    expect(result).toBeUndefined()
   })
 
   it('overrides shield slam rank formulas for sod', () => {

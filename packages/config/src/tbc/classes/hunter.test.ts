@@ -134,7 +134,7 @@ describe('tbc hunter config', () => {
         ),
       )
 
-      expect(result.formula).toBe('0')
+      expect(result.formula).toBe('misdirection')
       expect(result.value).toBe(0)
       expect(result.effects?.[0]?.type).toBe('installInterceptor')
     })

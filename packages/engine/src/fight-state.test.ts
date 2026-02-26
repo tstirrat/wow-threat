@@ -1239,6 +1239,33 @@ describe('FightState', () => {
     })
   })
 
+  describe('threat change application', () => {
+    it('clamps additive reductions at zero and reports clamped totals', () => {
+      const state = new FightState(defaultActorMap, testConfig)
+      const enemy = { id: 99, instanceId: 0 }
+
+      state.addThreat(1, enemy, 100)
+
+      const change = state.applyChange({
+        sourceId: 1,
+        targetId: enemy.id,
+        targetInstance: enemy.instanceId,
+        operator: 'add',
+        amount: -250,
+      })
+
+      expect(change).toEqual({
+        sourceId: 1,
+        targetId: enemy.id,
+        targetInstance: enemy.instanceId,
+        operator: 'add',
+        amount: -250,
+        total: 0,
+      })
+      expect(state.getThreat(1, enemy)).toBe(0)
+    })
+  })
+
   describe('cross-class exclusive auras', () => {
     it('applies paladin blessing exclusivity to warriors', () => {
       // Warrior (actor ID 1) receives paladin blessings

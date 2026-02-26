@@ -73,6 +73,10 @@ const successfulDamageHitTypes = new Set<HitType>([
   HitTypeCode.Crushing,
 ])
 
+export function isHit(hitType: HitType) {
+  return modifyThreatOnHitHitTypes.has(hitType)
+}
+
 function isEventTypeAllowed(
   eventType: EventType,
   allowedEventTypes?: EventType[],
@@ -123,7 +127,7 @@ export function threat(options: ThreatOptions = {}): FormulaFn {
       formula = `amt + ${bonus}`
     } else if (modifier === 0 && bonus === 0) {
       // Zero threat: "0"
-      formula = '0'
+      formula = 'threat(0)'
     } else if (bonus === 0) {
       // Pure multiplier: "amt * 2"
       formula = `amt * ${modifier}`
@@ -302,10 +306,7 @@ export function modifyThreatOnHit(multiplier: number): FormulaFn {
   })
 
   return (ctx) => {
-    if (
-      ctx.event.type !== 'damage' ||
-      !modifyThreatOnHitHitTypes.has(ctx.event.hitType)
-    ) {
+    if (ctx.event.type !== 'damage' || !isHit(ctx.event.hitType)) {
       return undefined
     }
 
@@ -317,11 +318,7 @@ export function modifyThreatOnHit(multiplier: number): FormulaFn {
  * No threat: spell generates zero threat
  */
 export function noThreat(): FormulaFn {
-  return () => ({
-    formula: '0',
-    value: 0,
-    splitAmongEnemies: false,
-  })
+  return () => undefined
 }
 
 /**
