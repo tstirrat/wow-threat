@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "kv:reset:local": "rm -rf .wrangler/state"
   },
   "dependencies": {
     "@wow-threat/shared": "workspace:*",
