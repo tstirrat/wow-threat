@@ -46,7 +46,7 @@ export const baseThreat: BaseThreatConfig = {
   energize: (ctx) => {
     const event = ctx.event
     if (event.type !== 'energize' && event.type !== 'resourcechange') {
-      return { formula: '0', value: 0, splitAmongEnemies: false }
+      return undefined
     }
     const resourceType = event.resourceChangeType
     const resourceLabelByCode: Record<number, string> = {
@@ -61,12 +61,7 @@ export const baseThreat: BaseThreatConfig = {
 
     // Energy gains do not generate threat
     if (resourceType === ResourceTypeCode.Energy) {
-      return {
-        formula: '0',
-        value: 0,
-        splitAmongEnemies: false,
-        applyPlayerMultipliers: false,
-      }
+      return undefined
     }
 
     // Rage: 5x threat, Mana: 0.5x threat
