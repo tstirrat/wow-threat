@@ -132,40 +132,30 @@ export const warlockConfig: ClassThreatConfig = {
   ]),
 
   auraModifiers: {
-    [Spells.MasterDemonologistR1]: (ctx) => ({
+    [Spells.MasterDemonologistR1]: () => ({
       source: 'talent',
       name: 'Master Demonologist (Rank 1)',
-      value: ctx.sourceAuras.has(Spells.ImpActive)
-        ? 1 - Mods.MasterDemonologist
-        : 1,
+      value: 1 - Mods.MasterDemonologist,
     }),
-    [Spells.MasterDemonologistR2]: (ctx) => ({
+    [Spells.MasterDemonologistR2]: () => ({
       source: 'talent',
       name: 'Master Demonologist (Rank 2)',
-      value: ctx.sourceAuras.has(Spells.ImpActive)
-        ? 1 - Mods.MasterDemonologist * 2
-        : 1,
+      value: 1 - Mods.MasterDemonologist * 2,
     }),
-    [Spells.MasterDemonologistR3]: (ctx) => ({
+    [Spells.MasterDemonologistR3]: () => ({
       source: 'talent',
       name: 'Master Demonologist (Rank 3)',
-      value: ctx.sourceAuras.has(Spells.ImpActive)
-        ? 1 - Mods.MasterDemonologist * 3
-        : 1,
+      value: 1 - Mods.MasterDemonologist * 3,
     }),
-    [Spells.MasterDemonologistR4]: (ctx) => ({
+    [Spells.MasterDemonologistR4]: () => ({
       source: 'talent',
       name: 'Master Demonologist (Rank 4)',
-      value: ctx.sourceAuras.has(Spells.ImpActive)
-        ? 1 - Mods.MasterDemonologist * 4
-        : 1,
+      value: 1 - Mods.MasterDemonologist * 4,
     }),
-    [Spells.MasterDemonologistR5]: (ctx) => ({
+    [Spells.MasterDemonologistR5]: () => ({
       source: 'talent',
       name: 'Master Demonologist (Rank 5)',
-      value: ctx.sourceAuras.has(Spells.ImpActive)
-        ? 1 - Mods.MasterDemonologist * 5
-        : 1,
+      value: 1 - Mods.MasterDemonologist * 5,
     }),
   },
 

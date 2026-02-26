@@ -43,23 +43,17 @@ describe('Warlock Config', () => {
   })
 
   describe('aura modifiers', () => {
-    it('applies master demonologist only while imp is active', () => {
+    it('applies master demonologist', () => {
       const modifier = warlockConfig.auraModifiers[Spells.MasterDemonologistR5]
       expect(modifier).toBeDefined()
 
-      const withImp = modifier!(
-        createMockContext({
-          sourceAuras: new Set([Spells.MasterDemonologistR5, Spells.ImpActive]),
-        }),
-      )
-      const withoutImp = modifier!(
+      const result = modifier!(
         createMockContext({
           sourceAuras: new Set([Spells.MasterDemonologistR5]),
         }),
       )
 
-      expect(withImp.value).toBe(1 - Mods.MasterDemonologist * 5)
-      expect(withoutImp.value).toBe(1)
+      expect(result.value).toBe(1 - Mods.MasterDemonologist * 5)
     })
   })
 
