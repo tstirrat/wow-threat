@@ -101,7 +101,7 @@ function inferGlobalGearAuras(gear: GearItem[]): number[] {
 }
 
 export const sodConfig: ThreatConfig = {
-  version: 5,
+  version: 6,
   displayName: 'Season of Discovery',
   wowhead: {
     domain: 'classic',

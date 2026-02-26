@@ -204,7 +204,6 @@ eventsRoutes.get('/', async (c) => {
       fight,
       actors: report.masterData.actors,
       abilities: report.masterData.abilities,
-      rawEvents,
     })
 
   // Process events and calculate threat using the threat engine

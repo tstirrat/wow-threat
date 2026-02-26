@@ -1,11 +1,15 @@
 /**
  * Zul'Gurub Encounter Hooks Tests
  */
-import { createCastEvent, createMockActorContext } from '@wow-threat/shared'
+import {
+  createCastEvent,
+  createDamageEvent,
+  createMockActorContext,
+} from '@wow-threat/shared'
 import type { Enemy, ThreatContext } from '@wow-threat/shared/src/types'
 import { describe, expect, it } from 'vitest'
 
-import { ZgEncounterIds, zgEncounters } from './zg'
+import { Boss, ZgEncounterIds, zgEncounters } from './zg'
 
 function createPreprocessorContext(
   event: ThreatContext['event'],
@@ -24,12 +28,14 @@ function createPreprocessorContext(
 }
 
 describe('zg encounter hooks', () => {
-  it('attaches threat wipe special when hostile cast gap exceeds 30 seconds', () => {
+  it('attaches threat wipe special when Arlokk cast gap exceeds 30 seconds', () => {
     const preprocessorFactory =
       zgEncounters[ZgEncounterIds.HighPriestessArlokk]?.preprocessor
     expect(preprocessorFactory).toBeDefined()
 
-    const enemies: Enemy[] = [{ id: 99, name: 'Arlokk', instance: 0 }]
+    const enemies: Enemy[] = [
+      { id: 99, name: 'Arlokk', gameID: Boss.HighPriestessArlokk, instance: 0 },
+    ]
     const preprocessor = preprocessorFactory?.({
       encounterId: ZgEncounterIds.HighPriestessArlokk,
       enemies,
@@ -87,13 +93,69 @@ describe('zg encounter hooks', () => {
     })
   })
 
+  it('attaches threat wipe special when Arlokk returns with non-cast event', () => {
+    const preprocessorFactory =
+      zgEncounters[ZgEncounterIds.HighPriestessArlokk]?.preprocessor
+    expect(preprocessorFactory).toBeDefined()
+
+    const enemies: Enemy[] = [
+      { id: 99, name: 'Arlokk', gameID: Boss.HighPriestessArlokk, instance: 0 },
+    ]
+    const preprocessor = preprocessorFactory?.({
+      encounterId: ZgEncounterIds.HighPriestessArlokk,
+      enemies,
+    })
+    expect(preprocessor).toBeDefined()
+
+    const firstCast = preprocessor?.(
+      createPreprocessorContext(
+        createCastEvent({
+          timestamp: 1000,
+          sourceID: 99,
+          sourceIsFriendly: false,
+          sourceInstance: 0,
+          targetID: 1,
+          targetIsFriendly: true,
+          abilityGameID: 24189,
+        }),
+      ),
+    )
+    expect(firstCast).toBeUndefined()
+
+    const firstHitAfterGap = preprocessor?.(
+      createPreprocessorContext(
+        createDamageEvent({
+          timestamp: 32050,
+          sourceID: 99,
+          sourceIsFriendly: false,
+          sourceInstance: 0,
+          targetID: 1,
+          targetIsFriendly: true,
+          abilityGameID: 1,
+          amount: 150,
+        }),
+      ),
+    )
+
+    expect(firstHitAfterGap?.effects?.[0]).toEqual({
+      type: 'modifyThreat',
+      multiplier: 0,
+      target: 'all',
+    })
+  })
+
   it('ignores non-Arlokk casts when tracking disappearance gaps', () => {
     const preprocessorFactory =
       zgEncounters[ZgEncounterIds.HighPriestessArlokk]?.preprocessor
     expect(preprocessorFactory).toBeDefined()
 
     const enemies: Enemy[] = [
-      { id: 99, name: 'High Priestess Arlokk', instance: 0 },
+      {
+        id: 99,
+        name: 'High Priestess Arlokk',
+        gameID: Boss.HighPriestessArlokk,
+        instance: 0,
+      },
       { id: 120, name: 'Zulian Prowler', instance: 0 },
     ]
     const preprocessor = preprocessorFactory?.({

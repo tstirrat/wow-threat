@@ -162,7 +162,6 @@ export function runConfigFixture(
       fight,
       actors: fixture.report.masterData.actors,
       abilities: fixture.report.masterData.abilities,
-      rawEvents: fixture.events,
     })
 
   const { augmentedEvents } = processEvents({

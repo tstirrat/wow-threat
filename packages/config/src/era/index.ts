@@ -35,7 +35,7 @@ import { bwlAggroLossBuffs } from './raids/bwl'
 import { mcAggroLossBuffs } from './raids/mc'
 import { naxxAbilities } from './raids/naxx'
 import { onyxiaAbilities } from './raids/ony'
-import { zgAggroLossBuffs, zgEncounters } from './raids/zg'
+import { zgAbilities, zgAggroLossBuffs, zgEncounters } from './raids/zg'
 
 const SOD_CLASSIC_SEASON_ID = 3
 const ANNIVERSARY_CLASSIC_SEASON_ID = 5
@@ -67,7 +67,7 @@ const globalAuraModifiers = {
 }
 
 export const eraConfig: ThreatConfig = {
-  version: 7,
+  version: 8,
   displayName: 'Vanilla (Era)',
   wowhead: {
     domain: 'classic',
@@ -124,6 +124,7 @@ export const eraConfig: ThreatConfig = {
     ...bwlAbilities,
     ...naxxAbilities,
     ...onyxiaAbilities,
+    ...zgAbilities,
   },
 
   auraModifiers: globalAuraModifiers,

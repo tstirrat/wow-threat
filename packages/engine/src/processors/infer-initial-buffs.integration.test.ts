@@ -125,7 +125,6 @@ describe('infer-initial-buffs integration', () => {
         fight: reportFixture.fight,
         actors: reportFixture.masterData.actors,
         abilities: reportFixture.masterData.abilities,
-        rawEvents: eventsFixture,
       })
 
     const result = processEvents({

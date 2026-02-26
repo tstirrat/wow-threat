@@ -9,7 +9,6 @@ import type {
   ReportAbility,
   ReportActor,
   ReportFight,
-  WCLEvent,
 } from '@wow-threat/wcl-types'
 
 export interface BuildThreatEngineInput {
@@ -23,7 +22,6 @@ export interface BuildThreatEngineInputParams {
   fight: ReportFight
   actors: ReportActor[]
   abilities?: ReportAbility[]
-  rawEvents: WCLEvent[]
 }
 
 const PLAYER_CLASS_NORMALIZATION: Record<string, WowClass> = {
@@ -128,44 +126,45 @@ function buildFriendlyActorIds(fight: ReportFight): Set<number> {
   return new Set([...friendlyPlayerIds, ...friendlyPetIds])
 }
 
-function buildEnemies(
-  fight: ReportFight,
-  actors: ReportActor[],
-  rawEvents: WCLEvent[],
-): Enemy[] {
+function buildEnemies(fight: ReportFight, actors: ReportActor[]): Enemy[] {
   const allActors = new Map(actors.map((actor) => [actor.id, actor]))
-  const enemyIds = new Set(
-    [...(fight.enemyNPCs ?? []), ...(fight.enemyPets ?? [])].map(
-      (enemy) => enemy.id,
-    ),
-  )
+  const enemyById = [
+    ...(fight.enemyNPCs ?? []),
+    ...(fight.enemyPets ?? []),
+  ].reduce(
+    (result, enemy) => {
+      const actor = allActors.get(enemy.id)
+      const nextInstanceCount = Math.max(1, Math.trunc(enemy.instanceCount))
+      const current = result.get(enemy.id)
 
-  const enemyInstanceKeys = rawEvents.reduce(
-    (keys, event) => {
-      if (enemyIds.has(event.sourceID)) {
-        keys.add(`${event.sourceID}:${event.sourceInstance ?? 0}`)
-      }
-      if (enemyIds.has(event.targetID)) {
-        keys.add(`${event.targetID}:${event.targetInstance ?? 0}`)
-      }
-      return keys
+      result.set(enemy.id, {
+        id: enemy.id,
+        name: actor?.name ?? current?.name ?? 'Unknown',
+        gameID: enemy.gameID ?? actor?.gameID ?? current?.gameID,
+        instanceCount: Math.max(current?.instanceCount ?? 0, nextInstanceCount),
+      })
+      return result
     },
-    new Set([...enemyIds].map((enemyId) => `${enemyId}:0`)),
+    new Map<
+      number,
+      {
+        id: number
+        name: string
+        gameID?: number
+        instanceCount: number
+      }
+    >(),
   )
 
-  return [...enemyInstanceKeys]
-    .map((key) => {
-      const [idRaw, instanceRaw] = key.split(':')
-      const id = Number(idRaw)
-      const instance = Number(instanceRaw)
-
-      return {
-        id,
-        name: allActors.get(id)?.name ?? 'Unknown',
-        gameID: allActors.get(id)?.gameID,
+  return [...enemyById.values()]
+    .flatMap((enemy) =>
+      Array.from({ length: enemy.instanceCount }, (_, instance) => ({
+        id: enemy.id,
+        name: enemy.name,
+        gameID: enemy.gameID,
         instance,
-      }
-    })
+      })),
+    )
     .sort((a, b) => {
       if (a.id === b.id) {
         return a.instance - b.instance
@@ -180,12 +179,12 @@ function buildEnemies(
 export function buildThreatEngineInput(
   params: BuildThreatEngineInputParams,
 ): BuildThreatEngineInput {
-  const { fight, actors, abilities, rawEvents } = params
+  const { fight, actors, abilities } = params
 
   return {
     actorMap: buildActorMap(fight, actors),
     friendlyActorIds: buildFriendlyActorIds(fight),
-    enemies: buildEnemies(fight, actors, rawEvents),
+    enemies: buildEnemies(fight, actors),
     abilitySchoolMap: buildAbilitySchoolMap(abilities),
   }
 }

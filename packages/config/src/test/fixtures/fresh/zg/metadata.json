@@ -1,0 +1,11 @@
+{
+  "host": "fresh",
+  "origin": "https://fresh.warcraftlogs.com",
+  "reportCode": "pdcYCTnNAQkaKx6w",
+  "fightId": 18,
+  "fightName": "High Priestess Arlokk",
+  "gameVersion": 2,
+  "downloadedAt": "2026-02-26T02:38:58.446Z",
+  "eventCount": 4063,
+  "eventsFile": "fight-18-high-priestess-arlokk-events.json"
+}
