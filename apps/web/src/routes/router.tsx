@@ -29,6 +29,11 @@ const FightPage = lazy(() =>
     default: module.FightPage,
   })),
 )
+const EntityReportsPage = lazy(() =>
+  import('../pages/entity-reports-page').then((module) => ({
+    default: module.EntityReportsPage,
+  })),
+)
 const NotFoundPage = lazy(() =>
   import('../pages/not-found-page').then((module) => ({
     default: module.NotFoundPage,
@@ -72,6 +77,10 @@ export const router: ReturnType<typeof createBrowserRouter> =
               element: withPageSuspense(<FightPage />),
             },
           ],
+        },
+        {
+          path: 'reports/:entityType/:entityId',
+          element: withPageSuspense(<EntityReportsPage />),
         },
         {
           path: '*',

@@ -3,6 +3,7 @@
  */
 import { ExternalLink } from 'lucide-react'
 import type { FC } from 'react'
+import { Link } from 'react-router-dom'
 
 import { buildBossKillNavigationFights } from '../lib/fight-navigation'
 import { formatReportHeaderDate } from '../lib/format'
@@ -54,6 +55,32 @@ function resolveGuildTextClass(faction: ReportGuildFaction): string {
   return 'text-muted-foreground'
 }
 
+function buildGuildEntityPath(report: ReportResponse): string | null {
+  const guild = report.guild
+  if (!guild) {
+    return null
+  }
+
+  const hasGuildId = typeof guild.id === 'number' && Number.isFinite(guild.id)
+  const hasLookupFallback = Boolean(guild.serverSlug && guild.serverRegion)
+  if (!hasGuildId && !hasLookupFallback) {
+    return null
+  }
+
+  const guildPathId = hasGuildId ? String(guild.id) : 'lookup'
+  const searchParams = new URLSearchParams()
+  searchParams.set('name', guild.name)
+  if (guild.serverSlug) {
+    searchParams.set('serverSlug', guild.serverSlug)
+  }
+  if (guild.serverRegion) {
+    searchParams.set('serverRegion', guild.serverRegion)
+  }
+  const search = searchParams.toString()
+
+  return `/reports/guild/${guildPathId}${search.length > 0 ? `?${search}` : ''}`
+}
+
 /** Render compact report metadata with threat config summary. */
 export const ReportSummaryHeader: FC<ReportSummaryHeaderProps> = ({
   report,
@@ -82,6 +109,7 @@ export const ReportSummaryHeader: FC<ReportSummaryHeaderProps> = ({
   const guildName = report.guild?.name ?? null
   const guildFaction = normalizeGuildFaction(report.guild?.faction)
   const guildTextClass = resolveGuildTextClass(guildFaction)
+  const guildEntityPath = buildGuildEntityPath(report)
   const bossLabel = `${bossKillCount} ${bossKillCount === 1 ? 'boss' : 'bosses'}`
   const playersLabel = `${playerCount} ${playerCount === 1 ? 'player' : 'players'}`
   const reportUrl = buildReportUrl(reportHost, reportId)
@@ -97,9 +125,19 @@ export const ReportSummaryHeader: FC<ReportSummaryHeaderProps> = ({
                 <span className="text-muted-foreground">|</span>
               ) : null}
               {guildName ? (
-                <span className={`font-medium ${guildTextClass}`}>
-                  {`<${guildName}>`}
-                </span>
+                guildEntityPath ? (
+                  <Link
+                    className={`font-medium underline ${guildTextClass}`}
+                    state={{ host: reportHost }}
+                    to={guildEntityPath}
+                  >
+                    {`<${guildName}>`}
+                  </Link>
+                ) : (
+                  <span className={`font-medium ${guildTextClass}`}>
+                    {`<${guildName}>`}
+                  </span>
+                )
               ) : null}
               <span className="text-muted-foreground">|</span>
               <span className="text-muted-foreground">{report.zone?.name}</span>

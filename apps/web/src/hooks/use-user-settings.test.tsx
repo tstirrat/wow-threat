@@ -67,14 +67,21 @@ function createSnapshot({
         showEnergizeEvents: false,
         showPets: false,
         starredReports: [],
+        starredEntities: [],
       },
     exists: () => exists,
   }
 }
 
 function Harness(): JSX.Element {
-  const { settings, isLoading, error, updateSettings, toggleStarredReport } =
-    useUserSettings()
+  const {
+    settings,
+    isLoading,
+    error,
+    updateSettings,
+    toggleStarredReport,
+    toggleStarredEntity,
+  } = useUserSettings()
 
   return (
     <div>
@@ -85,6 +92,9 @@ function Harness(): JSX.Element {
       <p data-testid="error">{error?.message ?? ''}</p>
       <p data-testid="starred-count">
         {String(settings.starredReports.length)}
+      </p>
+      <p data-testid="starred-entity-count">
+        {String(settings.starredEntities.length)}
       </p>
       <button
         type="button"
@@ -107,6 +117,19 @@ function Harness(): JSX.Element {
         }}
       >
         toggle starred report
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          void toggleStarredEntity({
+            entityType: 'guild',
+            entityId: '777',
+            name: 'Threat Guild',
+            sourceHost: 'fresh.warcraftlogs.com',
+          })
+        }}
+      >
+        toggle starred entity
       </button>
     </div>
   )
@@ -184,6 +207,7 @@ describe('UserSettingsProvider', () => {
             showEnergizeEvents: false,
             showPets: false,
             starredReports: [],
+            starredEntities: [],
           },
         }),
       )
@@ -330,6 +354,7 @@ describe('UserSettingsProvider', () => {
             showEnergizeEvents: false,
             showPets: false,
             starredReports: [existingStarred],
+            starredEntities: [],
           },
         }),
       )
@@ -363,6 +388,69 @@ describe('UserSettingsProvider', () => {
           expect.objectContaining({
             reportId: 'OLD123',
             title: 'Older report',
+          }),
+        ]),
+        starredEntities: [],
+      }),
+      {
+        merge: true,
+      },
+    )
+  })
+
+  it('toggles starred entities and writes full settings payload', async () => {
+    useAuthMock.mockReturnValue(
+      createAuthValue({
+        user: {
+          uid: 'wcl:12345',
+        } as User,
+      }),
+    )
+
+    let nextSnapshot:
+      | ((snapshot: ReturnType<typeof createSnapshot>) => void)
+      | undefined
+    onSnapshotMock.mockImplementation(
+      (
+        _documentRef: unknown,
+        onNext: (snapshot: ReturnType<typeof createSnapshot>) => void,
+      ) => {
+        nextSnapshot = onNext
+        return vi.fn()
+      },
+    )
+
+    render(
+      <UserSettingsProvider>
+        <Harness />
+      </UserSettingsProvider>,
+    )
+
+    act(() => {
+      nextSnapshot?.(createSnapshot({ exists: false }))
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('is-loading')).toHaveTextContent('false')
+    })
+
+    await act(async () => {
+      screen
+        .getByRole('button', {
+          name: 'toggle starred entity',
+        })
+        .click()
+    })
+
+    expect(screen.getByTestId('starred-entity-count')).toHaveTextContent('1')
+    expect(setDocMock).toHaveBeenCalledWith(
+      'settings-doc-ref',
+      expect.objectContaining({
+        starredEntities: expect.arrayContaining([
+          expect.objectContaining({
+            entityType: 'guild',
+            entityId: '777',
+            name: 'Threat Guild',
           }),
         ]),
       }),

@@ -9,11 +9,13 @@ import { AccountRecentReportsList } from '../components/account-recent-reports-l
 import { ExampleReportList } from '../components/example-report-list'
 import { RecentReportsList } from '../components/recent-reports-list'
 import { SectionCard } from '../components/section-card'
+import { StarredGuildReportsList } from '../components/starred-guild-reports-list'
 import { StarredReportsList } from '../components/starred-reports-list'
 import { Alert, AlertDescription } from '../components/ui/alert'
 import { Button } from '../components/ui/button'
 import { Kbd, KbdGroup } from '../components/ui/kbd'
 import { useRecentReports } from '../hooks/use-recent-reports'
+import { useStarredGuildReports } from '../hooks/use-starred-guild-reports'
 import { useUserRecentReports } from '../hooks/use-user-recent-reports'
 import { useUserSettings } from '../hooks/use-user-settings'
 import { exampleReports } from '../lib/constants'
@@ -32,6 +34,14 @@ export const LandingPage: FC = () => {
     error: accountRecentReportsError,
     refresh: refreshAccountReports,
   } = useUserRecentReports(10)
+  const {
+    reports: starredGuildReports,
+    trackedGuildCount,
+    isLoading: isLoadingGuildReports,
+    isRefreshing: isRefreshingGuildReports,
+    error: starredGuildReportsError,
+    refresh: refreshGuildReports,
+  } = useStarredGuildReports(10)
   const shouldShowAccountReports = authEnabled && Boolean(user)
   const starredReportIds = useMemo(
     () => new Set(settings.starredReports.map((report) => report.reportId)),
@@ -130,12 +140,35 @@ export const LandingPage: FC = () => {
           </div>
         </SectionCard>
         <SectionCard
+          headerRight={
+            <Button
+              disabled={isRefreshingGuildReports || trackedGuildCount === 0}
+              size="sm"
+              type="button"
+              variant="outline"
+              onClick={() => {
+                void refreshGuildReports()
+              }}
+            >
+              {isRefreshingGuildReports ? 'Refreshing...' : 'Refresh'}
+            </Button>
+          }
           title="Guild logs"
-          subtitle="Shared guild report history is coming soon."
+          subtitle={`Reports from ${trackedGuildCount} starred ${trackedGuildCount === 1 ? 'guild' : 'guilds'} (cached 1 hour).`}
         >
-          <p className="text-sm text-muted-foreground">
-            Guild log tracking and quick access will be available here.
-          </p>
+          {isLoadingGuildReports ? (
+            <p aria-live="polite" className="text-sm text-muted-foreground">
+              Loading starred guild reports...
+            </p>
+          ) : starredGuildReportsError ? (
+            <Alert variant="destructive">
+              <AlertDescription>
+                {starredGuildReportsError.message}
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <StarredGuildReportsList reports={starredGuildReports} />
+          )}
         </SectionCard>
         {shouldShowAccountReports ? (
           <SectionCard

@@ -91,6 +91,7 @@ describe('RootLayout', () => {
         showEnergizeEvents: false,
         inferThreatReduction: false,
         starredReports: [],
+        starredEntities: [],
       },
       isLoading: false,
     })
@@ -256,6 +257,7 @@ describe('RootLayout', () => {
             starredAt: 1,
           },
         ],
+        starredEntities: [],
       },
       isLoading: false,
     })

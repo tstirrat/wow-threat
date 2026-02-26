@@ -20,13 +20,19 @@ import {
 } from 'react'
 
 import { getFirebaseFirestore } from '../lib/firebase'
-import type { StarredReportEntry, WarcraftLogsHost } from '../types/app'
+import type {
+  StarredEntityEntry,
+  StarredEntityType,
+  StarredReportEntry,
+  WarcraftLogsHost,
+} from '../types/app'
 
 export interface UserSettings {
   showPets: boolean
   showEnergizeEvents: boolean
   inferThreatReduction: boolean
   starredReports: StarredReportEntry[]
+  starredEntities: StarredEntityEntry[]
 }
 
 const defaultUserSettings: UserSettings = {
@@ -34,6 +40,7 @@ const defaultUserSettings: UserSettings = {
   showEnergizeEvents: false,
   inferThreatReduction: false,
   starredReports: [],
+  starredEntities: [],
 }
 
 interface StoredUserSettings {
@@ -41,6 +48,7 @@ interface StoredUserSettings {
   showEnergizeEvents?: boolean
   inferThreatReduction?: boolean
   starredReports?: unknown
+  starredEntities?: unknown
 }
 
 const supportedWarcraftLogsHosts: WarcraftLogsHost[] = [
@@ -112,6 +120,52 @@ function parseStarredReportEntry(value: unknown): StarredReportEntry | null {
   }
 }
 
+function parseStarredEntityType(value: unknown): StarredEntityType | null {
+  if (value !== 'guild' && value !== 'character') {
+    return null
+  }
+
+  return value
+}
+
+function parseStarredEntityEntry(value: unknown): StarredEntityEntry | null {
+  if (!value || typeof value !== 'object') {
+    return null
+  }
+
+  const raw = value as Record<string, unknown>
+  const entityType = parseStarredEntityType(raw.entityType)
+  const entityId =
+    typeof raw.entityId === 'string' ? raw.entityId.trim() : undefined
+  const name = typeof raw.name === 'string' ? raw.name : undefined
+  const sourceHost = normalizeWarcraftLogsHost(raw.sourceHost)
+  const starredAt =
+    typeof raw.starredAt === 'number' && Number.isFinite(raw.starredAt)
+      ? raw.starredAt
+      : undefined
+
+  if (
+    !entityType ||
+    !entityId ||
+    !name ||
+    !sourceHost ||
+    starredAt === undefined
+  ) {
+    return null
+  }
+
+  return {
+    entityType,
+    entityId,
+    name,
+    sourceHost,
+    starredAt,
+    faction: parseOptionalString(raw.faction),
+    serverSlug: parseOptionalString(raw.serverSlug),
+    serverRegion: parseOptionalString(raw.serverRegion),
+  }
+}
+
 function normalizeStarredReports(value: unknown): StarredReportEntry[] {
   if (!Array.isArray(value)) {
     return []
@@ -129,6 +183,26 @@ function normalizeStarredReports(value: unknown): StarredReportEntry[] {
     })
 
   return Array.from(dedupedByReportId.values())
+}
+
+function normalizeStarredEntities(value: unknown): StarredEntityEntry[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  const dedupedByEntityKey = new Map<string, StarredEntityEntry>()
+  value
+    .map((entry) => parseStarredEntityEntry(entry))
+    .filter((entry): entry is StarredEntityEntry => entry !== null)
+    .sort((left, right) => right.starredAt - left.starredAt)
+    .forEach((entry) => {
+      const key = `${entry.entityType}:${entry.entityId}`
+      if (!dedupedByEntityKey.has(key)) {
+        dedupedByEntityKey.set(key, entry)
+      }
+    })
+
+  return Array.from(dedupedByEntityKey.values())
 }
 
 function upsertStarredReport({
@@ -152,6 +226,33 @@ function upsertStarredReport({
   ].sort((left, right) => right.starredAt - left.starredAt)
 }
 
+function upsertStarredEntity({
+  current,
+  entity,
+}: {
+  current: StarredEntityEntry[]
+  entity: Omit<StarredEntityEntry, 'starredAt'> & { starredAt?: number }
+}): StarredEntityEntry[] {
+  const nextEntry: StarredEntityEntry = {
+    ...entity,
+    starredAt:
+      typeof entity.starredAt === 'number' && Number.isFinite(entity.starredAt)
+        ? entity.starredAt
+        : Date.now(),
+  }
+
+  return [
+    nextEntry,
+    ...current.filter(
+      (entry) =>
+        !(
+          entry.entityType === nextEntry.entityType &&
+          entry.entityId === nextEntry.entityId
+        ),
+    ),
+  ].sort((left, right) => right.starredAt - left.starredAt)
+}
+
 const userSettingsConverter: FirestoreDataConverter<UserSettings> = {
   toFirestore(settings: UserSettings): StoredUserSettings {
     return {
@@ -159,6 +260,7 @@ const userSettingsConverter: FirestoreDataConverter<UserSettings> = {
       showEnergizeEvents: settings.showEnergizeEvents,
       inferThreatReduction: settings.inferThreatReduction,
       starredReports: settings.starredReports,
+      starredEntities: settings.starredEntities,
     }
   },
   fromFirestore(snapshot): UserSettings {
@@ -177,6 +279,7 @@ const userSettingsConverter: FirestoreDataConverter<UserSettings> = {
           ? data.inferThreatReduction
           : defaultUserSettings.inferThreatReduction,
       starredReports: normalizeStarredReports(data.starredReports),
+      starredEntities: normalizeStarredEntities(data.starredEntities),
     }
   },
 }
@@ -186,6 +289,7 @@ export interface UpdateUserSettingsRequest {
   showEnergizeEvents?: boolean
   inferThreatReduction?: boolean
   starredReports?: StarredReportEntry[]
+  starredEntities?: StarredEntityEntry[]
 }
 
 export interface UseUserSettingsResult {
@@ -202,6 +306,17 @@ export interface UseUserSettingsResult {
   toggleStarredReport: (
     report: Omit<StarredReportEntry, 'starredAt'> & { starredAt?: number },
   ) => Promise<void>
+  isEntityStarred: (entityType: StarredEntityType, entityId: string) => boolean
+  starEntity: (
+    entity: Omit<StarredEntityEntry, 'starredAt'> & { starredAt?: number },
+  ) => Promise<void>
+  unstarEntity: (
+    entityType: StarredEntityType,
+    entityId: string,
+  ) => Promise<void>
+  toggleStarredEntity: (
+    entity: Omit<StarredEntityEntry, 'starredAt'> & { starredAt?: number },
+  ) => Promise<void>
 }
 
 function buildNextSettings({
@@ -215,11 +330,16 @@ function buildNextSettings({
     patch.starredReports === undefined
       ? current.starredReports
       : normalizeStarredReports(patch.starredReports)
+  const nextStarredEntities =
+    patch.starredEntities === undefined
+      ? current.starredEntities
+      : normalizeStarredEntities(patch.starredEntities)
 
   return {
     ...current,
     ...patch,
     starredReports: nextStarredReports,
+    starredEntities: nextStarredEntities,
   }
 }
 
@@ -349,6 +469,48 @@ export const UserSettingsProvider: FC<PropsWithChildren> = ({ children }) => {
             : upsertStarredReport({
                 current: settings.starredReports,
                 report,
+              }),
+        })
+      },
+      isEntityStarred: (entityType: StarredEntityType, entityId: string) =>
+        settings.starredEntities.some(
+          (entry) =>
+            entry.entityType === entityType && entry.entityId === entityId,
+        ),
+      starEntity: async (entity) => {
+        await updateSettings({
+          starredEntities: upsertStarredEntity({
+            current: settings.starredEntities,
+            entity,
+          }),
+        })
+      },
+      unstarEntity: async (entityType, entityId) => {
+        await updateSettings({
+          starredEntities: settings.starredEntities.filter(
+            (entry) =>
+              !(entry.entityType === entityType && entry.entityId === entityId),
+          ),
+        })
+      },
+      toggleStarredEntity: async (entity) => {
+        const isStarred = settings.starredEntities.some(
+          (entry) =>
+            entry.entityType === entity.entityType &&
+            entry.entityId === entity.entityId,
+        )
+        await updateSettings({
+          starredEntities: isStarred
+            ? settings.starredEntities.filter(
+                (entry) =>
+                  !(
+                    entry.entityType === entity.entityType &&
+                    entry.entityId === entity.entityId
+                  ),
+              )
+            : upsertStarredEntity({
+                current: settings.starredEntities,
+                entity,
               }),
         })
       },

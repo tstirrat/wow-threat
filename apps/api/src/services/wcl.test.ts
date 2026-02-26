@@ -1195,3 +1195,120 @@ describe('WCLClient.getRecentReports', () => {
     expect(reports[0]?.code).toBe('RECENT-2')
   })
 })
+
+describe('WCLClient.getGuildReports', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-01-15T00:00:00Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('resolves guild identity and returns recent reports for that guild', async () => {
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString()
+
+        if (url.startsWith(firestorePrefix)) {
+          return new Response(
+            JSON.stringify(await createEncryptedTokenDocument()),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          )
+        }
+
+        if (url.includes('warcraftlogs.com/api/v2/user')) {
+          const body = init?.body ? JSON.parse(init.body.toString()) : {}
+          const query = body.query as string
+          const variables = body.variables as Record<string, unknown>
+
+          if (query.includes('GuildLookup')) {
+            expect(variables.id).toBe(77)
+            return new Response(
+              JSON.stringify({
+                data: {
+                  guildData: {
+                    guild: {
+                      id: 77,
+                      name: 'Threat Guild',
+                      faction: { name: 'Alliance' },
+                      server: {
+                        slug: 'benediction',
+                        region: { slug: 'US' },
+                      },
+                    },
+                  },
+                },
+              }),
+              { status: 200, headers: { 'Content-Type': 'application/json' } },
+            )
+          }
+
+          if (query.includes('RecentReports')) {
+            expect(variables.guildID).toBe(77)
+            return new Response(
+              JSON.stringify({
+                data: {
+                  reportData: {
+                    reports: {
+                      data: [
+                        {
+                          code: 'GUILD1',
+                          title: 'Guild #1',
+                          startTime: 1900,
+                          endTime: 1999,
+                          zone: { name: 'Blackwing Lair' },
+                          guild: {
+                            name: 'Threat Guild',
+                            faction: { name: 'Alliance' },
+                          },
+                          archiveStatus: {
+                            isArchived: false,
+                            isAccessible: true,
+                            archiveDate: null,
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              }),
+              { status: 200, headers: { 'Content-Type': 'application/json' } },
+            )
+          }
+        }
+
+        return new Response(null, { status: 404 })
+      },
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const client = new WCLClient(createMockBindings(), 'wcl:12345')
+    const result = await client.getGuildReports({
+      guildId: 77,
+      limit: 10,
+    })
+
+    expect(result.guild).toEqual({
+      id: 77,
+      name: 'Threat Guild',
+      faction: 'Alliance',
+      serverSlug: 'benediction',
+      serverRegion: 'US',
+    })
+    expect(result.reports).toEqual([
+      {
+        code: 'GUILD1',
+        title: 'Guild #1',
+        startTime: 1900,
+        endTime: 1999,
+        zoneName: 'Blackwing Lair',
+        guildName: 'Threat Guild',
+        guildFaction: 'Alliance',
+        source: 'guild',
+      },
+    ])
+  })
+})

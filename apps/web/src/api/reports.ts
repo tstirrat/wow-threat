@@ -7,6 +7,7 @@ import { immutableApiCacheVersions } from '@wow-threat/shared'
 import { defaultApiBaseUrl } from '../lib/constants'
 import type {
   AugmentedEventsResponse,
+  EntityReportsResponse,
   FightsResponse,
   RecentReportsResponse,
   ReportResponse,
@@ -66,6 +67,36 @@ export function getRecentReports(limit = 10): Promise<RecentReportsResponse> {
   )
 }
 
+/** Fetch recent reports for an entity (guild currently supported). */
+export function getEntityReports(options: {
+  entityType: 'guild'
+  guildId?: number
+  guildName?: string
+  serverSlug?: string
+  serverRegion?: string
+  limit?: number
+}): Promise<EntityReportsResponse> {
+  const searchParams = new URLSearchParams({
+    limit: String(options.limit ?? 10),
+  })
+  if (typeof options.guildId === 'number' && Number.isFinite(options.guildId)) {
+    searchParams.set('guildId', String(Math.trunc(options.guildId)))
+  }
+  if (options.guildName) {
+    searchParams.set('guildName', options.guildName)
+  }
+  if (options.serverSlug) {
+    searchParams.set('serverSlug', options.serverSlug)
+  }
+  if (options.serverRegion) {
+    searchParams.set('serverRegion', options.serverRegion)
+  }
+
+  return requestJson<EntityReportsResponse>(
+    `${defaultApiBaseUrl}/v1/reports/entities/${options.entityType}/reports?${searchParams.toString()}`,
+  )
+}
+
 export const reportQueryKey = (
   reportId: string,
 ): readonly ['report', string] => ['report', reportId]
@@ -76,6 +107,36 @@ export const recentReportsQueryKey = (
 ): readonly ['recent-reports', number, string | null] => [
   'recent-reports',
   limit,
+  uid,
+]
+
+export const entityReportsQueryKey = (
+  options: {
+    entityType: 'guild'
+    guildId?: number
+    guildName?: string
+    serverSlug?: string
+    serverRegion?: string
+    limit: number
+  },
+  uid: string | null,
+): readonly [
+  'entity-reports',
+  'guild',
+  number | null,
+  string | null,
+  string | null,
+  string | null,
+  number,
+  string | null,
+] => [
+  'entity-reports',
+  'guild',
+  options.guildId ?? null,
+  options.guildName ?? null,
+  options.serverSlug ?? null,
+  options.serverRegion ?? null,
+  options.limit,
   uid,
 ]
 

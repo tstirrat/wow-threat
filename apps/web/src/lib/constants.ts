@@ -10,6 +10,9 @@ export const recentReportsStorageKey = 'wow-threat.recent-reports'
 export const accountRecentReportsStorageKey =
   'wow-threat.account-recent-reports'
 export const accountRecentReportsCacheTtlMs = 1000 * 60 * 60
+export const starredGuildReportsStorageKey = 'wow-threat.starred-guild-reports'
+export const entityReportsStorageKey = 'wow-threat.entity-reports'
+export const starredGuildReportsCacheTtlMs = 1000 * 60 * 60
 
 export const defaultHost: WarcraftLogsHost = 'fresh.warcraftlogs.com'
 

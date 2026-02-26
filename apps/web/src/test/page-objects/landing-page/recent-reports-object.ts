@@ -11,11 +11,11 @@ export class RecentReportsObject {
   }
 
   recentReportsSection(): Locator {
-    return this.page.getByRole('region', { name: 'Recently viewed' })
+    return this.page.getByRole('region', { name: /Recent logs/i })
   }
 
   noRecentReportsText(): Locator {
-    return this.recentReportsSection().getByText('No recent reports yet')
+    return this.recentReportsSection().getByText(/No recent reports yet/i)
   }
 
   recentReportsList(): Locator {

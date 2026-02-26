@@ -43,8 +43,11 @@ describe('Reports API', () => {
       expect(data.title).toBe('Naxxramas 25 - Test Raid')
       expect(data.owner).toBe('TestGuild')
       expect(data.guild).toEqual({
+        id: null,
         name: 'TestGuild',
         faction: 'Alliance',
+        serverSlug: null,
+        serverRegion: null,
       })
       expect(data.gameVersion).toBe(2)
       expect(data.threatConfig).toEqual({
@@ -528,6 +531,166 @@ describe('Reports API', () => {
           source: 'guild',
         },
       ])
+    })
+  })
+
+  describe('GET /v1/reports/entities/:entityType/reports', () => {
+    it('returns guild reports resolved by guild id', async () => {
+      const encryptionKey = await importAesGcmKey('test-encryption-key')
+      const encryptedAccessToken = await encryptSecret(
+        'user-access-token',
+        encryptionKey,
+      )
+
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          const url = typeof input === 'string' ? input : input.toString()
+
+          if (url.startsWith(firestorePrefix)) {
+            return new Response(
+              JSON.stringify({
+                fields: {
+                  accessToken: { stringValue: encryptedAccessToken },
+                  accessTokenExpiresAtMs: {
+                    integerValue: String(Date.now() + 3_600_000),
+                  },
+                  refreshToken: { nullValue: null },
+                  refreshTokenExpiresAtMs: { nullValue: null },
+                  tokenType: { stringValue: 'Bearer' },
+                  uid: { stringValue: 'wcl-test-user' },
+                  wclUserId: { stringValue: '12345' },
+                  wclUserName: { stringValue: 'TestUser' },
+                },
+              }),
+              { status: 200, headers: { 'Content-Type': 'application/json' } },
+            )
+          }
+
+          if (url.includes('warcraftlogs.com/api/v2/user')) {
+            const body = init?.body ? JSON.parse(String(init.body)) : {}
+            const query = body.query as string
+            const variables = (body.variables ?? {}) as Record<string, unknown>
+
+            if (query.includes('GuildLookup')) {
+              expect(variables.id).toBe(777)
+              return new Response(
+                JSON.stringify({
+                  data: {
+                    guildData: {
+                      guild: {
+                        id: 777,
+                        name: 'Threat Guild',
+                        faction: { name: 'Alliance' },
+                        server: {
+                          slug: 'benediction',
+                          region: { slug: 'US' },
+                        },
+                      },
+                    },
+                  },
+                }),
+                {
+                  status: 200,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              )
+            }
+
+            if (query.includes('RecentReports') && variables.guildID === 777) {
+              return new Response(
+                JSON.stringify({
+                  data: {
+                    reportData: {
+                      reports: {
+                        data: [
+                          {
+                            code: 'GUILD-LATEST',
+                            title: 'Guild latest',
+                            startTime: 1900,
+                            endTime: 1999,
+                            zone: { name: "Ahn'Qiraj" },
+                            guild: {
+                              name: 'Threat Guild',
+                              faction: { name: 'Alliance' },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  },
+                }),
+                {
+                  status: 200,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              )
+            }
+          }
+
+          return new Response(null, { status: 404 })
+        }),
+      )
+
+      const res = await app.request(
+        'http://localhost/v1/reports/entities/guild/reports?guildId=777&limit=10',
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(200)
+
+      const data = (await res.json()) as {
+        entityType: string
+        entity: {
+          id: number
+          name: string
+          faction: string | null
+          serverSlug: string | null
+          serverRegion: string | null
+        }
+        reports: Array<{
+          code: string
+          title: string
+          startTime: number
+          endTime: number
+          zoneName: string | null
+          guildName: string | null
+          guildFaction: string | null
+        }>
+      }
+      expect(data.entityType).toBe('guild')
+      expect(data.entity).toEqual({
+        id: 777,
+        name: 'Threat Guild',
+        faction: 'Alliance',
+        serverSlug: 'benediction',
+        serverRegion: 'US',
+      })
+      expect(data.reports).toEqual([
+        {
+          code: 'GUILD-LATEST',
+          title: 'Guild latest',
+          startTime: 1900,
+          endTime: 1999,
+          zoneName: "Ahn'Qiraj",
+          guildName: 'Threat Guild',
+          guildFaction: 'Alliance',
+        },
+      ])
+    })
+
+    it('returns 400 for unsupported entity types', async () => {
+      const res = await app.request(
+        'http://localhost/v1/reports/entities/character/reports?entityId=123',
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(400)
+
+      const data: ApiError = await res.json()
+      expect(data.error.code).toBe('INVALID_ENTITY_TYPE')
     })
   })
 })

@@ -57,8 +57,11 @@ export interface ThreatConfigSummary {
 }
 
 export interface ReportGuildSummary {
+  id: number | null
   name: string
   faction: string
+  serverSlug: string | null
+  serverRegion: string | null
 }
 
 export interface ReportArchiveStatusSummary {
@@ -99,6 +102,32 @@ export interface RecentReportSummary {
 
 export interface RecentReportsResponse {
   reports: RecentReportSummary[]
+}
+
+export type ReportEntityType = 'guild' | 'character'
+
+export interface EntityReportSummary {
+  code: string
+  title: string
+  startTime: number
+  endTime: number
+  zoneName: string | null
+  guildName: string | null
+  guildFaction: string | null
+}
+
+export interface EntitySummary {
+  id: number
+  name: string
+  faction: string | null
+  serverSlug: string | null
+  serverRegion: string | null
+}
+
+export interface EntityReportsResponse {
+  entityType: ReportEntityType
+  entity: EntitySummary
+  reports: EntityReportSummary[]
 }
 
 export interface WclRateLimitResponse {

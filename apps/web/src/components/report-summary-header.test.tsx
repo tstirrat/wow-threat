@@ -2,6 +2,7 @@
  * Component tests for report summary header metadata.
  */
 import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
 import type { ReportResponse } from '../types/api'
@@ -16,8 +17,11 @@ function createReportResponse(
     visibility: 'public',
     owner: 'test-owner',
     guild: {
+      id: 777,
       name: 'Threat Guild',
       faction: 'Alliance',
+      serverSlug: 'benediction',
+      serverRegion: 'US',
     },
     archiveStatus: null,
     startTime: Date.UTC(2026, 1, 1, 0, 0, 0, 0),
@@ -89,14 +93,16 @@ describe('ReportSummaryHeader', () => {
     const report = createReportResponse()
 
     render(
-      <ReportSummaryHeader
-        isStarred={false}
-        onToggleStar={() => {}}
-        report={report}
-        reportHost="fresh.warcraftlogs.com"
-        reportId={report.code}
-        threatConfigLabel="No supported config"
-      />,
+      <MemoryRouter>
+        <ReportSummaryHeader
+          isStarred={false}
+          onToggleStar={() => {}}
+          report={report}
+          reportHost="fresh.warcraftlogs.com"
+          reportId={report.code}
+          threatConfigLabel="No supported config"
+        />
+      </MemoryRouter>,
     )
 
     expect(screen.getByText('4 players')).toBeVisible()
@@ -106,15 +112,17 @@ describe('ReportSummaryHeader', () => {
     const report = createReportResponse()
 
     render(
-      <ReportSummaryHeader
-        isStarred={false}
-        onToggleStar={() => {}}
-        report={report}
-        reportHost="fresh.warcraftlogs.com"
-        reportId={report.code}
-        selectedFightId={26}
-        threatConfigLabel="No supported config"
-      />,
+      <MemoryRouter>
+        <ReportSummaryHeader
+          isStarred={false}
+          onToggleStar={() => {}}
+          report={report}
+          reportHost="fresh.warcraftlogs.com"
+          reportId={report.code}
+          selectedFightId={26}
+          threatConfigLabel="No supported config"
+        />
+      </MemoryRouter>,
     )
 
     expect(screen.getByText('2 players')).toBeVisible()
@@ -125,17 +133,43 @@ describe('ReportSummaryHeader', () => {
     const report = createReportResponse()
 
     render(
-      <ReportSummaryHeader
-        isStarred={false}
-        onToggleStar={() => {}}
-        report={report}
-        reportHost="fresh.warcraftlogs.com"
-        reportId={report.code}
-        selectedFightId={999}
-        threatConfigLabel="No supported config"
-      />,
+      <MemoryRouter>
+        <ReportSummaryHeader
+          isStarred={false}
+          onToggleStar={() => {}}
+          report={report}
+          reportHost="fresh.warcraftlogs.com"
+          reportId={report.code}
+          selectedFightId={999}
+          threatConfigLabel="No supported config"
+        />
+      </MemoryRouter>,
     )
 
     expect(screen.getByText('4 players')).toBeVisible()
+  })
+
+  it('links guild name to guild reports page', () => {
+    const report = createReportResponse()
+
+    render(
+      <MemoryRouter>
+        <ReportSummaryHeader
+          isStarred={false}
+          onToggleStar={() => {}}
+          report={report}
+          reportHost="fresh.warcraftlogs.com"
+          reportId={report.code}
+          threatConfigLabel="No supported config"
+        />
+      </MemoryRouter>,
+    )
+
+    expect(
+      screen.getByRole('link', { name: '<Threat Guild>' }),
+    ).toHaveAttribute(
+      'href',
+      '/reports/guild/777?name=Threat+Guild&serverSlug=benediction&serverRegion=US',
+    )
   })
 })

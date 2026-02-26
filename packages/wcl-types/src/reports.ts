@@ -137,8 +137,18 @@ export interface GameFaction {
 }
 
 export interface ReportGuild {
+  id?: number
   name: string
   faction: GameFaction
+  server?: {
+    slug?: string | null
+    region?: {
+      id?: number
+      compactName?: string
+      name?: string
+      slug?: string
+    } | null
+  } | null
 }
 
 export interface ReportOwner {

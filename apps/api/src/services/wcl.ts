@@ -67,6 +67,12 @@ interface WclRecentReportsData {
   } | null
 }
 
+interface WclGuildLookupData {
+  guildData?: {
+    guild?: WclGuildNode | null
+  } | null
+}
+
 interface WclRateLimitData {
   rateLimitData?: {
     limitPerHour?: number | null
@@ -99,6 +105,25 @@ interface WclRecentReportNode {
   } | null
 }
 
+interface WclGuildNode {
+  id?: number | string | null
+  name?: string | null
+  faction?:
+    | string
+    | {
+        name?: string | null
+      }
+    | null
+  server?: {
+    slug?: string | null
+    region?: {
+      slug?: string | null
+      compactName?: string | null
+      name?: string | null
+    } | null
+  } | null
+}
+
 export type RecentWclReportSource = 'personal' | 'guild'
 
 export interface RecentWclReport {
@@ -110,6 +135,19 @@ export interface RecentWclReport {
   guildName: string | null
   guildFaction: string | null
   source: RecentWclReportSource
+}
+
+export interface GuildWclReference {
+  id: number
+  name: string
+  faction: string | null
+  serverSlug: string | null
+  serverRegion: string | null
+}
+
+export interface GuildWclReports {
+  guild: GuildWclReference
+  reports: RecentWclReport[]
 }
 
 const maxRecentReportsLimit = 20
@@ -231,8 +269,7 @@ function summarizeQueryVariables(
       }
 
       if (typeof value === 'string') {
-        summary[key] =
-          value.length > 24 ? `${value.slice(0, 24)}...` : value
+        summary[key] = value.length > 24 ? `${value.slice(0, 24)}...` : value
         return summary
       }
 
@@ -301,6 +338,43 @@ function parseGuildFaction(value: unknown): string | null {
   }
 
   return null
+}
+
+function parseGuildServerRegion(value: unknown): string | null {
+  if (!value || typeof value !== 'object') {
+    return null
+  }
+
+  if ('slug' in value && typeof value.slug === 'string') {
+    return value.slug
+  }
+
+  if ('compactName' in value && typeof value.compactName === 'string') {
+    return value.compactName
+  }
+
+  if ('name' in value && typeof value.name === 'string') {
+    return value.name
+  }
+
+  return null
+}
+
+function toGuildWclReference(node: WclGuildNode): GuildWclReference | null {
+  const id = parseNumericId(node.id)
+  const name = typeof node.name === 'string' ? node.name.trim() : ''
+
+  if (id === null || name.length === 0) {
+    return null
+  }
+
+  return {
+    id,
+    name,
+    faction: parseGuildFaction(node.faction),
+    serverSlug: typeof node.server?.slug === 'string' ? node.server.slug : null,
+    serverRegion: parseGuildServerRegion(node.server?.region),
+  }
 }
 
 function normalizeReportRankings(
@@ -914,10 +988,17 @@ export class WCLClient {
             visibility
             owner { name }
             guild {
+                id
                 name
                 faction {
                   id
                   name
+                }
+                server {
+                  slug
+                  region {
+                    slug
+                  }
                 }
               }
               archiveStatus {
@@ -1290,6 +1371,71 @@ export class WCLClient {
     }
   }
 
+  private async getGuildByIdentifier(
+    accessToken: string,
+    options: {
+      guildId?: number
+      guildName?: string
+      serverSlug?: string
+      serverRegion?: string
+    },
+  ): Promise<GuildWclReference> {
+    const query = `
+      query GuildLookup(
+        $id: Int
+        $name: String
+        $serverSlug: String
+        $serverRegion: String
+      ) {
+        guildData {
+          guild(
+            id: $id
+            name: $name
+            serverSlug: $serverSlug
+            serverRegion: $serverRegion
+          ) {
+            id
+            name
+            faction {
+              name
+            }
+            server {
+              slug
+              region {
+                slug
+                compactName
+                name
+              }
+            }
+          }
+        }
+      }
+    `
+    const data = await this.query<WclGuildLookupData>(
+      query,
+      {
+        id: options.guildId ?? null,
+        name: options.guildName ?? null,
+        serverSlug: options.serverSlug ?? null,
+        serverRegion: options.serverRegion ?? null,
+      },
+      {
+        accessToken,
+      },
+    )
+    const guild = data.guildData?.guild
+    if (!guild) {
+      throw wclApiError('Guild not found')
+    }
+
+    const guildReference = toGuildWclReference(guild)
+    if (!guildReference) {
+      throw wclApiError('Guild payload did not include required fields')
+    }
+
+    return guildReference
+  }
+
   private async getRecentReportsByOwner(
     accessToken: string,
     options:
@@ -1350,6 +1496,62 @@ export class WCLClient {
       .filter((report) => canAccessReportEvents(report))
       .map((report) => toRecentWclReport(report, options.source))
       .filter((report): report is RecentWclReport => report !== null)
+  }
+
+  /** Get recent reports for a specific guild. */
+  async getGuildReports(options: {
+    limit?: number
+    guildId?: number
+    guildName?: string
+    serverSlug?: string
+    serverRegion?: string
+  }): Promise<GuildWclReports> {
+    const boundedLimit = Math.min(
+      Math.max(Math.trunc(options.limit ?? 10), 1),
+      maxRecentReportsLimit,
+    )
+    const hasGuildLookupByName =
+      typeof options.guildName === 'string' &&
+      options.guildName.trim().length > 0 &&
+      typeof options.serverSlug === 'string' &&
+      options.serverSlug.trim().length > 0 &&
+      typeof options.serverRegion === 'string' &&
+      options.serverRegion.trim().length > 0
+    const hasGuildId =
+      typeof options.guildId === 'number' && Number.isFinite(options.guildId)
+
+    if (!hasGuildId && !hasGuildLookupByName) {
+      throw wclApiError(
+        'Guild lookup requires guildId or guildName/serverSlug/serverRegion',
+      )
+    }
+
+    const accessToken = await this.getUserAccessToken()
+    const normalizedGuildId =
+      hasGuildId && options.guildId !== undefined
+        ? Math.trunc(options.guildId)
+        : undefined
+    const guild = await this.getGuildByIdentifier(accessToken, {
+      guildId: normalizedGuildId,
+      guildName: hasGuildLookupByName ? options.guildName?.trim() : undefined,
+      serverSlug: hasGuildLookupByName ? options.serverSlug?.trim() : undefined,
+      serverRegion: hasGuildLookupByName
+        ? options.serverRegion?.trim()
+        : undefined,
+    })
+    const reports = await this.getRecentReportsByOwner(
+      accessToken,
+      {
+        source: 'guild',
+        guildId: guild.id,
+      },
+      boundedLimit,
+    )
+
+    return {
+      guild,
+      reports,
+    }
   }
 
   /** Get a merged list of current-user and guild recent reports. */

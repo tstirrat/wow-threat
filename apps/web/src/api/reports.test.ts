@@ -8,7 +8,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defaultApiBaseUrl } from '../lib/constants'
 import { requestJson } from './client'
 import {
+  entityReportsQueryKey,
   fightEventsQueryKey,
+  getEntityReports,
   getFight,
   getFightEvents,
   getRecentReports,
@@ -64,6 +66,43 @@ describe('reports api helpers', () => {
     expect(recentReportsQueryKey(10, 'wcl:12345')).toEqual([
       'recent-reports',
       10,
+      'wcl:12345',
+    ])
+  })
+
+  it('requests guild entity reports with guild id and limit', async () => {
+    await getEntityReports({
+      entityType: 'guild',
+      guildId: 777,
+      limit: 15,
+    })
+
+    expect(requestJson).toHaveBeenCalledWith(
+      `${defaultApiBaseUrl}/v1/reports/entities/guild/reports?limit=15&guildId=777`,
+    )
+  })
+
+  it('includes entity lookup values in entity reports query keys', () => {
+    expect(
+      entityReportsQueryKey(
+        {
+          entityType: 'guild',
+          guildId: 777,
+          guildName: 'Threat Guild',
+          serverSlug: 'benediction',
+          serverRegion: 'US',
+          limit: 20,
+        },
+        'wcl:12345',
+      ),
+    ).toEqual([
+      'entity-reports',
+      'guild',
+      777,
+      'Threat Guild',
+      'benediction',
+      'US',
+      20,
       'wcl:12345',
     ])
   })

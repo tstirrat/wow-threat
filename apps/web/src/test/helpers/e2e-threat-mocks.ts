@@ -238,8 +238,11 @@ export const e2eReportResponse: ReportResponse = {
   ],
   gameVersion: 2,
   guild: {
+    id: 777,
     name: 'Threat Officer Guild',
     faction: 'Alliance',
+    serverSlug: 'benediction',
+    serverRegion: 'US',
   },
   archiveStatus: null,
   owner: 'ThreatOfficer',

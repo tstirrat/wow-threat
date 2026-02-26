@@ -37,6 +37,31 @@ export interface StarredReportEntry {
   guildFaction?: string | null
 }
 
+export type StarredEntityType = 'guild' | 'character'
+
+export interface StarredEntityEntry {
+  entityType: StarredEntityType
+  entityId: string
+  name: string
+  sourceHost: WarcraftLogsHost
+  starredAt: number
+  faction?: string | null
+  serverSlug?: string | null
+  serverRegion?: string | null
+}
+
+export interface StarredGuildReportEntry {
+  reportId: string
+  title: string
+  startTime: number
+  endTime: number
+  zoneName: string | null
+  guildId: string
+  guildName: string | null
+  guildFaction: string | null
+  sourceHost: WarcraftLogsHost
+}
+
 export interface ExampleReportLink {
   label: string
   reportId: string
