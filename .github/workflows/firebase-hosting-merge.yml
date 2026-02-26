@@ -7,7 +7,31 @@ on:
     branches:
       - main
 jobs:
+  detect_changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            backend:
+              - 'apps/api/**'
+              - 'packages/config/**'
+              - 'packages/engine/**'
+              - 'packages/shared/**'
+              - 'packages/wcl-types/**'
+              - 'tooling/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'turbo.json'
+              - '.nvmrc'
+
   build_and_deploy:
+    needs: detect_changes
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,6 +58,7 @@ jobs:
           path: apps/web/playwright-report/
           retention-days: 7
       - name: Deploy BE
+        if: ${{ needs.detect_changes.outputs.backend == 'true' }}
         uses: cloudflare/wrangler-action@v3
         with:
           workingDirectory: 'apps/api'
