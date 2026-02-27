@@ -11,3 +11,20 @@
 - [x] WEB-009: Stop the "fisheye" zoom, and use a real start/end zoom so that the focus player table below is windowed to the selected time range
 - [x] WEB-010: Allow entering a new url from anywhere, perhaps in the nav header
 - [x] WEB-011: Make the home link more obvious, perhaps a home icon.
+- [ ] WEB-012: Add Starred, Guild lists at top,
+- [ ] WEB-013: Add mod+o fuzzy matches recents/starred/guild reports
+- [ ] WEB-014: Focused player links back to WCL
+- [ ] WEB-015: isolate key (i) toggles between isolated and previous selected players
+- [ ] WEB-016: zoom key (z) toggles between no zoom an previous zoom
+- [ ] WEB-017: Fuzzy target selector (t)
+- [ ] WEB-018: Fuzzy fight selector (f?)
+- [ ] WEB-019: Fuzzy fight selector (f?)
+- [ ] WEB-020: Lock players when switching fights with a button (l key?)
+- [ ] WEB-021: Keyboard shortcut for filter to tanks only (maybe cycle tanks, healers, everyone)
+- [ ] WEB-022: Show boss toggles through: off -> melee -> all damage events
+- [ ] WEB-023: Toggle-able fixate bands
+- [ ] WEB-024: Fixate band should have left edge orange border, and maybe be more orange, also legend to explain bg color
+- [ ] WEB-025: Click and zoom also zooms vertically
+- [ ] WEB-026: Clear isolate button should be near legend
+- [ ] WEB-027: Toggled players in legend should be visually more prominent
+- [ ] WEB-028: Symbol/icon for healers
