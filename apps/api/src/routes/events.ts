@@ -230,7 +230,6 @@ eventsRoutes.get('/', async (c) => {
   // Process events and calculate threat using the threat engine
   const {
     augmentedEvents,
-    eventCounts,
     initialAurasByActor: effectiveInitialAurasByActor,
   } = threatEngine.processEvents({
     rawEvents,
@@ -263,11 +262,6 @@ eventsRoutes.get('/', async (c) => {
     configVersion,
     events: augmentedEvents,
     initialAurasByActor: serializedInitialAurasByActor,
-    summary: {
-      totalEvents: augmentedEvents.length,
-      eventCounts,
-      duration: fight.endTime - fight.startTime,
-    },
   }
   const serializedResponse = JSON.stringify(response)
 

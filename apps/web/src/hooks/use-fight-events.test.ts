@@ -29,15 +29,13 @@ describe('useFightEvents', () => {
     vi.mocked(useSuspenseQuery).mockReset()
     vi.mocked(useSuspenseQuery).mockReturnValue({
       data: {
+        configVersion: 'test',
         events: [],
+        fightId: 12,
+        fightName: 'Patchwerk',
+        gameVersion: 2,
         initialAurasByActor: {},
-        summary: {
-          duration: 0,
-          eventCount: 0,
-          generatedAt: '',
-          fightId: 12,
-          reportCode: 'ABC123xyz',
-        },
+        reportCode: 'ABC123xyz',
       },
     } as never)
     vi.mocked(fightEventsQueryKey).mockClear()

@@ -75,6 +75,8 @@ can be referenced.
 Events queries use the implied WCL default `useAbilityIDs: true`, so event payloads
 include `abilityGameID` and do not include nested `ability` objects. Resolve spell
 metadata (name, school/type, icon) through `report.masterData.abilities`.
+WCL event pages are timestamp-sorted in API responses. When deriving event-time bounds,
+prefer `events[0]` and `events[events.length - 1]` over scanning the full list.
 
 ## Workspace Layout
 

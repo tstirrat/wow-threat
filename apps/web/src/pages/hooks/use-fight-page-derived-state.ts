@@ -144,7 +144,17 @@ export function useFightPageDerivedState({
     }
 
     const fightDuration = fightData.endTime - fightData.startTime
-    return fightDuration > 0 ? fightDuration : eventsData.summary.duration
+    if (fightDuration > 0) {
+      return fightDuration
+    }
+
+    const firstEvent = eventsData.events[0]
+    const lastEvent = eventsData.events[eventsData.events.length - 1]
+    if (!firstEvent || !lastEvent) {
+      return 0
+    }
+
+    return Math.max(0, lastEvent.timestamp - firstEvent.timestamp)
   }, [eventsData, fightData])
 
   const actorRoleById = useMemo(() => {

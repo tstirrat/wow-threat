@@ -215,7 +215,6 @@ describe('Events API', () => {
       expect(data.gameVersion).toBe(2)
       expect(data.events).toBeDefined()
       expect(data.initialAurasByActor).toBeDefined()
-      expect(data.summary).toBeDefined()
     })
 
     it('includes threat data for damage events', async () => {
@@ -267,18 +266,6 @@ describe('Events API', () => {
       expect(absorbedEvent?.attackerID).toBe(25)
       expect(absorbedEvent?.extraAbilityGameID).toBe(1)
       expect(absorbedEvent?.threat?.calculation.isSplit).toBe(false)
-    })
-
-    it('returns event counts in summary', async () => {
-      const res = await app.request(
-        'http://localhost/v1/reports/ABC123xyz/fights/1/events',
-        {},
-        createMockBindings(),
-      )
-
-      const data: AugmentedEventsResponse = await res.json()
-      expect(data.summary.eventCounts).toBeDefined()
-      expect(data.summary.duration).toBe(180000)
     })
 
     it('sets revalidation cache headers for unversioned responses', async () => {
@@ -338,7 +325,6 @@ describe('Events API', () => {
 
       const data: AugmentedEventsResponse = await res.json()
       expect(data.events).toHaveLength(3)
-      expect(data.summary.totalEvents).toBe(3)
       expect(data.events.some((event) => event.timestamp === 65000)).toBe(true)
     })
 
@@ -467,7 +453,6 @@ describe('Events API', () => {
       expect(data.fightName).toBe('Patchwerk')
       expect(data.gameVersion).toBe(2)
       expect(data.events).toBeDefined()
-      expect(data.summary).toBeDefined()
     })
 
     it('resolves anniversary config for gameVersion 3 from classic season metadata', async () => {
@@ -498,7 +483,6 @@ describe('Events API', () => {
       const data: AugmentedEventsResponse = await res.json()
       expect(data.gameVersion).toBe(3)
       expect(data.events).toBeDefined()
-      expect(data.summary).toBeDefined()
     })
 
     it('returns 400 when classic season metadata is unsupported', async () => {

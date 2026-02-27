@@ -59,15 +59,13 @@ describe('FightPage inferThreatReduction startup behavior', () => {
     })
     useSuspenseFightEventsMock.mockReturnValue({
       data: {
+        configVersion: 'test',
         events: [],
+        fightId: 9,
+        fightName: 'Patchwerk',
+        gameVersion: 2,
         initialAurasByActor: {},
-        summary: {
-          duration: 0,
-          eventCount: 0,
-          generatedAt: '',
-          fightId: 9,
-          reportCode: 'WaxMPvZrAHT9gJhc',
-        },
+        reportCode: 'WaxMPvZrAHT9gJhc',
       },
     })
     useFightQueryStateMock.mockReturnValue({

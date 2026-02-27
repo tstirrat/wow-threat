@@ -611,14 +611,6 @@ const patchwerkEvents: AugmentedEventsResponse = {
   fightName: 'Patchwerk',
   gameVersion: 2,
   reportCode: e2eReportId,
-  summary: {
-    duration: 120000,
-    eventCounts: {
-      damage: 9,
-      heal: 1,
-    },
-    totalEvents: 10,
-  },
 }
 
 const grobbulusEvents: AugmentedEventsResponse = {
@@ -707,13 +699,6 @@ const grobbulusEvents: AugmentedEventsResponse = {
   fightName: 'Grobbulus',
   gameVersion: 2,
   reportCode: e2eReportId,
-  summary: {
-    duration: 75000,
-    eventCounts: {
-      damage: 3,
-    },
-    totalEvents: 3,
-  },
 }
 
 const fightEventsById: Record<number, AugmentedEventsResponse> = {

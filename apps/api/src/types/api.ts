@@ -159,9 +159,4 @@ export interface AugmentedEventsResponse {
   configVersion: string
   events: AugmentedEvent[]
   initialAurasByActor?: Record<string, number[]>
-  summary: {
-    totalEvents: number
-    eventCounts: Record<string, number>
-    duration: number
-  }
 }
