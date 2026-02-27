@@ -2,7 +2,7 @@
  * Fight-level page with target filter and player-focused chart interactions.
  */
 import { ExternalLink } from 'lucide-react'
-import { type FC, useCallback, useMemo } from 'react'
+import { type FC, useMemo } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
 
 import { ErrorState } from '../components/error-state'
@@ -12,35 +12,13 @@ import { TargetSelector } from '../components/target-selector'
 import { ThreatChart } from '../components/threat-chart'
 import { useFightData } from '../hooks/use-fight-data'
 import { useFightEvents } from '../hooks/use-fight-events'
-import { useFightQueryState } from '../hooks/use-fight-query-state'
 import { useUserSettings } from '../hooks/use-user-settings'
-import { buildVisibleSeriesForLegend } from '../lib/fight-page-series'
 import { formatClockDuration } from '../lib/format'
-import {
-  buildFightTargetOptions,
-  buildFocusedPlayerAggregation,
-  buildInitialAurasDisplay,
-  buildThreatSeries,
-  resolveSeriesWindowBounds,
-  selectDefaultTarget,
-} from '../lib/threat-aggregation'
 import { resolveCurrentThreatConfig } from '../lib/threat-config'
+import { useFightPageDerivedState } from './hooks/use-fight-page-derived-state'
+import { useFightPageInteractions } from './hooks/use-fight-page-interactions'
 import { buildFightRankingsUrl } from '../lib/wcl-url'
 import { useReportRouteContext } from '../routes/report-layout-context'
-import type { ReportActorRole } from '../types/api'
-import type { WowheadLinksConfig } from '../types/app'
-
-const defaultWowheadLinksConfig: WowheadLinksConfig = {
-  domain: 'classic',
-}
-
-function areEqualIdLists(left: number[], right: number[]): boolean {
-  if (left.length !== right.length) {
-    return false
-  }
-
-  return left.every((id, index) => id === right[index])
-}
 
 const FightPageLoadingSkeleton: FC = () => {
   return (
@@ -114,264 +92,38 @@ export const FightPage: FC = () => {
   )
   const eventsData = eventsQuery.data ?? null
 
-  const validPlayerIds = useMemo(
-    () =>
-      new Set(
-        (fightData?.actors ?? [])
-          .filter((actor) => actor.type === 'Player')
-          .map((actor) => actor.id),
-      ),
-    [fightData?.actors],
-  )
-  const validActorIds = useMemo(
-    () => new Set((fightData?.actors ?? []).map((actor) => actor.id)),
-    [fightData?.actors],
-  )
-  const targetOptions = useMemo(
-    () =>
-      buildFightTargetOptions({
-        enemies: fightData?.enemies ?? [],
-        events: eventsData?.events ?? [],
-      }),
-    [eventsData?.events, fightData?.enemies],
-  )
-  const validTargetKeys = useMemo(
-    () => new Set(targetOptions.map((target) => target.key)),
-    [targetOptions],
-  )
-
-  const durationMs = useMemo(() => {
-    if (!fightData || !eventsData) {
-      return 0
-    }
-
-    const fightDuration = fightData.endTime - fightData.startTime
-    return fightDuration > 0 ? fightDuration : eventsData.summary.duration
-  }, [eventsData, fightData])
-
-  const actorRoleById = useMemo(() => {
-    if (!fightData) {
-      return new Map<number, ReportActorRole>()
-    }
-
-    return new Map(
-      fightData.actors
-        .filter((actor) => actor.type === 'Player' && actor.role)
-        .map((actor) => [actor.id, actor.role]),
-    )
-  }, [fightData])
-
-  const queryState = useFightQueryState({
-    validPlayerIds,
-    validActorIds,
-    validTargetKeys,
-    maxDurationMs: durationMs,
-  })
-
-  const defaultTarget = useMemo(
-    () => selectDefaultTarget(eventsData?.events ?? [], validTargetKeys),
-    [eventsData?.events, validTargetKeys],
-  )
-
-  const selectedTarget = useMemo(() => {
-    if (
-      queryState.state.targetId !== null &&
-      queryState.state.targetInstance !== null
-    ) {
-      return {
-        id: queryState.state.targetId,
-        instance: queryState.state.targetInstance,
-      }
-    }
-
-    if (defaultTarget) {
-      return defaultTarget
-    }
-
-    const firstTarget = targetOptions[0]
-    if (!firstTarget) {
-      return null
-    }
-
-    return {
-      id: firstTarget.id,
-      instance: firstTarget.instance,
-    }
-  }, [
-    defaultTarget,
-    queryState.state.targetId,
-    queryState.state.targetInstance,
-    targetOptions,
-  ])
-
-  const allSeries = useMemo(() => {
-    if (!selectedTarget || !eventsData || !fightData || !reportData) {
-      return []
-    }
-
-    const threatSeries = buildThreatSeries({
-      events: eventsData.events,
-      actors: fightData.actors,
-      abilities: reportData.abilities,
-      fightStartTime: fightData.startTime,
-      fightEndTime: fightData.endTime,
-      target: selectedTarget,
-    })
-
-    return threatSeries.map((series) => {
-      if (series.actorType !== 'Player') {
-        return series
-      }
-
-      const actorRole = actorRoleById.get(series.actorId)
-      return actorRole ? { ...series, actorRole } : series
-    })
-  }, [actorRoleById, eventsData, fightData, reportData, selectedTarget])
-
-  const visibleSeries = useMemo(
-    () => buildVisibleSeriesForLegend(allSeries, userSettings.showPets),
-    [allSeries, userSettings.showPets],
-  )
-
-  const windowBounds = useMemo(
-    () => resolveSeriesWindowBounds(visibleSeries),
-    [visibleSeries],
-  )
-  const selectedWindowStartMs = queryState.state.startMs ?? windowBounds.min
-  const selectedWindowEndMs = queryState.state.endMs ?? windowBounds.max
-
-  const focusedPlayerId = useMemo(() => {
-    const candidatePlayerId =
-      queryState.state.focusId ?? queryState.state.players[0] ?? null
-    if (candidatePlayerId === null) {
-      return null
-    }
-
-    const hasVisibleSeries = visibleSeries.some(
-      (series) => series.actorId === candidatePlayerId,
-    )
-    return hasVisibleSeries ? candidatePlayerId : null
-  }, [queryState.state.focusId, queryState.state.players, visibleSeries])
-
-  const focusedPlayerAggregation = useMemo(() => {
-    if (selectedTarget === null) {
-      return {
-        summary: null,
-        rows: [],
-      }
-    }
-
-    return buildFocusedPlayerAggregation({
-      events: eventsData?.events ?? [],
-      actors: fightData?.actors ?? [],
-      abilities: reportData.abilities,
-      fightStartTime: fightData?.startTime ?? 0,
-      target: selectedTarget,
-      focusedPlayerId,
-      windowStartMs: selectedWindowStartMs,
-      windowEndMs: selectedWindowEndMs,
-    })
-  }, [
-    eventsData?.events,
-    fightData?.actors,
-    fightData?.startTime,
-    focusedPlayerId,
-    reportData.abilities,
+  const {
+    durationMs,
+    focusedPlayerRows,
+    focusedPlayerSummary,
+    initialAuras,
+    queryState,
     selectedTarget,
-    selectedWindowEndMs,
-    selectedWindowStartMs,
-  ])
-  const focusedPlayerSummary = focusedPlayerAggregation.summary
-  const focusedPlayerRows = focusedPlayerAggregation.rows
-
-  const initialAuras = useMemo(
-    () =>
-      buildInitialAurasDisplay(
-        eventsData?.events ?? [],
-        focusedPlayerId,
-        threatConfig,
-        {
-          initialAurasByActor: eventsData?.initialAurasByActor,
-          abilities: reportData.abilities,
-        },
-      ),
-    [
-      eventsData?.events,
-      eventsData?.initialAurasByActor,
-      focusedPlayerId,
-      reportData.abilities,
-      threatConfig,
-    ],
-  )
-  const wowheadLinksConfig = threatConfig?.wowhead ?? defaultWowheadLinksConfig
-  const handleTargetChange = useCallback(
-    (target: { id: number; instance: number }) => {
-      queryState.setTarget(target)
-    },
-    [queryState],
-  )
-
-  const handleSeriesClick = useCallback(
-    (playerId: number) => {
-      queryState.setFocusId(playerId)
-    },
-    [queryState],
-  )
-  const handleVisiblePlayerIdsChange = useCallback(
-    (visiblePlayerIds: number[]) => {
-      const allPlayerIds = [...validPlayerIds].sort((a, b) => a - b)
-      const nextPlayers = areEqualIdLists(visiblePlayerIds, allPlayerIds)
-        ? []
-        : visiblePlayerIds
-
-      const currentPlayers = [...queryState.state.players].sort((a, b) => a - b)
-      if (areEqualIdLists(currentPlayers, nextPlayers)) {
-        return
-      }
-
-      queryState.setPlayers(nextPlayers)
-    },
-    [queryState, validPlayerIds],
-  )
-
-  const handleWindowChange = useCallback(
-    (startMs: number | null, endMs: number | null) => {
-      queryState.setWindow(startMs, endMs)
-    },
-    [queryState],
-  )
-  const handleShowPetsChange = useCallback(
-    (showPets: boolean) => {
-      void updateUserSettings({
-        showPets,
-      })
-    },
-    [updateUserSettings],
-  )
-  const handleShowEnergizeEventsChange = useCallback(
-    (showEnergizeEvents: boolean) => {
-      void updateUserSettings({
-        showEnergizeEvents,
-      })
-    },
-    [updateUserSettings],
-  )
-  const handleShowBossMeleeChange = useCallback(
-    (showBossMelee: boolean) => {
-      void updateUserSettings({
-        showBossMelee,
-      })
-    },
-    [updateUserSettings],
-  )
-  const handleInferThreatReductionChange = useCallback(
-    (inferThreatReduction: boolean) => {
-      void updateUserSettings({
-        inferThreatReduction,
-      })
-    },
-    [updateUserSettings],
-  )
+    targetOptions,
+    validPlayerIds,
+    visibleSeries,
+    wowheadLinksConfig,
+  } = useFightPageDerivedState({
+    eventsData,
+    fightData,
+    reportData,
+    showPets: userSettings.showPets,
+    threatConfig,
+  })
+  const {
+    handleInferThreatReductionChange,
+    handleSeriesClick,
+    handleShowBossMeleeChange,
+    handleShowEnergizeEventsChange,
+    handleShowPetsChange,
+    handleTargetChange,
+    handleVisiblePlayerIdsChange,
+    handleWindowChange,
+  } = useFightPageInteractions({
+    queryState,
+    updateUserSettings,
+    validPlayerIds,
+  })
 
   if (!reportId || Number.isNaN(fightId)) {
     return (
