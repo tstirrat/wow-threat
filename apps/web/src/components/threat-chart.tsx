@@ -4,61 +4,24 @@
 import type { EChartsOption } from 'echarts'
 import * as echarts from 'echarts'
 import ReactEChartsCore from 'echarts-for-react/lib/core'
-import {
-  type FC,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { type FC, useRef, useState } from 'react'
 
 import { useThreatChartLegendState } from '../hooks/use-threat-chart-legend-state'
+import { useThreatChartSelectedWindow } from '../hooks/use-threat-chart-selected-window'
+import { useThreatChartSeriesClickHandler } from '../hooks/use-threat-chart-series-click-handler'
+import { useThreatChartSeriesData } from '../hooks/use-threat-chart-series-data'
 import { useThreatChartThemeColors } from '../hooks/use-threat-chart-theme-colors'
+import { useThreatChartVisiblePlayers } from '../hooks/use-threat-chart-visible-players'
 import { useThreatChartZoom } from '../hooks/use-threat-chart-zoom'
 import { formatTimelineTime } from '../lib/format'
 import { resolveSeriesWindowBounds } from '../lib/threat-aggregation'
-import {
-  shouldRenderThreatPoint,
-  sortThreatPointsForRendering,
-} from '../lib/threat-chart-event-visibility'
 import { resolvePointSize } from '../lib/threat-chart-point-size'
-import {
-  bossMeleeMarkerColor,
-  createThreatChartTooltipFormatter,
-  deathMarkerColor,
-  tranquilAirTotemMarkerColor,
-} from '../lib/threat-chart-tooltip'
+import { createThreatChartTooltipFormatter } from '../lib/threat-chart-tooltip'
 import type { SeriesChartPoint } from '../lib/threat-chart-types'
-import {
-  buildAuraMarkArea,
-  buildThreatStateVisualMaps,
-} from '../lib/threat-chart-visuals'
+import { buildAuraMarkArea } from '../lib/threat-chart-visuals'
 import type { ThreatSeries } from '../types/app'
 import { ThreatChartControls } from './threat-chart-controls'
 import { ThreatChartLegend } from './threat-chart-legend'
-
-function resolvePointColor(
-  point: SeriesChartPoint | undefined,
-  seriesColor: string,
-): string {
-  if (!point?.markerKind) {
-    return seriesColor
-  }
-
-  if (point.markerKind === 'bossMelee') {
-    return bossMeleeMarkerColor
-  }
-
-  if (point.markerKind === 'death') {
-    return deathMarkerColor
-  }
-
-  if (point.markerKind === 'tranquilAirTotem') {
-    return tranquilAirTotemMarkerColor
-  }
-
-  return seriesColor
-}
 
 export type ThreatChartProps = {
   series: ThreatSeries[]
@@ -109,22 +72,11 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   } = useThreatChartLegendState(series, selectedPlayerIds)
 
   const bounds = resolveSeriesWindowBounds(series)
-  const selectedWindow = useMemo(() => {
-    if (windowStartMs === null || windowEndMs === null) {
-      return null
-    }
-
-    const start = Math.max(bounds.min, Math.min(windowStartMs, bounds.max))
-    const end = Math.max(bounds.min, Math.min(windowEndMs, bounds.max))
-    if (end - start < 1) {
-      return null
-    }
-
-    return {
-      start,
-      end,
-    }
-  }, [bounds.max, bounds.min, windowEndMs, windowStartMs])
+  const selectedWindow = useThreatChartSelectedWindow({
+    bounds,
+    windowStartMs,
+    windowEndMs,
+  })
   const { consumeSuppressedSeriesClick, resetZoom } = useThreatChartZoom({
     bounds,
     borderColor: themeColors.border,
@@ -134,84 +86,27 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     renderer,
   })
 
-  const actorIdByLabel = new Map(
-    series.map((item) => [item.label, item.actorId]),
-  )
+  const { actorIdByLabel, chartSeries, threatStateVisualMaps } =
+    useThreatChartSeriesData({
+      series,
+      visibleSeries,
+      showEnergizeEvents,
+      showBossMelee,
+    })
 
-  const threatStateVisualMaps = buildThreatStateVisualMaps(visibleSeries)
-  const chartSeries = useMemo(
-    () =>
-      visibleSeries.map((item) => {
-        const toDataPoint = (point: ThreatSeries['points'][number]) => {
-          const pointColor = resolvePointColor(point, item.color)
+  const { hasHiddenActors, handleClearIsolate } = useThreatChartVisiblePlayers({
+    clearIsolate,
+    isActorVisible,
+    onVisiblePlayerIdsChange,
+    series,
+  })
 
-          return {
-            ...point,
-            actorId: item.actorId,
-            actorColor: item.color,
-            focusedActorId: item.actorId,
-            value: [point.timeMs, point.totalThreat] as [number, number],
-            itemStyle: {
-              color: pointColor,
-              borderColor: pointColor,
-            },
-            emphasis: {
-              itemStyle: {
-                color: pointColor,
-                borderColor: pointColor,
-              },
-            },
-          }
-        }
+  const handleSeriesChartClick = useThreatChartSeriesClickHandler({
+    actorIdByLabel,
+    consumeSuppressedSeriesClick,
+    onSeriesClick,
+  })
 
-        return {
-          actorId: item.actorId,
-          actorType: item.actorType,
-          color: item.color,
-          data: sortThreatPointsForRendering(
-            item.points.filter((point) =>
-              shouldRenderThreatPoint({
-                point,
-                showEnergizeEvents,
-                showBossMelee,
-              }),
-            )
-          ).map(toDataPoint),
-          name: item.label,
-        }
-      }),
-    [showBossMelee, showEnergizeEvents, visibleSeries],
-  )
-
-  const visiblePlayerIds = useMemo(
-    () =>
-      series
-        .filter((item) => item.actorType === 'Player')
-        .filter((item) => isActorVisible(item.actorId))
-        .map((item) => item.actorId)
-        .sort((a, b) => a - b),
-    [isActorVisible, series],
-  )
-  const allPlayerIds = useMemo(
-    () =>
-      series
-        .filter((item) => item.actorType === 'Player')
-        .map((item) => item.actorId)
-        .sort((a, b) => a - b),
-    [series],
-  )
-  const hasHiddenActors = useMemo(
-    () => series.some((item) => !isActorVisible(item.actorId)),
-    [isActorVisible, series],
-  )
-
-  useEffect(() => {
-    onVisiblePlayerIdsChange?.(visiblePlayerIds)
-  }, [onVisiblePlayerIdsChange, visiblePlayerIds])
-  const handleClearIsolate = useCallback((): void => {
-    clearIsolate()
-    onVisiblePlayerIdsChange?.(allPlayerIds)
-  }, [allPlayerIds, clearIsolate, onVisiblePlayerIdsChange])
   const tooltipFormatter = createThreatChartTooltipFormatter({
     series,
     themeColors,
@@ -350,40 +245,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
               setIsChartReady(true)
             }}
             onEvents={{
-              click: (params: {
-                componentType?: string
-                seriesName?: string
-                data?: Record<string, unknown>
-                seriesType?: string
-              }) => {
-                if (consumeSuppressedSeriesClick()) {
-                  return
-                }
-
-                if (
-                  params.componentType !== 'series' ||
-                  params.seriesType !== 'line'
-                ) {
-                  return
-                }
-
-                const payloadActorId = Number(params.data?.focusedActorId)
-                if (Number.isFinite(payloadActorId) && payloadActorId > 0) {
-                  onSeriesClick(payloadActorId)
-                  return
-                }
-
-                if (!params.seriesName) {
-                  return
-                }
-
-                const clickedActorId = actorIdByLabel.get(params.seriesName)
-                if (!clickedActorId) {
-                  return
-                }
-
-                onSeriesClick(clickedActorId)
-              },
+              click: handleSeriesChartClick,
             }}
           />
         </div>
