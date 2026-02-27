@@ -12,7 +12,7 @@ export const cacheSchemaVersions = {
   events: 'v3',
   friendlyBuffBandsByFight: 'v5',
   fightPlayerRoles: 'v1',
-  augmentedEvents: 'v17',
+  augmentedEvents: 'v18',
 } as const
 
 export const immutableApiRouteVersions = {

@@ -8,7 +8,7 @@ import {
   Spells as EraSpells,
   warriorConfig as eraWarriorConfig,
 } from '../../era/classes/warrior'
-import { noThreat, threat } from '../../shared/formulas'
+import { noThreat, tauntTarget, threat } from '../../shared/formulas'
 
 export const Spells = {
   ...EraSpells,
@@ -30,6 +30,7 @@ export const Spells = {
   SE_Tank_6pc: 1227245, // https://www.wowhead.com/classic/spell=1227245/
   RuneOfDevastate: 403195, // https://www.wowhead.com/classic/spell=403195/
   RuneOfFuriousThunder: 403219, // https://www.wowhead.com/classic/spell=403219/
+  TauntV2: 1219541, // https://www.wowhead.com/classic/spell=1219541/
 } as const
 
 const SetIds = {
@@ -185,7 +186,16 @@ export const warriorConfig: ClassThreatConfig = {
       modifier: Mods.ShieldSlam,
       bonus: 254,
     }),
+    // Taunt / fixate abilities
+    [Spells.TauntV2]: tauntTarget({
+      bonus: 0,
+      eventTypes: ['applydebuff'],
+    }),
   },
 
   gearImplications: inferGearAuras,
+  fixateBuffs: new Set([
+    ...(eraWarriorConfig.fixateBuffs ?? []),
+    Spells.TauntV2,
+  ]),
 }
