@@ -146,7 +146,8 @@ git -C /path/to/main-worktree merge --ff-only <feature-branch>
 - Every change must be linted, type checked, and tested before it is considered complete; use the workspace commands (`pnpm lint`, `pnpm typecheck`, `pnpm test`, etc.) that cover the touched areas.
 - Introduce targeted tests for any new code or functionality whenever practical—unit, integration, or e2e tests that guard the behavior you add are preferred and should live alongside the relevant source files.
 - Run `pnpm fmt` using the project’s Prettier formatter before considering a change complete.
-- Finalization workflow: after all planned code changes and standard lint/typecheck/unit or integration tests are complete, inspect the final diff to decide whether an end-to-end Playwright run is warranted. Only run E2E when that final diff inspection indicates user-facing or cross-surface behavior that needs E2E coverage.
+- Finalization workflow: after all planned code changes and standard lint/typecheck/unit or integration tests are complete, run Playwright E2E for frontend app changes before considering the task complete.
+- Frontend E2E requirement: if the change touches `apps/web/src/**`, run at least one relevant Playwright spec (`pnpm --filter @wow-threat/web exec playwright test <spec>`) as final validation; if multiple user flows are affected, run the full web E2E suite (`pnpm --filter @wow-threat/web e2e`).
 
 ## Commit conventions
 

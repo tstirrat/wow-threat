@@ -22,7 +22,8 @@
    - `pnpm --filter @wow-threat/web lint`
    - `pnpm --filter @wow-threat/web typecheck`
    - `pnpm --filter @wow-threat/web test`
-   - `pnpm --filter @wow-threat/web e2e` (when UI flow changes)
+   - `pnpm --filter @wow-threat/web exec playwright test <relevant-spec>` (required final validation for frontend app changes)
+   - `pnpm --filter @wow-threat/web e2e` (required when multiple or broad user flows are impacted)
 
 ## Frontend Architecture (v0)
 
