@@ -6,6 +6,7 @@ import { type FC, useId } from 'react'
 
 import { Button } from './ui/button'
 import { Checkbox } from './ui/checkbox'
+import { Kbd } from './ui/kbd'
 import { Label } from './ui/label'
 import {
   Tooltip,
@@ -49,12 +50,21 @@ export const ThreatChartControls: FC<ThreatChartControlsProps> = ({
         </Button>
         {showClearIsolate ? (
           <Button
+            aria-label="Clear isolate"
             size="sm"
             type="button"
             variant="outline"
             onClick={onClearIsolate}
           >
-            Clear isolate
+            <span>Clear isolate</span>
+            <span
+              aria-hidden="true"
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+            >
+              <Kbd className="h-4 min-w-4 px-1 text-[0.55rem] leading-none">
+                C
+              </Kbd>
+            </span>
           </Button>
         ) : null}
         <div className="flex items-center gap-2">
@@ -66,10 +76,16 @@ export const ThreatChartControls: FC<ThreatChartControlsProps> = ({
             }}
           />
           <Label
-            className="cursor-pointer text-sm"
+            className="inline-flex cursor-pointer items-center gap-1 text-sm"
             htmlFor={showEnergizeEventsId}
           >
-            Show energize events
+            <span>Show energize events</span>
+            <Kbd
+              aria-hidden="true"
+              className="h-4 min-w-4 px-1 text-[0.55rem] leading-none"
+            >
+              E
+            </Kbd>
           </Label>
         </div>
         <div className="flex items-center gap-2">
@@ -80,8 +96,17 @@ export const ThreatChartControls: FC<ThreatChartControlsProps> = ({
               onShowBossMeleeChange(checked === true)
             }}
           />
-          <Label className="cursor-pointer text-sm" htmlFor={showBossMeleeId}>
-            Show boss damage
+          <Label
+            className="inline-flex cursor-pointer items-center gap-1 text-sm"
+            htmlFor={showBossMeleeId}
+          >
+            <span>Show boss damage</span>
+            <Kbd
+              aria-hidden="true"
+              className="h-4 min-w-4 px-1 text-[0.55rem] leading-none"
+            >
+              B
+            </Kbd>
           </Label>
         </div>
         <div className="flex items-center gap-1">

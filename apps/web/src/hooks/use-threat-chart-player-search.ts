@@ -144,6 +144,24 @@ export function useThreatChartPlayerSearch({
     ],
   )
 
+  const selectHighlightedPlayer = useCallback(
+    (shouldAddToFilter: boolean): void => {
+      const selectedPlayer =
+        filteredPlayerSearchOptions.find(
+          (option) => option.actorId === resolvedHighlightedPlayerId,
+        ) ?? filteredPlayerSearchOptions[0]
+      if (!selectedPlayer) {
+        return
+      }
+
+      selectPlayer({
+        playerId: selectedPlayer.actorId,
+        shouldAddToFilter,
+      })
+    },
+    [filteredPlayerSearchOptions, resolvedHighlightedPlayerId, selectPlayer],
+  )
+
   const handlePlayerSearchInputKeyDown = useCallback(
     (event: ReactKeyboardEvent<HTMLInputElement>): void => {
       if (event.key === 'Escape') {
@@ -154,19 +172,7 @@ export function useThreatChartPlayerSearch({
 
       if (event.key === 'Enter') {
         event.preventDefault()
-        const shouldAddToFilter = event.shiftKey
-        const selectedPlayer =
-          filteredPlayerSearchOptions.find(
-            (option) => option.actorId === resolvedHighlightedPlayerId,
-          ) ?? filteredPlayerSearchOptions[0]
-        if (!selectedPlayer) {
-          return
-        }
-
-        selectPlayer({
-          playerId: selectedPlayer.actorId,
-          shouldAddToFilter,
-        })
+        selectHighlightedPlayer(event.shiftKey)
         return
       }
 
@@ -199,7 +205,7 @@ export function useThreatChartPlayerSearch({
       closePlayerSearch,
       filteredPlayerSearchOptions,
       resolvedHighlightedPlayerId,
-      selectPlayer,
+      selectHighlightedPlayer,
     ],
   )
 

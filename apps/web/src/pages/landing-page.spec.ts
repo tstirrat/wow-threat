@@ -9,6 +9,7 @@ import {
   e2eValidFreshReportUrl,
   setupThreatApiMocks,
 } from '../test/helpers/e2e-threat-mocks'
+import { KeyboardShortcutsOverlayObject } from '../test/page-objects/components/keyboard-shortcuts-overlay-object'
 import { RecentReportsObject } from '../test/page-objects/landing-page/recent-reports-object'
 
 test.describe('landing page', () => {
@@ -41,6 +42,23 @@ test.describe('landing page', () => {
     await expect(page.getByRole('alert')).toContainText(
       'Unable to parse report input',
     )
+  })
+
+  test('shows keyboard shortcuts overlay on landing page', async ({ page }) => {
+    const shortcutsOverlay = new KeyboardShortcutsOverlayObject(page)
+
+    await page.goto('/')
+    await expect(shortcutsOverlay.dialog()).toHaveCount(0)
+    await shortcutsOverlay.open()
+    await expect(shortcutsOverlay.dialog()).toBeVisible()
+    await expect(
+      shortcutsOverlay.shortcutListItem('Open report input'),
+    ).toBeVisible()
+    await expect(
+      shortcutsOverlay.shortcutListItem('Toggle shortcuts panel'),
+    ).toBeVisible()
+    await shortcutsOverlay.clickOutside()
+    await expect(shortcutsOverlay.dialog()).toHaveCount(0)
   })
 
   test('empty state shows sample links, header guidance, and opens a report when clicked', async ({

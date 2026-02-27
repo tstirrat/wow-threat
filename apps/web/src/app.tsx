@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { UserSettingsProvider } from '@/hooks/use-user-settings'
 import { QueryClientProvider } from '@tanstack/react-query'
 import type { FC } from 'react'
+import { HotkeysProvider } from 'react-hotkeys-hook'
 import { RouterProvider } from 'react-router-dom'
 
 import { createQueryClient } from './lib/query-client'
@@ -19,7 +20,9 @@ export const App: FC = () => {
       <UserSettingsProvider>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-            <RouterProvider router={router} />
+            <HotkeysProvider>
+              <RouterProvider router={router} />
+            </HotkeysProvider>
           </ThemeProvider>
         </QueryClientProvider>
       </UserSettingsProvider>

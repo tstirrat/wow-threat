@@ -2,7 +2,8 @@
  * Fight-level page with target filter and player-focused chart interactions.
  */
 import { ExternalLink } from 'lucide-react'
-import { type FC, Suspense, useMemo } from 'react'
+import { type FC, Suspense, useEffect, useMemo } from 'react'
+import { useHotkeys, useHotkeysContext } from 'react-hotkeys-hook'
 import { useLocation, useParams } from 'react-router-dom'
 
 import { ErrorState } from '../components/error-state'
@@ -148,6 +149,66 @@ export const FightPage: FC = () => {
     updateUserSettings,
     validPlayerIds,
   })
+  const { disableScope, enableScope } = useHotkeysContext()
+
+  useEffect(() => {
+    enableScope('fight-page')
+
+    return () => {
+      disableScope('fight-page')
+    }
+  }, [disableScope, enableScope])
+
+  useHotkeys(
+    'b',
+    (event) => {
+      event.preventDefault()
+      handleShowBossMeleeChange(!userSettings.showBossMelee)
+    },
+    {
+      description: 'Toggle show boss damage',
+      metadata: {
+        order: 10,
+        showInFightOverlay: true,
+      },
+      scopes: ['fight-page'],
+    },
+    [handleShowBossMeleeChange, userSettings.showBossMelee],
+  )
+
+  useHotkeys(
+    'p',
+    (event) => {
+      event.preventDefault()
+      handleShowPetsChange(!userSettings.showPets)
+    },
+    {
+      description: 'Toggle show pets',
+      metadata: {
+        order: 20,
+        showInFightOverlay: true,
+      },
+      scopes: ['fight-page'],
+    },
+    [handleShowPetsChange, userSettings.showPets],
+  )
+
+  useHotkeys(
+    'e',
+    (event) => {
+      event.preventDefault()
+      handleShowEnergizeEventsChange(!userSettings.showEnergizeEvents)
+    },
+    {
+      description: 'Toggle show energize events',
+      metadata: {
+        order: 30,
+        showInFightOverlay: true,
+      },
+      scopes: ['fight-page'],
+    },
+    [handleShowEnergizeEventsChange, userSettings.showEnergizeEvents],
+  )
 
   if (!reportId || Number.isNaN(fightId)) {
     return (

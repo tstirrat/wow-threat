@@ -259,41 +259,47 @@ test.describe('fight page', () => {
     await expect.poll(() => fightPage.searchParam('focusId')).toBe('2')
     await expect.poll(() => fightPage.searchParam('players')).toBe('1,2')
 
-    const shortcutsOverlay = page.getByRole('dialog', {
-      name: 'Keyboard shortcuts',
-    })
-    await expect(shortcutsOverlay).toHaveCount(0)
-    await page.keyboard.press('Shift+/')
-    await expect(shortcutsOverlay).toBeVisible()
-    await expect(shortcutsOverlay).toContainText('Toggle show boss damage')
-    await expect(shortcutsOverlay).toContainText('Toggle show pets')
-    await expect(shortcutsOverlay).toContainText('Toggle show energize events')
-    await expect(shortcutsOverlay).toContainText('Clear isolate')
-    await expect(shortcutsOverlay).toContainText('Isolate focused player')
-    await expect(shortcutsOverlay).toContainText('Open player search')
+    await expect(fightPage.shortcuts.dialog()).toHaveCount(0)
+    await fightPage.shortcuts.open()
+    await expect(fightPage.shortcuts.dialog()).toBeVisible()
     await expect(
-      shortcutsOverlay.locator('kbd').filter({ hasText: /^B$/ }),
+      fightPage.shortcuts.shortcutListItem('Toggle show boss damage'),
     ).toBeVisible()
     await expect(
-      shortcutsOverlay.locator('kbd').filter({ hasText: /^P$/ }),
+      fightPage.shortcuts.shortcutListItem('Toggle show pets'),
     ).toBeVisible()
     await expect(
-      shortcutsOverlay.locator('kbd').filter({ hasText: /^E$/ }),
+      fightPage.shortcuts.shortcutListItem('Toggle show energize events'),
     ).toBeVisible()
     await expect(
-      shortcutsOverlay.locator('kbd').filter({ hasText: /^C$/ }),
+      fightPage.shortcuts.shortcutListItem('Clear isolate'),
     ).toBeVisible()
     await expect(
-      shortcutsOverlay.locator('kbd').filter({ hasText: /^I$/ }),
+      fightPage.shortcuts.shortcutListItem('Isolate focused player'),
     ).toBeVisible()
-    const openPlayerSearchRow = shortcutsOverlay
-      .getByText('Open player search')
-      .locator('xpath=ancestor::li[1]')
     await expect(
-      openPlayerSearchRow.locator('kbd').filter({ hasText: /^\/$/ }),
+      fightPage.shortcuts.shortcutListItem('Open player search'),
     ).toBeVisible()
-    await page.keyboard.press('Escape')
-    await expect(shortcutsOverlay).toHaveCount(0)
+    await expect(
+      fightPage.shortcuts.shortcutKey('Toggle show boss damage', 'B'),
+    ).toBeVisible()
+    await expect(
+      fightPage.shortcuts.shortcutKey('Toggle show pets', 'P'),
+    ).toBeVisible()
+    await expect(
+      fightPage.shortcuts.shortcutKey('Toggle show energize events', 'E'),
+    ).toBeVisible()
+    await expect(
+      fightPage.shortcuts.shortcutKey('Clear isolate', 'C'),
+    ).toBeVisible()
+    await expect(
+      fightPage.shortcuts.shortcutKey('Isolate focused player', 'I'),
+    ).toBeVisible()
+    await expect(
+      fightPage.shortcuts.shortcutKey('Open player search', '/'),
+    ).toBeVisible()
+    await fightPage.shortcuts.closeWithEscape()
+    await expect(fightPage.shortcuts.dialog()).toHaveCount(0)
   })
 
   test('clicking a chart point focuses a player and shows total threat values', async ({

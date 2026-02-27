@@ -5,8 +5,8 @@ import type { EChartsOption } from 'echarts'
 import * as echarts from 'echarts'
 import ReactEChartsCore from 'echarts-for-react/lib/core'
 import { type FC, useRef, useState } from 'react'
+import { useHotkeys } from 'react-hotkeys-hook'
 
-import { useThreatChartKeyboardShortcuts } from '../hooks/use-threat-chart-keyboard-shortcuts'
 import { useThreatChartLegendState } from '../hooks/use-threat-chart-legend-state'
 import { useThreatChartPlayerSearch } from '../hooks/use-threat-chart-player-search'
 import { useThreatChartSelectedWindow } from '../hooks/use-threat-chart-selected-window'
@@ -22,7 +22,6 @@ import { createThreatChartTooltipFormatter } from '../lib/threat-chart-tooltip'
 import type { SeriesChartPoint } from '../lib/threat-chart-types'
 import { buildAuraMarkArea } from '../lib/threat-chart-visuals'
 import type { ThreatSeries } from '../types/app'
-import { FightPageKeyboardShortcutsOverlay } from './fight-page-keyboard-shortcuts-overlay'
 import { ThreatChartControls } from './threat-chart-controls'
 import { ThreatChartLegend } from './threat-chart-legend'
 import { ThreatChartPlayerSearch } from './threat-chart-player-search'
@@ -129,20 +128,82 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     onFocusAndIsolatePlayer,
     series,
   })
-  const { isKeyboardOverlayOpen, closeKeyboardOverlay } =
-    useThreatChartKeyboardShortcuts({
-      canClearIsolate: visibleIsolatedActorId !== null || hasHiddenActors,
-      closePlayerSearch,
-      isolateFocusedPlayer,
-      onClearIsolate: handleClearIsolate,
-      onShowBossMeleeChange,
-      onShowEnergizeEventsChange,
-      onShowPetsChange,
-      openPlayerSearch,
-      showBossMelee,
-      showEnergizeEvents,
-      showPets,
-    })
+  const canClearIsolate = visibleIsolatedActorId !== null || hasHiddenActors
+
+  useHotkeys(
+    '/',
+    (event) => {
+      // Playwright reports Shift+/ as "/" with this useKey binding, so guard
+      // Shift to avoid opening player search when requesting the shortcuts panel.
+      if (event.shiftKey) {
+        return
+      }
+
+      event.preventDefault()
+      openPlayerSearch()
+    },
+    {
+      description: 'Open player search',
+      metadata: {
+        order: 60,
+        showInFightOverlay: true,
+      },
+      scopes: ['fight-page'],
+      useKey: true,
+    },
+    [openPlayerSearch],
+  )
+
+  useHotkeys(
+    'c',
+    (event) => {
+      if (!canClearIsolate) {
+        return
+      }
+
+      event.preventDefault()
+      handleClearIsolate()
+    },
+    {
+      description: 'Clear isolate',
+      metadata: {
+        order: 40,
+        showInFightOverlay: true,
+      },
+      scopes: ['fight-page'],
+    },
+    [canClearIsolate, handleClearIsolate],
+  )
+
+  useHotkeys(
+    'i',
+    (event) => {
+      event.preventDefault()
+      isolateFocusedPlayer()
+    },
+    {
+      description: 'Isolate focused player',
+      metadata: {
+        order: 50,
+        showInFightOverlay: true,
+      },
+      scopes: ['fight-page'],
+    },
+    [isolateFocusedPlayer],
+  )
+
+  useHotkeys(
+    'escape',
+    (event) => {
+      event.preventDefault()
+      closePlayerSearch()
+    },
+    {
+      enabled: isPlayerSearchOpen,
+      scopes: ['fight-page'],
+    },
+    [closePlayerSearch, isPlayerSearchOpen],
+  )
 
   const handleSeriesChartClick = useThreatChartSeriesClickHandler({
     actorIdByLabel,
@@ -291,10 +352,6 @@ export const ThreatChart: FC<ThreatChartProps> = ({
             shouldAddToFilter: false,
           })
         }}
-      />
-      <FightPageKeyboardShortcutsOverlay
-        isOpen={isKeyboardOverlayOpen}
-        onClose={closeKeyboardOverlay}
       />
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_14rem]">
         <div>

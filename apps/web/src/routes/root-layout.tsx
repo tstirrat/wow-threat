@@ -3,6 +3,7 @@
  */
 import { getReport } from '@/api/reports'
 import { useAuth } from '@/auth/auth-provider'
+import { FightPageKeyboardShortcutsOverlay } from '@/components/fight-page-keyboard-shortcuts-overlay'
 import { ModeToggle } from '@/components/mode-toggle'
 import { ReportUrlForm } from '@/components/report-url-form'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -38,7 +39,7 @@ import {
   Star,
 } from 'lucide-react'
 import { type FC, useEffect, useRef, useState } from 'react'
-import { useHotkeys } from 'react-hotkeys-hook'
+import { useHotkeys, useHotkeysContext } from 'react-hotkeys-hook'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 const warcraftLogsHomeUrl = 'https://www.warcraftlogs.com'
@@ -69,8 +70,10 @@ export const RootLayout: FC = () => {
   const [reportErrorMessage, setReportErrorMessage] = useState<string | null>(
     null,
   )
+  const [isKeyboardOverlayOpen, setIsKeyboardOverlayOpen] = useState(false)
   const [isReportInputOpen, setIsReportInputOpen] = useState(false)
   const reportInputRef = useRef<HTMLInputElement>(null)
+  const { hotkeys } = useHotkeysContext()
   const navigate = useNavigate()
   const location = useLocation()
   const isLandingPage = location.pathname === '/'
@@ -105,7 +108,7 @@ export const RootLayout: FC = () => {
   }, [isLandingPage])
 
   useHotkeys(
-    'meta+o,ctrl+o',
+    'mod+o',
     (event) => {
       event.preventDefault()
       setIsReportInputOpen(true)
@@ -114,9 +117,47 @@ export const RootLayout: FC = () => {
       })
     },
     {
-      enableOnFormTags: false,
+      description: 'Open report input',
+      enableOnFormTags: true,
+      metadata: {
+        order: 90,
+        showInFightOverlay: true,
+      },
     },
   )
+
+  useHotkeys(
+    'shift+slash',
+    (event) => {
+      event.preventDefault()
+      setIsKeyboardOverlayOpen((isOpen) => !isOpen)
+    },
+    {
+      description: 'Toggle shortcuts panel',
+      enableOnFormTags: true,
+      metadata: {
+        order: 70,
+        showInFightOverlay: true,
+      },
+    },
+  )
+
+  useHotkeys(
+    'escape',
+    (event) => {
+      event.preventDefault()
+      setIsKeyboardOverlayOpen(false)
+    },
+    {
+      enableOnFormTags: true,
+      enabled: isKeyboardOverlayOpen,
+    },
+    [isKeyboardOverlayOpen],
+  )
+
+  const closeKeyboardOverlay = (): void => {
+    setIsKeyboardOverlayOpen(false)
+  }
 
   const shouldShowAuthGate = authEnabled && !isInitializing && !user
   const isReportInputVisible = isLandingPage || isReportInputOpen
@@ -186,6 +227,11 @@ export const RootLayout: FC = () => {
 
   return (
     <div className="min-h-screen text-text">
+      <FightPageKeyboardShortcutsOverlay
+        hotkeys={hotkeys}
+        isOpen={isKeyboardOverlayOpen}
+        onClose={closeKeyboardOverlay}
+      />
       <header className="border-b border-border bg-panel">
         <div className="mx-auto grid w-full max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3">
           <h1 className="text-lg font-semibold">
