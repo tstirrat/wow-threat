@@ -24,7 +24,7 @@
 - [ ] WEB-022: Show boss toggles through: off -> melee -> all damage events
 - [ ] WEB-023: Toggle-able fixate bands
 - [ ] WEB-024: Fixate band should have left edge orange border, and maybe be more orange, also legend to explain bg color
-- [ ] WEB-025: Click and zoom also zooms vertically
+- [x] WEB-025: Click and zoom also zooms vertically
 - [ ] WEB-026: Clear isolate button should be near legend
 - [ ] WEB-027: Toggled players in legend should be visually more prominent
 - [ ] WEB-028: Symbol/icon for healers

@@ -4,9 +4,10 @@
 import * as echarts from 'echarts'
 import type ReactEChartsCore from 'echarts-for-react/lib/core'
 import type { MutableRefObject } from 'react'
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 const dragZoomMinWidthPx = 8
+const dragZoomMinHeightPx = 8
 
 interface PointerEventLike {
   offsetX?: number
@@ -17,6 +18,11 @@ interface PointerEventLike {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
+}
+
+export interface ThreatChartYAxisWindow {
+  min: number
+  max: number
 }
 
 /** Attach drag and double-click handlers that control threat chart window selection. */
@@ -37,10 +43,15 @@ export function useThreatChartZoom({
 }): {
   consumeSuppressedSeriesClick: () => boolean
   resetZoom: () => void
+  yAxisWindow: ThreatChartYAxisWindow | null
 } {
   const suppressNextSeriesClickRef = useRef(false)
+  const [yAxisWindow, setYAxisWindow] = useState<ThreatChartYAxisWindow | null>(
+    null,
+  )
 
   const resetZoom = useCallback((): void => {
+    setYAxisWindow(null)
     onWindowChange(null, null)
   }, [onWindowChange])
 
@@ -150,6 +161,7 @@ export function useThreatChartZoom({
 
       const clampedStartX = clamp(startPoint[0], 0, chart.getWidth())
       const clampedEndX = clamp(endPoint[0], 0, chart.getWidth())
+      const dragHeight = Math.abs(endPoint[1] - startPoint[1])
 
       const startValue = Number(
         chart.convertFromPixel({ xAxisIndex: 0 }, clampedStartX),
@@ -177,6 +189,29 @@ export function useThreatChartZoom({
         return
       }
 
+      let nextYAxisWindow: ThreatChartYAxisWindow | null = null
+      if (dragHeight >= dragZoomMinHeightPx) {
+        const clampedStartY = clamp(startPoint[1], 0, chart.getHeight())
+        const clampedEndY = clamp(endPoint[1], 0, chart.getHeight())
+        const startYValue = Number(
+          chart.convertFromPixel({ yAxisIndex: 0 }, clampedStartY),
+        )
+        const endYValue = Number(
+          chart.convertFromPixel({ yAxisIndex: 0 }, clampedEndY),
+        )
+        if (Number.isFinite(startYValue) && Number.isFinite(endYValue)) {
+          const min = Math.min(startYValue, endYValue)
+          const max = Math.max(startYValue, endYValue)
+          if (max > min) {
+            nextYAxisWindow = {
+              min,
+              max,
+            }
+          }
+        }
+      }
+
+      setYAxisWindow(nextYAxisWindow)
       onWindowChange(Math.round(clampedStart), Math.round(clampedEnd))
       suppressNextSeriesClickRef.current = true
     }
@@ -262,5 +297,6 @@ export function useThreatChartZoom({
   return {
     consumeSuppressedSeriesClick,
     resetZoom,
+    yAxisWindow,
   }
 }

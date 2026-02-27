@@ -44,8 +44,21 @@ interface FakeZRender {
   trigger: (eventName: string, event?: PointerEventLike) => void
 }
 
-const axisMaxPixel = 960
-const axisMinPixel = 60
+const xAxisMaxPixel = 960
+const xAxisMinPixel = 60
+const yAxisMaxPixel = 460
+const yAxisMinPixel = 40
+
+function isYAxisQuery(query: unknown): boolean {
+  if (!query || typeof query !== 'object') {
+    return false
+  }
+
+  return (
+    'yAxisIndex' in query &&
+    Number.isFinite((query as { yAxisIndex?: number }).yAxisIndex)
+  )
+}
 
 function createFakeZRender(): FakeZRender {
   const handlers = new Map<string, (event: PointerEventLike) => void>()
@@ -109,20 +122,25 @@ function createMockChart(bounds: { max: number; min: number }): {
 
   const convertToPixel = vi.fn((_query: unknown, value: number) => {
     const ratio = (value - bounds.min) / (bounds.max - bounds.min)
-    return axisMinPixel + ratio * (axisMaxPixel - axisMinPixel)
+    return xAxisMinPixel + ratio * (xAxisMaxPixel - xAxisMinPixel)
   })
 
-  const convertFromPixel = vi.fn((_query: unknown, pixel: number) => {
-    const ratio = (pixel - axisMinPixel) / (axisMaxPixel - axisMinPixel)
+  const convertFromPixel = vi.fn((query: unknown, pixel: number) => {
+    if (isYAxisQuery(query)) {
+      const ratio = (yAxisMaxPixel - pixel) / (yAxisMaxPixel - yAxisMinPixel)
+      return bounds.min + ratio * (bounds.max - bounds.min)
+    }
+
+    const ratio = (pixel - xAxisMinPixel) / (xAxisMaxPixel - xAxisMinPixel)
     return bounds.min + ratio * (bounds.max - bounds.min)
   })
 
   const containPixel = vi.fn((_query: unknown, pointer: [number, number]) => {
     return (
-      pointer[0] >= axisMinPixel &&
-      pointer[0] <= axisMaxPixel &&
-      pointer[1] >= 0 &&
-      pointer[1] <= chartHeight
+      pointer[0] >= xAxisMinPixel &&
+      pointer[0] <= xAxisMaxPixel &&
+      pointer[1] >= yAxisMinPixel &&
+      pointer[1] <= yAxisMaxPixel
     )
   })
 
@@ -191,10 +209,26 @@ describe('use-threat-chart-zoom', () => {
     })
 
     expect(onWindowChange).toHaveBeenCalledWith(111, 444)
+    expect(result.current.yAxisWindow).toBeNull()
     expect(setOption).not.toHaveBeenCalled()
 
     expect(result.current.consumeSuppressedSeriesClick()).toBe(true)
     expect(result.current.consumeSuppressedSeriesClick()).toBe(false)
+  })
+
+  it('applies a y-axis window when drag selection includes vertical range', () => {
+    const { onWindowChange, result, zr } = renderZoomHook()
+
+    act(() => {
+      zr.trigger('mousedown', { offsetX: 160, offsetY: 120 })
+      zr.trigger('mousemove', { offsetX: 460, offsetY: 320 })
+      zr.trigger('mouseup', { offsetX: 460, offsetY: 320 })
+    })
+
+    expect(onWindowChange).toHaveBeenCalledWith(111, 444)
+    expect(result.current.yAxisWindow).not.toBeNull()
+    expect(result.current.yAxisWindow?.min).toBeCloseTo(333.33, 2)
+    expect(result.current.yAxisWindow?.max).toBeCloseTo(809.52, 2)
   })
 
   it('finalizes drag selection from window mouseup', () => {
@@ -231,10 +265,11 @@ describe('use-threat-chart-zoom', () => {
 
     act(() => {
       zr.trigger('mousedown', { offsetX: 180, offsetY: 80 })
-      zr.trigger('mouseup', { offsetX: 540, offsetY: 80 })
+      zr.trigger('mouseup', { offsetX: 540, offsetY: 220 })
     })
 
     expect(onWindowChange).toHaveBeenCalledWith(133, 533)
+    expect(result.current.yAxisWindow).not.toBeNull()
 
     act(() => {
       zr.trigger('dblclick', { offsetX: 320, offsetY: 140 })
@@ -242,6 +277,7 @@ describe('use-threat-chart-zoom', () => {
 
     expect(setOption).not.toHaveBeenCalled()
     expect(onWindowChange).toHaveBeenCalledWith(null, null)
+    expect(result.current.yAxisWindow).toBeNull()
     expect(result.current.consumeSuppressedSeriesClick()).toBe(true)
     expect(result.current.consumeSuppressedSeriesClick()).toBe(false)
   })

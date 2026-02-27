@@ -86,14 +86,15 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     windowStartMs,
     windowEndMs,
   })
-  const { consumeSuppressedSeriesClick, resetZoom } = useThreatChartZoom({
-    bounds,
-    borderColor: themeColors.border,
-    chartRef,
-    isChartReady,
-    onWindowChange,
-    renderer,
-  })
+  const { consumeSuppressedSeriesClick, resetZoom, yAxisWindow } =
+    useThreatChartZoom({
+      bounds,
+      borderColor: themeColors.border,
+      chartRef,
+      isChartReady,
+      onWindowChange,
+      renderer,
+    })
 
   const { actorIdByLabel, chartSeries, threatStateVisualMaps } =
     useThreatChartSeriesData({
@@ -261,6 +262,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     yAxis: {
       type: 'value',
       name: 'Threat',
+      min: yAxisWindow?.min,
+      max: yAxisWindow?.max,
       nameTextStyle: {
         color: themeColors.muted,
       },
