@@ -17,9 +17,9 @@ export function isBossMeleeMarker(
 }
 
 /** Sort points to ensure boss-melee markers render above same-timestamp points. */
-export function sortThreatPointsForRendering<T extends Pick<ThreatPoint, 'markerKind' | 'timeMs'>>(
-  points: T[],
-): T[] {
+export function sortThreatPointsForRendering<
+  T extends Pick<ThreatPoint, 'markerKind' | 'timeMs'>,
+>(points: T[]): T[] {
   return [...points].sort((left, right) => {
     const timeDiff = left.timeMs - right.timeMs
     if (timeDiff !== 0) {

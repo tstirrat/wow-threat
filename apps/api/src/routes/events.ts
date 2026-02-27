@@ -187,21 +187,21 @@ eventsRoutes.get('/', async (c) => {
 
   const [rawEvents, initialAurasByActor, friendlyPlayerRoles] =
     await Promise.all([
-    wcl.getEvents(code, fightId, visibility, fight.startTime, fight.endTime, {
-      bypassCache: bypassAugmentedCache,
-    }) as Promise<WCLEvent[]>,
-    wcl.getFriendlyBuffAurasAtFightStart(
-      code,
-      fightId,
-      visibility,
-      fight.startTime,
-      fightFriendlyActorIds,
-      {
+      wcl.getEvents(code, fightId, visibility, fight.startTime, fight.endTime, {
         bypassCache: bypassAugmentedCache,
-      },
-    ),
-    friendlyPlayerRolesPromise,
-  ])
+      }) as Promise<WCLEvent[]>,
+      wcl.getFriendlyBuffAurasAtFightStart(
+        code,
+        fightId,
+        visibility,
+        fight.startTime,
+        fightFriendlyActorIds,
+        {
+          bypassCache: bypassAugmentedCache,
+        },
+      ),
+      friendlyPlayerRolesPromise,
+    ])
   const tankActorIds = new Set(
     [...friendlyPlayerRoles.entries()]
       .filter(([, role]) => role === 'Tank')

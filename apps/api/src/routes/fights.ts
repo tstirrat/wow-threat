@@ -14,7 +14,11 @@ import {
   unauthorized,
 } from '../middleware/error'
 import { normalizeVisibility } from '../services/cache'
-import { WCLClient, resolveFightActorRoles, resolveFightActorSpecs } from '../services/wcl'
+import {
+  WCLClient,
+  resolveFightActorRoles,
+  resolveFightActorSpecs,
+} from '../services/wcl'
 import type { FightsResponse } from '../types/api'
 import { toReportActorSummary } from '../types/api-transformers'
 import type { Bindings, Variables } from '../types/bindings'

@@ -1152,9 +1152,7 @@ export function buildThreatSeries({
           return
         }
         const pointAmount =
-          markerKind === 'bossMelee'
-            ? Math.max(0, event.amount ?? 0)
-            : amount
+          markerKind === 'bossMelee' ? Math.max(0, event.amount ?? 0) : amount
 
         const pointIndex = pointIndexByActorId.get(actorId)
         if (pointIndex !== undefined) {

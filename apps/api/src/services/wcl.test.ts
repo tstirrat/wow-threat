@@ -566,16 +566,11 @@ describe('WCLClient.getFightPlayerRoles', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     const client = new WCLClient(createMockBindings(), 'wcl:12345')
-    const actorRoles = await client.getFightPlayerRoles(
-      'ABC123',
-      9,
-      'public',
-      [
-        { id: 102355392, name: 'Merryday' },
-        { id: 105947179, name: 'Musictwo' },
-        { id: 91613399, name: 'Benderheide' },
-      ],
-    )
+    const actorRoles = await client.getFightPlayerRoles('ABC123', 9, 'public', [
+      { id: 102355392, name: 'Merryday' },
+      { id: 105947179, name: 'Musictwo' },
+      { id: 91613399, name: 'Benderheide' },
+    ])
 
     expect(actorRoles).toEqual(
       new Map<number, 'Tank' | 'Healer' | 'DPS'>([

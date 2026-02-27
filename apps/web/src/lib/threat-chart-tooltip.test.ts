@@ -177,7 +177,9 @@ describe('threat-chart-tooltip', () => {
     )
     expect(tooltip).toContain('text-decoration:line-through')
     expect(tooltip).toContain('T: 0:15.000')
-    expect(tooltip).toContain('Marker: <strong style="color:#dc2626">Death</strong>')
+    expect(tooltip).toContain(
+      'Marker: <strong style="color:#dc2626">Death</strong>',
+    )
     expect(tooltip).not.toContain('Unknown ability')
     expect(tooltip).not.toContain('Amt:')
     expect(tooltip).not.toContain('Threat:')

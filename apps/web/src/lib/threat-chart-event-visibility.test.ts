@@ -6,8 +6,8 @@ import { describe, expect, it } from 'vitest'
 import {
   isBossMeleeMarker,
   isEnergizeEventType,
-  sortThreatPointsForRendering,
   shouldRenderThreatPoint,
+  sortThreatPointsForRendering,
 } from './threat-chart-event-visibility'
 
 describe('threat-chart-event-visibility', () => {

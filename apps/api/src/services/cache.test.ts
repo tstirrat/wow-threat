@@ -263,9 +263,7 @@ describe('CacheKeys', () => {
   })
 
   it('generates correct fight player roles key', () => {
-    expect(
-      CacheKeys.fightPlayerRoles('ABC123', 9, 'private', 'uid-1'),
-    ).toBe(
+    expect(CacheKeys.fightPlayerRoles('ABC123', 9, 'private', 'uid-1')).toBe(
       'wcl:fight-player-roles:v1:ABC123:9:visibility:private:scope:uid:uid-1',
     )
   })

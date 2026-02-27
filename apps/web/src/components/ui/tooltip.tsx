@@ -41,9 +41,7 @@ function TooltipContent({
         {...props}
       >
         {children}
-        {withArrow ? (
-          <TooltipPrimitive.Arrow className="fill-popover" />
-        ) : null}
+        {withArrow ? <TooltipPrimitive.Arrow className="fill-popover" /> : null}
       </TooltipPrimitive.Content>
     </TooltipPrimitive.Portal>
   )

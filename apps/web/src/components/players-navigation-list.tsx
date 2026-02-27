@@ -90,8 +90,9 @@ export const PlayersNavigationList: FC<PlayersNavigationListProps> = ({
     )
   }
 
-  const resolvePlayerRole = (player: ReportActorSummary): ReportActorRole | null =>
-    player.role ?? null
+  const resolvePlayerRole = (
+    player: ReportActorSummary,
+  ): ReportActorRole | null => player.role ?? null
 
   const hasRoleColumn = sortedPlayers.some(
     (player) => resolvePlayerRole(player) !== null,
