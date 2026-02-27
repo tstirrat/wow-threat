@@ -4,7 +4,7 @@
 import type { EChartsOption } from 'echarts'
 import * as echarts from 'echarts'
 import ReactEChartsCore from 'echarts-for-react/lib/core'
-import { type FC, useRef, useState } from 'react'
+import { type FC, useEffect, useRef, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 
 import { useThreatChartLegendState } from '../hooks/use-threat-chart-legend-state'
@@ -17,6 +17,10 @@ import { useThreatChartVisiblePlayers } from '../hooks/use-threat-chart-visible-
 import { useThreatChartZoom } from '../hooks/use-threat-chart-zoom'
 import { formatTimelineTime } from '../lib/format'
 import { resolveSeriesWindowBounds } from '../lib/threat-aggregation'
+import {
+  loadShowFixateBandsPreference,
+  saveShowFixateBandsPreference,
+} from '../lib/threat-chart-fixate-bands-preference'
 import { resolvePointSize } from '../lib/threat-chart-point-size'
 import { createThreatChartTooltipFormatter } from '../lib/threat-chart-tooltip'
 import type { SeriesChartPoint } from '../lib/threat-chart-types'
@@ -71,6 +75,9 @@ export const ThreatChart: FC<ThreatChartProps> = ({
 }) => {
   const chartRef = useRef<ReactEChartsCore>(null)
   const [isChartReady, setIsChartReady] = useState(false)
+  const [showFixateBands, setShowFixateBands] = useState(
+    loadShowFixateBandsPreference,
+  )
   const themeColors = useThreatChartThemeColors()
   const {
     visibleSeries,
@@ -130,6 +137,10 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     series,
   })
   const canClearIsolate = visibleIsolatedActorId !== null || hasHiddenActors
+
+  useEffect(() => {
+    saveShowFixateBandsPreference(showFixateBands)
+  }, [showFixateBands])
 
   useHotkeys(
     '/',
@@ -319,7 +330,9 @@ export const ThreatChart: FC<ThreatChartProps> = ({
           width: 2,
         },
         markArea: buildAuraMarkArea({
-          fixateWindows: visibleSeries[seriesIndex]?.fixateWindows ?? [],
+          fixateWindows: showFixateBands
+            ? (visibleSeries[seriesIndex]?.fixateWindows ?? [])
+            : [],
           invulnerabilityWindows: [],
         }),
         data: item.data,
@@ -333,6 +346,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         showClearIsolate={visibleIsolatedActorId !== null || hasHiddenActors}
         onResetZoom={resetZoom}
         onClearIsolate={handleClearIsolate}
+        showFixateBands={showFixateBands}
+        onShowFixateBandsChange={setShowFixateBands}
         showEnergizeEvents={showEnergizeEvents}
         onShowEnergizeEventsChange={onShowEnergizeEventsChange}
         showBossMelee={showBossMelee}

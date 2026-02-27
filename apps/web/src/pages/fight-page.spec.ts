@@ -10,6 +10,8 @@ import {
 import { FightPageObject } from '../test/page-objects/fight-page'
 
 const svgFightUrl = `/report/${e2eReportId}/fight/26?renderer=svg`
+const threatChartShowFixateBandsStorageKey =
+  'wow-threat.threat-chart.show-fixate-bands'
 
 test.describe('fight page', () => {
   test.beforeEach(async ({ page }) => {
@@ -57,6 +59,7 @@ test.describe('fight page', () => {
     await expect(fightPage.chart.legendToggle('Wolfie')).toHaveCount(0)
 
     await expect(fightPage.chart.showEnergizeEventsCheckbox()).not.toBeChecked()
+    await expect(fightPage.chart.showFixateBandsCheckbox()).toBeChecked()
     await expect(fightPage.chart.showBossMeleeCheckbox()).toBeChecked()
     await expect(
       fightPage.chart.inferThreatReductionCheckbox(),
@@ -167,13 +170,27 @@ test.describe('fight page', () => {
     await expect.poll(() => fightPage.searchString()).toBe('')
   })
 
-  test('persists show pets, show energize, show boss damage, and infer threat reduction toggles across fight switches', async ({
+  test('loads persisted fixate band toggle state from local storage on first render', async ({
+    page,
+  }) => {
+    await page.addInitScript((storageKey: string) => {
+      window.localStorage.setItem(storageKey, 'false')
+    }, threatChartShowFixateBandsStorageKey)
+
+    const fightPage = new FightPageObject(page)
+    await fightPage.goto(svgFightUrl)
+
+    await expect(fightPage.chart.showFixateBandsCheckbox()).not.toBeChecked()
+  })
+
+  test('persists show pets, show energize, show fixate areas, show boss damage, and infer threat reduction toggles across fight switches', async ({
     page,
   }) => {
     const fightPage = new FightPageObject(page)
 
     await fightPage.goto(svgFightUrl)
     await expect(fightPage.chart.showEnergizeEventsCheckbox()).not.toBeChecked()
+    await expect(fightPage.chart.showFixateBandsCheckbox()).toBeChecked()
     await expect(fightPage.chart.showBossMeleeCheckbox()).toBeChecked()
     await expect(
       fightPage.chart.inferThreatReductionCheckbox(),
@@ -181,17 +198,25 @@ test.describe('fight page', () => {
     await expect(fightPage.chart.showPetsCheckbox()).not.toBeChecked()
 
     await fightPage.chart.setShowEnergizeEvents(true)
+    await fightPage.chart.setShowFixateBands(false)
     await fightPage.chart.setShowBossMelee(false)
     await fightPage.chart.setInferThreatReduction(true)
     await fightPage.chart.setShowPets(true)
     await expect(fightPage.chart.showEnergizeEventsCheckbox()).toBeChecked()
+    await expect(fightPage.chart.showFixateBandsCheckbox()).not.toBeChecked()
     await expect(fightPage.chart.showBossMeleeCheckbox()).not.toBeChecked()
     await expect(fightPage.chart.inferThreatReductionCheckbox()).toBeChecked()
     await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
+    expect(
+      await page.evaluate((storageKey: string) => {
+        return window.localStorage.getItem(storageKey)
+      }, threatChartShowFixateBandsStorageKey),
+    ).toBe('false')
 
     await fightPage.quickSwitch.clickFight('Grobbulus')
     await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}/fight/30$`))
     await expect(fightPage.chart.showEnergizeEventsCheckbox()).toBeChecked()
+    await expect(fightPage.chart.showFixateBandsCheckbox()).not.toBeChecked()
     await expect(fightPage.chart.showBossMeleeCheckbox()).not.toBeChecked()
     await expect(fightPage.chart.inferThreatReductionCheckbox()).toBeChecked()
     await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
@@ -199,6 +224,7 @@ test.describe('fight page', () => {
     await fightPage.quickSwitch.clickFight('Patchwerk')
     await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}/fight/26$`))
     await expect(fightPage.chart.showEnergizeEventsCheckbox()).toBeChecked()
+    await expect(fightPage.chart.showFixateBandsCheckbox()).not.toBeChecked()
     await expect(fightPage.chart.showBossMeleeCheckbox()).not.toBeChecked()
     await expect(fightPage.chart.inferThreatReductionCheckbox()).toBeChecked()
     await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()

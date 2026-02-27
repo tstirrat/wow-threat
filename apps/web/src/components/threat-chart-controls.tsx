@@ -19,6 +19,8 @@ export interface ThreatChartControlsProps {
   showClearIsolate: boolean
   onResetZoom: () => void
   onClearIsolate: () => void
+  showFixateBands: boolean
+  onShowFixateBandsChange: (showFixateBands: boolean) => void
   showEnergizeEvents: boolean
   onShowEnergizeEventsChange: (showEnergizeEvents: boolean) => void
   showBossMelee: boolean
@@ -31,6 +33,8 @@ export const ThreatChartControls: FC<ThreatChartControlsProps> = ({
   showClearIsolate,
   onResetZoom,
   onClearIsolate,
+  showFixateBands,
+  onShowFixateBandsChange,
   showEnergizeEvents,
   onShowEnergizeEventsChange,
   showBossMelee,
@@ -38,6 +42,7 @@ export const ThreatChartControls: FC<ThreatChartControlsProps> = ({
   inferThreatReduction,
   onInferThreatReductionChange,
 }) => {
+  const showFixateBandsId = useId()
   const showEnergizeEventsId = useId()
   const showBossMeleeId = useId()
   const inferThreatReductionId = useId()
@@ -67,6 +72,21 @@ export const ThreatChartControls: FC<ThreatChartControlsProps> = ({
             </span>
           </Button>
         ) : null}
+        <div className="flex items-center gap-2">
+          <Checkbox
+            checked={showFixateBands}
+            id={showFixateBandsId}
+            onCheckedChange={(checked) => {
+              onShowFixateBandsChange(checked === true)
+            }}
+          />
+          <Label
+            className="inline-flex cursor-pointer items-center gap-1 text-sm"
+            htmlFor={showFixateBandsId}
+          >
+            <span>Show fixate areas</span>
+          </Label>
+        </div>
         <div className="flex items-center gap-2">
           <Checkbox
             checked={showEnergizeEvents}

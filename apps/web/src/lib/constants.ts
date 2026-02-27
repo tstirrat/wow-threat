@@ -12,6 +12,8 @@ export const accountRecentReportsStorageKey =
 export const accountRecentReportsCacheTtlMs = 1000 * 60 * 60
 export const starredGuildReportsStorageKey = 'wow-threat.starred-guild-reports'
 export const entityReportsStorageKey = 'wow-threat.entity-reports'
+export const threatChartShowFixateBandsStorageKey =
+  'wow-threat.threat-chart.show-fixate-bands'
 export const starredGuildReportsCacheTtlMs = 1000 * 60 * 60
 export const reportSearchIndexStorageKey = 'wow-threat.report-search-index'
 export const reportSearchIndexRefreshIntervalMs = 1000 * 60 * 60

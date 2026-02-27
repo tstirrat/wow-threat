@@ -36,6 +36,10 @@ export class ThreatChartObject {
     return this.section.getByRole('checkbox', { name: 'Show energize events' })
   }
 
+  showFixateBandsCheckbox(): Locator {
+    return this.section.getByRole('checkbox', { name: 'Show fixate areas' })
+  }
+
   showBossMeleeCheckbox(): Locator {
     return this.section.getByRole('checkbox', { name: 'Show boss damage' })
   }
@@ -148,6 +152,17 @@ export class ThreatChartObject {
     }
 
     await showEnergizeEventsCheckbox.click()
+  }
+
+  async setShowFixateBands(checked: boolean): Promise<void> {
+    const showFixateBandsCheckbox = this.showFixateBandsCheckbox()
+    const isChecked = await showFixateBandsCheckbox.isChecked()
+
+    if (isChecked === checked) {
+      return
+    }
+
+    await showFixateBandsCheckbox.click()
   }
 
   async setShowBossMelee(checked: boolean): Promise<void> {
