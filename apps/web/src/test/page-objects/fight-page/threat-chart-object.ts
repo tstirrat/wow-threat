@@ -37,7 +37,7 @@ export class ThreatChartObject {
   }
 
   showBossMeleeCheckbox(): Locator {
-    return this.section.getByRole('checkbox', { name: 'Show boss melee' })
+    return this.section.getByRole('checkbox', { name: 'Show boss damage' })
   }
 
   inferThreatReductionCheckbox(): Locator {

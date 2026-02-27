@@ -81,7 +81,7 @@ export const ThreatChartControls: FC<ThreatChartControlsProps> = ({
             }}
           />
           <Label className="cursor-pointer text-sm" htmlFor={showBossMeleeId}>
-            Show boss melee
+            Show boss damage
           </Label>
         </div>
         <div className="flex items-center gap-1">

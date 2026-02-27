@@ -124,16 +124,19 @@ export function createThreatChartTooltipFormatter({
     const isAbsorbedEvent = rawEventType === 'absorbed'
     const isResourceEvent =
       rawEventType === 'resourcechange' || rawEventType === 'energize'
+    const isBossDamageMarker = markerKind === 'bossMelee'
     const isDeathMarker = markerKind === 'death'
-    const abilityEventSuffix = isHealEvent
-      ? `${targetName ? ` → ${targetName}` : ''} (${isTickEvent ? 'tick' : 'heal'})`
-      : isAbsorbedEvent
-        ? `${targetName ? ` @ ${targetName}` : ''} (absorbed)`
-        : rawEventType === 'damage'
-          ? isTickEvent
-            ? ' (tick)'
-            : ''
-          : ` (${rawEventType})`
+    const abilityEventSuffix = isBossDamageMarker
+      ? ' (incoming)'
+      : isHealEvent
+        ? `${targetName ? ` → ${targetName}` : ''} (${isTickEvent ? 'tick' : 'heal'})`
+        : isAbsorbedEvent
+          ? `${targetName ? ` @ ${targetName}` : ''} (absorbed)`
+          : rawEventType === 'damage'
+            ? isTickEvent
+              ? ' (tick)'
+              : ''
+            : ` (${rawEventType})`
     const abilityTitleColor = isHealEvent ? '#22c55e' : null
     const actorId = Number(payload.actorId ?? 0)
     const sourceSeries = series.find((item) => item.actorId === actorId) ?? null
@@ -178,7 +181,9 @@ export function createThreatChartTooltipFormatter({
       abilityEventSuffix: isDeathMarker ? '' : abilityEventSuffix,
       abilityName: isDeathMarker
         ? ''
-        : (payload.abilityName ?? 'Unknown ability'),
+        : isBossDamageMarker
+          ? `↓ ${payload.abilityName ?? 'Unknown ability'}`
+          : (payload.abilityName ?? 'Unknown ability'),
       abilityTitleColor,
       actorColor: String(payload.actorColor ?? '#94a3b8'),
       actorName: String(entry.seriesName ?? 'Unknown actor'),

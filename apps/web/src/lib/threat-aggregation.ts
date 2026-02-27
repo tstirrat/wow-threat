@@ -27,7 +27,6 @@ import type {
 import { getActorColor, getClassColor } from './class-colors'
 
 const trackableActorTypes = new Set(['Player', 'Pet'])
-const bossMeleeSpellId = 1
 const markerPriorityByKind: Record<ThreatPointMarkerKind, number> = {
   bossMelee: 1,
   tranquilAirTotem: 2,
@@ -260,12 +259,13 @@ function resolveEventPointDecorations({
     }
   })
 
-  const isLegacyBossMeleeEvent =
-    event.type === 'damage' && event.abilityGameID === bossMeleeSpellId
-  if (
-    (hasBossMeleeMarker || isLegacyBossMeleeEvent) &&
+  const isSelectedTargetSource =
     event.sourceID === target.id &&
     (event.sourceInstance ?? defaultTargetInstance) === target.instance
+  const isSelectedTargetDamageEvent = event.type === 'damage'
+  if (
+    isSelectedTargetSource &&
+    (hasBossMeleeMarker || isSelectedTargetDamageEvent)
   ) {
     setMarker({
       actorId: event.targetID,

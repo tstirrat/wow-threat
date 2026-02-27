@@ -167,7 +167,7 @@ test.describe('fight page', () => {
     await expect.poll(() => fightPage.searchString()).toBe('')
   })
 
-  test('persists show pets, show energize, show boss melee, and infer threat reduction toggles across fight switches', async ({
+  test('persists show pets, show energize, show boss damage, and infer threat reduction toggles across fight switches', async ({
     page,
   }) => {
     const fightPage = new FightPageObject(page)

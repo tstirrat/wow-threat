@@ -100,7 +100,7 @@ describe('threat-chart-tooltip', () => {
     expect(tooltip).toContain('ID: 7386')
   })
 
-  it('hides threat rows for boss melee marker tooltips', () => {
+  it('hides threat rows for boss-damage marker tooltips', () => {
     const formatter = createThreatChartTooltipFormatter({
       series: [baseSeries],
       themeColors: {
@@ -132,9 +132,10 @@ describe('threat-chart-tooltip', () => {
       },
     })
 
+    expect(tooltip).toContain('↓ Melee (incoming)')
     expect(tooltip).toContain('Amt: 700.00')
     expect(tooltip).toContain(
-      'Marker: <strong style="color:#ef4444">Boss melee</strong>',
+      'Marker: <strong style="color:#ef4444">Boss damage</strong>',
     )
     expect(tooltip).not.toContain('Threat:')
     expect(tooltip).not.toContain('Multipliers:')

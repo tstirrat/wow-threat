@@ -325,7 +325,7 @@ describe('threat-aggregation', () => {
     expect(series[0]?.points[1]?.spellSchool).toBeNull()
   })
 
-  it('adds boss melee markers to the struck player series for the selected target', () => {
+  it('adds boss-damage markers to struck player series for selected target damage events', () => {
     const actors: ReportActorSummary[] = [
       {
         id: 1,
@@ -345,19 +345,31 @@ describe('threat-aggregation', () => {
         type: 'NPC',
         subType: 'Boss',
       },
+      {
+        id: 11,
+        name: 'Other Add',
+        type: 'NPC',
+        subType: 'Boss',
+      },
     ]
     const abilities: ReportAbilitySummary[] = [
-      {
-        gameID: 1,
-        icon: null,
-        name: 'Melee',
-        type: '1',
-      },
       {
         gameID: 100,
         icon: null,
         name: 'Shield Slam',
         type: '1',
+      },
+      {
+        gameID: 9999,
+        icon: null,
+        name: 'Poison Bolt',
+        type: '8',
+      },
+      {
+        gameID: 9998,
+        icon: null,
+        name: 'Shadow Volley',
+        type: '32',
       },
     ]
     const events = [
@@ -403,18 +415,12 @@ describe('threat-aggregation', () => {
         threat: {
           changes: [],
           calculation: {
-            formula: '0 (boss melee marker)',
+            formula: '0 (boss damage marker)',
             amount: 700,
             baseThreat: 0,
             modifiedThreat: 0,
             isSplit: false,
             modifiers: [],
-            effects: [
-              {
-                type: 'eventMarker',
-                marker: 'bossMelee',
-              },
-            ],
           },
         },
       },
@@ -430,18 +436,33 @@ describe('threat-aggregation', () => {
         threat: {
           changes: [],
           calculation: {
-            formula: '0 (boss melee marker)',
+            formula: '0 (boss damage marker)',
             amount: 550,
             baseThreat: 0,
             modifiedThreat: 0,
             isSplit: false,
             modifiers: [],
-            effects: [
-              {
-                type: 'eventMarker',
-                marker: 'bossMelee',
-              },
-            ],
+          },
+        },
+      },
+      {
+        timestamp: 1400,
+        type: 'damage',
+        sourceID: 11,
+        sourceIsFriendly: false,
+        targetID: 1,
+        targetIsFriendly: true,
+        abilityGameID: 9999,
+        amount: 900,
+        threat: {
+          changes: [],
+          calculation: {
+            formula: '0 (other add damage)',
+            amount: 900,
+            baseThreat: 0,
+            modifiedThreat: 0,
+            isSplit: false,
+            modifiers: [],
           },
         },
       },
@@ -468,6 +489,14 @@ describe('threat-aggregation', () => {
           amount: 700,
           timeMs: 200,
           totalThreat: 200,
+          markerKind: 'bossMelee',
+        }),
+      ]),
+    )
+    expect(tankSeries?.points).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          amount: 900,
           markerKind: 'bossMelee',
         }),
       ]),

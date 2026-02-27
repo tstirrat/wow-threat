@@ -69,7 +69,7 @@ function formatThreatValue(data: ThreatChartTooltipContentData): string {
 export const ThreatChartTooltipContent: FC<ThreatChartTooltipContentProps> = ({
   data,
 }) => {
-  const isBossMeleeMarker = data.markerKind === 'bossMelee'
+  const isBossDamageMarker = data.markerKind === 'bossMelee'
   const isDeathMarker = data.markerKind === 'death'
   const rowStyle = {
     display: 'flex',
@@ -128,7 +128,7 @@ export const ThreatChartTooltipContent: FC<ThreatChartTooltipContentProps> = ({
           <span>{data.formula}</span>
         </div>
       ) : null}
-      {!isBossMeleeMarker &&
+      {!isBossDamageMarker &&
       !isDeathMarker &&
       data.visibleModifiers.length > 0 ? (
         <>
@@ -165,7 +165,7 @@ export const ThreatChartTooltipContent: FC<ThreatChartTooltipContentProps> = ({
           </div>
         </>
       ) : null}
-      {!isBossMeleeMarker && !isDeathMarker ? (
+      {!isBossDamageMarker && !isDeathMarker ? (
         <div style={rowStyle}>
           <span>Threat: {formatThreatValue(data)}</span>
           <span>&sum; {formatTooltipNumber(data.totalThreat)}</span>
@@ -182,7 +182,7 @@ export const ThreatChartTooltipContent: FC<ThreatChartTooltipContentProps> = ({
       {data.markerKind === 'bossMelee' ? (
         <div>
           Marker:{' '}
-          <strong style={{ color: bossMeleeMarkerColor }}>Boss melee</strong>
+          <strong style={{ color: bossMeleeMarkerColor }}>Boss damage</strong>
         </div>
       ) : data.markerKind === 'death' ? (
         <div>
