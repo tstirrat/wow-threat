@@ -239,25 +239,23 @@ test.describe('fight page', () => {
     await expect(fightPage.summary.focusedActorText('Bladefury')).toBeVisible()
   })
 
-  test('shows chart and legend placeholders while loading fight data', async ({
+  test('keeps fight header visible while threat events are still loading', async ({
     page,
   }) => {
     const fightPage = new FightPageObject(page)
 
     await setupThreatApiMocks(page, {
-      fightResponseDelayMs: 400,
-      eventsResponseDelayMs: 400,
+      fightResponseDelayMs: 0,
+      eventsResponseDelayMs: 2000,
     })
     await fightPage.goto(svgFightUrl)
 
-    await expect(
-      page.getByRole('status', { name: 'Loading fight data' }),
-    ).toBeVisible()
+    await expect(fightPage.chart.targetControl()).toBeVisible()
     await expect(page.getByTestId('fight-chart-skeleton')).toBeVisible()
-    await expect(page.getByTestId('fight-legend-skeleton')).toBeVisible()
-    await expect.poll(() => fightPage.chart.renderer()).toBe('svg')
     await expect(
       page.getByRole('status', { name: 'Loading fight data' }),
     ).toHaveCount(0)
+    await expect.poll(() => fightPage.chart.renderer()).toBe('svg')
+    await expect(page.getByTestId('fight-chart-skeleton')).toHaveCount(0)
   })
 })

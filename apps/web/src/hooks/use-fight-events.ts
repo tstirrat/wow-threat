@@ -1,7 +1,7 @@
 /**
  * Query hook for a fight's augmented event timeline.
  */
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 
 import { fightEventsQueryKey, getFightEvents } from '../api/reports'
 import type { AugmentedEventsResponse } from '../types/api'
@@ -27,5 +27,23 @@ export function useFightEvents(
     data: query.data,
     isLoading: query.isLoading,
     error: query.error,
+  }
+}
+
+/** Fetch and cache fight events with React Suspense integration. */
+export function useSuspenseFightEvents(
+  reportId: string,
+  fightId: number,
+  inferThreatReduction: boolean,
+): {
+  data: AugmentedEventsResponse
+} {
+  const query = useSuspenseQuery({
+    queryKey: fightEventsQueryKey(reportId, fightId, inferThreatReduction),
+    queryFn: () => getFightEvents(reportId, fightId, inferThreatReduction),
+  })
+
+  return {
+    data: query.data,
   }
 }
