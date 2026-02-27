@@ -6,7 +6,9 @@ import * as echarts from 'echarts'
 import ReactEChartsCore from 'echarts-for-react/lib/core'
 import { type FC, useRef, useState } from 'react'
 
+import { useThreatChartKeyboardShortcuts } from '../hooks/use-threat-chart-keyboard-shortcuts'
 import { useThreatChartLegendState } from '../hooks/use-threat-chart-legend-state'
+import { useThreatChartPlayerSearch } from '../hooks/use-threat-chart-player-search'
 import { useThreatChartSelectedWindow } from '../hooks/use-threat-chart-selected-window'
 import { useThreatChartSeriesClickHandler } from '../hooks/use-threat-chart-series-click-handler'
 import { useThreatChartSeriesData } from '../hooks/use-threat-chart-series-data'
@@ -20,16 +22,21 @@ import { createThreatChartTooltipFormatter } from '../lib/threat-chart-tooltip'
 import type { SeriesChartPoint } from '../lib/threat-chart-types'
 import { buildAuraMarkArea } from '../lib/threat-chart-visuals'
 import type { ThreatSeries } from '../types/app'
+import { FightPageKeyboardShortcutsOverlay } from './fight-page-keyboard-shortcuts-overlay'
 import { ThreatChartControls } from './threat-chart-controls'
 import { ThreatChartLegend } from './threat-chart-legend'
+import { ThreatChartPlayerSearch } from './threat-chart-player-search'
 
 export type ThreatChartProps = {
   series: ThreatSeries[]
   selectedPlayerIds?: number[]
+  focusedActorId?: number | null
   renderer?: 'canvas' | 'svg'
   windowStartMs: number | null
   windowEndMs: number | null
   onWindowChange: (startMs: number | null, endMs: number | null) => void
+  onFocusAndAddPlayer: (playerId: number) => void
+  onFocusAndIsolatePlayer: (playerId: number) => void
   onSeriesClick: (actorId: number) => void
   onVisiblePlayerIdsChange?: (playerIds: number[]) => void
   showPets: boolean
@@ -45,10 +52,13 @@ export type ThreatChartProps = {
 export const ThreatChart: FC<ThreatChartProps> = ({
   series,
   selectedPlayerIds = [],
+  focusedActorId = null,
   renderer = 'canvas',
   windowStartMs,
   windowEndMs,
   onWindowChange,
+  onFocusAndAddPlayer,
+  onFocusAndIsolatePlayer,
   onSeriesClick,
   onVisiblePlayerIdsChange,
   showPets,
@@ -100,6 +110,39 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     onVisiblePlayerIdsChange,
     series,
   })
+  const {
+    filteredPlayerSearchOptions,
+    handlePlayerSearchInputKeyDown,
+    isPlayerSearchOpen,
+    openPlayerSearch,
+    closePlayerSearch,
+    isolateFocusedPlayer,
+    playerSearchQuery,
+    resolvedHighlightedPlayerId,
+    selectPlayer,
+    setHighlightedPlayerId,
+    setPlayerSearchQuery,
+  } = useThreatChartPlayerSearch({
+    clearIsolate,
+    focusedActorId,
+    onFocusAndAddPlayer,
+    onFocusAndIsolatePlayer,
+    series,
+  })
+  const { isKeyboardOverlayOpen, closeKeyboardOverlay } =
+    useThreatChartKeyboardShortcuts({
+      canClearIsolate: visibleIsolatedActorId !== null || hasHiddenActors,
+      closePlayerSearch,
+      isolateFocusedPlayer,
+      onClearIsolate: handleClearIsolate,
+      onShowBossMeleeChange,
+      onShowEnergizeEventsChange,
+      onShowPetsChange,
+      openPlayerSearch,
+      showBossMelee,
+      showEnergizeEvents,
+      showPets,
+    })
 
   const handleSeriesChartClick = useThreatChartSeriesClickHandler({
     actorIdByLabel,
@@ -125,6 +168,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
       triggerOn: 'mousemove|click',
       alwaysShowContent: true,
       appendToBody: true,
+      extraCssText: 'z-index: 40;',
       backgroundColor: themeColors.panel,
       borderColor: themeColors.border,
       borderWidth: 1,
@@ -231,6 +275,26 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         onShowBossMeleeChange={onShowBossMeleeChange}
         inferThreatReduction={inferThreatReduction}
         onInferThreatReductionChange={onInferThreatReductionChange}
+      />
+      <ThreatChartPlayerSearch
+        isOpen={isPlayerSearchOpen}
+        query={playerSearchQuery}
+        options={filteredPlayerSearchOptions}
+        highlightedPlayerId={resolvedHighlightedPlayerId}
+        onClose={closePlayerSearch}
+        onQueryChange={setPlayerSearchQuery}
+        onInputKeyDown={handlePlayerSearchInputKeyDown}
+        onHighlightPlayer={setHighlightedPlayerId}
+        onSelectPlayer={(playerId) => {
+          selectPlayer({
+            playerId,
+            shouldAddToFilter: false,
+          })
+        }}
+      />
+      <FightPageKeyboardShortcutsOverlay
+        isOpen={isKeyboardOverlayOpen}
+        onClose={closeKeyboardOverlay}
       />
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_14rem]">
         <div>

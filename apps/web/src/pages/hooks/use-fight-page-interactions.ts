@@ -16,6 +16,8 @@ export function areEqualIdLists(left: number[], right: number[]): boolean {
 }
 
 export interface UseFightPageInteractionsResult {
+  handleFocusAndAddPlayer: (playerId: number) => void
+  handleFocusAndIsolatePlayer: (playerId: number) => void
   handleInferThreatReductionChange: (inferThreatReduction: boolean) => void
   handleSeriesClick: (playerId: number) => void
   handleShowBossMeleeChange: (showBossMelee: boolean) => void
@@ -34,7 +36,12 @@ export function useFightPageInteractions({
 }: {
   queryState: Pick<
     UseFightQueryStateResult,
-    'setFocusId' | 'setPlayers' | 'setTarget' | 'setWindow' | 'state'
+    | 'setFocusAndPlayers'
+    | 'setFocusId'
+    | 'setPlayers'
+    | 'setTarget'
+    | 'setWindow'
+    | 'state'
   >
   updateUserSettings: UseUserSettingsResult['updateSettings']
   validPlayerIds: Set<number>
@@ -51,6 +58,38 @@ export function useFightPageInteractions({
       queryState.setFocusId(playerId)
     },
     [queryState],
+  )
+
+  const handleFocusAndIsolatePlayer = useCallback(
+    (playerId: number): void => {
+      queryState.setFocusAndPlayers(playerId, [playerId])
+    },
+    [queryState],
+  )
+
+  const handleFocusAndAddPlayer = useCallback(
+    (playerId: number): void => {
+      if (!validPlayerIds.has(playerId)) {
+        return
+      }
+
+      const allPlayerIds = [...validPlayerIds].sort(
+        (left, right) => left - right,
+      )
+      const currentPlayers =
+        queryState.state.players.length === 0
+          ? allPlayerIds
+          : [...queryState.state.players].sort((left, right) => left - right)
+      const nextPlayers = currentPlayers.includes(playerId)
+        ? currentPlayers
+        : [...currentPlayers, playerId].sort((left, right) => left - right)
+      const normalizedNextPlayers = areEqualIdLists(nextPlayers, allPlayerIds)
+        ? []
+        : nextPlayers
+
+      queryState.setFocusAndPlayers(playerId, normalizedNextPlayers)
+    },
+    [queryState, validPlayerIds],
   )
 
   const handleVisiblePlayerIdsChange = useCallback(
@@ -118,6 +157,8 @@ export function useFightPageInteractions({
   )
 
   return {
+    handleFocusAndAddPlayer,
+    handleFocusAndIsolatePlayer,
     handleInferThreatReductionChange,
     handleSeriesClick,
     handleShowBossMeleeChange,

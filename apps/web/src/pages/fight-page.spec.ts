@@ -204,6 +204,98 @@ test.describe('fight page', () => {
     await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
   })
 
+  test('supports keyboard shortcuts for toggles, clear isolate, and shortcuts overlay', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(svgFightUrl)
+    await expect(fightPage.chart.showBossMeleeCheckbox()).toBeChecked()
+    await expect(fightPage.chart.showEnergizeEventsCheckbox()).not.toBeChecked()
+    await expect(fightPage.chart.showPetsCheckbox()).not.toBeChecked()
+
+    await page.keyboard.press('b')
+    await expect(fightPage.chart.showBossMeleeCheckbox()).not.toBeChecked()
+    await page.keyboard.press('p')
+    await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
+    await page.keyboard.press('e')
+    await expect(fightPage.chart.showEnergizeEventsCheckbox()).toBeChecked()
+
+    await fightPage.chart.isolateLegend('Aegistank')
+    await expect(fightPage.chart.clearIsolateButton()).toBeVisible()
+    await page.keyboard.press('c')
+    await expect(fightPage.chart.clearIsolateButton()).toHaveCount(0)
+    await expect(fightPage.chart.legendToggle('Bladefury')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+
+    await fightPage.chart.focusLegend('Bladefury')
+    await expect(page).toHaveURL(/focusId=2/)
+    await page.keyboard.press('i')
+    await expect.poll(() => fightPage.searchParam('players')).toBe('2')
+
+    const playerSearch = page.getByRole('dialog', {
+      name: 'Player search',
+    })
+    await expect(playerSearch).toHaveCount(0)
+    await page.keyboard.press('/')
+    await expect(playerSearch).toBeVisible()
+    const playerSearchInput = playerSearch.getByRole('textbox', {
+      name: 'Search players',
+    })
+    await expect(playerSearchInput).toBeFocused()
+    await playerSearchInput.fill('aegi')
+    await page.keyboard.press('Enter')
+    await expect(playerSearch).toHaveCount(0)
+    await expect.poll(() => fightPage.searchParam('focusId')).toBe('1')
+    await expect.poll(() => fightPage.searchParam('players')).toBe('1')
+
+    await page.keyboard.press('/')
+    await expect(playerSearch).toBeVisible()
+    await playerSearchInput.fill('blade')
+    await page.keyboard.press('Shift+Enter')
+    await expect(playerSearch).toHaveCount(0)
+    await expect.poll(() => fightPage.searchParam('focusId')).toBe('2')
+    await expect.poll(() => fightPage.searchParam('players')).toBe('1,2')
+
+    const shortcutsOverlay = page.getByRole('dialog', {
+      name: 'Keyboard shortcuts',
+    })
+    await expect(shortcutsOverlay).toHaveCount(0)
+    await page.keyboard.press('Shift+/')
+    await expect(shortcutsOverlay).toBeVisible()
+    await expect(shortcutsOverlay).toContainText('Toggle show boss damage')
+    await expect(shortcutsOverlay).toContainText('Toggle show pets')
+    await expect(shortcutsOverlay).toContainText('Toggle show energize events')
+    await expect(shortcutsOverlay).toContainText('Clear isolate')
+    await expect(shortcutsOverlay).toContainText('Isolate focused player')
+    await expect(shortcutsOverlay).toContainText('Open player search')
+    await expect(
+      shortcutsOverlay.locator('kbd').filter({ hasText: /^B$/ }),
+    ).toBeVisible()
+    await expect(
+      shortcutsOverlay.locator('kbd').filter({ hasText: /^P$/ }),
+    ).toBeVisible()
+    await expect(
+      shortcutsOverlay.locator('kbd').filter({ hasText: /^E$/ }),
+    ).toBeVisible()
+    await expect(
+      shortcutsOverlay.locator('kbd').filter({ hasText: /^C$/ }),
+    ).toBeVisible()
+    await expect(
+      shortcutsOverlay.locator('kbd').filter({ hasText: /^I$/ }),
+    ).toBeVisible()
+    const openPlayerSearchRow = shortcutsOverlay
+      .getByText('Open player search')
+      .locator('xpath=ancestor::li[1]')
+    await expect(
+      openPlayerSearchRow.locator('kbd').filter({ hasText: /^\/$/ }),
+    ).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(shortcutsOverlay).toHaveCount(0)
+  })
+
   test('clicking a chart point focuses a player and shows total threat values', async ({
     page,
   }) => {

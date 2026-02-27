@@ -133,6 +133,8 @@ export const FightPage: FC = () => {
     ? Math.max(fightData.endTime - fightData.startTime, 0)
     : 0
   const {
+    handleFocusAndAddPlayer,
+    handleFocusAndIsolatePlayer,
     handleInferThreatReductionChange,
     handleSeriesClick,
     handleShowBossMeleeChange,
@@ -195,11 +197,14 @@ export const FightPage: FC = () => {
   const chartProps: ThreatChartProps = {
     renderer: chartRenderer,
     series: visibleSeries,
+    focusedActorId: queryState.state.focusId,
     selectedPlayerIds: queryState.state.players,
     onVisiblePlayerIdsChange: handleVisiblePlayerIdsChange,
     windowEndMs: queryState.state.endMs,
     windowStartMs: queryState.state.startMs,
     onSeriesClick: handleSeriesClick,
+    onFocusAndAddPlayer: handleFocusAndAddPlayer,
+    onFocusAndIsolatePlayer: handleFocusAndIsolatePlayer,
     onWindowChange: handleWindowChange,
     showPets: userSettings.showPets,
     onShowPetsChange: handleShowPetsChange,

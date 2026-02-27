@@ -14,6 +14,7 @@ export interface UseFightQueryStateResult {
   state: FightQueryState
   setPlayers: (players: number[]) => void
   setFocusId: (focusId: number | null) => void
+  setFocusAndPlayers: (focusId: number | null, players: number[]) => void
   setTarget: (target: FightTarget | null) => void
   setWindow: (startMs: number | null, endMs: number | null) => void
 }
@@ -81,6 +82,18 @@ export function useFightQueryState({
     [setSearchParams],
   )
 
+  const setFocusAndPlayers = useCallback(
+    (focusId: number | null, players: number[]): void => {
+      setSearchParams((currentSearchParams) =>
+        applyFightQueryState(currentSearchParams, {
+          focusId,
+          players,
+        }),
+      )
+    },
+    [setSearchParams],
+  )
+
   const setWindow = useCallback(
     (startMs: number | null, endMs: number | null): void => {
       setSearchParams((currentSearchParams) =>
@@ -95,9 +108,10 @@ export function useFightQueryState({
       state,
       setPlayers,
       setFocusId,
+      setFocusAndPlayers,
       setTarget,
       setWindow,
     }),
-    [setFocusId, setPlayers, setTarget, setWindow, state],
+    [setFocusAndPlayers, setFocusId, setPlayers, setTarget, setWindow, state],
   )
 }

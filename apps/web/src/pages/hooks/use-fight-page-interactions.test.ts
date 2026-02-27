@@ -31,6 +31,7 @@ function createQueryState({
 } = {}) {
   return {
     state,
+    setFocusAndPlayers: vi.fn(),
     setFocusId: vi.fn(),
     setPlayers: vi.fn(),
     setTarget: vi.fn(),
@@ -77,6 +78,50 @@ describe('useFightPageInteractions', () => {
     expect(queryState.setPlayers).toHaveBeenCalledWith([1])
   })
 
+  it('adds focused player to current filtered players list', () => {
+    const queryState = createQueryState({
+      state: createQueryStateState({
+        players: [1],
+      }),
+    })
+
+    const { result } = renderHook(() =>
+      useFightPageInteractions({
+        queryState,
+        updateUserSettings: vi.fn().mockResolvedValue(undefined),
+        validPlayerIds: new Set([1, 2, 3]),
+      }),
+    )
+
+    act(() => {
+      result.current.handleFocusAndAddPlayer(2)
+    })
+
+    expect(queryState.setFocusAndPlayers).toHaveBeenCalledWith(2, [1, 2])
+  })
+
+  it('keeps all players visible when adding from unfiltered state', () => {
+    const queryState = createQueryState({
+      state: createQueryStateState({
+        players: [],
+      }),
+    })
+
+    const { result } = renderHook(() =>
+      useFightPageInteractions({
+        queryState,
+        updateUserSettings: vi.fn().mockResolvedValue(undefined),
+        validPlayerIds: new Set([1, 2, 3]),
+      }),
+    )
+
+    act(() => {
+      result.current.handleFocusAndAddPlayer(2)
+    })
+
+    expect(queryState.setFocusAndPlayers).toHaveBeenCalledWith(2, [])
+  })
+
   it('forwards chart and settings interactions to query state and settings updates', () => {
     const queryState = createQueryState()
     const updateUserSettings = vi.fn().mockResolvedValue(undefined)
@@ -92,6 +137,7 @@ describe('useFightPageInteractions', () => {
     act(() => {
       result.current.handleTargetChange({ id: 99, instance: 2 })
       result.current.handleSeriesClick(7)
+      result.current.handleFocusAndIsolatePlayer(1)
       result.current.handleWindowChange(1000, 5000)
       result.current.handleShowPetsChange(true)
       result.current.handleShowEnergizeEventsChange(true)
@@ -101,6 +147,7 @@ describe('useFightPageInteractions', () => {
 
     expect(queryState.setTarget).toHaveBeenCalledWith({ id: 99, instance: 2 })
     expect(queryState.setFocusId).toHaveBeenCalledWith(7)
+    expect(queryState.setFocusAndPlayers).toHaveBeenCalledWith(1, [1])
     expect(queryState.setWindow).toHaveBeenCalledWith(1000, 5000)
     expect(updateUserSettings).toHaveBeenNthCalledWith(1, { showPets: true })
     expect(updateUserSettings).toHaveBeenNthCalledWith(2, {
