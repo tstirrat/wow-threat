@@ -15,6 +15,11 @@ export function areEqualIdLists(left: number[], right: number[]): boolean {
   return left.every((id, index) => id === right[index])
 }
 
+/** Return a stable, unique, sorted actor-id list. */
+export function normalizeIdList(ids: number[]): number[] {
+  return [...new Set(ids)].sort((left, right) => left - right)
+}
+
 export interface UseFightPageInteractionsResult {
   handleFocusAndAddPlayer: (playerId: number) => void
   handleFocusAndIsolatePlayer: (playerId: number) => void
@@ -23,6 +28,7 @@ export interface UseFightPageInteractionsResult {
   handleShowBossMeleeChange: (showBossMelee: boolean) => void
   handleShowEnergizeEventsChange: (showEnergizeEvents: boolean) => void
   handleShowPetsChange: (showPets: boolean) => void
+  handleTogglePinnedPlayer: (playerId: number) => void
   handleTargetChange: (target: { id: number; instance: number }) => void
   handleVisiblePlayerIdsChange: (visiblePlayerIds: number[]) => void
   handleWindowChange: (startMs: number | null, endMs: number | null) => void
@@ -38,6 +44,7 @@ export function useFightPageInteractions({
     UseFightQueryStateResult,
     | 'setFocusAndPlayers'
     | 'setFocusId'
+    | 'setPinnedPlayersAndPlayers'
     | 'setPlayers'
     | 'setTarget'
     | 'setWindow'
@@ -73,16 +80,14 @@ export function useFightPageInteractions({
         return
       }
 
-      const allPlayerIds = [...validPlayerIds].sort(
-        (left, right) => left - right,
-      )
+      const allPlayerIds = normalizeIdList([...validPlayerIds])
       const currentPlayers =
         queryState.state.players.length === 0
           ? allPlayerIds
-          : [...queryState.state.players].sort((left, right) => left - right)
+          : normalizeIdList(queryState.state.players)
       const nextPlayers = currentPlayers.includes(playerId)
         ? currentPlayers
-        : [...currentPlayers, playerId].sort((left, right) => left - right)
+        : normalizeIdList([...currentPlayers, playerId])
       const normalizedNextPlayers = areEqualIdLists(nextPlayers, allPlayerIds)
         ? []
         : nextPlayers
@@ -94,21 +99,51 @@ export function useFightPageInteractions({
 
   const handleVisiblePlayerIdsChange = useCallback(
     (visiblePlayerIds: number[]): void => {
-      const allPlayerIds = [...validPlayerIds].sort(
-        (left, right) => left - right,
-      )
-      const nextPlayers = areEqualIdLists(visiblePlayerIds, allPlayerIds)
-        ? []
-        : visiblePlayerIds
+      const pinnedPlayerIds = normalizeIdList(queryState.state.pinnedPlayers)
+      if (pinnedPlayerIds.length > 0) {
+        const currentPlayers = normalizeIdList(queryState.state.players)
+        if (!areEqualIdLists(currentPlayers, pinnedPlayerIds)) {
+          queryState.setPlayers(pinnedPlayerIds)
+        }
+        return
+      }
 
-      const currentPlayers = [...queryState.state.players].sort(
-        (left, right) => left - right,
+      const allPlayerIds = normalizeIdList([...validPlayerIds])
+      const normalizedVisiblePlayerIds = normalizeIdList(visiblePlayerIds)
+      const nextPlayers = areEqualIdLists(
+        normalizedVisiblePlayerIds,
+        allPlayerIds,
       )
+        ? []
+        : normalizedVisiblePlayerIds
+
+      const currentPlayers = normalizeIdList(queryState.state.players)
       if (areEqualIdLists(currentPlayers, nextPlayers)) {
         return
       }
 
       queryState.setPlayers(nextPlayers)
+    },
+    [queryState, validPlayerIds],
+  )
+
+  const handleTogglePinnedPlayer = useCallback(
+    (playerId: number): void => {
+      if (!validPlayerIds.has(playerId)) {
+        return
+      }
+
+      const currentPinnedPlayerIds = normalizeIdList(
+        queryState.state.pinnedPlayers.filter((id) => validPlayerIds.has(id)),
+      )
+      const nextPinnedPlayerIds = currentPinnedPlayerIds.includes(playerId)
+        ? currentPinnedPlayerIds.filter((id) => id !== playerId)
+        : normalizeIdList([...currentPinnedPlayerIds, playerId])
+
+      queryState.setPinnedPlayersAndPlayers(
+        nextPinnedPlayerIds,
+        nextPinnedPlayerIds.length > 0 ? nextPinnedPlayerIds : [],
+      )
     },
     [queryState, validPlayerIds],
   )
@@ -164,6 +199,7 @@ export function useFightPageInteractions({
     handleShowBossMeleeChange,
     handleShowEnergizeEventsChange,
     handleShowPetsChange,
+    handleTogglePinnedPlayer,
     handleTargetChange,
     handleVisiblePlayerIdsChange,
     handleWindowChange,

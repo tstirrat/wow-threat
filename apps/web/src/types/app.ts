@@ -75,6 +75,7 @@ export interface WowheadLinksConfig {
 
 export interface FightQueryState {
   players: number[]
+  pinnedPlayers: number[]
   focusId: number | null
   targetId: number | null
   targetInstance: number | null

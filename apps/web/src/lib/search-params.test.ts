@@ -50,6 +50,7 @@ describe('search-params', () => {
   it('resolves fight query state with fallback behavior', () => {
     const params = new URLSearchParams({
       players: '1,2,999',
+      pinnedPlayers: '1,3,1',
       focusId: '2',
       targetId: '20',
       startMs: '100',
@@ -66,6 +67,7 @@ describe('search-params', () => {
       }),
     ).toEqual({
       players: [1, 2],
+      pinnedPlayers: [1],
       focusId: 2,
       targetId: 20,
       targetInstance: 0,
@@ -90,6 +92,7 @@ describe('search-params', () => {
       }),
     ).toEqual({
       players: [1],
+      pinnedPlayers: [],
       focusId: 5,
       targetId: null,
       targetInstance: null,
@@ -101,6 +104,7 @@ describe('search-params', () => {
   it('applies fight query state updates', () => {
     const next = applyFightQueryState(new URLSearchParams(), {
       players: [1, 2],
+      pinnedPlayers: [2, 1, 2],
       focusId: 1,
       targetId: 99,
       targetInstance: 2,
@@ -109,10 +113,35 @@ describe('search-params', () => {
     })
 
     expect(next.toString()).toContain('players=1%2C2')
+    expect(next.toString()).toContain('pinnedPlayers=1%2C2')
     expect(next.toString()).toContain('focusId=1')
     expect(next.toString()).toContain('targetId=99')
     expect(next.toString()).toContain('targetInstance=2')
     expect(next.toString()).toContain('startMs=10')
     expect(next.toString()).toContain('endMs=80')
+  })
+
+  it('falls back to pinned players when players is missing', () => {
+    const params = new URLSearchParams({
+      pinnedPlayers: '3,1,3',
+    })
+
+    expect(
+      resolveFightQueryState({
+        searchParams: params,
+        validPlayerIds: new Set([1, 2, 3]),
+        validActorIds: new Set([1, 2, 3]),
+        validTargetKeys: new Set(),
+        maxDurationMs: 1000,
+      }),
+    ).toEqual({
+      players: [1, 3],
+      pinnedPlayers: [1, 3],
+      focusId: null,
+      targetId: null,
+      targetInstance: null,
+      startMs: null,
+      endMs: null,
+    })
   })
 })

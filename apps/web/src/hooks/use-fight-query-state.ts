@@ -13,6 +13,11 @@ import type { FightQueryState, FightTarget } from '../types/app'
 export interface UseFightQueryStateResult {
   state: FightQueryState
   setPlayers: (players: number[]) => void
+  setPinnedPlayers: (pinnedPlayers: number[]) => void
+  setPinnedPlayersAndPlayers: (
+    pinnedPlayers: number[],
+    players: number[],
+  ) => void
   setFocusId: (focusId: number | null) => void
   setFocusAndPlayers: (focusId: number | null, players: number[]) => void
   setTarget: (target: FightTarget | null) => void
@@ -56,6 +61,27 @@ export function useFightQueryState({
     (players: number[]): void => {
       setSearchParams((currentSearchParams) =>
         applyFightQueryState(currentSearchParams, { players }),
+      )
+    },
+    [setSearchParams],
+  )
+
+  const setPinnedPlayers = useCallback(
+    (pinnedPlayers: number[]): void => {
+      setSearchParams((currentSearchParams) =>
+        applyFightQueryState(currentSearchParams, { pinnedPlayers }),
+      )
+    },
+    [setSearchParams],
+  )
+
+  const setPinnedPlayersAndPlayers = useCallback(
+    (pinnedPlayers: number[], players: number[]): void => {
+      setSearchParams((currentSearchParams) =>
+        applyFightQueryState(currentSearchParams, {
+          pinnedPlayers,
+          players,
+        }),
       )
     },
     [setSearchParams],
@@ -107,11 +133,22 @@ export function useFightQueryState({
     () => ({
       state,
       setPlayers,
+      setPinnedPlayers,
+      setPinnedPlayersAndPlayers,
       setFocusId,
       setFocusAndPlayers,
       setTarget,
       setWindow,
     }),
-    [setFocusAndPlayers, setFocusId, setPlayers, setTarget, setWindow, state],
+    [
+      setFocusAndPlayers,
+      setFocusId,
+      setPinnedPlayers,
+      setPinnedPlayersAndPlayers,
+      setPlayers,
+      setTarget,
+      setWindow,
+      state,
+    ],
   )
 }

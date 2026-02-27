@@ -19,7 +19,7 @@
 - [ ] WEB-017: Fuzzy target selector (t)
 - [ ] WEB-018: Fuzzy fight selector (f?)
 - [ ] WEB-019: Fuzzy fight selector (f?)
-- [ ] WEB-020: Lock players when switching fights with a button (l key?)
+- [x] WEB-020: Lock players when switching fights with a button (l key?)
 - [ ] WEB-021: Keyboard shortcut for filter to tanks only (maybe cycle tanks, healers, everyone)
 - [ ] WEB-022: Show boss toggles through: off -> melee -> all damage events
 - [x] WEB-023: Toggle-able fixate bands

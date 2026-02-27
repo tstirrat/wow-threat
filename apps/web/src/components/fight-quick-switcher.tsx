@@ -11,6 +11,7 @@ export type FightQuickSwitcherProps = {
   reportId: string
   fights: ReportFightSummary[]
   selectedFightId: number | null
+  pinnedPlayerIds?: number[]
 }
 
 /** Render boss-kill quick links in report order. */
@@ -18,8 +19,12 @@ export const FightQuickSwitcher: FC<FightQuickSwitcherProps> = ({
   reportId,
   fights,
   selectedFightId,
+  pinnedPlayerIds = [],
 }) => {
   const bossKillFights = buildBossKillNavigationFights(fights)
+  const pinnedPlayers = [...new Set(pinnedPlayerIds)].sort(
+    (left, right) => left - right,
+  )
 
   return (
     <nav aria-label="Fight quick switch">
@@ -27,6 +32,12 @@ export const FightQuickSwitcher: FC<FightQuickSwitcherProps> = ({
         <div className="flex w-full gap-1 overflow-x-auto">
           {bossKillFights.map((fight) => {
             const isCurrentFight = fight.id === selectedFightId
+            const searchParams = new URLSearchParams()
+            if (pinnedPlayers.length > 0) {
+              const pinnedPlayerParam = pinnedPlayers.join(',')
+              searchParams.set('pinnedPlayers', pinnedPlayerParam)
+            }
+            const search = searchParams.toString()
 
             return (
               <Link
@@ -37,7 +48,7 @@ export const FightQuickSwitcher: FC<FightQuickSwitcherProps> = ({
                     : 'text-foreground/60 hover:text-foreground',
                 ].join(' ')}
                 key={fight.id}
-                to={`/report/${reportId}/fight/${fight.id}`}
+                to={`/report/${reportId}/fight/${fight.id}${search.length > 0 ? `?${search}` : ''}`}
               >
                 {fight.name}
               </Link>

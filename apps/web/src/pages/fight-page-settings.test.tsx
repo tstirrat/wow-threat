@@ -69,7 +69,10 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       },
     })
     useFightQueryStateMock.mockReturnValue({
-      setFocus: vi.fn(),
+      setFocusAndPlayers: vi.fn(),
+      setFocusId: vi.fn(),
+      setPinnedPlayers: vi.fn(),
+      setPinnedPlayersAndPlayers: vi.fn(),
       setPlayers: vi.fn(),
       setTarget: vi.fn(),
       setWindow: vi.fn(),
@@ -77,6 +80,7 @@ describe('FightPage inferThreatReduction startup behavior', () => {
         endMs: null,
         focusId: null,
         players: [],
+        pinnedPlayers: [],
         startMs: null,
         targetId: null,
         targetInstance: null,

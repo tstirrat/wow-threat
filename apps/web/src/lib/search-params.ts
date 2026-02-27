@@ -24,6 +24,10 @@ export function parsePlayersParam(raw: string | null): number[] {
     .filter((id) => Number.isFinite(id))
 }
 
+function normalizePlayerIds(playerIds: number[]): number[] {
+  return [...new Set(playerIds)].sort((left, right) => left - right)
+}
+
 /** Parse a target ID and ensure it exists in the valid target set. */
 export function parseTargetIdParam(
   raw: string | null,
@@ -95,9 +99,18 @@ export function resolveFightQueryState({
   validTargetKeys: Set<string>
   maxDurationMs: number
 }): FightQueryState {
-  const players = parsePlayersParam(searchParams.get('players')).filter((id) =>
-    validPlayerIds.has(id),
+  const players = normalizePlayerIds(
+    parsePlayersParam(searchParams.get('players')).filter((id) =>
+      validPlayerIds.has(id),
+    ),
   )
+  const pinnedPlayers = normalizePlayerIds(
+    parsePlayersParam(searchParams.get('pinnedPlayers')).filter((id) =>
+      validPlayerIds.has(id),
+    ),
+  )
+  const resolvedPlayers =
+    players.length > 0 || pinnedPlayers.length === 0 ? players : pinnedPlayers
   const parsedFocusId = parseInteger(searchParams.get('focusId'))
   const focusId =
     parsedFocusId !== null && validActorIds.has(parsedFocusId)
@@ -115,7 +128,8 @@ export function resolveFightQueryState({
   )
 
   return {
-    players,
+    players: resolvedPlayers,
+    pinnedPlayers,
     focusId,
     targetId: parsedTargetSelection?.targetId ?? null,
     targetInstance: parsedTargetSelection?.targetInstance ?? null,
@@ -136,6 +150,17 @@ export function applyFightQueryState(
       next.delete('players')
     } else {
       next.set('players', state.players.join(','))
+    }
+  }
+
+  if (state.pinnedPlayers !== undefined) {
+    if (state.pinnedPlayers.length === 0) {
+      next.delete('pinnedPlayers')
+    } else {
+      next.set(
+        'pinnedPlayers',
+        normalizePlayerIds(state.pinnedPlayers).join(','),
+      )
     }
   }
 

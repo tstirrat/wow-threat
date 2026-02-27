@@ -68,6 +68,13 @@ export class ThreatChartObject {
     })
   }
 
+  legendPin(name: string): Locator {
+    return this.legendRoot().getByRole('button', {
+      name: `Toggle pin ${name}`,
+      exact: true,
+    })
+  }
+
   legendListItem(name: string): Locator {
     return this.legendToggle(name).locator('xpath=ancestor::li[1]')
   }
@@ -117,13 +124,20 @@ export class ThreatChartObject {
     await this.legendFocus(name).click()
   }
 
+  async toggleLegendPin(name: string): Promise<void> {
+    await this.legendPin(name).click()
+  }
+
   async legendToggleLabels(): Promise<string[]> {
     return this.legendRoot()
       .locator('button[aria-label^="Toggle "]')
       .evaluateAll((elements) =>
         elements
           .map((element) => element.getAttribute('aria-label') ?? '')
-          .filter((label) => label.startsWith('Toggle '))
+          .filter(
+            (label) =>
+              label.startsWith('Toggle ') && !label.startsWith('Toggle pin '),
+          )
           .map((label) => label.replace('Toggle ', '')),
       )
   }

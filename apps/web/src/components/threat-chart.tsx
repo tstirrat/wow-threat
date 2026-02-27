@@ -33,6 +33,7 @@ import { ThreatChartPlayerSearch } from './threat-chart-player-search'
 export type ThreatChartProps = {
   series: ThreatSeries[]
   selectedPlayerIds?: number[]
+  pinnedPlayerIds?: number[]
   focusedActorId?: number | null
   renderer?: 'canvas' | 'svg'
   windowStartMs: number | null
@@ -40,6 +41,7 @@ export type ThreatChartProps = {
   onWindowChange: (startMs: number | null, endMs: number | null) => void
   onFocusAndAddPlayer: (playerId: number) => void
   onFocusAndIsolatePlayer: (playerId: number) => void
+  onTogglePinnedPlayer: (playerId: number) => void
   onSeriesClick: (actorId: number) => void
   onVisiblePlayerIdsChange?: (playerIds: number[]) => void
   showPets: boolean
@@ -55,6 +57,7 @@ export type ThreatChartProps = {
 export const ThreatChart: FC<ThreatChartProps> = ({
   series,
   selectedPlayerIds = [],
+  pinnedPlayerIds = [],
   focusedActorId = null,
   renderer = 'canvas',
   windowStartMs,
@@ -62,6 +65,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   onWindowChange,
   onFocusAndAddPlayer,
   onFocusAndIsolatePlayer,
+  onTogglePinnedPlayer,
   onSeriesClick,
   onVisiblePlayerIdsChange,
   showPets,
@@ -393,6 +397,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
           isActorVisible={isActorVisible}
           onActorClick={handleLegendItemClick}
           onActorFocus={onSeriesClick}
+          pinnedPlayerIds={pinnedPlayerIds}
+          onTogglePinnedPlayer={onTogglePinnedPlayer}
           showPets={showPets}
           onShowPetsChange={onShowPetsChange}
         />

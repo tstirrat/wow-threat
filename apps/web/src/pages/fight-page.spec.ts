@@ -183,7 +183,39 @@ test.describe('fight page', () => {
     await expect(fightPage.chart.showFixateBandsCheckbox()).not.toBeChecked()
   })
 
-  test('persists show pets, show energize, show fixate areas, show boss damage, and infer threat reduction toggles across fight switches', async ({
+  test('pins players and keeps them on quick switch fight links', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(svgFightUrl)
+
+    await fightPage.chart.legendListItem('Aegistank').hover()
+    await fightPage.chart.toggleLegendPin('Aegistank')
+    await expect(fightPage.chart.legendPin('Aegistank')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    await expect.poll(() => fightPage.searchParam('players')).toBe('1')
+    await expect.poll(() => fightPage.searchParam('pinnedPlayers')).toBe('1')
+
+    await expect(fightPage.quickSwitch.fightLink('Grobbulus')).toHaveAttribute(
+      'href',
+      `/report/${e2eReportId}/fight/30?players=1&pinnedPlayers=1`,
+    )
+    await fightPage.quickSwitch.clickFight('Grobbulus')
+    await expect(page).toHaveURL(
+      new RegExp(
+        `/report/${e2eReportId}/fight/30\\?players=1&pinnedPlayers=1$`,
+      ),
+    )
+    await expect(fightPage.chart.legendPin('Aegistank')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+  })
+
+  test('persists show pets, show energize, show boss damage, and infer threat reduction toggles across fight switches', async ({
     page,
   }) => {
     const fightPage = new FightPageObject(page)

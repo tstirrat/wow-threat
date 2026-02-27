@@ -12,6 +12,7 @@ import { useReportData } from '../hooks/use-report-data'
 import { useReportIndex } from '../hooks/use-report-index'
 import { useUserSettings } from '../hooks/use-user-settings'
 import { buildBossKillNavigationFights } from '../lib/fight-navigation'
+import { parsePlayersParam } from '../lib/search-params'
 import { resolveCurrentThreatConfig } from '../lib/threat-config'
 import type { WarcraftLogsHost } from '../types/app'
 import type { ReportRouteContext } from './report-layout-context'
@@ -28,6 +29,9 @@ export const ReportLayout: FC = () => {
 
   const location = useLocation()
   const locationState = location.state as LocationState | null
+  const pinnedPlayerIds = parsePlayersParam(
+    new URLSearchParams(location.search).get('pinnedPlayers'),
+  )
 
   const { addRecentReport, resolveReportHost } = useReportIndex()
   const {
@@ -119,6 +123,7 @@ export const ReportLayout: FC = () => {
       />
       <FightQuickSwitcher
         fights={data.fights}
+        pinnedPlayerIds={pinnedPlayerIds}
         reportId={reportId}
         selectedFightId={selectedFightId}
       />
