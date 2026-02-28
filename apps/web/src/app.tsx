@@ -3,6 +3,7 @@
  */
 import { AuthProvider } from '@/auth/auth-provider'
 import { ThemeProvider } from '@/components/theme-provider'
+import { ReportIndexProvider } from '@/hooks/use-report-index'
 import { UserSettingsProvider } from '@/hooks/use-user-settings'
 import { QueryClientProvider } from '@tanstack/react-query'
 import type { FC } from 'react'
@@ -19,11 +20,13 @@ export const App: FC = () => {
     <AuthProvider>
       <UserSettingsProvider>
         <QueryClientProvider client={queryClient}>
-          <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-            <HotkeysProvider>
-              <RouterProvider router={router} />
-            </HotkeysProvider>
-          </ThemeProvider>
+          <ReportIndexProvider>
+            <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+              <HotkeysProvider>
+                <RouterProvider router={router} />
+              </HotkeysProvider>
+            </ThemeProvider>
+          </ReportIndexProvider>
         </QueryClientProvider>
       </UserSettingsProvider>
     </AuthProvider>

@@ -8,9 +8,8 @@ import { ErrorState } from '../components/error-state'
 import { FightQuickSwitcher } from '../components/fight-quick-switcher'
 import { LoadingState } from '../components/loading-state'
 import { ReportSummaryHeader } from '../components/report-summary-header'
-import { useRecentReports } from '../hooks/use-recent-reports'
 import { useReportData } from '../hooks/use-report-data'
-import { useReportHost } from '../hooks/use-report-host'
+import { useReportIndex } from '../hooks/use-report-index'
 import { useUserSettings } from '../hooks/use-user-settings'
 import { buildBossKillNavigationFights } from '../lib/fight-navigation'
 import { resolveCurrentThreatConfig } from '../lib/threat-config'
@@ -30,14 +29,14 @@ export const ReportLayout: FC = () => {
   const location = useLocation()
   const locationState = location.state as LocationState | null
 
-  const { recentReports, addRecentReport } = useRecentReports()
+  const { addRecentReport, resolveReportHost } = useReportIndex()
   const {
     isLoading: isUserSettingsLoading,
     isSaving: isSavingUserSettings,
     isReportStarred,
     toggleStarredReport,
   } = useUserSettings()
-  const fallbackHost = useReportHost(reportId, recentReports)
+  const fallbackHost = resolveReportHost(reportId)
   const reportHost = locationState?.host ?? fallbackHost
   const { data, isLoading, error } = useReportData(reportId)
 

@@ -15,10 +15,18 @@ import type { RecentReportSummary } from '../types/api'
 
 const defaultRecentReportsLimit = 10
 
+export interface UseUserRecentReportsOptions {
+  enabled?: boolean
+  staleTimeMs?: number
+}
+
 export interface UseUserRecentReportsResult {
   reports: RecentReportSummary[]
   isLoading: boolean
   isRefreshing: boolean
+  hasFetched: boolean
+  hasFetchedSuccessfully: boolean
+  dataUpdatedAt: number
   error: Error | null
   refresh: () => Promise<void>
 }
@@ -26,10 +34,12 @@ export interface UseUserRecentReportsResult {
 /** Fetch recent reports for the signed-in Warcraft Logs account. */
 export function useUserRecentReports(
   limit = defaultRecentReportsLimit,
+  options: UseUserRecentReportsOptions = {},
 ): UseUserRecentReportsResult {
   const { authEnabled, user } = useAuth()
   const uid = user?.uid ?? null
   const cached = uid ? loadAccountRecentReportsCache(uid) : null
+  const isEnabled = options.enabled ?? true
 
   const query = useQuery({
     queryKey: recentReportsQueryKey(limit, uid),
@@ -37,8 +47,8 @@ export function useUserRecentReports(
       const response = await getRecentReports(limit)
       return response.reports
     },
-    enabled: authEnabled && Boolean(uid),
-    staleTime: accountRecentReportsCacheTtlMs,
+    enabled: isEnabled && authEnabled && Boolean(uid),
+    staleTime: options.staleTimeMs ?? accountRecentReportsCacheTtlMs,
     initialData: cached?.reports,
     initialDataUpdatedAt: cached?.fetchedAtMs,
   })
@@ -55,6 +65,9 @@ export function useUserRecentReports(
     reports: query.data ?? [],
     isLoading: query.isLoading,
     isRefreshing: query.isFetching,
+    hasFetched: query.isFetched,
+    hasFetchedSuccessfully: query.isSuccess,
+    dataUpdatedAt: query.dataUpdatedAt,
     error: query.error,
     refresh: async () => {
       await query.refetch()

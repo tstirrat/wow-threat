@@ -17,11 +17,19 @@ import { useUserSettings } from './use-user-settings'
 
 const defaultGuildReportsLimit = 10
 
+export interface UseStarredGuildReportsOptions {
+  enabled?: boolean
+  staleTimeMs?: number
+}
+
 export interface UseStarredGuildReportsResult {
   reports: StarredGuildReportEntry[]
   trackedGuildCount: number
   isLoading: boolean
   isRefreshing: boolean
+  hasFetched: boolean
+  hasFetchedSuccessfully: boolean
+  dataUpdatedAt: number
   error: Error | null
   refresh: () => Promise<void>
 }
@@ -29,9 +37,11 @@ export interface UseStarredGuildReportsResult {
 /** Fetch and cache merged guild reports for all starred guild entities. */
 export function useStarredGuildReports(
   limit = defaultGuildReportsLimit,
+  options: UseStarredGuildReportsOptions = {},
 ): UseStarredGuildReportsResult {
   const { authEnabled, user } = useAuth()
   const uid = user?.uid ?? null
+  const isEnabled = options.enabled ?? true
   const { settings } = useUserSettings()
   const starredGuilds = useMemo(
     () =>
@@ -99,8 +109,9 @@ export function useStarredGuildReports(
 
       return Array.from(dedupedReports.values()).slice(0, limit)
     },
-    enabled: authEnabled && Boolean(uid) && starredGuilds.length > 0,
-    staleTime: starredGuildReportsCacheTtlMs,
+    enabled:
+      isEnabled && authEnabled && Boolean(uid) && starredGuilds.length > 0,
+    staleTime: options.staleTimeMs ?? starredGuildReportsCacheTtlMs,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     initialData: cached?.reports,
@@ -126,6 +137,9 @@ export function useStarredGuildReports(
     trackedGuildCount: starredGuilds.length,
     isLoading: query.isLoading,
     isRefreshing: query.isFetching,
+    hasFetched: query.isFetched,
+    hasFetchedSuccessfully: query.isSuccess,
+    dataUpdatedAt: query.dataUpdatedAt,
     error: query.error,
     refresh: async () => {
       await query.refetch()

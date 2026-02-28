@@ -14,9 +14,7 @@ import { StarredReportsList } from '../components/starred-reports-list'
 import { Alert, AlertDescription } from '../components/ui/alert'
 import { Button } from '../components/ui/button'
 import { Kbd, KbdGroup } from '../components/ui/kbd'
-import { useRecentReports } from '../hooks/use-recent-reports'
-import { useStarredGuildReports } from '../hooks/use-starred-guild-reports'
-import { useUserRecentReports } from '../hooks/use-user-recent-reports'
+import { useReportIndex } from '../hooks/use-report-index'
 import { useUserSettings } from '../hooks/use-user-settings'
 import { exampleReports } from '../lib/constants'
 import { superKey } from '../lib/keyboard-shortcut'
@@ -25,23 +23,27 @@ const reportHintDismissedStorageKey = 'landing-report-hint-dismissed'
 
 export const LandingPage: FC = () => {
   const { authEnabled, user } = useAuth()
-  const { recentReports, removeRecentReport } = useRecentReports()
+  const {
+    recentReports,
+    removeRecentReport,
+    personalReports: accountRecentReports,
+    guildReports: starredGuildReports,
+    isLoadingPersonalReports: isLoadingAccountReports,
+    isRefreshingPersonalReports: isRefreshingAccountReports,
+    personalReportsError: accountRecentReportsError,
+    isLoadingGuildReports,
+    isRefreshingGuildReports,
+    guildReportsError: starredGuildReportsError,
+    refreshPersonalReports: refreshAccountReports,
+    refreshGuildReports,
+  } = useReportIndex()
   const { settings, toggleStarredReport, unstarReport } = useUserSettings()
-  const {
-    reports: accountRecentReports,
-    isLoading: isLoadingAccountReports,
-    isRefreshing: isRefreshingAccountReports,
-    error: accountRecentReportsError,
-    refresh: refreshAccountReports,
-  } = useUserRecentReports(10)
-  const {
-    reports: starredGuildReports,
-    trackedGuildCount,
-    isLoading: isLoadingGuildReports,
-    isRefreshing: isRefreshingGuildReports,
-    error: starredGuildReportsError,
-    refresh: refreshGuildReports,
-  } = useStarredGuildReports(10)
+  const trackedGuildCount = useMemo(
+    () =>
+      settings.starredEntities.filter((entry) => entry.entityType === 'guild')
+        .length,
+    [settings.starredEntities],
+  )
   const shouldShowAccountReports = authEnabled && Boolean(user)
   const starredReportIds = useMemo(
     () => new Set(settings.starredReports.map((report) => report.reportId)),

@@ -46,3 +46,4 @@ coverage/
 
 # Playwright
 packages/threat-config/src/test/fixtures/**/*.txt
+output/

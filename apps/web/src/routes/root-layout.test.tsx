@@ -13,6 +13,8 @@ import { RootLayout } from './root-layout'
 const useAuthMock = vi.fn()
 const useWclRateLimitMock = vi.fn()
 const addRecentReportMock = vi.fn()
+const searchReportsMock = vi.fn()
+const useReportIndexMock = vi.fn()
 const getReportMock = vi.fn()
 const useUserSettingsMock = vi.fn()
 
@@ -22,12 +24,8 @@ vi.mock('@/auth/auth-provider', () => ({
 vi.mock('@/hooks/use-wcl-rate-limit', () => ({
   useWclRateLimit: () => useWclRateLimitMock(),
 }))
-vi.mock('@/hooks/use-recent-reports', () => ({
-  useRecentReports: () => ({
-    addRecentReport: addRecentReportMock,
-    recentReports: [],
-    removeRecentReport: vi.fn(),
-  }),
+vi.mock('@/hooks/use-report-index', () => ({
+  useReportIndex: () => useReportIndexMock(),
 }))
 vi.mock('@/hooks/use-user-settings', () => ({
   useUserSettings: () => useUserSettingsMock(),
@@ -85,6 +83,11 @@ function renderLayout(pathname = '/'): void {
 
 describe('RootLayout', () => {
   beforeEach(() => {
+    searchReportsMock.mockReturnValue([])
+    useReportIndexMock.mockReturnValue({
+      addRecentReport: addRecentReportMock,
+      searchReports: searchReportsMock,
+    })
     useUserSettingsMock.mockReturnValue({
       settings: {
         showPets: false,

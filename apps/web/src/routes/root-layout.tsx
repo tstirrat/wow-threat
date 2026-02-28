@@ -23,7 +23,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { useRecentReports } from '@/hooks/use-recent-reports'
+import { useReportIndex } from '@/hooks/use-report-index'
 import { useUserSettings } from '@/hooks/use-user-settings'
 import { useWclRateLimit } from '@/hooks/use-wcl-rate-limit'
 import { defaultHost } from '@/lib/constants'
@@ -38,7 +38,7 @@ import {
   Search,
   Star,
 } from 'lucide-react'
-import { type FC, useEffect, useRef, useState } from 'react'
+import { type FC, useEffect, useMemo, useRef, useState } from 'react'
 import { useHotkeys, useHotkeysContext } from 'react-hotkeys-hook'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
@@ -72,12 +72,13 @@ export const RootLayout: FC = () => {
   )
   const [isKeyboardOverlayOpen, setIsKeyboardOverlayOpen] = useState(false)
   const [isReportInputOpen, setIsReportInputOpen] = useState(false)
+  const [reportInputValue, setReportInputValue] = useState('')
   const reportInputRef = useRef<HTMLInputElement>(null)
   const { hotkeys } = useHotkeysContext()
   const navigate = useNavigate()
   const location = useLocation()
   const isLandingPage = location.pathname === '/'
-  const { addRecentReport } = useRecentReports()
+  const { addRecentReport, searchReports } = useReportIndex()
   const { settings, isLoading: isUserSettingsLoading } = useUserSettings()
   const {
     authEnabled,
@@ -161,6 +162,10 @@ export const RootLayout: FC = () => {
 
   const shouldShowAuthGate = authEnabled && !isInitializing && !user
   const isReportInputVisible = isLandingPage || isReportInputOpen
+  const reportSuggestions = useMemo(
+    () => (isReportInputVisible ? searchReports(reportInputValue, 20) : []),
+    [isReportInputVisible, reportInputValue, searchReports],
+  )
   const isSignInInProgress = shouldShowAuthGate && isBusy
   const shouldShowStarredDropdown = Boolean(user) && !isLandingPage
   const displayUserName =
@@ -180,6 +185,7 @@ export const RootLayout: FC = () => {
       return
     }
 
+    setReportInputValue('')
     setIsSubmittingReport(true)
     try {
       const report = await getReport(parsed.reportId)
@@ -251,7 +257,7 @@ export const RootLayout: FC = () => {
               data-testid="report-input-container"
               className={`overflow-hidden transition-all duration-200 ${
                 isReportInputVisible
-                  ? 'max-w-xl opacity-100'
+                  ? 'max-w-[500px] opacity-100'
                   : 'max-w-0 opacity-0 pointer-events-none'
               }`}
             >
@@ -261,10 +267,22 @@ export const RootLayout: FC = () => {
                 }`}
               >
                 <ReportUrlForm
-                  className="flex w-full items-end gap-2"
+                  className="flex w-[460px] max-w-[calc(100vw-7rem)] items-end gap-2"
                   inputRef={reportInputRef}
                   isSubmitting={isSubmittingReport}
                   inputAriaLabel="Open report"
+                  onSelectSuggestion={(suggestion) => {
+                    setReportErrorMessage(null)
+                    setReportInputValue('')
+                    navigate(`/report/${suggestion.reportId}`, {
+                      state: {
+                        host: suggestion.sourceHost,
+                      },
+                    })
+                    if (!isLandingPage) {
+                      setIsReportInputOpen(false)
+                    }
+                  }}
                   onInputBlur={() => {
                     if (!isLandingPage) {
                       setIsReportInputOpen(false)
@@ -276,7 +294,10 @@ export const RootLayout: FC = () => {
                     }
                   }}
                   placeholder={`Paste Warcraft Logs report URL or report ID (${superKey()}+O)`}
+                  suggestions={reportSuggestions}
                   submitIconOnly={!isLandingPage}
+                  value={reportInputValue}
+                  onValueChange={setReportInputValue}
                   onSubmit={(input) => {
                     void handleReportSubmit(input)
                   }}

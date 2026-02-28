@@ -12,7 +12,7 @@
 - [x] WEB-010: Allow entering a new url from anywhere, perhaps in the nav header
 - [x] WEB-011: Make the home link more obvious, perhaps a home icon.
 - [ ] WEB-012: Add Starred, Guild lists at top,
-- [ ] WEB-013: Add mod+o fuzzy matches recents/starred/guild reports
+- [x] WEB-013: Add mod+o fuzzy matches recents/starred/guild reports
 - [ ] WEB-014: Focused player links back to WCL
 - [ ] WEB-015: isolate key (i) toggles between isolated and previous selected players
 - [ ] WEB-016: zoom key (z) toggles between no zoom an previous zoom
