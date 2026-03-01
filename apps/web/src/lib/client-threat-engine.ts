@@ -61,6 +61,24 @@ function formatEventCount(eventCount: number): string {
   return new Intl.NumberFormat().format(eventCount)
 }
 
+function toErrorDetails(error: unknown): {
+  message: string
+  name?: string
+  stack?: string
+} {
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+    }
+  }
+
+  return {
+    message: String(error),
+  }
+}
+
 function toReportFightParticipant(
   participant: ReportFightParticipant,
 ): ReportFight['enemyNPCs'][number] {
@@ -188,15 +206,26 @@ async function runThreatEngineWorker(
 
   const worker = createThreatEngineWorker()
   const requestId = createWorkerRequestId()
+  const workerStartedAt = performance.now()
   const request: ThreatEngineWorkerRequest = {
     requestId,
     payload,
   }
+  console.info('[Events] Starting threat worker request', {
+    fightId: payload.fightId,
+    inferThreatReduction: payload.inferThreatReduction,
+    rawEventCount: payload.rawEvents.length,
+    reportAbilityCount: payload.report.masterData.abilities.length,
+    reportCode: payload.report.code,
+    reportFightCount: payload.report.fights.length,
+    requestId,
+    tankActorCount: payload.tankActorIds.length,
+  })
 
   return new Promise<ThreatEngineWorkerResponse>((resolve, reject) => {
     const timeoutHandle = globalThis.setTimeout(() => {
       worker.terminate()
-      reject(new Error('Threat engine worker timed out'))
+      reject(new Error('Threat engine worker timed out after 120000ms'))
     }, 120_000)
 
     const handleAbort = (): void => {
@@ -213,14 +242,28 @@ async function runThreatEngineWorker(
       worker.terminate()
     }
 
-    const handleError = (): void => {
+    const handleError = (event: ErrorEvent): void => {
       cleanup()
-      reject(new Error('Threat engine worker failed to execute'))
+      reject(
+        new Error(
+          `Threat engine worker failed to execute: ${event.message || 'unknown error'}`,
+        ),
+      )
     }
 
-    const handleMessageError = (): void => {
+    const handleMessageError = (event: MessageEvent): void => {
       cleanup()
-      reject(new Error('Threat engine worker returned an invalid message'))
+      const messageType =
+        event.data === null
+          ? 'null'
+          : typeof event.data === 'object'
+            ? 'object'
+            : typeof event.data
+      reject(
+        new Error(
+          `Threat engine worker returned an invalid message payload (${messageType})`,
+        ),
+      )
     }
 
     const handleMessage = (
@@ -230,6 +273,12 @@ async function runThreatEngineWorker(
         return
       }
 
+      const workerElapsedMs = Math.round(performance.now() - workerStartedAt)
+      console.info('[Events] Threat worker returned response', {
+        requestId,
+        status: message.data.status,
+        workerElapsedMs,
+      })
       cleanup()
       resolve(message.data)
     }
@@ -480,10 +529,22 @@ export async function getFightEventsClientSide(params: {
     mode: preferWorker ? 'worker' : 'main-thread',
   })
   if (preferWorker) {
+    const workerAttemptStartedAt = performance.now()
     try {
       const workerResponse = await runThreatEngineWorker(workerPayload, signal)
       if (workerResponse.status === 'error') {
-        throw new Error(workerResponse.error)
+        console.warn('[Events] Threat worker returned error response', {
+          debug: workerResponse.debug,
+          error: workerResponse.error,
+          errorName: workerResponse.errorName,
+          errorStack: workerResponse.errorStack,
+          fightId,
+          reportId,
+        })
+
+        throw new Error(
+          `Threat worker returned status=error: ${workerResponse.errorName ?? 'Error'}: ${workerResponse.error}`,
+        )
       }
 
       mode = 'worker'
@@ -493,9 +554,14 @@ export async function getFightEventsClientSide(params: {
       console.warn(
         '[Events] Worker threat processing failed, falling back to main thread',
         {
-          error,
+          error: toErrorDetails(error),
+          fallbackMode: 'main-thread',
           fightId,
+          rawEventCount: rawEvents.length,
           reportId,
+          workerAttemptElapsedMs: Math.round(
+            performance.now() - workerAttemptStartedAt,
+          ),
         },
       )
       processed = processThreatEventsOnMainThread(workerPayload)

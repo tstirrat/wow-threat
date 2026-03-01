@@ -19,6 +19,11 @@ export interface ThreatEngineWorkerRequest {
 }
 
 export interface ThreatEngineWorkerSuccessResponse {
+  debug?: {
+    augmentedEventCount: number
+    processDurationMs: number
+    rawEventCount: number
+  }
   payload: {
     augmentedEvents: AugmentedEvent[]
     initialAurasByActor: Record<string, number[]>
@@ -29,7 +34,13 @@ export interface ThreatEngineWorkerSuccessResponse {
 }
 
 export interface ThreatEngineWorkerErrorResponse {
+  debug?: {
+    processDurationMs: number
+    rawEventCount: number
+  }
   error: string
+  errorName?: string
+  errorStack?: string
   requestId: string
   status: 'error'
 }

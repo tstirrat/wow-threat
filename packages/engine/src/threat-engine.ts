@@ -341,7 +341,7 @@ function processEventsWithProcessors(
         modifiedThreat: 0,
         isSplit: false,
         modifiers: [],
-        effects: bossMeleeEffects,
+        effects: toSerializableAugmentedEffects(bossMeleeEffects),
       }
       storeAugmentedEvent(
         eventIndex,
@@ -360,6 +360,8 @@ function processEventsWithProcessors(
     // Check if any interceptor wants to skip this event
     const shouldSkip = interceptorResults.some((r) => r.action === 'skip')
     if (shouldSkip) {
+      const serializableProcessorEffects =
+        toSerializableAugmentedEffects(processorEffects)
       // Create zero-threat augmented event
       const zeroCalculation: ThreatCalculation = {
         formula: '(skipped by processor)',
@@ -368,8 +370,7 @@ function processEventsWithProcessors(
         modifiedThreat: 0,
         isSplit: false,
         modifiers: [],
-        effects:
-          processorEffects.length > 0 ? [...processorEffects] : undefined,
+        effects: serializableProcessorEffects,
       }
       storeAugmentedEvent(
         eventIndex,
@@ -440,14 +441,7 @@ function processEventsWithProcessors(
       ...(stateEffect ? [stateEffect] : []),
       ...(deathMarkerEffect ? [deathMarkerEffect] : []),
     ]
-
-    if (!baseCalculation && effects.length === 0) {
-      storeAugmentedEvent(
-        eventIndex,
-        buildAugmentedEvent(event, undefined, undefined),
-      )
-      continue
-    }
+    const serializableEffects = toSerializableAugmentedEffects(effects)
 
     effects
       .filter((e) => e.type === 'installInterceptor')
@@ -455,10 +449,18 @@ function processEventsWithProcessors(
         interceptorTracker.install(effect.interceptor, event.timestamp)
       })
 
+    if (!baseCalculation && !serializableEffects) {
+      storeAugmentedEvent(
+        eventIndex,
+        buildAugmentedEvent(event, undefined, undefined),
+      )
+      continue
+    }
+
     const calculation: ThreatCalculation = baseCalculation
       ? {
           ...baseCalculation,
-          effects: effects.length > 0 ? effects : undefined,
+          effects: serializableEffects,
         }
       : {
           formula: '(effects only)',
@@ -467,7 +469,7 @@ function processEventsWithProcessors(
           modifiedThreat: 0,
           isSplit: false,
           modifiers: [],
-          effects,
+          effects: serializableEffects,
         }
 
     const changes = applyThreat(
@@ -1043,6 +1045,21 @@ function getStateKind(
     return 'invulnerable'
   }
   return undefined
+}
+
+function isSerializableAugmentedEffect(effect: ThreatEffect): boolean {
+  return effect.type !== 'installInterceptor'
+}
+
+function toSerializableAugmentedEffects(
+  effects: readonly ThreatEffect[],
+): ThreatEffect[] | undefined {
+  if (effects.length === 0) {
+    return undefined
+  }
+
+  const serializableEffects = effects.filter(isSerializableAugmentedEffect)
+  return serializableEffects.length > 0 ? serializableEffects : undefined
 }
 
 function getAbilityName(event: WCLEvent): string | undefined {

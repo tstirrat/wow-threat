@@ -2795,9 +2795,7 @@ describe('threat-engine', () => {
         config,
       })
 
-      expect(result.augmentedEvents[0]?.threat?.calculation.formula).toBe(
-        '(effects only)',
-      )
+      expect(result.augmentedEvents[0]?.threat).toBeUndefined()
       expect(result.augmentedEvents[1]?.threat?.calculation.formula).toBe(
         '(skipped by processor)',
       )
@@ -4915,9 +4913,7 @@ describe('threat-engine', () => {
 
         // First event: Misdirection cast (no threat changes)
         const misdirectionEvent = result.augmentedEvents[0]
-        expect(misdirectionEvent?.threat!.calculation.effects?.[0]?.type).toBe(
-          'installInterceptor',
-        )
+        expect(misdirectionEvent?.threat?.calculation.effects).toBeUndefined()
 
         // Second event: Damage threat goes to tank, not hunter
         const damageEvent = result.augmentedEvents[1]

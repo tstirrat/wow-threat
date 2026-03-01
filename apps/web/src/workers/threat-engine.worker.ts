@@ -63,6 +63,22 @@ function toErrorMessage(error: unknown): string {
   return String(error)
 }
 
+function toErrorName(error: unknown): string | undefined {
+  if (error instanceof Error) {
+    return error.name
+  }
+
+  return undefined
+}
+
+function toErrorStack(error: unknown): string | undefined {
+  if (error instanceof Error) {
+    return error.stack
+  }
+
+  return undefined
+}
+
 const workerContext = self as unknown as DedicatedWorkerGlobalScope
 
 workerContext.onmessage = (
@@ -70,6 +86,13 @@ workerContext.onmessage = (
 ): void => {
   const startedAt = performance.now()
   const { payload, requestId } = message.data
+  console.info('[ThreatWorker] Received request', {
+    fightId: payload.fightId,
+    inferThreatReduction: payload.inferThreatReduction,
+    rawEventCount: payload.rawEvents.length,
+    reportCode: payload.report.code,
+    requestId,
+  })
 
   try {
     const fight = payload.report.fights.find(
@@ -119,6 +142,11 @@ workerContext.onmessage = (
     const response: ThreatEngineWorkerResponse = {
       requestId,
       status: 'success',
+      debug: {
+        processDurationMs: Math.round(performance.now() - startedAt),
+        rawEventCount: payload.rawEvents.length,
+        augmentedEventCount: augmentedEvents.length,
+      },
       payload: {
         augmentedEvents,
         initialAurasByActor: serializeInitialAurasByActor(
@@ -127,13 +155,29 @@ workerContext.onmessage = (
         processDurationMs: Math.round(performance.now() - startedAt),
       },
     }
+    console.info('[ThreatWorker] Completed request', {
+      ...response.debug,
+      requestId,
+    })
     workerContext.postMessage(response)
   } catch (error) {
     const response: ThreatEngineWorkerResponse = {
       requestId,
       status: 'error',
       error: toErrorMessage(error),
+      errorName: toErrorName(error),
+      errorStack: toErrorStack(error),
+      debug: {
+        processDurationMs: Math.round(performance.now() - startedAt),
+        rawEventCount: payload.rawEvents.length,
+      },
     }
+    console.warn('[ThreatWorker] Failed request', {
+      ...response.debug,
+      error: response.error,
+      errorName: response.errorName,
+      requestId,
+    })
     workerContext.postMessage(response)
   }
 }
