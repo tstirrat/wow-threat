@@ -28,3 +28,4 @@
 - [ ] WEB-026: Clear isolate button should be near legend
 - [ ] WEB-027: Toggled players in legend should be visually more prominent
 - [ ] WEB-028: Symbol/icon for healers
+- [ ] WEB-029: Improved skeleton loading states for the chart. Chart controls (checkboxes) can render while the event/chart is loading.
