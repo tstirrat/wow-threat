@@ -36,6 +36,7 @@ export const FightQuickSwitcher: FC<FightQuickSwitcherProps> = ({
             if (pinnedPlayers.length > 0) {
               const pinnedPlayerParam = pinnedPlayers.join(',')
               searchParams.set('pinnedPlayers', pinnedPlayerParam)
+              searchParams.set('players', pinnedPlayerParam)
             }
             const search = searchParams.toString()
 

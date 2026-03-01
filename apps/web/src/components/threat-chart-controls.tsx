@@ -18,9 +18,7 @@ import {
 } from './ui/tooltip'
 
 export interface ThreatChartControlsProps {
-  showClearIsolate: boolean
   onResetZoom: () => void
-  onClearIsolate: () => void
   showFixateBands: boolean
   onShowFixateBandsChange: (showFixateBands: boolean) => void
   showEnergizeEvents: boolean
@@ -32,9 +30,7 @@ export interface ThreatChartControlsProps {
 }
 
 export const ThreatChartControls: FC<ThreatChartControlsProps> = ({
-  showClearIsolate,
   onResetZoom,
-  onClearIsolate,
   showFixateBands,
   onShowFixateBandsChange,
   showEnergizeEvents,
@@ -55,25 +51,6 @@ export const ThreatChartControls: FC<ThreatChartControlsProps> = ({
         <Button size="sm" type="button" variant="outline" onClick={onResetZoom}>
           Reset zoom
         </Button>
-        {showClearIsolate ? (
-          <Button
-            aria-label="Clear isolate"
-            size="sm"
-            type="button"
-            variant="outline"
-            onClick={onClearIsolate}
-          >
-            <span>Clear isolate</span>
-            <span
-              aria-hidden="true"
-              className="inline-flex items-center gap-1 text-xs text-muted-foreground"
-            >
-              <Kbd className="h-4 min-w-4 px-1 text-[0.55rem] leading-none">
-                C
-              </Kbd>
-            </span>
-          </Button>
-        ) : null}
         <div className="flex items-center gap-2">
           <Checkbox
             checked={showFixateBands}

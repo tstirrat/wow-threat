@@ -88,7 +88,7 @@ export class ThreatChartObject {
   }
 
   clearIsolateButton(): Locator {
-    return this.section.getByRole('button', { name: 'Clear isolate' })
+    return this.legendRoot().getByRole('button', { name: 'Clear selections' })
   }
 
   async renderer(): Promise<ChartRenderer> {

@@ -35,7 +35,7 @@ function createQueryState({
     state,
     setFocusAndPlayers: vi.fn(),
     setFocusId: vi.fn(),
-    setPinnedPlayersAndPlayers: vi.fn(),
+    setPinnedPlayers: vi.fn(),
     setPlayers: vi.fn(),
     setTarget: vi.fn(),
     setWindow: vi.fn(),
@@ -85,7 +85,7 @@ describe('useFightPageInteractions', () => {
     expect(queryState.setPlayers).toHaveBeenCalledWith([1])
   })
 
-  it('keeps pinned players in query params when legend visibility changes', () => {
+  it('updates visible players without mutating pinned players', () => {
     const queryState = createQueryState({
       state: createQueryStateState({
         pinnedPlayers: [3, 1],
@@ -105,7 +105,8 @@ describe('useFightPageInteractions', () => {
       result.current.handleVisiblePlayerIdsChange([1, 2])
     })
 
-    expect(queryState.setPlayers).not.toHaveBeenCalled()
+    expect(queryState.setPlayers).toHaveBeenCalledWith([1, 2])
+    expect(queryState.setPinnedPlayers).not.toHaveBeenCalled()
   })
 
   it('adds focused player to current filtered players list', () => {
@@ -168,6 +169,7 @@ describe('useFightPageInteractions', () => {
       result.current.handleTargetChange({ id: 99, instance: 2 })
       result.current.handleSeriesClick(7)
       result.current.handleFocusAndIsolatePlayer(1)
+      result.current.handleClearSelections()
       result.current.handleTogglePinnedPlayer(1)
       result.current.handleWindowChange(1000, 5000)
       result.current.handleShowPetsChange(true)
@@ -179,7 +181,8 @@ describe('useFightPageInteractions', () => {
     expect(queryState.setTarget).toHaveBeenCalledWith({ id: 99, instance: 2 })
     expect(queryState.setFocusId).toHaveBeenCalledWith(7)
     expect(queryState.setFocusAndPlayers).toHaveBeenCalledWith(1, [1])
-    expect(queryState.setPinnedPlayersAndPlayers).toHaveBeenCalledWith([1], [1])
+    expect(queryState.setPlayers).toHaveBeenCalledWith([])
+    expect(queryState.setPinnedPlayers).toHaveBeenCalledWith([1])
     expect(queryState.setWindow).toHaveBeenCalledWith(1000, 5000)
     expect(updateUserSettings).toHaveBeenNthCalledWith(1, { showPets: true })
     expect(updateUserSettings).toHaveBeenNthCalledWith(2, {
@@ -194,7 +197,7 @@ describe('useFightPageInteractions', () => {
     })
   })
 
-  it('unpins players and clears players query when no pins remain', () => {
+  it('unpins players without mutating players query when no pins remain', () => {
     const queryState = createQueryState({
       state: createQueryStateState({
         pinnedPlayers: [2],
@@ -214,6 +217,7 @@ describe('useFightPageInteractions', () => {
       result.current.handleTogglePinnedPlayer(2)
     })
 
-    expect(queryState.setPinnedPlayersAndPlayers).toHaveBeenCalledWith([], [])
+    expect(queryState.setPinnedPlayers).toHaveBeenCalledWith([])
+    expect(queryState.setPlayers).not.toHaveBeenCalled()
   })
 })

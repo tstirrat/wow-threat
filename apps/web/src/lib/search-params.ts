@@ -109,8 +109,6 @@ export function resolveFightQueryState({
       validPlayerIds.has(id),
     ),
   )
-  const resolvedPlayers =
-    players.length > 0 || pinnedPlayers.length === 0 ? players : pinnedPlayers
   const parsedFocusId = parseInteger(searchParams.get('focusId'))
   const focusId =
     parsedFocusId !== null && validActorIds.has(parsedFocusId)
@@ -128,7 +126,7 @@ export function resolveFightQueryState({
   )
 
   return {
-    players: resolvedPlayers,
+    players,
     pinnedPlayers,
     focusId,
     targetId: parsedTargetSelection?.targetId ?? null,

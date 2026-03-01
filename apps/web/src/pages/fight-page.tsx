@@ -120,6 +120,7 @@ export const FightPage: FC = () => {
     ? Math.max(fightData.endTime - fightData.startTime, 0)
     : 0
   const {
+    handleClearSelections,
     handleFocusAndAddPlayer,
     handleFocusAndIsolatePlayer,
     handleBossDamageModeChange,
@@ -260,6 +261,7 @@ export const FightPage: FC = () => {
     selectedPlayerIds: queryState.state.players,
     pinnedPlayerIds: queryState.state.pinnedPlayers,
     onVisiblePlayerIdsChange: handleVisiblePlayerIdsChange,
+    onClearSelections: handleClearSelections,
     windowEndMs: queryState.state.endMs,
     windowStartMs: queryState.state.startMs,
     onSeriesClick: handleSeriesClick,

@@ -14,10 +14,6 @@ export interface UseFightQueryStateResult {
   state: FightQueryState
   setPlayers: (players: number[]) => void
   setPinnedPlayers: (pinnedPlayers: number[]) => void
-  setPinnedPlayersAndPlayers: (
-    pinnedPlayers: number[],
-    players: number[],
-  ) => void
   setFocusId: (focusId: number | null) => void
   setFocusAndPlayers: (focusId: number | null, players: number[]) => void
   setTarget: (target: FightTarget | null) => void
@@ -75,18 +71,6 @@ export function useFightQueryState({
     [setSearchParams],
   )
 
-  const setPinnedPlayersAndPlayers = useCallback(
-    (pinnedPlayers: number[], players: number[]): void => {
-      setSearchParams((currentSearchParams) =>
-        applyFightQueryState(currentSearchParams, {
-          pinnedPlayers,
-          players,
-        }),
-      )
-    },
-    [setSearchParams],
-  )
-
   const setTarget = useCallback(
     (target: FightTarget | null): void => {
       setSearchParams((currentSearchParams) =>
@@ -134,7 +118,6 @@ export function useFightQueryState({
       state,
       setPlayers,
       setPinnedPlayers,
-      setPinnedPlayersAndPlayers,
       setFocusId,
       setFocusAndPlayers,
       setTarget,
@@ -144,7 +127,6 @@ export function useFightQueryState({
       setFocusAndPlayers,
       setFocusId,
       setPinnedPlayers,
-      setPinnedPlayersAndPlayers,
       setPlayers,
       setTarget,
       setWindow,

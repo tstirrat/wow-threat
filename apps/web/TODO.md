@@ -25,7 +25,7 @@
 - [x] WEB-023: Toggle-able fixate bands
 - [ ] WEB-024: Fixate band should have left edge orange border, and maybe be more orange, also legend to explain bg color
 - [x] WEB-025: Click and zoom also zooms vertically
-- [ ] WEB-026: Clear isolate button should be near legend
+- [x] WEB-026: Clear isolate button should be near legend
 - [ ] WEB-027: Toggled players in legend should be visually more prominent
 - [ ] WEB-028: Symbol/icon for healers
 - [ ] WEB-029: Improved skeleton loading states for the chart. Chart controls (checkboxes) can render while the event/chart is loading.

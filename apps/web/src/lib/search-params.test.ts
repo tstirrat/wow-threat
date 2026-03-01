@@ -47,7 +47,7 @@ describe('search-params', () => {
     })
   })
 
-  it('resolves fight query state with fallback behavior', () => {
+  it('resolves fight query state with independent players and pinnedPlayers', () => {
     const params = new URLSearchParams({
       players: '1,2,999',
       pinnedPlayers: '1,3,1',
@@ -121,7 +121,7 @@ describe('search-params', () => {
     expect(next.toString()).toContain('endMs=80')
   })
 
-  it('falls back to pinned players when players is missing', () => {
+  it('keeps players empty when players is missing and pinnedPlayers exists', () => {
     const params = new URLSearchParams({
       pinnedPlayers: '3,1,3',
     })
@@ -135,7 +135,7 @@ describe('search-params', () => {
         maxDurationMs: 1000,
       }),
     ).toEqual({
-      players: [1, 3],
+      players: [],
       pinnedPlayers: [1, 3],
       focusId: null,
       targetId: null,

@@ -1,7 +1,7 @@
 /**
  * Scrollable legend for threat chart actor visibility and isolation controls.
  */
-import { Eye, Pin, Shield } from 'lucide-react'
+import { Eye, Pin, RotateCcw, Shield } from 'lucide-react'
 import { type FC, useId } from 'react'
 
 import type { ThreatSeries } from '../types/app'
@@ -24,6 +24,8 @@ export interface ThreatChartLegendProps {
   onActorFocus: (actorId: number) => void
   pinnedPlayerIds: number[]
   onTogglePinnedPlayer: (playerId: number) => void
+  showClearSelections: boolean
+  onClearSelections: () => void
   showPets: boolean
   onShowPetsChange: (showPets: boolean) => void
 }
@@ -35,6 +37,8 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
   onActorFocus,
   pinnedPlayerIds,
   onTogglePinnedPlayer,
+  showClearSelections,
+  onClearSelections,
   showPets,
   onShowPetsChange,
 }) => {
@@ -53,6 +57,25 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
         </CardTitle>
         <CardAction>
           <div className="flex items-center gap-2">
+            {showClearSelections ? (
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      aria-label="Clear selections"
+                      className="h-6 w-6 cursor-pointer"
+                      size="icon-xs"
+                      type="button"
+                      variant="ghost"
+                      onClick={onClearSelections}
+                    >
+                      <RotateCcw />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Clear selections</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : null}
             <Checkbox
               checked={showPets}
               id={showPetsId}
@@ -70,7 +93,7 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
         </CardAction>
       </CardHeader>
       <CardContent className="min-h-0 flex-1 p-0">
-        <TooltipProvider>
+        <TooltipProvider delayDuration={0}>
           <ScrollArea className="h-full">
             <ul className="py-1">
               {series.map((item) => {

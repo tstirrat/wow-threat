@@ -58,7 +58,6 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       setFocusAndPlayers: vi.fn(),
       setFocusId: vi.fn(),
       setPinnedPlayers: vi.fn(),
-      setPinnedPlayersAndPlayers: vi.fn(),
       setPlayers: vi.fn(),
       setTarget: vi.fn(),
       setWindow: vi.fn(),

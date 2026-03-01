@@ -25,6 +25,7 @@ export interface UseFightPageInteractionsResult {
   handleFocusAndAddPlayer: (playerId: number) => void
   handleFocusAndIsolatePlayer: (playerId: number) => void
   handleBossDamageModeChange: (bossDamageMode: BossDamageMode) => void
+  handleClearSelections: () => void
   handleInferThreatReductionChange: (inferThreatReduction: boolean) => void
   handleSeriesClick: (playerId: number) => void
   handleShowEnergizeEventsChange: (showEnergizeEvents: boolean) => void
@@ -45,7 +46,7 @@ export function useFightPageInteractions({
     UseFightQueryStateResult,
     | 'setFocusAndPlayers'
     | 'setFocusId'
-    | 'setPinnedPlayersAndPlayers'
+    | 'setPinnedPlayers'
     | 'setPlayers'
     | 'setTarget'
     | 'setWindow'
@@ -98,17 +99,12 @@ export function useFightPageInteractions({
     [queryState, validPlayerIds],
   )
 
+  const handleClearSelections = useCallback((): void => {
+    queryState.setPlayers([])
+  }, [queryState])
+
   const handleVisiblePlayerIdsChange = useCallback(
     (visiblePlayerIds: number[]): void => {
-      const pinnedPlayerIds = normalizeIdList(queryState.state.pinnedPlayers)
-      if (pinnedPlayerIds.length > 0) {
-        const currentPlayers = normalizeIdList(queryState.state.players)
-        if (!areEqualIdLists(currentPlayers, pinnedPlayerIds)) {
-          queryState.setPlayers(pinnedPlayerIds)
-        }
-        return
-      }
-
       const allPlayerIds = normalizeIdList([...validPlayerIds])
       const normalizedVisiblePlayerIds = normalizeIdList(visiblePlayerIds)
       const nextPlayers = areEqualIdLists(
@@ -141,10 +137,7 @@ export function useFightPageInteractions({
         ? currentPinnedPlayerIds.filter((id) => id !== playerId)
         : normalizeIdList([...currentPinnedPlayerIds, playerId])
 
-      queryState.setPinnedPlayersAndPlayers(
-        nextPinnedPlayerIds,
-        nextPinnedPlayerIds.length > 0 ? nextPinnedPlayerIds : [],
-      )
+      queryState.setPinnedPlayers(nextPinnedPlayerIds)
     },
     [queryState, validPlayerIds],
   )
@@ -194,6 +187,7 @@ export function useFightPageInteractions({
   )
 
   return {
+    handleClearSelections,
     handleFocusAndAddPlayer,
     handleFocusAndIsolatePlayer,
     handleBossDamageModeChange,

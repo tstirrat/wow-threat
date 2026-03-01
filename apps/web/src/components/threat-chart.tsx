@@ -4,7 +4,7 @@
 import type { EChartsOption } from 'echarts'
 import * as echarts from 'echarts'
 import ReactEChartsCore from 'echarts-for-react/lib/core'
-import { type FC, useEffect, useRef, useState } from 'react'
+import { type FC, useCallback, useEffect, useRef, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 
 import { useThreatChartLegendState } from '../hooks/use-threat-chart-legend-state'
@@ -44,6 +44,7 @@ export type ThreatChartProps = {
   onTogglePinnedPlayer: (playerId: number) => void
   onSeriesClick: (actorId: number) => void
   onVisiblePlayerIdsChange?: (playerIds: number[]) => void
+  onClearSelections?: () => void
   showPets: boolean
   onShowPetsChange: (showPets: boolean) => void
   showEnergizeEvents: boolean
@@ -68,6 +69,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   onTogglePinnedPlayer,
   onSeriesClick,
   onVisiblePlayerIdsChange,
+  onClearSelections,
   showPets,
   onShowPetsChange,
   showEnergizeEvents,
@@ -115,7 +117,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
       bossDamageMode,
     })
 
-  const { hasHiddenActors, handleClearIsolate } = useThreatChartVisiblePlayers({
+  const { allPlayerIds, hasHiddenActors } = useThreatChartVisiblePlayers({
     clearIsolate,
     isActorVisible,
     onVisiblePlayerIdsChange,
@@ -141,6 +143,15 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     series,
   })
   const canClearIsolate = visibleIsolatedActorId !== null || hasHiddenActors
+  const handleClearSelections = useCallback((): void => {
+    clearIsolate()
+    if (onClearSelections) {
+      onClearSelections()
+      return
+    }
+
+    onVisiblePlayerIdsChange?.(allPlayerIds)
+  }, [allPlayerIds, clearIsolate, onClearSelections, onVisiblePlayerIdsChange])
 
   useEffect(() => {
     saveShowFixateBandsPreference(showFixateBands)
@@ -178,7 +189,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
       }
 
       event.preventDefault()
-      handleClearIsolate()
+      handleClearSelections()
     },
     {
       description: 'Clear isolate',
@@ -188,7 +199,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
       },
       scopes: ['fight-page'],
     },
-    [canClearIsolate, handleClearIsolate],
+    [canClearIsolate, handleClearSelections],
   )
 
   useHotkeys(
@@ -347,9 +358,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   return (
     <div className="space-y-3">
       <ThreatChartControls
-        showClearIsolate={visibleIsolatedActorId !== null || hasHiddenActors}
         onResetZoom={resetZoom}
-        onClearIsolate={handleClearIsolate}
         showFixateBands={showFixateBands}
         onShowFixateBandsChange={setShowFixateBands}
         showEnergizeEvents={showEnergizeEvents}
@@ -399,6 +408,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
           onActorFocus={onSeriesClick}
           pinnedPlayerIds={pinnedPlayerIds}
           onTogglePinnedPlayer={onTogglePinnedPlayer}
+          showClearSelections={canClearIsolate}
+          onClearSelections={handleClearSelections}
           showPets={showPets}
           onShowPetsChange={onShowPetsChange}
         />
