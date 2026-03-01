@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - uses: actions/checkout@v4
       - id: filter
@@ -19,6 +20,18 @@ jobs:
           filters: |
             backend:
               - 'apps/api/**'
+              - 'packages/config/**'
+              - 'packages/engine/**'
+              - 'packages/shared/**'
+              - 'packages/wcl-types/**'
+              - 'tooling/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'turbo.json'
+              - '.nvmrc'
+            frontend:
+              - 'apps/web/**'
               - 'packages/config/**'
               - 'packages/engine/**'
               - 'packages/shared/**'
@@ -46,13 +59,15 @@ jobs:
       - run: pnpm typecheck && pnpm lint
       - run: pnpm test
       - name: Install Playwright Browsers
+        if: ${{ needs.detect_changes.outputs.frontend == 'true' }}
         run: npx playwright install --with-deps chromium
         working-directory: ./apps/web
       - name: Run Playwright tests
+        if: ${{ needs.detect_changes.outputs.frontend == 'true' }}
         run: npx playwright test
         working-directory: ./apps/web
       - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
+        if: ${{ needs.detect_changes.outputs.frontend == 'true' && !cancelled() }}
         with:
           name: playwright-report
           path: apps/web/playwright-report/
@@ -70,6 +85,7 @@ jobs:
           test -n "$VITE_FIREBASE_AUTH_DOMAIN"
           test -n "$VITE_FIREBASE_APP_ID"
           pnpm --filter @wow-threat/web build
+        if: ${{ needs.detect_changes.outputs.frontend == 'true' }}
         env:
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
@@ -78,6 +94,7 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
       - uses: FirebaseExtended/action-hosting-deploy@v0
         name: Deploy FE
+        if: ${{ needs.detect_changes.outputs.frontend == 'true' }}
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WOW_THREAT }}
