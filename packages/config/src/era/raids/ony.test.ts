@@ -52,9 +52,9 @@ describe('Onyxia Abilities', () => {
       }
     })
 
-    it('has descriptive formula', () => {
+    it('adds a descriptive note', () => {
       const result = assertDefined(knockAway(createMockContext()))
-      expect(result.formula).toBe('threat * 0.75')
+      expect(result.note).toBe('modifyThreat(0.75,target)')
     })
 
     it('returns zero base threat value', () => {

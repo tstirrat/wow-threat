@@ -51,7 +51,11 @@ describe('Rogue Config', () => {
         const ctx = createMockContext()
         const result = assertDefined(formula!(ctx))
 
-        expect(result.formula).toBe('-150')
+        expect(result.spellModifier).toEqual({
+          type: 'spell',
+          value: 0,
+          bonus: -150,
+        })
         expect(result.value).toBe(-150)
       })
     })

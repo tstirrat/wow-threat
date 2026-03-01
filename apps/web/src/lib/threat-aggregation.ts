@@ -1,7 +1,12 @@
 /**
  * Threat data transformation helpers for report rankings and fight chart series.
  */
-import type { AugmentedEvent, SpellId, ThreatConfig } from '@wow-threat/shared'
+import type {
+  AugmentedEvent,
+  SpellId,
+  SpellThreatModifier,
+  ThreatConfig,
+} from '@wow-threat/shared'
 import { HitTypeCode } from '@wow-threat/wcl-types'
 import type { CombatantInfoAura, PlayerClass } from '@wow-threat/wcl-types'
 
@@ -103,6 +108,8 @@ interface ActorStateVisuals {
 
 interface ModifierVariantAccumulator {
   modifiers: ThreatPointModifier[]
+  spellModifier?: SpellThreatModifier
+  note?: string
   totalThreat: number
 }
 
@@ -133,6 +140,8 @@ interface FocusedEventVisitContext extends OrderedEventVisitContext {
   hasMatchingSource: boolean
   matchingThreat: number
   visibleModifierEntries: VisibleThreatModifierEntry[]
+  spellModifier?: SpellThreatModifier
+  note?: string
 }
 
 interface OrderedEventVisitor<TContext extends OrderedEventVisitContext> {
@@ -189,7 +198,6 @@ function ensureEncounterStartPoint(
     spellSchool: null,
     eventType: 'start',
     abilityName: 'Encounter start',
-    formula: 'n/a',
     modifiers: [],
   })
 }
@@ -508,15 +516,38 @@ function createModifierSignature(modifier: ThreatPointModifier): string {
   return `${modifier.name}|${schoolsKey}|${modifier.value.toFixed(6)}`
 }
 
-function createModifierVariantKey(modifiers: ThreatPointModifier[]): string {
-  if (modifiers.length === 0) {
+function createSpellModifierSignature(
+  spellModifier: SpellThreatModifier | undefined,
+): string {
+  if (!spellModifier) {
     return 'none'
   }
 
-  return modifiers
-    .map((modifier) => createModifierSignature(modifier))
-    .sort()
-    .join('||')
+  const multiplier = spellModifier.value ?? 1
+  const bonus = spellModifier.bonus ?? 0
+
+  return `spell|${multiplier.toFixed(6)}|${bonus.toFixed(6)}`
+}
+
+function createModifierVariantKey({
+  modifiers,
+  spellModifier,
+  note,
+}: {
+  modifiers: ThreatPointModifier[]
+  spellModifier?: SpellThreatModifier
+  note?: string
+}): string {
+  const modifiersKey =
+    modifiers.length === 0
+      ? 'none'
+      : modifiers
+          .map((modifier) => createModifierSignature(modifier))
+          .sort()
+          .join('||')
+  const noteKey = note?.trim() ? note.trim() : 'none'
+
+  return `${modifiersKey}::${createSpellModifierSignature(spellModifier)}::${noteKey}`
 }
 
 function finalizeAppliedModifiers(
@@ -1091,7 +1122,8 @@ export function buildThreatSeries({
                 : null
             })()
           : null
-      const formula = event.threat?.calculation.formula ?? 'n/a'
+      const spellModifier = event.threat?.calculation.spellModifier
+      const note = event.threat?.calculation.note
       const modifiers = normalizeThreatModifiers(
         event.threat?.calculation.modifiers,
       )
@@ -1140,7 +1172,8 @@ export function buildThreatSeries({
           targetName,
           ...(hitType ? { hitType } : {}),
           isTick,
-          formula,
+          ...(spellModifier ? { spellModifier } : {}),
+          ...(note ? { note } : {}),
           modifiers,
         })
         pointIndexByActorId.set(change.sourceId, accumulator.points.length - 1)
@@ -1183,7 +1216,8 @@ export function buildThreatSeries({
           targetName,
           ...(hitType ? { hitType } : {}),
           isTick,
-          formula,
+          ...(spellModifier ? { spellModifier } : {}),
+          ...(note ? { note } : {}),
           modifiers,
           markerKind,
         })
@@ -1217,7 +1251,8 @@ export function buildThreatSeries({
           targetName,
           ...(hitType ? { hitType } : {}),
           isTick,
-          formula,
+          ...(spellModifier ? { spellModifier } : {}),
+          ...(note ? { note } : {}),
           modifiers,
         })
         pointIndexByActorId.set(actorId, accumulator.points.length - 1)
@@ -1566,6 +1601,8 @@ function buildFocusedPlayerAggregationInternal({
       isWithinWindow,
       matchingThreat,
       visibleModifierEntries,
+      spellModifier,
+      note,
     }) => {
       if (!isWithinWindow || matchingThreat === 0) {
         return
@@ -1601,8 +1638,12 @@ function buildFocusedPlayerAggregationInternal({
       const visibleModifiers = visibleModifierEntries.map(
         ({ modifier }) => modifier,
       )
-      if (visibleModifiers.length > 0) {
-        const variantKey = createModifierVariantKey(visibleModifiers)
+      if (visibleModifiers.length > 0 || spellModifier || note) {
+        const variantKey = createModifierVariantKey({
+          modifiers: visibleModifiers,
+          spellModifier,
+          note,
+        })
         const rowVariants = modifierVariantsByRowKey.get(key) ?? new Map()
         const existingVariant = rowVariants.get(variantKey)
         if (existingVariant) {
@@ -1610,6 +1651,8 @@ function buildFocusedPlayerAggregationInternal({
         } else {
           rowVariants.set(variantKey, {
             modifiers: visibleModifiers,
+            ...(spellModifier ? { spellModifier } : {}),
+            ...(note ? { note } : {}),
             totalThreat: Math.abs(matchingThreat),
           })
         }
@@ -1678,6 +1721,8 @@ function buildFocusedPlayerAggregationInternal({
       })
 
       const visibleModifierEntries: VisibleThreatModifierEntry[] = []
+      const spellModifier = event.threat?.calculation.spellModifier
+      const note = event.threat?.calculation.note
       if (hasMatchingSource) {
         ;(event.threat?.calculation.modifiers ?? []).forEach((rawModifier) => {
           const normalizedModifier = normalizeThreatModifier(rawModifier)
@@ -1703,6 +1748,8 @@ function buildFocusedPlayerAggregationInternal({
         hasMatchingSource,
         matchingThreat,
         visibleModifierEntries,
+        ...(spellModifier ? { spellModifier } : {}),
+        ...(note ? { note } : {}),
       }
     },
     visitors: [modifierVisitor, totalVisitor, rowVisitor, talentVisitor],
@@ -1730,19 +1777,28 @@ function buildFocusedPlayerAggregationInternal({
         ...(modifierVariantsByRowKey.get(row.key)?.values() ?? []),
       ].sort((left, right) => right.totalThreat - left.totalThreat)[0]
       const modifierBreakdown = dominantVariant?.modifiers ?? []
-      const modifierTotal = modifierBreakdown.reduce((total, modifier) => {
-        if (!isVisibleModifierValue(modifier.value)) {
-          return total
-        }
+      const spellModifier = dominantVariant?.spellModifier
+      const note = dominantVariant?.note
+      const playerModifierTotal = modifierBreakdown.reduce(
+        (total, modifier) => {
+          if (!isVisibleModifierValue(modifier.value)) {
+            return total
+          }
 
-        return total * modifier.value
-      }, 1)
+          return total * modifier.value
+        },
+        1,
+      )
+      const spellModifierValue = spellModifier?.value ?? 1
+      const modifierTotal = playerModifierTotal * spellModifierValue
 
       return {
         ...row,
         tps: row.isFixate ? null : row.threat / windowDurationSeconds,
         modifierTotal,
         modifierBreakdown,
+        ...(spellModifier ? { spellModifier } : {}),
+        ...(note ? { note } : {}),
       }
     })
     .sort((a, b) => {

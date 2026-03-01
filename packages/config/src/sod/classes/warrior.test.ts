@@ -95,7 +95,11 @@ describe('sod warrior config', () => {
       ),
     )
 
-    expect(result.formula).toBe('(amt * 2) + 254')
+    expect(result.spellModifier).toEqual({
+      type: 'spell',
+      value: 2,
+      bonus: 254,
+    })
     expect(result.value).toBe(454)
   })
 

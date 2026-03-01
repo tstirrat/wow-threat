@@ -326,13 +326,18 @@ describe('Hateful Strike', () => {
     }
   })
 
-  it('should use correct formula string', () => {
+  it('should expose structured spell modifier metadata', () => {
     const actors = createNaxxActorContext([], new Map())
     const ctx = createMockContext(actors)
 
     const result = checkExists(formula(ctx))
 
-    expect(result.formula).toBe('hatefulStrike(500)')
+    expect(result.spellModifier).toEqual({
+      type: 'spell',
+      value: 0,
+      bonus: 500,
+    })
+    expect(result.note).toBe('hatefulStrike(target+nearbyMelee)')
     expect(result.splitAmongEnemies).toBe(false)
   })
 })
@@ -386,7 +391,7 @@ describe('Magnetic Pull', () => {
     })
 
     const result = checkExists(magneticPull(createMagneticPullContext(actors)))
-    expect(result.formula).toBe('magneticPull(sourceMaxThreat)')
+    expect(result.note).toBe('magneticPull(sourceMaxThreat)')
     expect(result.effects?.[0]).toEqual({
       type: 'customThreat',
       changes: [
@@ -439,7 +444,7 @@ describe('Boss Threat Wipe on Cast', () => {
       naxxAbilities[29210]!(createThreatWipeContext(29210)),
     )
 
-    expect(result.formula).toBe('threatWipe')
+    expect(result.note).toBe('threatWipe(all)')
     expect(result.value).toBe(0)
     expect(result.effects?.[0]).toEqual({
       type: 'modifyThreat',

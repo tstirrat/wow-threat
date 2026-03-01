@@ -99,9 +99,9 @@ function forceAuraDuringClassCall(
     const auraAlreadyActive = ctx.targetAuras.has(options.forcedAuraId)
 
     return {
-      formula: `0 (force ${options.forcedAuraName})`,
       value: 0,
       splitAmongEnemies: false,
+      note: `classCall(${options.forcedAuraName})`,
       effects: [
         {
           type: 'installInterceptor',

@@ -234,7 +234,11 @@ describe('Paladin Config', () => {
         const ctx = createMockContext()
         const result = assertDefined(formula!(ctx))
 
-        expect(result.formula).toBe('194')
+        expect(result.spellModifier).toEqual({
+          type: 'spell',
+          value: 0,
+          bonus: 194,
+        })
         expect(result.value).toBe(194)
       })
     })
@@ -247,7 +251,10 @@ describe('Paladin Config', () => {
         const ctx = createMockContext({ amount: 50 })
         const result = assertDefined(formula!(ctx))
 
-        expect(result.formula).toBe('amt + 35')
+        expect(result.spellModifier).toEqual({
+          type: 'spell',
+          bonus: 35,
+        })
         expect(result.value).toBe(85) // 50 + 35
       })
     })
@@ -262,7 +269,11 @@ describe('Paladin Config', () => {
         })
         const result = assertDefined(formula!(ctx))
 
-        expect(result.formula).toBe('60')
+        expect(result.spellModifier).toEqual({
+          type: 'spell',
+          value: 0,
+          bonus: 60,
+        })
         expect(result.value).toBe(60)
         expect(result.splitAmongEnemies).toBe(true)
       })

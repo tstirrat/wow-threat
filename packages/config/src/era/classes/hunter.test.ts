@@ -56,7 +56,10 @@ describe('era hunter config', () => {
         ),
       )
 
-      expect(result.formula).toBe('amt + 110')
+      expect(result.spellModifier).toEqual({
+        type: 'spell',
+        bonus: 110,
+      })
       expect(result.value).toBe(110)
     })
 
@@ -64,7 +67,11 @@ describe('era hunter config', () => {
       const formula = hunterConfig.abilities[Spells.DisengageR1]
       const result = assertDefined(formula?.(createMockContext()))
 
-      expect(result.formula).toBe('-140')
+      expect(result.spellModifier).toEqual({
+        type: 'spell',
+        value: 0,
+        bonus: -140,
+      })
       expect(result.value).toBe(-140)
     })
   })

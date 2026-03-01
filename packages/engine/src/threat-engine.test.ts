@@ -322,7 +322,9 @@ describe('threat-engine', () => {
       })
 
       expect(result.augmentedEvents).toHaveLength(1)
-      expect(result.augmentedEvents[0]?.threat?.calculation.formula).toBe('100')
+      expect(result.augmentedEvents[0]?.threat?.calculation.spellModifier).toBe(
+        undefined,
+      )
       expect(result.augmentedEvents[0]?.threat?.calculation.baseThreat).toBe(
         100,
       )
@@ -1447,7 +1449,6 @@ describe('threat-engine', () => {
           resourceAwareConfig,
         )
 
-        expect(manaResult?.formula).toBe('mana * 0.5')
         expect(manaResult?.baseThreat).toBe(15)
 
         const energyEvent = {
@@ -1463,7 +1464,6 @@ describe('threat-engine', () => {
           resourceAwareConfig,
         )
 
-        expect(energyResult?.formula).toBe('0')
         expect(energyResult?.baseThreat).toBe(0)
       })
     })
@@ -1488,7 +1488,6 @@ describe('threat-engine', () => {
         )
 
         expect(result?.baseThreat).toBeUndefined()
-        expect(result?.formula).toBeUndefined()
       })
     })
 
@@ -2542,7 +2541,7 @@ describe('threat-engine', () => {
       const augmented = result.augmentedEvents[0]
       // Custom formula: amount + 100 = 300
       expect(augmented?.threat!.calculation.baseThreat).toBe(300)
-      expect(augmented?.threat!.calculation.formula).toBe('(custom) amt + 100')
+      expect(augmented?.threat!.calculation.spellModifier).toBeUndefined()
     })
 
     it('runs ability formulas on refresh and stack aura phases', () => {
@@ -2601,7 +2600,7 @@ describe('threat-engine', () => {
 
       const augmented = result.augmentedEvents[0]
       expect(augmented?.threat!.calculation.baseThreat).toBe(100)
-      expect(augmented?.threat!.calculation.formula).toBe('(custom) amt + 100')
+      expect(augmented?.threat!.calculation.spellModifier).toBeUndefined()
     })
 
     it('treats undefined ability formula result as no threat and does not fall back', () => {
@@ -2724,7 +2723,6 @@ describe('threat-engine', () => {
       })
 
       const augmented = result.augmentedEvents[0]
-      expect(augmented?.threat?.calculation.formula).toBe('(effects only)')
       expect(augmented?.threat?.calculation.modifiedThreat).toBe(0)
       expect(augmented?.threat?.changes).toEqual([
         {
@@ -2796,9 +2794,9 @@ describe('threat-engine', () => {
       })
 
       expect(result.augmentedEvents[0]?.threat).toBeUndefined()
-      expect(result.augmentedEvents[1]?.threat?.calculation.formula).toBe(
-        '(skipped by processor)',
-      )
+      expect(
+        result.augmentedEvents[1]?.threat?.calculation.modifiedThreat,
+      ).toBe(0)
       expect(result.augmentedEvents[1]?.threat?.changes).toEqual([])
     })
 
@@ -2865,7 +2863,7 @@ describe('threat-engine', () => {
       expect(result.augmentedEvents.length).toBe(1)
 
       const augmented = result.augmentedEvents[0]
-      expect(augmented?.threat!.calculation.formula).toBe('(base) 2 * damage')
+      expect(augmented?.threat!.calculation.baseThreat).toBe(1000)
     })
 
     it('calculates threat for heal events using base formula', () => {
@@ -2888,7 +2886,7 @@ describe('threat-engine', () => {
       expect(result.augmentedEvents.length).toBe(1)
 
       const augmented = result.augmentedEvents[0]
-      expect(augmented?.threat!.calculation.formula).toBe('(base) 0.5 * heal')
+      expect(augmented?.threat!.calculation.baseThreat).toBe(500)
     })
 
     it('applies damage threat to single target', () => {
@@ -2976,9 +2974,6 @@ describe('threat-engine', () => {
 
       expect(result.augmentedEvents).toHaveLength(1)
       expect(result.augmentedEvents[0]?.type).toBe('damage')
-      expect(result.augmentedEvents[0]?.threat!.calculation.formula).toBe(
-        'bossMelee',
-      )
       expect(result.augmentedEvents[0]?.threat!.calculation.amount).toBe(500)
       expect(result.augmentedEvents[0]?.threat!.calculation.effects).toEqual([
         {
@@ -3242,7 +3237,7 @@ describe('threat-engine', () => {
       })
 
       const augmented = result.augmentedEvents[0]
-      expect(augmented?.threat!.calculation.formula).toBeDefined()
+      expect(augmented?.threat!.calculation.baseThreat).toBeDefined()
       expect(augmented?.threat!.calculation.amount).toBe(1000)
       expect(augmented?.threat!.calculation.baseThreat).toBeGreaterThan(0)
       expect(augmented?.threat!.calculation.modifiedThreat).toBeGreaterThan(0)
@@ -3280,7 +3275,7 @@ describe('threat-engine', () => {
 
       const augmented = result.augmentedEvents[0]
       expect(augmented?.threat!.calculation).toEqual(
-        expect.objectContaining({ formula: 'zero', modifiedThreat: 0 }),
+        expect.objectContaining({ modifiedThreat: 0 }),
       )
       expect(augmented?.threat!.changes).toBeUndefined()
     })
@@ -3351,14 +3346,12 @@ describe('threat-engine', () => {
       // First event: class formula (2x) overrides global (5x)
       const augmented1 = result.augmentedEvents[0]
       expect(augmented1?.threat!.calculation.baseThreat).toBe(200)
-      expect(augmented1?.threat!.calculation.formula).toBe('class: 2 * amt')
+      expect(augmented1?.threat!.calculation.spellModifier).toBeUndefined()
 
       // Second event: class-only formula (3x)
       const augmented2 = result.augmentedEvents[1]
       expect(augmented2?.threat!.calculation.baseThreat).toBe(300)
-      expect(augmented2?.threat!.calculation.formula).toBe(
-        'class-only: 3 * amt',
-      )
+      expect(augmented2?.threat!.calculation.spellModifier).toBeUndefined()
     })
 
     it('should use global auraModifiers and merge with class auraModifiers', () => {
@@ -4054,8 +4047,8 @@ describe('threat-engine', () => {
 
         expect(result.augmentedEvents.length).toBe(1)
         expect(result.augmentedEvents[0]?.threat?.changes).toBeUndefined()
-        expect(result.augmentedEvents[0]?.threat?.calculation.formula).toBe(
-          '(base) 2 * damage',
+        expect(result.augmentedEvents[0]?.threat?.calculation.baseThreat).toBe(
+          2000,
         )
       })
 
@@ -4108,8 +4101,8 @@ describe('threat-engine', () => {
         })
 
         expect(result.augmentedEvents).toHaveLength(1)
-        expect(result.augmentedEvents[0]?.threat?.calculation.formula).toBe(
-          'magneticPull(sourceMaxThreat)',
+        expect(result.augmentedEvents[0]?.threat?.calculation.baseThreat).toBe(
+          0,
         )
         expect(result.augmentedEvents[0]?.threat?.changes).toEqual([
           {
@@ -5077,9 +5070,6 @@ describe('threat-engine', () => {
         // Second event: suppressed
         const suppressedEvent = result.augmentedEvents[1]
         expect(suppressedEvent?.threat!.calculation.modifiedThreat).toBe(0)
-        expect(suppressedEvent?.threat!.calculation.formula).toBe(
-          '(skipped by processor)',
-        )
         expect(suppressedEvent?.threat!.changes).toEqual([])
 
         // Third event: normal threat

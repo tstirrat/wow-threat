@@ -14,17 +14,25 @@ const noThreat = noThreatFormula()
 const diamondFlaskThreat: ThreatFormula = (ctx) => {
   if (ctx.event.type === 'applybuff') {
     return {
-      formula: '60',
       value: 60,
       splitAmongEnemies: true,
+      spellModifier: {
+        type: 'spell',
+        value: 0,
+        bonus: 60,
+      },
     }
   }
 
   if (ctx.event.type === 'heal') {
     return {
-      formula: 'effectiveHeal * 0.50',
       value: ctx.amount * 0.5,
       splitAmongEnemies: true,
+      spellModifier: {
+        type: 'spell',
+        value: 0.5,
+        bonus: 0,
+      },
     }
   }
 

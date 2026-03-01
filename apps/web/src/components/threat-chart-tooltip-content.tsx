@@ -33,7 +33,9 @@ export interface ThreatChartTooltipContentData {
   totalThreat: number
   visibleModifiers: TooltipPointPayload['modifiers']
   hitTypeLabel: string | null
-  formula: string
+  spellModifier?: TooltipPointPayload['spellModifier']
+  spellModifierLabel?: string
+  note?: string
   mutedColor: string
   spellId: number | null
 }
@@ -65,12 +67,35 @@ function formatThreatValue(data: ThreatChartTooltipContentData): string {
   return `${formatThreatNumber(data.modifiedThreat)} / ${data.splitCount} = ${formatThreatNumber(data.threatDelta)}`
 }
 
+function formatSignedModifierBonus(value: number): string {
+  const formatted = new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+  }).format(Math.abs(value))
+
+  return `${value >= 0 ? '+' : '-'}${formatted}`
+}
+
 /** Render the ECharts tooltip body for a single threat point. */
 export const ThreatChartTooltipContent: FC<ThreatChartTooltipContentProps> = ({
   data,
 }) => {
   const isBossDamageMarker = data.markerKind === 'bossMelee'
   const isDeathMarker = data.markerKind === 'death'
+  const spellModifier = data.spellModifier
+  const spellModifierMultiplier = spellModifier?.value ?? 1
+  const spellModifierBonus = spellModifier?.bonus ?? 0
+  const hasVisibleSpellMultiplier =
+    spellModifier !== undefined &&
+    Math.abs(spellModifierMultiplier - 1) > 0.0005
+  const hasVisibleSpellBonus =
+    spellModifier !== undefined && Math.abs(spellModifierBonus) > 0.0005
+  const spellModifierValueLabel =
+    spellModifier && (hasVisibleSpellMultiplier || hasVisibleSpellBonus)
+      ? `${hasVisibleSpellBonus ? `(${formatSignedModifierBonus(spellModifierBonus)}) ` : ''}${formatTooltipNumber(spellModifierMultiplier)}`
+      : null
+  const hasVisibleMultipliers =
+    data.visibleModifiers.length > 0 || Boolean(spellModifierValueLabel)
   const rowStyle = {
     display: 'flex',
     justifyContent: 'space-between',
@@ -125,18 +150,22 @@ export const ThreatChartTooltipContent: FC<ThreatChartTooltipContentProps> = ({
             {data.amountLabel}: {formatTooltipNumber(data.amount)}
             {data.amountSchool}
           </span>
-          <span>{data.formula}</span>
+          <span />
         </div>
       ) : null}
-      {!isBossDamageMarker &&
-      !isDeathMarker &&
-      data.visibleModifiers.length > 0 ? (
+      {!isBossDamageMarker && !isDeathMarker && hasVisibleMultipliers ? (
         <>
           <div style={rowStyle}>
             <span>Multipliers:</span>
             <span>&sum; {formatTooltipNumber(data.modifiersTotal)}</span>
           </div>
           <div style={{ paddingLeft: '2ch' }}>
+            {spellModifierValueLabel ? (
+              <div style={rowStyle}>
+                <span>{data.spellModifierLabel ?? data.abilityName}</span>
+                <span>{spellModifierValueLabel}</span>
+              </div>
+            ) : null}
             {data.visibleModifiers.map((modifier, index) => {
               const schoolsLabel = modifier.schoolLabels.join('/')
               const rowColor = resolveSpellSchoolColorFromLabels(
@@ -177,6 +206,11 @@ export const ThreatChartTooltipContent: FC<ThreatChartTooltipContentProps> = ({
           <strong style={{ color: data.auraStatusColor }}>
             {data.auraLabel}
           </strong>
+        </div>
+      ) : null}
+      {data.note ? (
+        <div>
+          Note: <strong>{data.note}</strong>
         </div>
       ) : null}
       {data.markerKind === 'bossMelee' ? (

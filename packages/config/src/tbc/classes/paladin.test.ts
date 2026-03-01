@@ -61,7 +61,11 @@ describe('tbc paladin config', () => {
         }),
       ),
     )
-    expect(buffResult.formula).toBe('58')
+    expect(buffResult.spellModifier).toEqual({
+      type: 'spell',
+      value: 0,
+      bonus: 58,
+    })
     expect(buffResult.value).toBe(58)
     expect(buffResult.splitAmongEnemies).toBe(true)
 
@@ -73,7 +77,7 @@ describe('tbc paladin config', () => {
         }),
       ),
     )
-    expect(damageResult.formula).toBe('amt')
+    expect(damageResult.spellModifier).toBeUndefined()
     expect(damageResult.value).toBe(315)
     expect(damageResult.splitAmongEnemies).toBe(false)
 

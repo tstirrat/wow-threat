@@ -166,7 +166,10 @@ describe('sod shaman config', () => {
       ),
     )
 
-    expect(result.formula).toBe('topThreat + (amt * 2)')
+    expect(result.spellModifier).toEqual({
+      type: 'spell',
+      value: 2,
+    })
     expect(result.effects?.[0]?.type).toBe('customThreat')
     expect(shamanConfig.fixateBuffs?.has(Spells.EarthShockTaunt)).toBe(true)
   })

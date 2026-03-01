@@ -114,7 +114,10 @@ describe('tbc hunter config', () => {
         ),
       )
 
-      expect(result.formula).toBe('amt + 900')
+      expect(result.spellModifier).toEqual({
+        type: 'spell',
+        bonus: 900,
+      })
       expect(result.value).toBe(900)
     })
   })
@@ -134,7 +137,7 @@ describe('tbc hunter config', () => {
         ),
       )
 
-      expect(result.formula).toBe('misdirection')
+      expect(result.note).toBe('misdirection(installInterceptor)')
       expect(result.value).toBe(0)
       expect(result.effects?.[0]?.type).toBe('installInterceptor')
     })

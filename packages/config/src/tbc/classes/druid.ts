@@ -97,9 +97,13 @@ const lacerateFormula = (
 
   if (ctx.event.tick) {
     return {
-      formula: 'amt * 0.5',
       value: ctx.amount * 0.5,
       splitAmongEnemies: false,
+      spellModifier: {
+        type: 'spell' as const,
+        value: 0.5,
+        bonus: 0,
+      },
     }
   }
 

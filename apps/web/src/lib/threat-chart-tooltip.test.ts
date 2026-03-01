@@ -60,7 +60,7 @@ describe('threat-chart-tooltip', () => {
         baseThreat: 0,
         eventType: 'damage',
         hitType: 6,
-        formula: 'base < calc',
+        note: 'base < calc',
         modifiedThreat: 300,
         spellId: 7386,
         spellSchool: 'Fire',
@@ -82,7 +82,7 @@ describe('threat-chart-tooltip', () => {
     expect(tooltip).toContain('Tank &lt;A&gt;')
     expect(tooltip).toContain('T: 0:15.000')
     expect(tooltip).toContain('Amt: 240.00 (fire)')
-    expect(tooltip).toContain('base &lt; calc')
+    expect(tooltip).toContain('Note: <strong>base &lt; calc</strong>')
     expect(tooltip).toContain('Threat: 300.00 / 3 = 100.00')
     expect(tooltip).toContain('Multipliers:')
     expect(tooltip).toContain('1.30')
@@ -120,7 +120,6 @@ describe('threat-chart-tooltip', () => {
         amount: 700,
         baseThreat: 0,
         eventType: 'damage',
-        formula: 'bossMelee',
         modifiedThreat: 0,
         spellId: 1,
         spellSchool: null,
@@ -162,7 +161,6 @@ describe('threat-chart-tooltip', () => {
         amount: 0,
         baseThreat: 0,
         eventType: 'death',
-        formula: 'n/a',
         modifiedThreat: 0,
         spellSchool: null,
         modifiers: [{ name: 'Defensive Stance', schoolLabels: [], value: 1.3 }],
@@ -208,7 +206,6 @@ describe('threat-chart-tooltip', () => {
         amount: 0,
         baseThreat: 0,
         eventType: 'summon',
-        formula: '0',
         modifiedThreat: 0,
         spellId: 25908,
         spellSchool: null,
@@ -245,7 +242,6 @@ describe('threat-chart-tooltip', () => {
         amount: 20,
         baseThreat: 0,
         eventType: 'energize',
-        formula: 'resource',
         modifiedThreat: -55,
         resourceType: ResourceTypeCode.Rage,
         spellSchool: null,
@@ -284,7 +280,6 @@ describe('threat-chart-tooltip', () => {
         baseThreat: 400,
         eventType: 'damage',
         hitType: 1,
-        formula: 'damage',
         modifiedThreat: 400,
         spellSchool: 'Physical',
         modifiers: [],
@@ -318,7 +313,6 @@ describe('threat-chart-tooltip', () => {
         baseThreat: 400,
         eventType: 'damage',
         hitType: HitTypeCode.Crit,
-        formula: 'damage',
         modifiedThreat: 400,
         spellSchool: 'Physical',
         modifiers: [],
@@ -352,7 +346,6 @@ describe('threat-chart-tooltip', () => {
         amount: 2000,
         baseThreat: 0,
         eventType: 'heal',
-        formula: 'heal * 0.5',
         modifiedThreat: 1000,
         spellSchool: null,
         modifiers: [],
@@ -373,7 +366,6 @@ describe('threat-chart-tooltip', () => {
         baseThreat: 0,
         eventType: 'heal',
         isTick: true,
-        formula: 'heal * 0.5',
         modifiedThreat: 250,
         spellSchool: null,
         modifiers: [],
@@ -393,7 +385,6 @@ describe('threat-chart-tooltip', () => {
         baseThreat: 300,
         eventType: 'damage',
         isTick: true,
-        formula: 'damage',
         modifiedThreat: 300,
         spellSchool: 'Shadow',
         modifiers: [],
@@ -413,7 +404,6 @@ describe('threat-chart-tooltip', () => {
         amount: 800,
         baseThreat: 0,
         eventType: 'absorbed',
-        formula: 'absorbed',
         modifiedThreat: 0,
         spellSchool: null,
         modifiers: [],
@@ -429,5 +419,98 @@ describe('threat-chart-tooltip', () => {
     expect(absorbedTooltip).toContain(
       'Power Word: Shield @ TargetPlayer (absorbed)',
     )
+  })
+
+  it('renders spell modifier inside multipliers with cumulative total and bonus prefix', () => {
+    const formatter = createThreatChartTooltipFormatter({
+      series: [baseSeries],
+      themeColors: {
+        border: '#d1d5db',
+        foreground: '#0f172a',
+        muted: '#64748b',
+        panel: '#ffffff',
+      },
+    })
+
+    const tooltip = formatter({
+      seriesName: 'Tank',
+      data: {
+        actorId: 1,
+        actorColor: '#c79c6e',
+        abilityName: 'Execute',
+        amount: 450,
+        baseThreat: 1161,
+        eventType: 'damage',
+        modifiedThreat: 1161,
+        spellSchool: 'Physical',
+        spellModifier: {
+          type: 'spell',
+          value: 2,
+          bonus: 261,
+        },
+        modifiers: [
+          {
+            name: 'Defensive Stance',
+            schoolLabels: [],
+            value: 3,
+          },
+          {
+            name: 'Neutral',
+            schoolLabels: [],
+            value: 1,
+          },
+        ],
+        threatDelta: 1161,
+        timeMs: 10000,
+        totalThreat: 1161,
+      },
+    })
+
+    expect(tooltip).toContain('Multipliers:')
+    expect(tooltip).toContain('∑ 6.00')
+    expect(tooltip).toContain('>Execute</span><span>(+261) 2.00</span>')
+    expect(tooltip).toContain('Defensive Stance')
+    expect(tooltip).toContain('>3.00</span>')
+    expect(tooltip).not.toContain('Spell modifier:')
+  })
+
+  it('labels heal spell modifier rows as Heal', () => {
+    const formatter = createThreatChartTooltipFormatter({
+      series: [baseSeries],
+      themeColors: {
+        border: '#d1d5db',
+        foreground: '#0f172a',
+        muted: '#64748b',
+        panel: '#ffffff',
+      },
+    })
+
+    const tooltip = formatter({
+      seriesName: 'Healer',
+      data: {
+        actorId: 1,
+        actorColor: '#22c55e',
+        abilityName: 'Flash Heal',
+        amount: 700,
+        baseThreat: 350,
+        eventType: 'heal',
+        modifiedThreat: 350,
+        spellSchool: 'Holy',
+        spellModifier: {
+          type: 'spell',
+          value: 1.5,
+          bonus: 0,
+        },
+        modifiers: [],
+        threatDelta: 350,
+        timeMs: 1000,
+        totalThreat: 350,
+      },
+    })
+
+    expect(tooltip).toContain('Multipliers:')
+    expect(tooltip).toContain('∑ 1.50')
+    expect(tooltip).toContain('>Heal</span><span>1.50</span>')
+    expect(tooltip).not.toContain('>Flash Heal</span><span>1.50</span>')
   })
 })

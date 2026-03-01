@@ -116,9 +116,9 @@ function forcePush(): FormulaFn {
 
     if (target.targetId === ctx.event.targetID) {
       return {
-        formula: 'forcePunch(target)',
         value: 0,
         splitAmongEnemies: false,
+        note: 'forcePunch(setCurrentTargetThreat)',
         effects: [
           {
             type: 'customThreat',

@@ -22,7 +22,6 @@ export const baseThreat: BaseThreatConfig = {
    * Threat is attributed to event.sourceID (absorbed-event caster in WCL payloads).
    */
   absorbed: (ctx) => ({
-    formula: 'absorbAmount',
     value: ctx.amount,
     splitAmongEnemies: false,
   }),
@@ -32,9 +31,13 @@ export const baseThreat: BaseThreatConfig = {
    * Overheal does not generate threat (handled in getEventAmount)
    */
   heal: (ctx) => ({
-    formula: 'effectiveHeal * 0.5',
     value: ctx.amount * 0.5,
     splitAmongEnemies: true,
+    spellModifier: {
+      type: 'spell',
+      value: 0.5,
+      bonus: 0,
+    },
   }),
 
   /**
@@ -49,15 +52,6 @@ export const baseThreat: BaseThreatConfig = {
       return undefined
     }
     const resourceType = event.resourceChangeType
-    const resourceLabelByCode: Record<number, string> = {
-      [ResourceTypeCode.Mana]: 'mana',
-      [ResourceTypeCode.Rage]: 'rage',
-      [ResourceTypeCode.Focus]: 'focus',
-      [ResourceTypeCode.Energy]: 'energy',
-      [ResourceTypeCode.ComboPoints]: 'combo_points',
-      [ResourceTypeCode.RunicPower]: 'runic_power',
-      [ResourceTypeCode.HolyPower]: 'holy_power',
-    }
 
     // Energy gains do not generate threat
     if (resourceType === ResourceTypeCode.Energy) {
@@ -66,13 +60,15 @@ export const baseThreat: BaseThreatConfig = {
 
     // Rage: 5x threat, Mana: 0.5x threat
     const multiplier = resourceType === ResourceTypeCode.Rage ? 5 : 0.5
-    const resourceLabel =
-      resourceLabelByCode[resourceType] ?? `resource(${resourceType})`
 
     return {
-      formula: `${resourceLabel} * ${multiplier}`,
       value: ctx.amount * multiplier,
       splitAmongEnemies: true,
+      spellModifier: {
+        type: 'spell',
+        value: multiplier,
+        bonus: 0,
+      },
       applyPlayerMultipliers: false,
     }
   },

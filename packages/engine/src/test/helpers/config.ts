@@ -48,22 +48,18 @@ export function createMockThreatConfig(
 
     baseThreat: {
       damage: (ctx: ThreatContext) => ({
-        formula: 'amount',
         value: ctx.amount,
         splitAmongEnemies: false,
       }),
       absorbed: (ctx: ThreatContext) => ({
-        formula: 'amount',
         value: ctx.amount,
         splitAmongEnemies: false,
       }),
       heal: (ctx: ThreatContext) => ({
-        formula: 'amount * 0.5',
         value: ctx.amount * 0.5,
         splitAmongEnemies: true,
       }),
       energize: (ctx: ThreatContext) => ({
-        formula: 'amount * 5',
         value: ctx.amount * 5,
         splitAmongEnemies: true,
       }),

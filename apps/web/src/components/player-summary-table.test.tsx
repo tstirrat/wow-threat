@@ -1,7 +1,7 @@
 /**
  * Component tests for focused-player table Wowhead link rendering.
  */
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
 import type { FocusedPlayerSummary, FocusedPlayerThreatRow } from '../types/app'
@@ -35,6 +35,13 @@ const rows: FocusedPlayerThreatRow[] = [
     modifierBreakdown: [],
   },
 ]
+
+function openModifierTooltip(buttonLabel: string): HTMLElement {
+  const trigger = screen.getByRole('button', { name: buttonLabel })
+  fireEvent.mouseEnter(trigger)
+  fireEvent.focus(trigger)
+  return screen.getByRole('tooltip')
+}
 
 describe('PlayerSummaryTable', () => {
   it('renders focused actor details as spec class with talent points', () => {
@@ -244,16 +251,22 @@ describe('PlayerSummaryTable', () => {
         name: 'Improved Righteous Fury (Rank 3) (holy)',
       }),
     ).toHaveAttribute('data-wowhead', 'spell=20470&domain=tbc')
-    expect(screen.getByText('x1.37')).toBeInTheDocument()
-    expect(screen.getByText('Modifier breakdown')).toBeInTheDocument()
-    expect(screen.getByText('Ability school: holy')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'x1.37' })).toBeInTheDocument()
+    const tooltip = openModifierTooltip('x1.37')
+    expect(within(tooltip).getByText('Modifier breakdown')).toBeInTheDocument()
+    expect(within(tooltip).getByText('Ability school:')).toBeInTheDocument()
+    expect(within(tooltip).getByText('holy')).toHaveStyle({ color: '#FFE680' })
+    expect(within(tooltip).getByText('Multipliers')).toHaveClass('text-right')
+    const tooltipText = tooltip.textContent ?? ''
+    expect(tooltipText.indexOf('Total')).toBeGreaterThan(
+      tooltipText.indexOf('Defensive Stance'),
+    )
     expect(screen.getByRole('row', { name: /Shield Slam/ })).toHaveStyle({
       color: '#FFE680',
     })
-    expect(screen.getByRole('tooltip')).toHaveClass('bottom-full')
   })
 
-  it('keeps heal row color while coloring heal modifier by spell school', () => {
+  it('keeps heal row color without spell-school override on modifier cell', () => {
     render(
       <PlayerSummaryTable
         summary={summary}
@@ -287,12 +300,12 @@ describe('PlayerSummaryTable', () => {
 
     const healRow = screen.getByRole('row', { name: /Flash Heal/ })
     expect(healRow).toHaveStyle({ color: '#22c55e' })
-    expect(screen.getByRole('button', { name: 'x1.20' })).toHaveStyle({
+    expect(screen.getByRole('button', { name: 'x1.20' })).not.toHaveStyle({
       color: '#FF8000',
     })
   })
 
-  it('keeps physical heal modifiers neutral', () => {
+  it('keeps physical heal modifier cells inheriting heal row color', () => {
     render(
       <PlayerSummaryTable
         summary={summary}
@@ -324,10 +337,12 @@ describe('PlayerSummaryTable', () => {
       />,
     )
 
+    const healRow = screen.getByRole('row', { name: /Death Strike/ })
+    expect(healRow).toHaveStyle({ color: '#22c55e' })
     expect(screen.getByRole('button', { name: 'x1.20' })).not.toHaveStyle({
       color: '#FFFF00',
     })
-    expect(screen.getByRole('button', { name: 'x1.20' })).toHaveClass(
+    expect(screen.getByRole('button', { name: 'x1.20' })).not.toHaveClass(
       'text-foreground',
     )
   })
@@ -420,7 +435,7 @@ describe('PlayerSummaryTable', () => {
       color: '#FFE680',
     })
 
-    const tooltip = screen.getByRole('tooltip')
+    const tooltip = openModifierTooltip('x1.37')
     const genericBreakdownModifier = within(tooltip)
       .getByText('Generic Breakdown')
       .closest('div')
@@ -588,5 +603,95 @@ describe('PlayerSummaryTable', () => {
     expect(columnHeaders[2]).toHaveClass('text-right')
     expect(columnHeaders[3]).toHaveClass('text-right')
     expect(columnHeaders[4]).toHaveClass('text-right')
+  })
+
+  it('shows spell as a multiplier row with bonus prefix and included total', () => {
+    render(
+      <PlayerSummaryTable
+        summary={summary}
+        rows={[
+          {
+            key: 'ability-5308',
+            abilityId: 5308,
+            abilityName: 'Execute',
+            spellSchool: 'physical',
+            amount: 450,
+            threat: 900,
+            tps: 9,
+            isHeal: false,
+            isFixate: false,
+            modifierTotal: 6,
+            modifierBreakdown: [
+              {
+                name: 'Defensive Stance',
+                schoolLabels: [],
+                value: 3,
+              },
+            ],
+            spellModifier: {
+              type: 'spell',
+              value: 2,
+              bonus: 261,
+            },
+          },
+        ]}
+        initialAuras={[]}
+        wowhead={{
+          domain: 'tbc',
+        }}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'x6.00*' })).toBeInTheDocument()
+
+    const tooltip = openModifierTooltip('x6.00*')
+    expect(within(tooltip).getByText('Multipliers')).toBeInTheDocument()
+    expect(within(tooltip).getByText('Total')).toBeInTheDocument()
+    expect(within(tooltip).getByText('x6.00')).toBeInTheDocument()
+    expect(within(tooltip).getByText('Execute')).toBeInTheDocument()
+    expect(within(tooltip).getByText('(+261) x2.00')).toBeInTheDocument()
+    expect(within(tooltip).getByText('Defensive Stance')).toBeInTheDocument()
+    expect(within(tooltip).getByText('x3.00')).toBeInTheDocument()
+    const tooltipText = tooltip.textContent ?? ''
+    expect(tooltipText.indexOf('Total')).toBeGreaterThan(
+      tooltipText.indexOf('Defensive Stance'),
+    )
+  })
+
+  it('labels heal spell modifier rows as Heal in tooltip', () => {
+    render(
+      <PlayerSummaryTable
+        summary={summary}
+        rows={[
+          {
+            key: 'ability-2061',
+            abilityId: 2061,
+            abilityName: 'Flash Heal',
+            spellSchool: 'holy',
+            amount: 700,
+            threat: 350,
+            tps: 3.5,
+            isHeal: true,
+            isFixate: false,
+            modifierTotal: 1.5,
+            modifierBreakdown: [],
+            spellModifier: {
+              type: 'spell',
+              value: 1.5,
+              bonus: 0,
+            },
+          },
+        ]}
+        initialAuras={[]}
+        wowhead={{
+          domain: 'tbc',
+        }}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'x1.50' })).toBeInTheDocument()
+    const tooltip = openModifierTooltip('x1.50')
+    expect(within(tooltip).getByText('Heal')).toBeInTheDocument()
+    expect(within(tooltip).queryByText('Flash Heal')).not.toBeInTheDocument()
   })
 })

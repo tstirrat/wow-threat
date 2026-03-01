@@ -345,7 +345,10 @@ describe('era warrior config', () => {
         const ctx = createMockContext({ amount: 2500 })
         const result = assertDefined(formula!(ctx))
 
-        expect(result.formula).toBe('amt + 178')
+        expect(result.spellModifier).toEqual({
+          type: 'spell',
+          bonus: 178,
+        })
         expect(result.value).toBe(2678)
         expect(result.splitAmongEnemies).toBe(false)
       })
@@ -357,7 +360,10 @@ describe('era warrior config', () => {
         const ctx = createMockContext({ amount: 1000 })
         const result = assertDefined(formula!(ctx))
 
-        expect(result.formula).toBe('amt + 254')
+        expect(result.spellModifier).toEqual({
+          type: 'spell',
+          bonus: 254,
+        })
         expect(result.value).toBe(1254)
         expect(result.splitAmongEnemies).toBe(false)
       })
@@ -385,9 +391,17 @@ describe('era warrior config', () => {
           ),
         )
 
-        expect(castResult.formula).toBe('261 (cast)')
+        expect(castResult.spellModifier).toEqual({
+          type: 'spell',
+          value: 0,
+          bonus: 261,
+        })
         expect(castResult.value).toBe(261)
-        expect(missResult.formula).toBe('-261 (miss rollback)')
+        expect(missResult.spellModifier).toEqual({
+          type: 'spell',
+          value: 0,
+          bonus: -261,
+        })
         expect(missResult.value).toBe(-261)
       })
 
@@ -412,9 +426,17 @@ describe('era warrior config', () => {
           ),
         )
 
-        expect(castResult.formula).toBe('261 (cast)')
+        expect(castResult.spellModifier).toEqual({
+          type: 'spell',
+          value: 0,
+          bonus: 261,
+        })
         expect(castResult.value).toBe(261)
-        expect(missResult.formula).toBe('-261 (miss rollback)')
+        expect(missResult.spellModifier).toEqual({
+          type: 'spell',
+          value: 0,
+          bonus: -261,
+        })
         expect(missResult.value).toBe(-261)
       })
     })
@@ -427,7 +449,11 @@ describe('era warrior config', () => {
         const ctx = createMockContext({ amount: 500 })
         const result = assertDefined(formula!(ctx))
 
-        expect(result.formula).toBe('(amt * 2.25) + 270')
+        expect(result.spellModifier).toEqual({
+          type: 'spell',
+          value: 2.25,
+          bonus: 270,
+        })
         expect(result.value).toBe(1395)
       })
 
@@ -452,7 +478,10 @@ describe('era warrior config', () => {
         const ctx = createMockContext({ amount: 1000 })
         const result = assertDefined(formula!(ctx))
 
-        expect(result.formula).toBe('amt + 175')
+        expect(result.spellModifier).toEqual({
+          type: 'spell',
+          bonus: 175,
+        })
         expect(result.value).toBe(1175)
       })
 
@@ -479,7 +508,11 @@ describe('era warrior config', () => {
         })
         const result = assertDefined(formula!(ctx))
 
-        expect(result.formula).toBe('60')
+        expect(result.spellModifier).toEqual({
+          type: 'spell',
+          value: 0,
+          bonus: 60,
+        })
         expect(result.value).toBe(60)
         expect(result.splitAmongEnemies).toBe(true)
       })
@@ -495,7 +528,11 @@ describe('era warrior config', () => {
         })
         const result = assertDefined(formula!(ctx))
 
-        expect(result.formula).toBe('43')
+        expect(result.spellModifier).toEqual({
+          type: 'spell',
+          value: 0,
+          bonus: 43,
+        })
         expect(result.value).toBe(43)
         expect(result.splitAmongEnemies).toBe(false)
       })
@@ -512,7 +549,11 @@ describe('era warrior config', () => {
           ),
         )
 
-        expect(result.formula).toBe('43')
+        expect(result.spellModifier).toEqual({
+          type: 'spell',
+          value: 0,
+          bonus: 43,
+        })
         expect(result.value).toBe(43)
       })
     })
@@ -532,7 +573,10 @@ describe('era warrior config', () => {
         })
         const result = assertDefined(formula!(ctx))
 
-        expect(result.formula).toBe('topThreat + 0')
+        expect(result.spellModifier).toEqual({
+          type: 'spell',
+          value: 0,
+        })
         expect(result.effects?.[0]).toEqual({
           type: 'customThreat',
           changes: [
@@ -562,7 +606,10 @@ describe('era warrior config', () => {
           ),
         )
 
-        expect(result.formula).toBe('amt + 76')
+        expect(result.spellModifier).toEqual({
+          type: 'spell',
+          bonus: 76,
+        })
         expect(result.value).toBe(326)
       })
 
@@ -578,7 +625,10 @@ describe('era warrior config', () => {
           ),
         )
 
-        expect(result.formula).toBe('amt + 116')
+        expect(result.spellModifier).toEqual({
+          type: 'spell',
+          bonus: 116,
+        })
         expect(result.value).toBe(366)
       })
 
@@ -616,7 +666,10 @@ describe('era warrior config', () => {
           ),
         )
 
-        expect(result.formula).toBe('amt * 5')
+        expect(result.spellModifier).toEqual({
+          type: 'spell',
+          value: 5,
+        })
         expect(result.value).toBe(50)
         expect(result.splitAmongEnemies).toBe(true)
         expect(result.applyPlayerMultipliers).toBe(true)
@@ -640,7 +693,10 @@ describe('era warrior config', () => {
           ),
         )
 
-        expect(result.formula).toBe('amt * 5')
+        expect(result.spellModifier).toEqual({
+          type: 'spell',
+          value: 5,
+        })
         expect(result.value).toBe(5)
         expect(result.splitAmongEnemies).toBe(true)
         expect(result.applyPlayerMultipliers).toBe(false)
@@ -658,7 +714,7 @@ describe('era warrior config', () => {
         })
         const result = assertDefined(formula!(ctx))
 
-        expect(result.formula).toBe('amt')
+        expect(result.spellModifier).toBeUndefined()
         expect(result.value).toBe(500)
         expect(result.effects).toBeUndefined()
       })

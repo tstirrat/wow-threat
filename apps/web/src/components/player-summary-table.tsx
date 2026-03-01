@@ -27,6 +27,12 @@ import {
   TableHeader,
   TableRow,
 } from './ui/table'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './ui/tooltip'
 
 export type PlayerSummaryTableProps = {
   summary: FocusedPlayerSummary | null
@@ -62,6 +68,15 @@ function formatModifierValue(value: number): string {
     maximumFractionDigits: 2,
     minimumFractionDigits: 2,
   }).format(value)
+}
+
+function formatSignedModifierBonus(value: number): string {
+  const formatted = new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+  }).format(Math.abs(value))
+
+  return `${value >= 0 ? '+' : '-'}${formatted}`
 }
 
 function isVisibleModifier(modifier: ThreatPointModifier): boolean {
@@ -238,67 +253,69 @@ export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
               window.
             </p>
           ) : (
-            <Table
-              aria-label="Focused player threat breakdown"
-              className="text-sm"
-            >
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ability / Debuff</TableHead>
-                  <TableHead className="text-right">
-                    Damage/Heal (Amount)
-                  </TableHead>
-                  <TableHead className="text-right">Threat</TableHead>
-                  <TableHead className="text-right">Modifier</TableHead>
-                  <TableHead className="text-right">TPS</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((row) => (
-                  <TableRow key={row.key} style={resolveThreatRowStyle(row)}>
-                    <TableCell>
-                      {row.abilityId === null ? (
-                        row.abilityName
-                      ) : (
-                        <WowHeadLink
-                          abilityId={row.abilityId}
-                          wowhead={wowhead}
-                        >
-                          {row.abilityName}
-                        </WowHeadLink>
-                      )}
+            <TooltipProvider delayDuration={0}>
+              <Table
+                aria-label="Focused player threat breakdown"
+                className="text-sm"
+              >
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Ability / Debuff</TableHead>
+                    <TableHead className="text-right">
+                      Damage/Heal (Amount)
+                    </TableHead>
+                    <TableHead className="text-right">Threat</TableHead>
+                    <TableHead className="text-right">Modifier</TableHead>
+                    <TableHead className="text-right">TPS</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((row) => (
+                    <TableRow key={row.key} style={resolveThreatRowStyle(row)}>
+                      <TableCell>
+                        {row.abilityId === null ? (
+                          row.abilityName
+                        ) : (
+                          <WowHeadLink
+                            abilityId={row.abilityId}
+                            wowhead={wowhead}
+                          >
+                            {row.abilityName}
+                          </WowHeadLink>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatNumber(row.amount)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatThreatValue(row.threat)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        <ModifierCell row={row} />
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {row.tps === null ? null : formatTps(row.tps)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow>
+                    <TableCell>Total</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatNumber(totalAmount)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatNumber(row.amount)}
+                      {formatThreatValue(summary.totalThreat)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      -
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatThreatValue(row.threat)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      <ModifierCell row={row} />
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {row.tps === null ? null : formatTps(row.tps)}
+                      {formatTps(summary.totalTps)}
                     </TableCell>
                   </TableRow>
-                ))}
-                <TableRow>
-                  <TableCell>Total</TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatNumber(totalAmount)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatThreatValue(summary.totalThreat)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums text-muted-foreground">
-                    -
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatTps(summary.totalTps)}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+                </TableBody>
+              </Table>
+            </TooltipProvider>
           )}
         </CardContent>
       </Card>
@@ -361,66 +378,146 @@ function ModifierCell({ row }: { row: FocusedPlayerThreatRow }) {
   const visibleModifiers = row.modifierBreakdown.filter((modifier) =>
     isVisibleModifier(modifier),
   )
-  const healModifierColor = row.isHeal
-    ? resolveModifierTotalColor(row.spellSchool ?? null)
-    : null
+  const spellModifier = row.spellModifier
+  const spellModifierMultiplier = spellModifier?.value ?? 1
+  const spellModifierBonus = spellModifier?.bonus ?? 0
+  const hasVisibleSpellMultiplier =
+    spellModifier !== undefined &&
+    Math.abs(spellModifierMultiplier - 1) > modifierValueTolerance
+  const hasVisibleSpellBonus =
+    spellModifier !== undefined &&
+    Math.abs(spellModifierBonus) > modifierValueTolerance
+  const hasFlatBonusOnlySpellModifier =
+    spellModifier !== undefined &&
+    Math.abs(spellModifierMultiplier) <= modifierValueTolerance &&
+    hasVisibleSpellBonus
+  const hasAnyModifierDetails =
+    visibleModifiers.length > 0 ||
+    hasVisibleSpellMultiplier ||
+    hasVisibleSpellBonus ||
+    Boolean(row.note)
 
   if (
-    visibleModifiers.length === 0 ||
-    Math.abs(row.modifierTotal - 1) <= modifierValueTolerance
+    !hasAnyModifierDetails ||
+    (!hasFlatBonusOnlySpellModifier &&
+      Math.abs(row.modifierTotal - 1) <= modifierValueTolerance &&
+      !row.note)
   ) {
     return <span className="text-muted-foreground">-</span>
   }
 
   const abilitySchoolLabel = formatAbilitySchoolLabel(row.spellSchool)
+  const abilitySchoolColor = resolveModifierTotalColor(row.spellSchool ?? null)
+  const hasVisibleTotalMultiplier =
+    Math.abs(row.modifierTotal - 1) > modifierValueTolerance
+  const spellModifierValueLabel =
+    spellModifier && (hasVisibleSpellMultiplier || hasVisibleSpellBonus)
+      ? hasVisibleSpellBonus
+        ? `(${formatSignedModifierBonus(spellModifierBonus)}) x${formatModifierValue(spellModifierMultiplier)}`
+        : `x${formatModifierValue(spellModifierMultiplier)}`
+      : null
+  const hasMultiplierDetails =
+    Boolean(spellModifierValueLabel) || visibleModifiers.length > 0
+  const multiplierDetailRowCount =
+    visibleModifiers.length + (spellModifierValueLabel ? 1 : 0)
+  const renderTotalAfterDetails = multiplierDetailRowCount > 1
+  const primaryLabel = hasFlatBonusOnlySpellModifier
+    ? `${formatSignedModifierBonus(spellModifierBonus)}*`
+    : hasVisibleTotalMultiplier
+      ? `x${formatModifierValue(row.modifierTotal)}${hasVisibleSpellBonus ? '*' : ''}`
+      : hasVisibleSpellBonus
+        ? '*'
+        : row.note
+          ? 'note'
+          : '-'
+  const spellModifierLabel = row.isHeal ? 'Heal' : row.abilityName
 
   return (
-    <div className="group relative inline-flex">
-      <button
-        className={`cursor-help underline decoration-dotted underline-offset-2 ${
-          row.isHeal && !healModifierColor ? 'text-foreground' : ''
-        }`}
-        style={healModifierColor ? { color: healModifierColor } : undefined}
-        type="button"
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          className="cursor-help underline decoration-dotted underline-offset-2"
+          type="button"
+        >
+          {primaryLabel}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent
+        align="center"
+        className="w-60 max-w-none rounded-md border border-border bg-popover p-2 text-left text-xs text-popover-foreground shadow-md"
+        side="top"
+        sideOffset={8}
       >
-        x{formatModifierValue(row.modifierTotal)}
-      </button>
-      <div
-        className="pointer-events-none invisible absolute bottom-full left-1/2 z-20 mb-2 w-60 -translate-x-1/2 rounded-md border border-border bg-popover p-2 text-xs text-popover-foreground opacity-0 shadow-md transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
-        role="tooltip"
-      >
-        <div className="font-medium">Modifier breakdown</div>
+        <div className="text-left font-medium">Modifier breakdown</div>
         {row.spellSchool ? (
           <div className="mb-1 text-[11px] text-muted-foreground">
-            Ability school: {abilitySchoolLabel}
+            <span>Ability school: </span>
+            <span
+              style={
+                abilitySchoolColor ? { color: abilitySchoolColor } : undefined
+              }
+            >
+              {abilitySchoolLabel}
+            </span>
           </div>
         ) : null}
-        <div className="space-y-1">
-          {visibleModifiers.map((modifier, index) => {
-            const modifierSchoolsLabel = resolveModifierSchoolsLabel(
-              modifier.schoolLabels,
-            )
-            const schoolColor = resolveModifierSchoolColor(
-              modifier.schoolLabels,
-            )
-
-            return (
-              <div
-                className="flex items-center justify-between gap-2"
-                key={`${modifier.name}-${index}`}
-                style={schoolColor ? { color: schoolColor } : undefined}
-              >
-                <span>
-                  {modifier.name}
-                  {modifierSchoolsLabel ? ` (${modifierSchoolsLabel})` : ''}
-                </span>
-                <span>x{formatModifierValue(modifier.value)}</span>
+        {hasMultiplierDetails ? (
+          <div className="space-y-1">
+            <div className="text-right text-[11px] uppercase tracking-wide text-muted-foreground">
+              Multipliers
+            </div>
+            {!renderTotalAfterDetails ? (
+              <div className="flex items-center justify-between gap-2">
+                <span>Total</span>
+                <span>x{formatModifierValue(row.modifierTotal)}</span>
               </div>
-            )
-          })}
-        </div>
-      </div>
-    </div>
+            ) : null}
+            {spellModifierValueLabel ? (
+              <div className="flex items-center justify-between gap-2">
+                <span>{spellModifierLabel}</span>
+                <span>{spellModifierValueLabel}</span>
+              </div>
+            ) : null}
+            {visibleModifiers.map((modifier, index) => {
+              const modifierSchoolsLabel = resolveModifierSchoolsLabel(
+                modifier.schoolLabels,
+              )
+              const schoolColor = resolveModifierSchoolColor(
+                modifier.schoolLabels,
+              )
+
+              return (
+                <div
+                  className="flex items-center justify-between gap-2"
+                  key={`${modifier.name}-${index}`}
+                  style={schoolColor ? { color: schoolColor } : undefined}
+                >
+                  <span>
+                    {modifier.name}
+                    {modifierSchoolsLabel ? ` (${modifierSchoolsLabel})` : ''}
+                  </span>
+                  <span>x{formatModifierValue(modifier.value)}</span>
+                </div>
+              )
+            })}
+            {renderTotalAfterDetails ? (
+              <div className="mt-1 flex items-center justify-between gap-2 border-t border-border/60 pt-1">
+                <span>Total</span>
+                <span>x{formatModifierValue(row.modifierTotal)}</span>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+        {row.note ? (
+          <div className="mt-1">
+            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+              Note
+            </span>
+            <div>{row.note}</div>
+          </div>
+        ) : null}
+      </TooltipContent>
+    </Tooltip>
   )
 }
 

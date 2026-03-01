@@ -118,9 +118,9 @@ export const hunterConfig: ClassThreatConfig = {
     [Spells.PetScreechR5]: threatOnDebuffOrDamage(210),
     [Spells.DistractingShotR7]: threat({ bonus: 900, eventTypes: ['cast'] }),
     [Spells.Misdirection]: (ctx) => ({
-      formula: 'misdirection',
       value: 0,
       splitAmongEnemies: false,
+      note: 'misdirection(installInterceptor)',
       effects: [
         {
           type: 'installInterceptor',

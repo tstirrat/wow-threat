@@ -253,13 +253,23 @@ export type ThreatEffect =
   | { type: 'customThreat'; changes: ThreatChangeRequest[] }
   | { type: 'installInterceptor'; interceptor: EventInterceptor }
 
+export interface SpellThreatModifier {
+  type: 'spell'
+  /** Multiplier applied to amount; defaults to 1 when omitted. */
+  value?: number
+  /** Flat threat bonus added after multiplier; defaults to 0 when omitted. */
+  bonus?: number
+}
+
 export interface ThreatFormulaResult {
-  /** Human-readable formula, e.g., "(2 * amt) + 115" */
-  formula: string
   /** Threat value to apply to the target */
   value: number
   /** Whether to divide threat among all enemies */
   splitAmongEnemies: boolean
+  /** Structured spell math metadata, e.g. (amount * value) + bonus */
+  spellModifier?: SpellThreatModifier
+  /** Optional note for novel mechanics where math alone is insufficient */
+  note?: string
   /** Whether to apply player multipliers (class/aura/talent). Defaults to true. */
   applyPlayerMultipliers?: boolean
   /** Event effects (taunt, threat drop, custom threat, etc.) */
@@ -439,16 +449,18 @@ export interface ThreatChangeRequest {
 }
 
 export interface ThreatCalculation {
-  /** The base threat formula */
-  formula: string
   /** Event amount (damage/heal/etc.) - for reference */
   amount: number
-  /** Result of formula applied to baseValue */
+  /** Base threat after spell modifier math is applied */
   baseThreat: number
   /** Final threat (before splitting) */
   modifiedThreat: number
   /** Whether threat was split among multiple enemies */
   isSplit: boolean
+  /** Structured spell math metadata, e.g. (amount * value) + bonus */
+  spellModifier?: SpellThreatModifier
+  /** Optional note for novel mechanics where math alone is insufficient */
+  note?: string
   /** Modifiers applied (multiplicative with each other) */
   modifiers: AppliedThreatModifier[]
   /** Event effects (taunt, threat drop, custom threat, etc.) */

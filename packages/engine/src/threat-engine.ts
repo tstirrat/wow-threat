@@ -335,7 +335,6 @@ function processEventsWithProcessors(
         { type: 'eventMarker', marker: 'bossMelee' },
       ]
       const zeroCalculation: ThreatCalculation = {
-        formula: 'bossMelee',
         amount: event.amount,
         baseThreat: 0,
         modifiedThreat: 0,
@@ -364,7 +363,6 @@ function processEventsWithProcessors(
         toSerializableAugmentedEffects(processorEffects)
       // Create zero-threat augmented event
       const zeroCalculation: ThreatCalculation = {
-        formula: '(skipped by processor)',
         amount: 0,
         baseThreat: 0,
         modifiedThreat: 0,
@@ -463,7 +461,7 @@ function processEventsWithProcessors(
           effects: serializableEffects,
         }
       : {
-          formula: '(effects only)',
+          note: '(effects only)',
           amount: 0,
           baseThreat: 0,
           modifiedThreat: 0,
@@ -1207,11 +1205,12 @@ export function calculateModifiedThreat(
   const modifiedThreat = formulaResult.value * totalMultiplier
 
   return {
-    formula: formulaResult.formula,
     amount: ctx.amount,
     baseThreat: formulaResult.value,
     modifiedThreat: modifiedThreat,
     isSplit: formulaResult.splitAmongEnemies,
+    spellModifier: formulaResult.spellModifier,
+    note: formulaResult.note,
     modifiers: allModifiers,
     effects: formulaResult.effects,
   }

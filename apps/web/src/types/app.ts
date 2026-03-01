@@ -1,6 +1,7 @@
 /**
  * Shared frontend app-level types.
  */
+import type { SpellThreatModifier } from '@wow-threat/shared'
 import type { HitType, PlayerClass } from '@wow-threat/wcl-types'
 
 import type { ReportActorRole } from './api'
@@ -113,7 +114,8 @@ export interface ThreatPoint {
   targetName?: string | null
   hitType?: HitType
   isTick?: boolean
-  formula: string
+  spellModifier?: SpellThreatModifier
+  note?: string
   modifiers: ThreatPointModifier[]
   markerKind?: ThreatPointMarkerKind
 }
@@ -202,6 +204,8 @@ export interface FocusedPlayerThreatRow {
   isFixate: boolean
   modifierTotal: number
   modifierBreakdown: ThreatPointModifier[]
+  spellModifier?: SpellThreatModifier
+  note?: string
 }
 
 export interface InitialAuraDisplay {

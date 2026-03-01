@@ -1,6 +1,7 @@
 /**
  * Shared data payload types used by threat chart rendering and tooltip formatters.
  */
+import type { SpellThreatModifier } from '@wow-threat/shared'
 import type { HitType } from '@wow-threat/wcl-types'
 
 import type { ThreatPointMarkerKind, ThreatPointModifier } from '../types/app'
@@ -16,7 +17,8 @@ export interface TooltipPointPayload {
   eventType: string
   hitType?: HitType
   isTick?: boolean
-  formula: string
+  spellModifier?: SpellThreatModifier
+  note?: string
   modifiedThreat: number
   resourceType?: number | null
   spellSchool: string | null

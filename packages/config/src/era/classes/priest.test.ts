@@ -54,7 +54,10 @@ describe('Priest Config', () => {
 
       const result = formula!(createMockContext({ amount: 300 }))
 
-      expect(result?.formula).toBe('amt + 40')
+      expect(result?.spellModifier).toEqual({
+        type: 'spell',
+        bonus: 40,
+      })
       expect(result?.value).toBe(340)
     })
   })

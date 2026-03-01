@@ -113,7 +113,10 @@ describe('Druid Config', () => {
         const ctx = createMockContext({ amount: 1000 })
         const result = assertDefined(formula!(ctx))
 
-        expect(result.formula).toBe('amt * 1.75')
+        expect(result.spellModifier).toEqual({
+          type: 'spell',
+          value: 1.75,
+        })
         expect(result.value).toBe(1750)
       })
     })
@@ -126,7 +129,10 @@ describe('Druid Config', () => {
         const ctx = createMockContext({ amount: 100 })
         const result = assertDefined(formula!(ctx))
 
-        expect(result.formula).toBe('amt * 1.75')
+        expect(result.spellModifier).toEqual({
+          type: 'spell',
+          value: 1.75,
+        })
         expect(result.value).toBe(175)
       })
     })
@@ -146,7 +152,10 @@ describe('Druid Config', () => {
         })
         const result = assertDefined(formula!(ctx))
 
-        expect(result.formula).toBe('topThreat + 0')
+        expect(result.spellModifier).toEqual({
+          type: 'spell',
+          value: 0,
+        })
         expect(result.effects?.[0]).toEqual({
           type: 'customThreat',
           changes: [
@@ -179,9 +188,17 @@ describe('Druid Config', () => {
           }),
         )
 
-        expect(castResult?.formula).toBe('-240 (cast)')
+        expect(castResult?.spellModifier).toEqual({
+          type: 'spell',
+          value: 0,
+          bonus: -240,
+        })
         expect(castResult?.value).toBe(-240)
-        expect(missResult?.formula).toBe('240 (miss rollback)')
+        expect(missResult?.spellModifier).toEqual({
+          type: 'spell',
+          value: 0,
+          bonus: 240,
+        })
         expect(missResult?.value).toBe(240)
       })
     })
@@ -196,7 +213,11 @@ describe('Druid Config', () => {
         })
         const result = assertDefined(formula!(ctx))
 
-        expect(result.formula).toBe('108')
+        expect(result.spellModifier).toEqual({
+          type: 'spell',
+          value: 0,
+          bonus: 108,
+        })
         expect(result.value).toBe(108)
       })
     })

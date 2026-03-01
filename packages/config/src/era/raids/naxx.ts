@@ -73,9 +73,9 @@ export const magneticPull: ThreatFormula = (ctx) => {
   }
 
   return {
-    formula: 'magneticPull(sourceMaxThreat)',
     value: 0,
     splitAmongEnemies: false,
+    note: 'magneticPull(sourceMaxThreat)',
     effects: [
       {
         type: 'customThreat',
@@ -195,9 +195,14 @@ export const hatefulStrike =
     })
 
     return {
-      formula: `hatefulStrike(${amount})`,
       value: amount,
       splitAmongEnemies: false,
+      spellModifier: {
+        type: 'spell',
+        value: 0,
+        bonus: amount,
+      },
+      note: 'hatefulStrike(target+nearbyMelee)',
       effects: [{ type: 'customThreat', changes }],
     }
   }

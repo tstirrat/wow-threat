@@ -71,9 +71,9 @@ const nightbaneRainOfBones: ThreatFormula = (ctx) => {
   const enemyInstance = ctx.event.sourceInstance ?? 0
 
   return {
-    formula: 'threatWipe + delayedLandingWipe(43s)',
     value: 0,
     splitAmongEnemies: false,
+    note: 'nightbaneRainOfBones(wipe+delayedWipe)',
     effects: [
       {
         type: 'modifyThreat',

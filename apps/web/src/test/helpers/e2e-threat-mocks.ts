@@ -323,12 +323,10 @@ const fightsById: Record<number, FightsResponse> = {
 function calculationFor({
   amount,
   baseThreat,
-  formula,
   modifiedThreat,
 }: {
   amount: number
   baseThreat: number
-  formula: string
   modifiedThreat: number
 }): NonNullable<
   AugmentedEventsResponse['events'][number]['threat']
@@ -336,7 +334,6 @@ function calculationFor({
   return {
     amount,
     baseThreat,
-    formula,
     isSplit: false,
     modifiedThreat,
     modifiers: [],
@@ -355,7 +352,6 @@ const patchwerkEvents: AugmentedEventsResponse = {
         calculation: calculationFor({
           amount: 600,
           baseThreat: 600,
-          formula: 'damage * 0.5',
           modifiedThreat: 300,
         }),
         changes: [
@@ -381,7 +377,6 @@ const patchwerkEvents: AugmentedEventsResponse = {
         calculation: calculationFor({
           amount: 500,
           baseThreat: 500,
-          formula: 'damage * 0.5',
           modifiedThreat: 250,
         }),
         changes: [
@@ -407,7 +402,6 @@ const patchwerkEvents: AugmentedEventsResponse = {
         calculation: calculationFor({
           amount: 300,
           baseThreat: 300,
-          formula: 'damage * 0.5',
           modifiedThreat: 150,
         }),
         changes: [
@@ -433,7 +427,6 @@ const patchwerkEvents: AugmentedEventsResponse = {
         calculation: calculationFor({
           amount: 240,
           baseThreat: 240,
-          formula: 'damage * 0.5',
           modifiedThreat: 120,
         }),
         changes: [
@@ -459,7 +452,6 @@ const patchwerkEvents: AugmentedEventsResponse = {
         calculation: calculationFor({
           amount: 300,
           baseThreat: 300,
-          formula: 'damage * 0.4',
           modifiedThreat: 120,
         }),
         changes: [
@@ -485,7 +477,6 @@ const patchwerkEvents: AugmentedEventsResponse = {
         calculation: calculationFor({
           amount: 360,
           baseThreat: 360,
-          formula: 'damage * 0.5',
           modifiedThreat: 180,
         }),
         changes: [
@@ -511,7 +502,6 @@ const patchwerkEvents: AugmentedEventsResponse = {
         calculation: calculationFor({
           amount: 400,
           baseThreat: 400,
-          formula: 'damage * 0.325',
           modifiedThreat: 130,
         }),
         changes: [
@@ -537,7 +527,6 @@ const patchwerkEvents: AugmentedEventsResponse = {
         calculation: calculationFor({
           amount: 200,
           baseThreat: 200,
-          formula: 'heal * 0.35',
           modifiedThreat: 70,
         }),
         changes: [
@@ -563,7 +552,6 @@ const patchwerkEvents: AugmentedEventsResponse = {
         calculation: calculationFor({
           amount: 200,
           baseThreat: 200,
-          formula: 'damage * 0.4',
           modifiedThreat: 80,
         }),
         changes: [
@@ -589,7 +577,6 @@ const patchwerkEvents: AugmentedEventsResponse = {
         calculation: calculationFor({
           amount: 120,
           baseThreat: 120,
-          formula: 'damage * 0.35',
           modifiedThreat: 42,
         }),
         changes: [
@@ -625,7 +612,6 @@ const grobbulusEvents: AugmentedEventsResponse = {
         calculation: calculationFor({
           amount: 500,
           baseThreat: 500,
-          formula: 'damage * 0.4',
           modifiedThreat: 200,
         }),
         changes: [
@@ -651,7 +637,6 @@ const grobbulusEvents: AugmentedEventsResponse = {
         calculation: calculationFor({
           amount: 520,
           baseThreat: 520,
-          formula: 'damage * 0.5',
           modifiedThreat: 260,
         }),
         changes: [
@@ -677,7 +662,6 @@ const grobbulusEvents: AugmentedEventsResponse = {
         calculation: calculationFor({
           amount: 420,
           baseThreat: 420,
-          formula: 'damage * 0.5',
           modifiedThreat: 210,
         }),
         changes: [

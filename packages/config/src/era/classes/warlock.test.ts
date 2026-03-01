@@ -69,7 +69,10 @@ describe('Warlock Config', () => {
         }),
       )
 
-      expect(result?.formula).toBe('amt * 2')
+      expect(result?.spellModifier).toEqual({
+        type: 'spell',
+        value: 2,
+      })
       expect(result?.value).toBe(400)
     })
 
@@ -90,9 +93,13 @@ describe('Warlock Config', () => {
         }),
       )
 
-      expect(debuffResult?.formula).toBe('120')
+      expect(debuffResult?.spellModifier).toEqual({
+        type: 'spell',
+        value: 0,
+        bonus: 120,
+      })
       expect(debuffResult?.value).toBe(120)
-      expect(damageResult?.formula).toBe('amt')
+      expect(damageResult?.spellModifier).toBeUndefined()
       expect(damageResult?.value).toBe(456)
     })
 
@@ -113,9 +120,13 @@ describe('Warlock Config', () => {
         }),
       )
 
-      expect(debuffResult?.formula).toBe('60')
+      expect(debuffResult?.spellModifier).toEqual({
+        type: 'spell',
+        value: 0,
+        bonus: 60,
+      })
       expect(debuffResult?.value).toBe(60)
-      expect(damageResult?.formula).toBe('amt')
+      expect(damageResult?.spellModifier).toBeUndefined()
       expect(damageResult?.value).toBe(222)
     })
   })

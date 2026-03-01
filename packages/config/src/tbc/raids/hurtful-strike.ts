@@ -105,9 +105,9 @@ export function createHurtfulStrikeFormula(
     }
 
     return {
-      formula: `hurtfulStrike(MT=${mainTankThreat}, target=${targetThreat})`,
       value: 0,
       splitAmongEnemies: false,
+      note: `hurtfulStrike(MT=${mainTankThreat}, target=${targetThreat})`,
       effects: [{ type: 'customThreat', changes }],
     }
   }

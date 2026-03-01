@@ -117,9 +117,9 @@ export const shamanConfig: ClassThreatConfig = {
       if (ctx.event.type === 'summon') {
         // adds a marker on the chart only
         return {
-          formula: 'tranquilAirSummon',
           value: 0,
           splitAmongEnemies: false,
+          note: 'tranquilAirTotem(summonMarker)',
           effects: [{ type: 'eventMarker', marker: 'tranquilAirTotem' }],
         }
       }

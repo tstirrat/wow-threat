@@ -149,6 +149,8 @@ export function createThreatChartTooltipFormatter({
         Number.isFinite(modifier.value) &&
         Math.abs(modifier.value - 1) > 0.0005,
     )
+    const spellModifier = payload.spellModifier
+    const spellModifierMultiplier = spellModifier?.value ?? 1
     const modifiersTotal = visibleModifiers.reduce((total, modifier) => {
       if (!Number.isFinite(modifier.value)) {
         return total
@@ -156,6 +158,7 @@ export function createThreatChartTooltipFormatter({
 
       return total * modifier.value
     }, 1)
+    const totalMultiplierWithSpell = modifiersTotal * spellModifierMultiplier
     const isSchoolAmountEvent =
       rawEventType === 'damage' || rawEventType === 'heal'
     const amountSchool =
@@ -172,6 +175,12 @@ export function createThreatChartTooltipFormatter({
       ? (formatResourceTypeLabel(rawResourceType) ?? 'Amt')
       : 'Amt'
     const hitTypeLabel = resolveTooltipHitTypeLabel(payload.hitType)
+    const spellModifierLabel = spellModifier
+      ? isHealEvent
+        ? 'Heal'
+        : (payload.abilityName ?? 'Unknown ability')
+      : null
+    const note = payload.note ?? null
     const spellId =
       typeof payload.spellId === 'number' && payload.spellId > 0
         ? payload.spellId
@@ -194,7 +203,7 @@ export function createThreatChartTooltipFormatter({
       auraLabel: auraStatus.color && auraStatus.label ? auraStatus.label : null,
       auraStatusColor: auraStatus.color ?? themeColors.muted,
       markerKind,
-      modifiersTotal,
+      modifiersTotal: totalMultiplierWithSpell,
       modifiedThreat,
       splitCount,
       threatDelta,
@@ -202,7 +211,9 @@ export function createThreatChartTooltipFormatter({
       totalThreat,
       visibleModifiers,
       hitTypeLabel,
-      formula: payload.formula ?? 'n/a',
+      ...(spellModifier ? { spellModifier } : {}),
+      ...(spellModifierLabel ? { spellModifierLabel } : {}),
+      ...(note ? { note } : {}),
       mutedColor: themeColors.muted,
       spellId,
     }

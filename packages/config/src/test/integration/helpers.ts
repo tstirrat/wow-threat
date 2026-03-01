@@ -4,7 +4,11 @@
  * Loads config-scoped fixtures and runs them through the shared threat engine.
  */
 import { buildThreatEngineInput, processEvents } from '@wow-threat/engine'
-import { type Actor, type AugmentedEvent } from '@wow-threat/shared'
+import {
+  type Actor,
+  type AugmentedEvent,
+  type SpellThreatModifier,
+} from '@wow-threat/shared'
 import type { ThreatConfig } from '@wow-threat/shared/src/types'
 import type { WCLEvent, WCLReportResponse } from '@wow-threat/wcl-types'
 import { existsSync } from 'node:fs'
@@ -218,9 +222,31 @@ function formatSpellName(
   return `${spellName} (${event.type})`
 }
 
-function formatFormula(formula: string): string {
-  const normalized = formula.replace(/\s+/g, ' ').trim()
-  return normalized.length === 0 ? '-' : normalized
+function formatSpellModifier(
+  spellModifier: SpellThreatModifier | undefined,
+): string {
+  if (!spellModifier) {
+    return '-'
+  }
+
+  const value = spellModifier.value ?? 1
+  const bonus = spellModifier.bonus ?? 0
+  const hasMultiplier = Math.abs(value - 1) > 0.0005
+  const hasBonus = Math.abs(bonus) > 0.0005
+
+  if (!hasMultiplier && !hasBonus) {
+    return '-'
+  }
+
+  if (!hasMultiplier && hasBonus) {
+    return `${bonus >= 0 ? '+' : ''}${bonus.toFixed(2)}`
+  }
+
+  if (hasMultiplier && !hasBonus) {
+    return `x${value.toFixed(2)}`
+  }
+
+  return `x${value.toFixed(2)} + ${bonus.toFixed(2)}`
 }
 
 function formatModifiers(event: AugmentedEvent): string {
@@ -425,7 +451,8 @@ export function buildThreatSnapshotLines(
         time: formatRelativeTime(event.timestamp, fightStartTime),
         spell: formatSpellName(event, abilityNameMap),
         amount: formatThreat(threat.calculation.amount),
-        formula: formatFormula(threat.calculation.formula),
+        spellMod: formatSpellModifier(threat.calculation.spellModifier),
+        note: threat.calculation.note?.trim() || '-',
         threat: formatThreat(threat.calculation.modifiedThreat),
         toTarget,
         total: formatThreat(targetChange.total),
@@ -447,7 +474,8 @@ export function buildThreatSnapshotLines(
     t: 'T',
     spell: 'Spell',
     amount: 'Amount',
-    formula: 'Formula',
+    spellMod: 'Spell Mod',
+    note: 'Note',
     threat: 'Threat',
     toTarget: 'To Target',
     total: 'Total',
@@ -464,10 +492,11 @@ export function buildThreatSnapshotLines(
       columns.amount.length,
       ...rows.map((row) => row.amount.length),
     ),
-    formula: Math.max(
-      columns.formula.length,
-      ...rows.map((row) => row.formula.length),
+    spellMod: Math.max(
+      columns.spellMod.length,
+      ...rows.map((row) => row.spellMod.length),
     ),
+    note: Math.max(columns.note.length, ...rows.map((row) => row.note.length)),
     threat: Math.max(
       columns.threat.length,
       ...rows.map((row) => row.threat.length),
@@ -486,7 +515,8 @@ export function buildThreatSnapshotLines(
     pad(columns.t, widths.t),
     pad(columns.spell, widths.spell),
     pad(columns.amount, widths.amount),
-    pad(columns.formula, widths.formula),
+    pad(columns.spellMod, widths.spellMod),
+    pad(columns.note, widths.note),
     pad(columns.threat, widths.threat),
     pad(columns.toTarget, widths.toTarget),
     pad(columns.total, widths.total),
@@ -498,7 +528,8 @@ export function buildThreatSnapshotLines(
       pad(row.time, widths.t),
       pad(row.spell, widths.spell),
       pad(row.amount, widths.amount),
-      pad(row.formula, widths.formula),
+      pad(row.spellMod, widths.spellMod),
+      pad(row.note, widths.note),
       pad(row.threat, widths.threat),
       pad(row.toTarget, widths.toTarget),
       pad(row.total, widths.total),

@@ -4,7 +4,11 @@
  * These helper functions create threat formula functions that can be used
  * in class configurations.
  */
-import type { ThreatContext, ThreatFormulaResult } from '@wow-threat/shared'
+import type {
+  SpellThreatModifier,
+  ThreatContext,
+  ThreatFormulaResult,
+} from '@wow-threat/shared'
 import {
   type EventType,
   type HitType,
@@ -87,6 +91,36 @@ function isEventTypeAllowed(
   return allowedEventTypes.includes(eventType)
 }
 
+function createSpellModifier({
+  modifier,
+  bonus,
+}: {
+  modifier?: number
+  bonus?: number
+}): SpellThreatModifier | undefined {
+  const hasMultiplier =
+    modifier !== undefined && Math.abs(modifier - 1) > 0.0005
+  const hasBonus = bonus !== undefined && Math.abs(bonus) > 0.0005
+
+  if (!hasMultiplier && !hasBonus) {
+    return undefined
+  }
+
+  const spellModifier: SpellThreatModifier = {
+    type: 'spell',
+  }
+
+  if (hasMultiplier && modifier !== undefined) {
+    spellModifier.value = modifier
+  }
+
+  if (hasBonus && bonus !== undefined) {
+    spellModifier.bonus = bonus
+  }
+
+  return spellModifier
+}
+
 /**
  * Consolidated threat formula: (amount × modifier) + bonus
  * Replaces flat(), modAmount(), modAmountFlat(), defaultFormula(), threatOnBuff()
@@ -113,33 +147,15 @@ export function threat(options: ThreatOptions = {}): FormulaFn {
     }
 
     const value = ctx.amount * modifier + bonus
-
-    // Generate formula string
-    let formula: string
-    if (modifier === 0 && bonus !== 0) {
-      // Pure flat threat: "301"
-      formula = `${bonus}`
-    } else if (modifier === 1 && bonus === 0) {
-      // Default: "amt"
-      formula = 'amt'
-    } else if (modifier === 1 && bonus !== 0) {
-      // Amount + bonus: "amt + 150"
-      formula = `amt + ${bonus}`
-    } else if (modifier === 0 && bonus === 0) {
-      // Zero threat: "0"
-      formula = 'threat(0)'
-    } else if (bonus === 0) {
-      // Pure multiplier: "amt * 2"
-      formula = `amt * ${modifier}`
-    } else {
-      // Full formula: "(amt * 2) + 150"
-      formula = `(amt * ${modifier}) + ${bonus}`
-    }
+    const spellModifier = createSpellModifier({
+      modifier,
+      bonus,
+    })
 
     return {
-      formula,
       value,
       splitAmongEnemies: split,
+      ...(spellModifier ? { spellModifier } : {}),
       applyPlayerMultipliers,
     }
   }
@@ -228,24 +244,16 @@ export function tauntTarget(options: TauntOptions = {}): FormulaFn {
         1,
       )[0]?.threat ?? 0
     const nextThreat = Math.max(currentThreat, topThreat + bonusThreat)
-
-    let formula: string
-    if (modifier === 0) {
-      formula = `topThreat + ${bonus}`
-    } else if (modifier === 1 && bonus === 0) {
-      formula = 'topThreat + amt'
-    } else if (modifier === 1) {
-      formula = `topThreat + amt + ${bonus}`
-    } else if (bonus === 0) {
-      formula = `topThreat + (amt * ${modifier})`
-    } else {
-      formula = `topThreat + (amt * ${modifier}) + ${bonus}`
-    }
+    const spellModifier = createSpellModifier({
+      modifier,
+      bonus,
+    })
 
     return {
-      formula,
       value: 0,
       splitAmongEnemies: false,
+      ...(spellModifier ? { spellModifier } : {}),
+      note: 'taunt(topThreat+bonusThreat)',
       effects: [
         {
           type: 'customThreat',
@@ -281,9 +289,12 @@ export function modifyThreat(options: ModifyThreatOptions): FormulaFn {
     }
 
     return {
-      formula: modifier === 0 ? 'threatWipe' : `threat * ${modifier}`,
       value: 0,
       splitAmongEnemies: false,
+      note:
+        modifier === 0
+          ? `threatWipe(${target})`
+          : `modifyThreat(${modifier},${target})`,
       effects: [
         {
           type: 'modifyThreat',
@@ -334,10 +345,12 @@ export function threatOnDebuff(value: number): FormulaFn {
       return undefined
     }
 
+    const spellModifier = createSpellModifier({ modifier: 0, bonus: value })
+
     return {
-      formula: `${value}`,
       value,
       splitAmongEnemies: false,
+      ...(spellModifier ? { spellModifier } : {}),
     }
   }
 }
@@ -353,16 +366,17 @@ export function threatOnDebuffOrDamage(value: number): FormulaFn {
       ctx.event.type === 'refreshdebuff' ||
       ctx.event.type === 'applydebuffstack'
     ) {
+      const spellModifier = createSpellModifier({ modifier: 0, bonus: value })
+
       return {
-        formula: `${value}`,
         value,
         splitAmongEnemies: false,
+        ...(spellModifier ? { spellModifier } : {}),
       }
     }
 
     if (ctx.event.type === 'damage') {
       return {
-        formula: 'amt',
         value: ctx.amount,
         splitAmongEnemies: false,
       }
@@ -387,10 +401,12 @@ export function threatOnBuff(
       return undefined
     }
 
+    const spellModifier = createSpellModifier({ modifier: 0, bonus: value })
+
     return {
-      formula: `${value}`,
       value,
       splitAmongEnemies: options?.split ?? true,
+      ...(spellModifier ? { spellModifier } : {}),
       applyPlayerMultipliers: options?.applyPlayerMultipliers,
     }
   }
@@ -407,16 +423,17 @@ export function threatOnBuffOrDamage(value: number): FormulaFn {
       ctx.event.type === 'refreshbuff' ||
       ctx.event.type === 'applybuffstack'
     ) {
+      const spellModifier = createSpellModifier({ modifier: 0, bonus: value })
+
       return {
-        formula: `${value}`,
         value,
         splitAmongEnemies: true,
+        ...(spellModifier ? { spellModifier } : {}),
       }
     }
 
     if (ctx.event.type === 'damage') {
       return {
-        formula: 'amt',
         value: ctx.amount,
         splitAmongEnemies: false,
       }
@@ -437,10 +454,13 @@ export function threatOnCastRollbackOnMiss(
 ): FormulaFn {
   return (ctx) => {
     if (ctx.event.type === 'cast') {
+      const spellModifier = createSpellModifier({ modifier: 0, bonus: value })
+
       return {
-        formula: `${value} (cast)`,
         value,
         splitAmongEnemies: false,
+        ...(spellModifier ? { spellModifier } : {}),
+        note: 'castThreat(rollbackOnMiss)',
         applyPlayerMultipliers: options.applyPlayerMultipliers,
       }
     }
@@ -450,10 +470,16 @@ export function threatOnCastRollbackOnMiss(
       castRollbackHitTypes.has(ctx.event.hitType)
     ) {
       const rollbackValue = -value
+      const spellModifier = createSpellModifier({
+        modifier: 0,
+        bonus: rollbackValue,
+      })
+
       return {
-        formula: `${rollbackValue} (miss rollback)`,
         value: rollbackValue,
         splitAmongEnemies: false,
+        ...(spellModifier ? { spellModifier } : {}),
+        note: 'castThreat(missRollback)',
         applyPlayerMultipliers: options.applyPlayerMultipliers,
       }
     }

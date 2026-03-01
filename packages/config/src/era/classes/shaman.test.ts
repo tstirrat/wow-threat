@@ -97,7 +97,10 @@ describe('Shaman Config', () => {
         }),
       )
 
-      expect(result?.formula).toBe('amt * 2')
+      expect(result?.spellModifier).toEqual({
+        type: 'spell',
+        value: 2,
+      })
       expect(result?.value).toBe(500)
     })
   })
