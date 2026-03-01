@@ -23,21 +23,21 @@ describe('threat-chart-event-visibility', () => {
       shouldRenderThreatPoint({
         point: { eventType: 'resourcechange', markerKind: undefined },
         showEnergizeEvents: false,
-        showBossMelee: true,
+        bossDamageMode: 'all',
       }),
     ).toBe(false)
     expect(
       shouldRenderThreatPoint({
         point: { eventType: 'energize', markerKind: undefined },
         showEnergizeEvents: false,
-        showBossMelee: true,
+        bossDamageMode: 'all',
       }),
     ).toBe(false)
     expect(
       shouldRenderThreatPoint({
         point: { eventType: 'damage', markerKind: undefined },
         showEnergizeEvents: false,
-        showBossMelee: true,
+        bossDamageMode: 'all',
       }),
     ).toBe(true)
   })
@@ -47,14 +47,14 @@ describe('threat-chart-event-visibility', () => {
       shouldRenderThreatPoint({
         point: { eventType: 'resourcechange', markerKind: undefined },
         showEnergizeEvents: true,
-        showBossMelee: true,
+        bossDamageMode: 'all',
       }),
     ).toBe(true)
     expect(
       shouldRenderThreatPoint({
         point: { eventType: 'energize', markerKind: undefined },
         showEnergizeEvents: true,
-        showBossMelee: true,
+        bossDamageMode: 'all',
       }),
     ).toBe(true)
   })
@@ -65,21 +65,38 @@ describe('threat-chart-event-visibility', () => {
     expect(isBossMeleeMarker({ markerKind: undefined })).toBe(false)
   })
 
-  it('hides boss-melee markers when toggle is disabled', () => {
+  it('hides boss-damage markers when mode is off', () => {
     expect(
       shouldRenderThreatPoint({
-        point: { eventType: 'damage', markerKind: 'bossMelee' },
+        point: { eventType: 'damage', markerKind: 'bossMelee', spellId: 1 },
         showEnergizeEvents: true,
-        showBossMelee: false,
+        bossDamageMode: 'off',
       }),
     ).toBe(false)
     expect(
       shouldRenderThreatPoint({
         point: { eventType: 'damage', markerKind: 'death' },
         showEnergizeEvents: true,
-        showBossMelee: false,
+        bossDamageMode: 'off',
       }),
     ).toBe(true)
+  })
+
+  it('shows only melee boss-damage markers when mode is melee', () => {
+    expect(
+      shouldRenderThreatPoint({
+        point: { eventType: 'damage', markerKind: 'bossMelee', spellId: 1 },
+        showEnergizeEvents: true,
+        bossDamageMode: 'melee',
+      }),
+    ).toBe(true)
+    expect(
+      shouldRenderThreatPoint({
+        point: { eventType: 'damage', markerKind: 'bossMelee', spellId: 23931 },
+        showEnergizeEvents: true,
+        bossDamageMode: 'melee',
+      }),
+    ).toBe(false)
   })
 
   it('prioritizes boss-melee markers at identical timestamps', () => {

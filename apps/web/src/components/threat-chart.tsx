@@ -25,7 +25,7 @@ import { resolvePointSize } from '../lib/threat-chart-point-size'
 import { createThreatChartTooltipFormatter } from '../lib/threat-chart-tooltip'
 import type { SeriesChartPoint } from '../lib/threat-chart-types'
 import { buildAuraMarkArea } from '../lib/threat-chart-visuals'
-import type { ThreatSeries } from '../types/app'
+import type { BossDamageMode, ThreatSeries } from '../types/app'
 import { ThreatChartControls } from './threat-chart-controls'
 import { ThreatChartLegend } from './threat-chart-legend'
 import { ThreatChartPlayerSearch } from './threat-chart-player-search'
@@ -48,8 +48,8 @@ export type ThreatChartProps = {
   onShowPetsChange: (showPets: boolean) => void
   showEnergizeEvents: boolean
   onShowEnergizeEventsChange: (showEnergizeEvents: boolean) => void
-  showBossMelee: boolean
-  onShowBossMeleeChange: (showBossMelee: boolean) => void
+  bossDamageMode: BossDamageMode
+  onBossDamageModeChange: (bossDamageMode: BossDamageMode) => void
   inferThreatReduction: boolean
   onInferThreatReductionChange: (inferThreatReduction: boolean) => void
 }
@@ -72,8 +72,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   onShowPetsChange,
   showEnergizeEvents,
   onShowEnergizeEventsChange,
-  showBossMelee,
-  onShowBossMeleeChange,
+  bossDamageMode,
+  onBossDamageModeChange,
   inferThreatReduction,
   onInferThreatReductionChange,
 }) => {
@@ -112,7 +112,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
       series,
       visibleSeries,
       showEnergizeEvents,
-      showBossMelee,
+      bossDamageMode,
     })
 
   const { hasHiddenActors, handleClearIsolate } = useThreatChartVisiblePlayers({
@@ -354,8 +354,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         onShowFixateBandsChange={setShowFixateBands}
         showEnergizeEvents={showEnergizeEvents}
         onShowEnergizeEventsChange={onShowEnergizeEventsChange}
-        showBossMelee={showBossMelee}
-        onShowBossMeleeChange={onShowBossMeleeChange}
+        bossDamageMode={bossDamageMode}
+        onBossDamageModeChange={onBossDamageModeChange}
         inferThreatReduction={inferThreatReduction}
         onInferThreatReductionChange={onInferThreatReductionChange}
       />

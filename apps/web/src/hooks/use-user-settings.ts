@@ -21,6 +21,7 @@ import {
 
 import { getFirebaseFirestore } from '../lib/firebase'
 import type {
+  BossDamageMode,
   StarredEntityEntry,
   StarredEntityType,
   StarredReportEntry,
@@ -31,6 +32,7 @@ export interface UserSettings {
   showPets: boolean
   showEnergizeEvents: boolean
   showBossMelee: boolean
+  showAllBossDamageEvents: boolean
   inferThreatReduction: boolean
   starredReports: StarredReportEntry[]
   starredEntities: StarredEntityEntry[]
@@ -40,6 +42,7 @@ const defaultUserSettings: UserSettings = {
   showPets: false,
   showEnergizeEvents: false,
   showBossMelee: true,
+  showAllBossDamageEvents: false,
   inferThreatReduction: false,
   starredReports: [],
   starredEntities: [],
@@ -49,6 +52,8 @@ interface StoredUserSettings {
   showPets?: boolean
   showEnergizeEvents?: boolean
   showBossMelee?: boolean
+  showAllBossDamageEvents?: boolean
+  bossDamageMode?: BossDamageMode
   inferThreatReduction?: boolean
   starredReports?: unknown
   starredEntities?: unknown
@@ -69,6 +74,14 @@ function normalizeWarcraftLogsHost(value: unknown): WarcraftLogsHost | null {
   return supportedWarcraftLogsHosts.includes(normalized as WarcraftLogsHost)
     ? (normalized as WarcraftLogsHost)
     : null
+}
+
+function normalizeBossDamageMode(value: unknown): BossDamageMode | null {
+  if (value === 'off' || value === 'melee' || value === 'all') {
+    return value
+  }
+
+  return null
 }
 
 function parseOptionalString(value: unknown): string | null | undefined {
@@ -258,10 +271,18 @@ function upsertStarredEntity({
 
 const userSettingsConverter: FirestoreDataConverter<UserSettings> = {
   toFirestore(settings: UserSettings): StoredUserSettings {
+    const bossDamageMode: BossDamageMode = settings.showBossMelee
+      ? settings.showAllBossDamageEvents
+        ? 'all'
+        : 'melee'
+      : 'off'
+
     return {
       showPets: settings.showPets,
       showEnergizeEvents: settings.showEnergizeEvents,
       showBossMelee: settings.showBossMelee,
+      showAllBossDamageEvents: settings.showAllBossDamageEvents,
+      bossDamageMode,
       inferThreatReduction: settings.inferThreatReduction,
       starredReports: settings.starredReports,
       starredEntities: settings.starredEntities,
@@ -269,6 +290,25 @@ const userSettingsConverter: FirestoreDataConverter<UserSettings> = {
   },
   fromFirestore(snapshot): UserSettings {
     const data = snapshot.data() as StoredUserSettings
+    const bossDamageMode = normalizeBossDamageMode(data.bossDamageMode)
+    const showBossMeleeFromLegacy =
+      typeof data.showBossMelee === 'boolean'
+        ? data.showBossMelee
+        : defaultUserSettings.showBossMelee
+    const showAllBossDamageEventsFromLegacy =
+      typeof data.showAllBossDamageEvents === 'boolean'
+        ? data.showAllBossDamageEvents
+        : defaultUserSettings.showAllBossDamageEvents
+
+    const showBossMelee =
+      bossDamageMode === null
+        ? showBossMeleeFromLegacy
+        : bossDamageMode !== 'off'
+    const showAllBossDamageEvents =
+      bossDamageMode === null
+        ? showAllBossDamageEventsFromLegacy
+        : bossDamageMode === 'all'
+
     return {
       showPets:
         typeof data.showPets === 'boolean'
@@ -278,10 +318,8 @@ const userSettingsConverter: FirestoreDataConverter<UserSettings> = {
         typeof data.showEnergizeEvents === 'boolean'
           ? data.showEnergizeEvents
           : defaultUserSettings.showEnergizeEvents,
-      showBossMelee:
-        typeof data.showBossMelee === 'boolean'
-          ? data.showBossMelee
-          : defaultUserSettings.showBossMelee,
+      showBossMelee,
+      showAllBossDamageEvents,
       inferThreatReduction:
         typeof data.inferThreatReduction === 'boolean'
           ? data.inferThreatReduction
@@ -296,6 +334,7 @@ export interface UpdateUserSettingsRequest {
   showPets?: boolean
   showEnergizeEvents?: boolean
   showBossMelee?: boolean
+  showAllBossDamageEvents?: boolean
   inferThreatReduction?: boolean
   starredReports?: StarredReportEntry[]
   starredEntities?: StarredEntityEntry[]

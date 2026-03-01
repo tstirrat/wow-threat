@@ -39,6 +39,8 @@ export interface StarredReportEntry {
 
 export type StarredEntityType = 'guild' | 'character'
 
+export type BossDamageMode = 'off' | 'melee' | 'all'
+
 export interface StarredEntityEntry {
   entityType: StarredEntityType
   entityId: string

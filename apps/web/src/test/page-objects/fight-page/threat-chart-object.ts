@@ -40,8 +40,16 @@ export class ThreatChartObject {
     return this.section.getByRole('checkbox', { name: 'Show fixate areas' })
   }
 
-  showBossMeleeCheckbox(): Locator {
-    return this.section.getByRole('checkbox', { name: 'Show boss damage' })
+  bossDamageOffToggle(): Locator {
+    return this.section.getByRole('radio', { name: 'Boss damage off' })
+  }
+
+  bossDamageMeleeToggle(): Locator {
+    return this.section.getByRole('radio', { name: 'Boss damage melee' })
+  }
+
+  bossDamageAllToggle(): Locator {
+    return this.section.getByRole('radio', { name: 'Boss damage all' })
   }
 
   inferThreatReductionCheckbox(): Locator {
@@ -179,15 +187,18 @@ export class ThreatChartObject {
     await showFixateBandsCheckbox.click()
   }
 
-  async setShowBossMelee(checked: boolean): Promise<void> {
-    const showBossMeleeCheckbox = this.showBossMeleeCheckbox()
-    const isChecked = await showBossMeleeCheckbox.isChecked()
-
-    if (isChecked === checked) {
+  async setBossDamageMode(mode: 'off' | 'melee' | 'all'): Promise<void> {
+    if (mode === 'off') {
+      await this.bossDamageOffToggle().click()
       return
     }
 
-    await showBossMeleeCheckbox.click()
+    if (mode === 'melee') {
+      await this.bossDamageMeleeToggle().click()
+      return
+    }
+
+    await this.bossDamageAllToggle().click()
   }
 
   async setInferThreatReduction(checked: boolean): Promise<void> {

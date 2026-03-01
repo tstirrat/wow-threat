@@ -93,14 +93,14 @@ describe('useThreatChartSeriesData', () => {
         series: ThreatSeries[]
         visibleSeries: ThreatSeries[]
         showEnergizeEvents: boolean
-        showBossMelee: boolean
+        bossDamageMode: 'off' | 'melee' | 'all'
       }) => useThreatChartSeriesData(props),
       {
         initialProps: {
           series: [tankSeries, mageSeries],
           visibleSeries: [tankSeries],
           showEnergizeEvents: false,
-          showBossMelee: false,
+          bossDamageMode: 'off',
         },
       },
     )
@@ -118,7 +118,7 @@ describe('useThreatChartSeriesData', () => {
       series: [tankSeries, mageSeries],
       visibleSeries: [tankSeries],
       showEnergizeEvents: true,
-      showBossMelee: true,
+      bossDamageMode: 'all',
     })
 
     const visiblePoints = result.current.chartSeries[0]?.data ?? []

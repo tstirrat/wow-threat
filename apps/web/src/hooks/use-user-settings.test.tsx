@@ -65,6 +65,7 @@ function createSnapshot({
       settings ?? {
         inferThreatReduction: false,
         showBossMelee: true,
+        showAllBossDamageEvents: false,
         showEnergizeEvents: false,
         showPets: false,
         starredReports: [],
@@ -206,6 +207,7 @@ describe('UserSettingsProvider', () => {
           settings: {
             inferThreatReduction: true,
             showBossMelee: true,
+            showAllBossDamageEvents: false,
             showEnergizeEvents: false,
             showPets: false,
             starredReports: [],
@@ -354,6 +356,7 @@ describe('UserSettingsProvider', () => {
           settings: {
             inferThreatReduction: false,
             showBossMelee: true,
+            showAllBossDamageEvents: false,
             showEnergizeEvents: false,
             showPets: false,
             starredReports: [existingStarred],
@@ -382,6 +385,7 @@ describe('UserSettingsProvider', () => {
         showPets: false,
         showEnergizeEvents: false,
         showBossMelee: true,
+        showAllBossDamageEvents: false,
         inferThreatReduction: false,
         starredReports: expect.arrayContaining([
           expect.objectContaining({

@@ -172,7 +172,7 @@ describe('useFightPageInteractions', () => {
       result.current.handleWindowChange(1000, 5000)
       result.current.handleShowPetsChange(true)
       result.current.handleShowEnergizeEventsChange(true)
-      result.current.handleShowBossMeleeChange(false)
+      result.current.handleBossDamageModeChange('all')
       result.current.handleInferThreatReductionChange(true)
     })
 
@@ -186,7 +186,8 @@ describe('useFightPageInteractions', () => {
       showEnergizeEvents: true,
     })
     expect(updateUserSettings).toHaveBeenNthCalledWith(3, {
-      showBossMelee: false,
+      showBossMelee: true,
+      showAllBossDamageEvents: true,
     })
     expect(updateUserSettings).toHaveBeenNthCalledWith(4, {
       inferThreatReduction: true,

@@ -21,7 +21,7 @@
 - [ ] WEB-019: Fuzzy fight selector (f?)
 - [x] WEB-020: Lock players when switching fights with a button (l key?)
 - [ ] WEB-021: Keyboard shortcut for filter to tanks only (maybe cycle tanks, healers, everyone)
-- [ ] WEB-022: Show boss toggles through: off -> melee -> all damage events
+- [x] WEB-022: Show boss toggles through: off -> melee -> all damage events
 - [x] WEB-023: Toggle-able fixate bands
 - [ ] WEB-024: Fixate band should have left edge orange border, and maybe be more orange, also legend to explain bg color
 - [x] WEB-025: Click and zoom also zooms vertically

@@ -5,6 +5,7 @@ import { useCallback } from 'react'
 
 import type { UseFightQueryStateResult } from '../../hooks/use-fight-query-state'
 import type { UseUserSettingsResult } from '../../hooks/use-user-settings'
+import type { BossDamageMode } from '../../types/app'
 
 /** Compare two sorted actor-id lists for exact equality. */
 export function areEqualIdLists(left: number[], right: number[]): boolean {
@@ -23,9 +24,9 @@ export function normalizeIdList(ids: number[]): number[] {
 export interface UseFightPageInteractionsResult {
   handleFocusAndAddPlayer: (playerId: number) => void
   handleFocusAndIsolatePlayer: (playerId: number) => void
+  handleBossDamageModeChange: (bossDamageMode: BossDamageMode) => void
   handleInferThreatReductionChange: (inferThreatReduction: boolean) => void
   handleSeriesClick: (playerId: number) => void
-  handleShowBossMeleeChange: (showBossMelee: boolean) => void
   handleShowEnergizeEventsChange: (showEnergizeEvents: boolean) => void
   handleShowPetsChange: (showPets: boolean) => void
   handleTogglePinnedPlayer: (playerId: number) => void
@@ -173,10 +174,11 @@ export function useFightPageInteractions({
     [updateUserSettings],
   )
 
-  const handleShowBossMeleeChange = useCallback(
-    (showBossMelee: boolean): void => {
+  const handleBossDamageModeChange = useCallback(
+    (bossDamageMode: BossDamageMode): void => {
       void updateUserSettings({
-        showBossMelee,
+        showBossMelee: bossDamageMode !== 'off',
+        showAllBossDamageEvents: bossDamageMode === 'all',
       })
     },
     [updateUserSettings],
@@ -194,9 +196,9 @@ export function useFightPageInteractions({
   return {
     handleFocusAndAddPlayer,
     handleFocusAndIsolatePlayer,
+    handleBossDamageModeChange,
     handleInferThreatReductionChange,
     handleSeriesClick,
-    handleShowBossMeleeChange,
     handleShowEnergizeEventsChange,
     handleShowPetsChange,
     handleTogglePinnedPlayer,

@@ -60,7 +60,7 @@ test.describe('fight page', () => {
 
     await expect(fightPage.chart.showEnergizeEventsCheckbox()).not.toBeChecked()
     await expect(fightPage.chart.showFixateBandsCheckbox()).toBeChecked()
-    await expect(fightPage.chart.showBossMeleeCheckbox()).toBeChecked()
+    await expect(fightPage.chart.bossDamageMeleeToggle()).toBeChecked()
     await expect(
       fightPage.chart.inferThreatReductionCheckbox(),
     ).not.toBeChecked()
@@ -221,7 +221,7 @@ test.describe('fight page', () => {
     await fightPage.goto(svgFightUrl)
     await expect(fightPage.chart.showEnergizeEventsCheckbox()).not.toBeChecked()
     await expect(fightPage.chart.showFixateBandsCheckbox()).toBeChecked()
-    await expect(fightPage.chart.showBossMeleeCheckbox()).toBeChecked()
+    await expect(fightPage.chart.bossDamageMeleeToggle()).toBeChecked()
     await expect(
       fightPage.chart.inferThreatReductionCheckbox(),
     ).not.toBeChecked()
@@ -229,12 +229,12 @@ test.describe('fight page', () => {
 
     await fightPage.chart.setShowEnergizeEvents(true)
     await fightPage.chart.setShowFixateBands(false)
-    await fightPage.chart.setShowBossMelee(false)
+    await fightPage.chart.setBossDamageMode('off')
     await fightPage.chart.setInferThreatReduction(true)
     await fightPage.chart.setShowPets(true)
     await expect(fightPage.chart.showEnergizeEventsCheckbox()).toBeChecked()
     await expect(fightPage.chart.showFixateBandsCheckbox()).not.toBeChecked()
-    await expect(fightPage.chart.showBossMeleeCheckbox()).not.toBeChecked()
+    await expect(fightPage.chart.bossDamageOffToggle()).toBeChecked()
     await expect(fightPage.chart.inferThreatReductionCheckbox()).toBeChecked()
     await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
     expect(
@@ -247,7 +247,7 @@ test.describe('fight page', () => {
     await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}/fight/30$`))
     await expect(fightPage.chart.showEnergizeEventsCheckbox()).toBeChecked()
     await expect(fightPage.chart.showFixateBandsCheckbox()).not.toBeChecked()
-    await expect(fightPage.chart.showBossMeleeCheckbox()).not.toBeChecked()
+    await expect(fightPage.chart.bossDamageOffToggle()).toBeChecked()
     await expect(fightPage.chart.inferThreatReductionCheckbox()).toBeChecked()
     await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
 
@@ -255,7 +255,7 @@ test.describe('fight page', () => {
     await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}/fight/26$`))
     await expect(fightPage.chart.showEnergizeEventsCheckbox()).toBeChecked()
     await expect(fightPage.chart.showFixateBandsCheckbox()).not.toBeChecked()
-    await expect(fightPage.chart.showBossMeleeCheckbox()).not.toBeChecked()
+    await expect(fightPage.chart.bossDamageOffToggle()).toBeChecked()
     await expect(fightPage.chart.inferThreatReductionCheckbox()).toBeChecked()
     await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
   })
@@ -266,12 +266,12 @@ test.describe('fight page', () => {
     const fightPage = new FightPageObject(page)
 
     await fightPage.goto(svgFightUrl)
-    await expect(fightPage.chart.showBossMeleeCheckbox()).toBeChecked()
+    await expect(fightPage.chart.bossDamageMeleeToggle()).toBeChecked()
     await expect(fightPage.chart.showEnergizeEventsCheckbox()).not.toBeChecked()
     await expect(fightPage.chart.showPetsCheckbox()).not.toBeChecked()
 
     await page.keyboard.press('b')
-    await expect(fightPage.chart.showBossMeleeCheckbox()).not.toBeChecked()
+    await expect(fightPage.chart.bossDamageAllToggle()).toBeChecked()
     await page.keyboard.press('p')
     await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
     await page.keyboard.press('e')
@@ -319,7 +319,7 @@ test.describe('fight page', () => {
     await fightPage.shortcuts.open()
     await expect(fightPage.shortcuts.dialog()).toBeVisible()
     await expect(
-      fightPage.shortcuts.shortcutListItem('Toggle show boss damage'),
+      fightPage.shortcuts.shortcutListItem('Cycle boss damage markers'),
     ).toBeVisible()
     await expect(
       fightPage.shortcuts.shortcutListItem('Toggle show pets'),
@@ -337,7 +337,7 @@ test.describe('fight page', () => {
       fightPage.shortcuts.shortcutListItem('Open player search'),
     ).toBeVisible()
     await expect(
-      fightPage.shortcuts.shortcutKey('Toggle show boss damage', 'B'),
+      fightPage.shortcuts.shortcutKey('Cycle boss damage markers', 'B'),
     ).toBeVisible()
     await expect(
       fightPage.shortcuts.shortcutKey('Toggle show pets', 'P'),

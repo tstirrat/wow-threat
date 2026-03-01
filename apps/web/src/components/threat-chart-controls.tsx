@@ -4,10 +4,12 @@
 import { Info } from 'lucide-react'
 import { type FC, useId } from 'react'
 
+import type { BossDamageMode } from '../types/app'
 import { Button } from './ui/button'
 import { Checkbox } from './ui/checkbox'
 import { Kbd } from './ui/kbd'
 import { Label } from './ui/label'
+import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group'
 import {
   Tooltip,
   TooltipContent,
@@ -23,8 +25,8 @@ export interface ThreatChartControlsProps {
   onShowFixateBandsChange: (showFixateBands: boolean) => void
   showEnergizeEvents: boolean
   onShowEnergizeEventsChange: (showEnergizeEvents: boolean) => void
-  showBossMelee: boolean
-  onShowBossMeleeChange: (showBossMelee: boolean) => void
+  bossDamageMode: BossDamageMode
+  onBossDamageModeChange: (bossDamageMode: BossDamageMode) => void
   inferThreatReduction: boolean
   onInferThreatReductionChange: (inferThreatReduction: boolean) => void
 }
@@ -37,14 +39,14 @@ export const ThreatChartControls: FC<ThreatChartControlsProps> = ({
   onShowFixateBandsChange,
   showEnergizeEvents,
   onShowEnergizeEventsChange,
-  showBossMelee,
-  onShowBossMeleeChange,
+  bossDamageMode,
+  onBossDamageModeChange,
   inferThreatReduction,
   onInferThreatReductionChange,
 }) => {
   const showFixateBandsId = useId()
   const showEnergizeEventsId = useId()
-  const showBossMeleeId = useId()
+  const bossDamageModeId = useId()
   const inferThreatReductionId = useId()
 
   return (
@@ -109,18 +111,8 @@ export const ThreatChartControls: FC<ThreatChartControlsProps> = ({
           </Label>
         </div>
         <div className="flex items-center gap-2">
-          <Checkbox
-            checked={showBossMelee}
-            id={showBossMeleeId}
-            onCheckedChange={(checked) => {
-              onShowBossMeleeChange(checked === true)
-            }}
-          />
-          <Label
-            className="inline-flex cursor-pointer items-center gap-1 text-sm"
-            htmlFor={showBossMeleeId}
-          >
-            <span>Show boss damage</span>
+          <Label className="inline-flex items-center gap-1 text-sm">
+            <span id={bossDamageModeId}>Boss damage</span>
             <Kbd
               aria-hidden="true"
               className="h-4 min-w-4 px-1 text-[0.55rem] leading-none"
@@ -128,6 +120,27 @@ export const ThreatChartControls: FC<ThreatChartControlsProps> = ({
               B
             </Kbd>
           </Label>
+          <ToggleGroup
+            variant="outline"
+            aria-labelledby={bossDamageModeId}
+            onValueChange={(value) => {
+              if (value === 'off' || value === 'melee' || value === 'all') {
+                onBossDamageModeChange(value)
+              }
+            }}
+            type="single"
+            value={bossDamageMode}
+          >
+            <ToggleGroupItem aria-label="Boss damage off" value="off">
+              Off
+            </ToggleGroupItem>
+            <ToggleGroupItem aria-label="Boss damage melee" value="melee">
+              Melee
+            </ToggleGroupItem>
+            <ToggleGroupItem aria-label="Boss damage all" value="all">
+              All
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
         <div className="flex items-center gap-1">
           <Checkbox

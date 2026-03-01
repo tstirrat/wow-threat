@@ -14,7 +14,7 @@ import {
 } from '../lib/threat-chart-tooltip'
 import type { SeriesChartPoint } from '../lib/threat-chart-types'
 import { buildThreatStateVisualMaps } from '../lib/threat-chart-visuals'
-import type { ThreatSeries } from '../types/app'
+import type { BossDamageMode, ThreatSeries } from '../types/app'
 
 interface ThreatChartDataPoint extends SeriesChartPoint {
   emphasis: {
@@ -71,12 +71,12 @@ export function useThreatChartSeriesData({
   series,
   visibleSeries,
   showEnergizeEvents,
-  showBossMelee,
+  bossDamageMode,
 }: {
   series: ThreatSeries[]
   visibleSeries: ThreatSeries[]
   showEnergizeEvents: boolean
-  showBossMelee: boolean
+  bossDamageMode: BossDamageMode
 }): UseThreatChartSeriesDataResult {
   const actorIdByLabel = useMemo(
     () => new Map(series.map((item) => [item.label, item.actorId])),
@@ -124,14 +124,14 @@ export function useThreatChartSeriesData({
               shouldRenderThreatPoint({
                 point,
                 showEnergizeEvents,
-                showBossMelee,
+                bossDamageMode,
               }),
             ),
           ).map(toDataPoint),
           name: item.label,
         }
       }),
-    [showBossMelee, showEnergizeEvents, visibleSeries],
+    [bossDamageMode, showEnergizeEvents, visibleSeries],
   )
 
   return {

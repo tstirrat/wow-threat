@@ -1,7 +1,9 @@
 /**
  * Event-type visibility rules for chart point rendering.
  */
-import type { ThreatPoint } from '../types/app'
+import type { BossDamageMode, ThreatPoint } from '../types/app'
+
+const BOSS_MELEE_SPELL_ID = 1
 
 /** Return true when an event type is a resource-change point that can be hidden. */
 export function isEnergizeEventType(eventType: string): boolean {
@@ -36,14 +38,24 @@ export function sortThreatPointsForRendering<
 export function shouldRenderThreatPoint({
   point,
   showEnergizeEvents,
-  showBossMelee,
+  bossDamageMode,
 }: {
-  point: Pick<ThreatPoint, 'eventType' | 'markerKind'>
+  point: Pick<ThreatPoint, 'eventType' | 'markerKind' | 'spellId'>
   showEnergizeEvents: boolean
-  showBossMelee: boolean
+  bossDamageMode: BossDamageMode
 }): boolean {
-  if (!showBossMelee && isBossMeleeMarker(point)) {
-    return false
+  if (isBossMeleeMarker(point)) {
+    if (bossDamageMode === 'off') {
+      return false
+    }
+
+    if (
+      bossDamageMode === 'melee' &&
+      point.spellId !== undefined &&
+      point.spellId !== BOSS_MELEE_SPELL_ID
+    ) {
+      return false
+    }
   }
 
   if (!showEnergizeEvents && isEnergizeEventType(point.eventType)) {

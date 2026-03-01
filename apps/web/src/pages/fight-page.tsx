@@ -19,6 +19,7 @@ import { formatClockDuration } from '../lib/format'
 import { resolveCurrentThreatConfig } from '../lib/threat-config'
 import { buildFightRankingsUrl } from '../lib/wcl-url'
 import { useReportRouteContext } from '../routes/report-layout-context'
+import type { BossDamageMode } from '../types/app'
 import { useFightPageDerivedState } from './hooks/use-fight-page-derived-state'
 import { useFightPageInteractions } from './hooks/use-fight-page-interactions'
 
@@ -121,9 +122,9 @@ export const FightPage: FC = () => {
   const {
     handleFocusAndAddPlayer,
     handleFocusAndIsolatePlayer,
+    handleBossDamageModeChange,
     handleInferThreatReductionChange,
     handleSeriesClick,
-    handleShowBossMeleeChange,
     handleShowEnergizeEventsChange,
     handleShowPetsChange,
     handleTogglePinnedPlayer,
@@ -135,6 +136,11 @@ export const FightPage: FC = () => {
     updateUserSettings,
     validPlayerIds,
   })
+  const bossDamageMode: BossDamageMode = userSettings.showBossMelee
+    ? userSettings.showAllBossDamageEvents
+      ? 'all'
+      : 'melee'
+    : 'off'
   const { disableScope, enableScope } = useHotkeysContext()
 
   useEffect(() => {
@@ -149,17 +155,23 @@ export const FightPage: FC = () => {
     'b',
     (event) => {
       event.preventDefault()
-      handleShowBossMeleeChange(!userSettings.showBossMelee)
+      const nextBossDamageMode: BossDamageMode =
+        bossDamageMode === 'off'
+          ? 'melee'
+          : bossDamageMode === 'melee'
+            ? 'all'
+            : 'off'
+      handleBossDamageModeChange(nextBossDamageMode)
     },
     {
-      description: 'Toggle show boss damage',
+      description: 'Cycle boss damage markers',
       metadata: {
         order: 10,
         showInFightOverlay: true,
       },
       scopes: ['fight-page'],
     },
-    [handleShowBossMeleeChange, userSettings.showBossMelee],
+    [bossDamageMode, handleBossDamageModeChange],
   )
 
   useHotkeys(
@@ -259,8 +271,8 @@ export const FightPage: FC = () => {
     onShowPetsChange: handleShowPetsChange,
     showEnergizeEvents: userSettings.showEnergizeEvents,
     onShowEnergizeEventsChange: handleShowEnergizeEventsChange,
-    showBossMelee: userSettings.showBossMelee,
-    onShowBossMeleeChange: handleShowBossMeleeChange,
+    bossDamageMode,
+    onBossDamageModeChange: handleBossDamageModeChange,
     inferThreatReduction: userSettings.inferThreatReduction,
     onInferThreatReductionChange: handleInferThreatReductionChange,
   }
