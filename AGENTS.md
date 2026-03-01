@@ -4,6 +4,7 @@
 
 pnpm monorepo (Turborepo) for a World of Warcraft combat log threat calculation platform.
 The backend API runs on Cloudflare Workers using Hono, and the frontend web app is a React SPA hosted on Firebase Hosting.
+Threat engine event augmentation runs client-side in the web app; the API returns raw/paginated fight events.
 All code is TypeScript (strict mode, ESM). Node >= 20 (see `.nvmrc`), pnpm 9.15+.
 
 ## Start Here (Agent Quickstart)
@@ -35,7 +36,7 @@ git worktree list
 | API middleware or error behavior       | `@wow-threat/api`                          | `apps/api/src/middleware/*.ts`, `apps/api/src/middleware/error.ts`, `apps/api/src/types/bindings.ts`                                                       |
 | Warcraft Logs fetch/auth/rate limiting | `@wow-threat/api`, `@wow-threat/wcl-types` | `apps/api/src/services/wcl.ts`, `apps/api/src/services/wcl-oauth.ts`, `apps/api/src/services/wcl-rate-limit.ts`, `packages/wcl-types/src/report-schema.ts` |
 | Web routing/page flow                  | `@wow-threat/web`                          | `apps/web/src/routes/router.tsx`, `apps/web/src/pages/*.tsx`, `apps/web/src/app.tsx`                                                                       |
-| Web chart/threat presentation          | `@wow-threat/web`                          | `apps/web/src/components/threat-chart.tsx`, `apps/web/src/lib/threat-aggregation.ts`, `apps/web/src/hooks/use-fight-events.ts`                             |
+| Web chart/threat presentation          | `@wow-threat/web`                          | `apps/web/src/components/threat-chart.tsx`, `apps/web/src/lib/threat-aggregation.ts`, `apps/web/src/hooks/use-fight-events.ts`, `apps/web/src/lib/client-threat-engine.ts`, `apps/web/src/workers/threat-engine.worker.ts` |
 | Web auth/session                       | `@wow-threat/web`, `@wow-threat/api`       | `apps/web/src/auth/*`, `apps/api/src/routes/auth.ts`, `apps/api/src/services/firebase-auth.ts`                                                             |
 | Threat rules/config changes            | `@wow-threat/config`                       | `packages/config/src/era/**`, `packages/config/src/sod/**`, `packages/config/src/tbc/**`, `packages/config/src/*/index.ts`                                 |
 | Threat engine behavior                 | `@wow-threat/engine`                       | `packages/engine/src/threat-engine.ts`, `packages/engine/src/fight-state.ts`, `packages/engine/src/actor-state.ts`                                         |
@@ -170,7 +171,7 @@ Framework: Vitest.
 
 - API package uses `@cloudflare/vitest-pool-workers` (tests run inside miniflare).
 - Web package uses Vitest + React Testing Library for component/integration tests.
-- Custom snapshot tests are allowed for `@wow-threat/engine`, `@wow-threat/config`, or any tests that assert final augmented events payloads; these are most commonly used in `@wow-threat/config`.
+- Custom snapshot tests are allowed for `@wow-threat/engine`, `@wow-threat/config`, or any tests that assert threat-engine augmentation output; these are most commonly used in `@wow-threat/config`.
 - End-to-end tests are in Playwright.
 - Prefer shared event factory helpers (`createDamageEvent`, `createHealEvent`, and other `createXEvent` helpers) when building test events. Use raw event payload objects only when absolutely necessary for a scenario the helpers cannot express.
 
@@ -186,7 +187,7 @@ pnpm --filter @wow-threat/config test
 pnpm --filter @wow-threat/shared test
 
 # API single test file
-pnpm --filter @wow-threat/api exec vitest run src/services/threat.test.ts
+pnpm --filter @wow-threat/api exec vitest run src/routes/events.test.ts
 
 # Web single test file
 pnpm --filter @wow-threat/web exec vitest run src/lib/threat-aggregation.test.ts
@@ -195,7 +196,7 @@ pnpm --filter @wow-threat/web exec vitest run src/lib/threat-aggregation.test.ts
 pnpm --filter @wow-threat/engine exec vitest run src/threat-engine.test.ts
 
 # Single test by name pattern
-pnpm --filter @wow-threat/api exec vitest run -t "calculates basic damage threat"
+pnpm --filter @wow-threat/api exec vitest run -t "returns raw event page payload by default"
 pnpm --filter @wow-threat/web exec vitest run -t "loads report from pasted url"
 
 # Watch mode
@@ -406,7 +407,7 @@ have concrete context (function signatures, key conditionals, or data shapes).
 - Test descriptions are lowercase, starting with verbs
 - Factory functions for test data with spread overrides: `{ ...defaults, ...overrides }`
 - Integration tests mock `fetch` via `vi.stubGlobal()` and use `app.request()`
-- Use custom snapshots when asserting final augmented events payloads (typically in `@wow-threat/config` tests)
+- Use custom snapshots when asserting threat-engine augmentation output (typically in `@wow-threat/config` tests)
 
 **No class inheritance** (except `AppError extends Error`). Prefer composition and
 plain functions. No DI framework -- pass dependencies explicitly.

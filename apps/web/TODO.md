@@ -18,7 +18,7 @@
 - [ ] WEB-016: zoom key (z) toggles between no zoom an previous zoom
 - [ ] WEB-017: Fuzzy target selector (t)
 - [ ] WEB-018: Fuzzy fight selector (f?)
-- [ ] WEB-019: Fuzzy fight selector (f?)
+- [ ] WEB-019: Fight event pagination - retrieves all pages while blocking the UI thread
 - [x] WEB-020: Lock players when switching fights with a button (l key?)
 - [ ] WEB-021: Keyboard shortcut for filter to tanks only (maybe cycle tanks, healers, everyone)
 - [x] WEB-022: Show boss toggles through: off -> melee -> all damage events

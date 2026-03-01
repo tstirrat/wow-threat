@@ -7,6 +7,12 @@
 - Package: `@wow-threat/api`
 - Deployment/config: `apps/api/wrangler.toml`
 
+### Events API Boundary
+
+- `GET /v1/reports/:code/fights/:id/events` returns raw WCL event pages (`WCLEvent[]`) plus paging metadata.
+- API routes do not run threat-engine augmentation for fight timelines.
+- Threat-engine processing lives in the web app (`apps/web/src/lib/client-threat-engine.ts`, `apps/web/src/workers/threat-engine.worker.ts`).
+
 ## Task Routing (Open These Files First)
 
 | Task                                   | Open these files first                                                                                                                                                                    |

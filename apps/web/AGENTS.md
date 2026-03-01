@@ -5,7 +5,8 @@
 | Task                                   | Open these files first                                                                                                                                                                                                                |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Add/change routes or page flow         | `apps/web/src/routes/router.tsx`, `apps/web/src/routes/root-layout.tsx`, `apps/web/src/routes/report-layout.tsx`, `apps/web/src/pages/*.tsx`                                                                                          |
-| Report/fight data loading              | `apps/web/src/api/client.ts`, `apps/web/src/api/reports.ts`, `apps/web/src/hooks/use-report-data.ts`, `apps/web/src/hooks/use-fight-data.ts`                                                                                          |
+| Report/fight data loading              | `apps/web/src/api/client.ts`, `apps/web/src/api/reports.ts`, `apps/web/src/hooks/use-report-data.ts`, `apps/web/src/hooks/use-fight-data.ts`, `apps/web/src/hooks/use-fight-events.ts`                                                |
+| Threat engine processing (frontend)    | `apps/web/src/lib/client-threat-engine.ts`, `apps/web/src/workers/threat-engine.worker.ts`, `apps/web/src/workers/threat-engine-worker-types.ts`, `apps/web/src/hooks/use-fight-events.ts`                                            |
 | Query-param/deep-link behavior         | `apps/web/src/hooks/use-fight-query-state.ts`, `apps/web/src/lib/search-params.ts`, `apps/web/src/lib/fight-navigation.ts`                                                                                                            |
 | Threat chart, legend, tooltip behavior | `apps/web/src/components/threat-chart.tsx`, `apps/web/src/components/threat-chart-legend.tsx`, `apps/web/src/components/threat-chart-controls.tsx`, `apps/web/src/lib/threat-chart-*.ts*`, `apps/web/src/hooks/use-threat-chart-*.ts` |
 | Auth and WCL popup flow                | `apps/web/src/auth/auth-provider.tsx`, `apps/web/src/auth/wcl-popup-bridge.ts`, `apps/web/src/pages/auth-complete-page.tsx`                                                                                                           |
@@ -35,6 +36,12 @@
 - Hosting: Firebase Hosting (frontend), Cloudflare Worker API remains backend
 - Authentication: Firebase Authentication for office access
 - Browser support: modern evergreen browsers only
+
+### Threat Processing Boundary
+
+- The API provides raw paginated fight event data (`FightEventsResponse`), not pre-augmented threat timelines.
+- The web app is responsible for threat-engine execution and augmented timeline generation.
+- Primary implementation files: `apps/web/src/lib/client-threat-engine.ts`, `apps/web/src/workers/threat-engine.worker.ts`, `apps/web/src/hooks/use-fight-events.ts`.
 
 ### Frontend Route Contract
 
