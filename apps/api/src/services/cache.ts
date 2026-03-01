@@ -246,6 +246,15 @@ export const CacheKeys = {
     endTime?: number,
   ) =>
     `wcl:events:${CacheKeys.wclEventsSchemaVersion}:${code}:${fightId}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}:start:${startTime ?? 'full'}:end:${endTime ?? 'full'}`,
+  eventsPage: (
+    code: string,
+    fightId: number,
+    visibility: unknown,
+    uid: string | undefined,
+    startTime: number,
+    endTime: number,
+  ) =>
+    `wcl:events-page:${CacheKeys.wclEventsSchemaVersion}:${code}:${fightId}:visibility:${normalizeVisibility(visibility)}:scope:${resolveVisibilityScope(visibility, uid)}:start:${startTime}:end:${endTime}`,
   friendlyBuffBandsSchemaVersion: cacheSchemaVersions.friendlyBuffBandsByFight,
   friendlyBuffBandsByFight: (
     code: string,

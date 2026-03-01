@@ -201,13 +201,11 @@ test.describe('fight page', () => {
 
     await expect(fightPage.quickSwitch.fightLink('Grobbulus')).toHaveAttribute(
       'href',
-      `/report/${e2eReportId}/fight/30?players=1&pinnedPlayers=1`,
+      `/report/${e2eReportId}/fight/30?pinnedPlayers=1`,
     )
     await fightPage.quickSwitch.clickFight('Grobbulus')
     await expect(page).toHaveURL(
-      new RegExp(
-        `/report/${e2eReportId}/fight/30\\?players=1&pinnedPlayers=1$`,
-      ),
+      new RegExp(`/report/${e2eReportId}/fight/30\\?pinnedPlayers=1$`),
     )
     await expect(fightPage.chart.legendPin('Aegistank')).toHaveAttribute(
       'aria-pressed',
@@ -382,7 +380,7 @@ test.describe('fight page', () => {
     ).toHaveText('Total')
     await expect(
       fightPage.summary.totalRow().getByRole('cell').nth(2),
-    ).toHaveText('550.00')
+    ).toHaveText('2,596.00')
   })
 
   test('focuses a player from the legend focus button', async ({ page }) => {

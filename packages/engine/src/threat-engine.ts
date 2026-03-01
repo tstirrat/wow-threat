@@ -263,7 +263,7 @@ function processEventsWithProcessors(
   seedInitialAuras(fightState, effectiveInitialAurasByActor)
   const interceptorTracker = new InterceptorTracker()
   const stateSpellSets = buildStateSpellSets(config)
-  const augmentedEvents: AugmentedEvent[] = []
+  const augmentedEvents: AugmentedEvent[] = new Array(rawEvents.length)
   const eventCounts: Record<string, number> = {}
   const encounterId = toEncounterId(inputEncounterId)
   const encounterConfig = getEncounterConfig(config, encounterId)
@@ -278,6 +278,14 @@ function processEventsWithProcessors(
           enemies,
         })
       : undefined
+  const storeAugmentedEvent = (
+    eventIndex: number,
+    augmentedEvent: AugmentedEvent,
+  ): void => {
+    augmentedEvents[eventIndex] = augmentedEvent
+    // Release the original raw-event reference as we go to reduce peak memory.
+    rawEvents[eventIndex] = augmentedEvent as WCLEvent
+  }
 
   for (const [eventIndex, rawEvent] of rawEvents.entries()) {
     const event = resolveEventFriendliness({
@@ -335,7 +343,10 @@ function processEventsWithProcessors(
         modifiers: [],
         effects: bossMeleeEffects,
       }
-      augmentedEvents.push(buildAugmentedEvent(event, zeroCalculation, []))
+      storeAugmentedEvent(
+        eventIndex,
+        buildAugmentedEvent(event, zeroCalculation, []),
+      )
       continue
     }
 
@@ -360,7 +371,10 @@ function processEventsWithProcessors(
         effects:
           processorEffects.length > 0 ? [...processorEffects] : undefined,
       }
-      augmentedEvents.push(buildAugmentedEvent(event, zeroCalculation, []))
+      storeAugmentedEvent(
+        eventIndex,
+        buildAugmentedEvent(event, zeroCalculation, []),
+      )
       continue
     }
 
@@ -428,7 +442,10 @@ function processEventsWithProcessors(
     ]
 
     if (!baseCalculation && effects.length === 0) {
-      augmentedEvents.push(buildAugmentedEvent(event, undefined, undefined))
+      storeAugmentedEvent(
+        eventIndex,
+        buildAugmentedEvent(event, undefined, undefined),
+      )
       continue
     }
 
@@ -461,7 +478,8 @@ function processEventsWithProcessors(
       threatRecipientOverride,
     )
 
-    augmentedEvents.push(
+    storeAugmentedEvent(
+      eventIndex,
       buildAugmentedEvent(
         event,
         calculation,

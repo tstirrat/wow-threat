@@ -108,6 +108,9 @@ importers:
       '@wow-threat/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@wow-threat/engine':
+        specifier: workspace:*
+        version: link:../../packages/engine
       '@wow-threat/shared':
         specifier: workspace:*
         version: link:../../packages/shared

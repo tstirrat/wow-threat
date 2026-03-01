@@ -9,12 +9,12 @@ import {
   resolveConfigOrNull,
 } from '@wow-threat/config'
 import { ThreatEngine, buildThreatEngineInput } from '@wow-threat/engine'
-import type { WCLEvent } from '@wow-threat/wcl-types'
 import { Hono } from 'hono'
 
 import {
   fightNotFound,
   invalidConfigVersion,
+  invalidEventsCursor,
   invalidFightId,
   invalidGameVersion,
   reportNotFound,
@@ -22,8 +22,18 @@ import {
 } from '../middleware/error'
 import { CacheKeys, createCache, normalizeVisibility } from '../services/cache'
 import { WCLClient } from '../services/wcl'
-import type { AugmentedEventsResponse, ReportActorRole } from '../types/api'
+import type {
+  AugmentedEventsResponse,
+  RawFightEventsResponse,
+  ReportActorRole,
+} from '../types/api'
 import type { Bindings, Variables } from '../types/bindings'
+import {
+  estimateArrayPayloadBytes,
+  getUtf8ByteLength,
+  logEventsMemoryCheckpoint,
+  monotonicNowMs,
+} from './events-logging'
 
 export const eventsRoutes = new Hono<{
   Bindings: Bindings
@@ -31,6 +41,7 @@ export const eventsRoutes = new Hono<{
 }>()
 
 const threatEngine = new ThreatEngine()
+const maxCacheableAugmentedEvents = 15000
 
 function countSerializedInitialAuraIds(
   initialAurasByActor: Record<string, number[]> | undefined,
@@ -58,6 +69,39 @@ function isTruthyQueryParam(value: string | undefined): boolean {
   return value === '1' || value === 'true'
 }
 
+function shouldProcessEvents(value: string | undefined): boolean {
+  if (!value) {
+    return true
+  }
+
+  return !(value === '0' || value === 'false' || value === 'raw')
+}
+
+function parseEventsCursor(value: string | undefined): number | undefined {
+  if (value === undefined) {
+    return undefined
+  }
+
+  if (!/^\d+$/.test(value)) {
+    throw invalidEventsCursor(value)
+  }
+
+  return Number.parseInt(value, 10)
+}
+
+function serializeInitialAurasByActor(
+  initialAurasByActor: Map<number, readonly number[]>,
+): Record<string, number[]> {
+  return Object.fromEntries(
+    [...initialAurasByActor.entries()]
+      .filter(([, auraIds]) => auraIds.length > 0)
+      .map(([actorId, auraIds]) => [
+        String(actorId),
+        [...new Set(auraIds)].sort((left, right) => left - right),
+      ]),
+  )
+}
+
 /**
  * GET /reports/:code/fights/:id/events
  * Returns threat-augmented events for supported combat event types
@@ -66,10 +110,17 @@ eventsRoutes.get('/', async (c) => {
   const code = c.req.param('code')!
   const idParam = c.req.param('id')!
   const configVersionParam = c.req.query('cv')
+  const processParam = c.req.query('process')
+  const cursorParam = c.req.query('cursor')
   const refreshParam = c.req.query('refresh')
   const inferThreatReductionParam = c.req.query('inferThreatReduction')
+  const debugMemoryParam = c.req.query('debugMemory')
   const bypassAugmentedCache = isTruthyQueryParam(refreshParam)
   const inferThreatReduction = isTruthyQueryParam(inferThreatReductionParam)
+  const processEvents = shouldProcessEvents(processParam)
+  const cursor = parseEventsCursor(cursorParam)
+  const debugMemory = isTruthyQueryParam(debugMemoryParam)
+  const requestStartedAtMs = monotonicNowMs()
 
   // Validate fight ID
   const fightId = parseInt(idParam, 10)
@@ -124,13 +175,80 @@ eventsRoutes.get('/', async (c) => {
   const isVersionedRequest = configVersionParam === configVersion
 
   const cacheControl =
-    c.env.ENVIRONMENT === 'development'
-      ? 'no-store, no-cache, must-revalidate'
-      : visibility === 'public'
-        ? isVersionedRequest
-          ? 'public, max-age=31536000, immutable'
+    visibility === 'public'
+      ? isVersionedRequest
+        ? 'public, max-age=31536000, immutable'
+        : c.env.ENVIRONMENT === 'development'
+          ? 'no-store, no-cache, must-revalidate'
           : 'public, max-age=0, must-revalidate'
-        : 'private, no-store'
+      : 'private, no-store'
+
+  const fightFriendlyActorIds = new Set<number>([
+    ...(fight.friendlyPlayers ?? []),
+    ...(fight.friendlyPets ?? []).map((pet) => pet.id),
+  ])
+
+  if (!processEvents) {
+    const requestStartTime = cursor ?? fight.startTime
+    const [eventsPage, initialAurasByActor] = await Promise.all([
+      wcl.getEventsPage(
+        code,
+        fightId,
+        visibility,
+        requestStartTime,
+        fight.endTime,
+        {
+          bypassCache: bypassAugmentedCache,
+        },
+      ),
+      wcl.getFriendlyBuffAurasAtFightStart(
+        code,
+        fightId,
+        visibility,
+        fight.startTime,
+        fightFriendlyActorIds,
+        {
+          bypassCache: bypassAugmentedCache,
+        },
+      ),
+    ])
+    const serializedInitialAurasByActor =
+      serializeInitialAurasByActor(initialAurasByActor)
+
+    logEventsMemoryCheckpoint({
+      code,
+      debugMemory,
+      details: {
+        durationMs: Math.round(monotonicNowMs() - requestStartedAtMs),
+        nextPageTimestamp: eventsPage.nextPageTimestamp ?? undefined,
+        rawEventCount: eventsPage.data.length,
+        rawEventsEstimatedBytes: estimateArrayPayloadBytes(eventsPage.data),
+        requestStartTime,
+      },
+      fightId,
+      phase: 'raw-page-response',
+    })
+
+    const response: RawFightEventsResponse = {
+      reportCode: code,
+      fightId,
+      fightName: fight.name,
+      gameVersion,
+      configVersion,
+      process: 'raw',
+      events: eventsPage.data,
+      nextPageTimestamp: eventsPage.nextPageTimestamp,
+      initialAurasByActor: serializedInitialAurasByActor,
+    }
+
+    return c.json(response, 200, {
+      'Cache-Control': cacheControl,
+      'X-Events-Mode': 'raw',
+      'X-Game-Version': String(gameVersion),
+      'X-Config-Version': configVersion,
+      'X-Next-Page-Timestamp': String(eventsPage.nextPageTimestamp ?? ''),
+    })
+  }
 
   // Check augmented cache
   const augmentedCache = createCache(c.env, 'augmented')
@@ -147,6 +265,19 @@ eventsRoutes.get('/', async (c) => {
     : await augmentedCache.get<AugmentedEventsResponse>(cacheKey)
 
   if (cached) {
+    logEventsMemoryCheckpoint({
+      code,
+      debugMemory,
+      details: {
+        cacheStatus: 'HIT',
+        durationMs: Math.round(monotonicNowMs() - requestStartedAtMs),
+        initialAuraActors: Object.keys(cached.initialAurasByActor ?? {}).length,
+        responseEventCount: cached.events.length,
+        responseEstimatedBytes: estimateArrayPayloadBytes(cached.events),
+      },
+      fightId,
+      phase: 'cache-hit',
+    })
     const serializedInitialAuras = cached.initialAurasByActor ?? {}
     console.info('[Events] Returning augmented cache hit', {
       code,
@@ -165,10 +296,6 @@ eventsRoutes.get('/', async (c) => {
     })
   }
 
-  const fightFriendlyActorIds = new Set<number>([
-    ...(fight.friendlyPlayers ?? []),
-    ...(fight.friendlyPets ?? []).map((pet) => pet.id),
-  ])
   const fightFriendlyPlayers = report.masterData.actors.flatMap((actor) =>
     actor.type === 'Player' && (fight.friendlyPlayers ?? []).includes(actor.id)
       ? [
@@ -189,7 +316,7 @@ eventsRoutes.get('/', async (c) => {
     await Promise.all([
       wcl.getEvents(code, fightId, visibility, fight.startTime, fight.endTime, {
         bypassCache: bypassAugmentedCache,
-      }) as Promise<WCLEvent[]>,
+      }),
       wcl.getFriendlyBuffAurasAtFightStart(
         code,
         fightId,
@@ -207,6 +334,21 @@ eventsRoutes.get('/', async (c) => {
       .filter(([, role]) => role === 'Tank')
       .map(([actorId]) => actorId),
   )
+
+  logEventsMemoryCheckpoint({
+    code,
+    debugMemory,
+    details: {
+      durationMs: Math.round(monotonicNowMs() - requestStartedAtMs),
+      inferThreatReduction,
+      initialAuraActorsBeforeProcessors: initialAurasByActor.size,
+      rawEventCount: rawEvents.length,
+      rawEventsEstimatedBytes: estimateArrayPayloadBytes(rawEvents),
+      resolvedTankActorIds: tankActorIds.size,
+    },
+    fightId,
+    phase: 'after-raw-fetch',
+  })
 
   console.info('[Events] Loaded fight events and initial aura seeds', {
     code,
@@ -228,31 +370,37 @@ eventsRoutes.get('/', async (c) => {
     })
 
   // Process events and calculate threat using the threat engine
-  const {
-    augmentedEvents,
-    initialAurasByActor: effectiveInitialAurasByActor,
-  } = threatEngine.processEvents({
-    rawEvents,
-    initialAurasByActor,
-    actorMap,
-    friendlyActorIds,
-    abilitySchoolMap,
-    enemies,
-    encounterId: fight.encounterID ?? null,
-    report,
-    fight,
-    inferThreatReduction,
-    tankActorIds,
-    config,
-  })
-  const serializedInitialAurasByActor = Object.fromEntries(
-    [...effectiveInitialAurasByActor.entries()]
-      .filter(([, auraIds]) => auraIds.length > 0)
-      .map(([actorId, auraIds]) => [
-        String(actorId),
-        [...new Set(auraIds)].sort((left, right) => left - right),
-      ]),
+  const { augmentedEvents, initialAurasByActor: effectiveInitialAurasByActor } =
+    threatEngine.processEvents({
+      rawEvents,
+      initialAurasByActor,
+      actorMap,
+      friendlyActorIds,
+      abilitySchoolMap,
+      enemies,
+      encounterId: fight.encounterID ?? null,
+      report,
+      fight,
+      inferThreatReduction,
+      tankActorIds,
+      config,
+    })
+  const serializedInitialAurasByActor = serializeInitialAurasByActor(
+    effectiveInitialAurasByActor,
   )
+  logEventsMemoryCheckpoint({
+    code,
+    debugMemory,
+    details: {
+      augmentedEventCount: augmentedEvents.length,
+      augmentedEventsEstimatedBytes: estimateArrayPayloadBytes(augmentedEvents),
+      durationMs: Math.round(monotonicNowMs() - requestStartedAtMs),
+      initialAuraActorsAfterProcessors: effectiveInitialAurasByActor.size,
+    },
+    fightId,
+    phase: 'after-augmentation',
+  })
+  rawEvents.length = 0
 
   const response: AugmentedEventsResponse = {
     reportCode: code,
@@ -260,13 +408,34 @@ eventsRoutes.get('/', async (c) => {
     fightName: fight.name,
     gameVersion,
     configVersion,
+    process: 'processed',
     events: augmentedEvents,
     initialAurasByActor: serializedInitialAurasByActor,
   }
   const serializedResponse = JSON.stringify(response)
+  const responseBytes = getUtf8ByteLength(serializedResponse)
+  logEventsMemoryCheckpoint({
+    code,
+    debugMemory,
+    details: {
+      durationMs: Math.round(monotonicNowMs() - requestStartedAtMs),
+      responseBytes,
+      responseEventCount: response.events.length,
+    },
+    fightId,
+    phase: 'before-response',
+  })
 
-  // Cache the result
-  await augmentedCache.set(cacheKey, response)
+  if (response.events.length <= maxCacheableAugmentedEvents) {
+    await augmentedCache.set(cacheKey, response)
+  } else {
+    console.info('[Events] Skipping augmented cache for large payload', {
+      code,
+      fightId,
+      eventCount: response.events.length,
+      maxCacheableAugmentedEvents,
+    })
+  }
 
   return new Response(serializedResponse, {
     headers: {

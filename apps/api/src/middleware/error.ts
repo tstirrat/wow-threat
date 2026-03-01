@@ -32,6 +32,7 @@ export class AppError extends Error {
 export const ErrorCodes = {
   INVALID_REPORT_CODE: 'INVALID_REPORT_CODE',
   INVALID_FIGHT_ID: 'INVALID_FIGHT_ID',
+  INVALID_EVENTS_CURSOR: 'INVALID_EVENTS_CURSOR',
   INVALID_GAME_VERSION: 'INVALID_GAME_VERSION',
   INVALID_CONFIG_VERSION: 'INVALID_CONFIG_VERSION',
   REPORT_NOT_FOUND: 'REPORT_NOT_FOUND',
@@ -56,6 +57,14 @@ export function invalidFightId(id: string): AppError {
   return new AppError(
     ErrorCodes.INVALID_FIGHT_ID,
     `Fight ID must be a number: ${id}`,
+    400,
+  )
+}
+
+export function invalidEventsCursor(cursor: string): AppError {
+  return new AppError(
+    ErrorCodes.INVALID_EVENTS_CURSOR,
+    `Events cursor must be a number: ${cursor}`,
     400,
   )
 }

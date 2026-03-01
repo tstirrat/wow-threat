@@ -1,10 +1,52 @@
 /**
  * Query hook for a fight's augmented event timeline.
  */
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
+import {
+  type QueryClient,
+  useQuery,
+  useQueryClient,
+  useSuspenseQuery,
+} from '@tanstack/react-query'
 
-import { fightEventsQueryKey, getFightEvents } from '../api/reports'
+import {
+  fightEventsQueryKey,
+  fightQueryKey,
+  getFight,
+  getReport,
+  reportQueryKey,
+} from '../api/reports'
+import { getFightEventsClientSide } from '../lib/client-threat-engine'
+import { useClientThreatEngine } from '../lib/constants'
 import type { AugmentedEventsResponse } from '../types/api'
+
+async function fetchFightEvents(params: {
+  reportId: string
+  fightId: number
+  inferThreatReduction: boolean
+  queryClient: QueryClient
+}): Promise<AugmentedEventsResponse> {
+  const { reportId, fightId, inferThreatReduction, queryClient } = params
+
+  const [reportData, fightData] = await Promise.all([
+    queryClient.ensureQueryData({
+      queryKey: reportQueryKey(reportId),
+      queryFn: () => getReport(reportId),
+    }),
+    queryClient.ensureQueryData({
+      queryKey: fightQueryKey(reportId, fightId),
+      queryFn: () => getFight(reportId, fightId),
+    }),
+  ])
+
+  return getFightEventsClientSide({
+    reportId,
+    fightId,
+    reportData,
+    fightData,
+    inferThreatReduction,
+    preferWorker: useClientThreatEngine,
+  })
+}
 
 /** Fetch and cache fight events. */
 export function useFightEvents(
@@ -17,9 +59,21 @@ export function useFightEvents(
   isLoading: boolean
   error: Error | null
 } {
+  const queryClient = useQueryClient()
   const query = useQuery({
-    queryKey: fightEventsQueryKey(reportId, fightId, inferThreatReduction),
-    queryFn: () => getFightEvents(reportId, fightId, inferThreatReduction),
+    queryKey: fightEventsQueryKey(
+      reportId,
+      fightId,
+      inferThreatReduction,
+      'client',
+    ),
+    queryFn: () =>
+      fetchFightEvents({
+        reportId,
+        fightId,
+        inferThreatReduction,
+        queryClient,
+      }),
     enabled: reportId.length > 0 && Number.isFinite(fightId) && enabled,
   })
 
@@ -38,9 +92,21 @@ export function useSuspenseFightEvents(
 ): {
   data: AugmentedEventsResponse
 } {
+  const queryClient = useQueryClient()
   const query = useSuspenseQuery({
-    queryKey: fightEventsQueryKey(reportId, fightId, inferThreatReduction),
-    queryFn: () => getFightEvents(reportId, fightId, inferThreatReduction),
+    queryKey: fightEventsQueryKey(
+      reportId,
+      fightId,
+      inferThreatReduction,
+      'client',
+    ),
+    queryFn: () =>
+      fetchFightEvents({
+        reportId,
+        fightId,
+        inferThreatReduction,
+        queryClient,
+      }),
   })
 
   return {

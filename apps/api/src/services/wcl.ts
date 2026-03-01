@@ -4,6 +4,7 @@
 import type {
   Report,
   ReportPlayerDetailsByRole,
+  WCLEvent,
   WCLEventsResponse,
   WCLReportResponse,
 } from '@wow-threat/wcl-types'
@@ -148,6 +149,8 @@ export interface GuildWclReports {
 }
 
 const maxRecentReportsLimit = 20
+const wclEventsPageLimit = 5000
+const maxCacheableWclEvents = 15000
 
 interface WclFriendlyBuffTableAuraBand {
   endTime?: number | null
@@ -182,6 +185,11 @@ interface FriendlyBuffBandEntry {
   actorId: number
   abilityId: number
   bands: FriendlyBuffBand[]
+}
+
+export interface WclEventsPage {
+  data: WCLEvent[]
+  nextPageTimestamp: number | null
 }
 
 type FriendlyBuffBandsResolutionSource = 'actor-scoped-batch' | 'legacy'
@@ -1673,6 +1681,82 @@ export class WCLClient {
   /**
    * Get fight events using visibility-specific cache scope and token selection.
    */
+  async getEventsPage(
+    code: string,
+    fightId: number,
+    visibility: unknown,
+    startTime: number,
+    endTime: number,
+    options: { accessToken?: string; bypassCache?: boolean } = {},
+  ): Promise<WclEventsPage> {
+    const { accessToken: accessTokenOption, bypassCache = false } = options
+    const normalizedVisibility = normalizeVisibility(visibility)
+    const cacheKey = CacheKeys.eventsPage(
+      code,
+      fightId,
+      normalizedVisibility,
+      normalizedVisibility === 'private' ? this.uid : undefined,
+      startTime,
+      endTime,
+    )
+
+    if (!bypassCache) {
+      const cached = await this.cache.get<WclEventsPage>(cacheKey)
+      if (cached) {
+        return cached
+      }
+    }
+
+    const accessToken =
+      accessTokenOption ??
+      (normalizedVisibility === 'private'
+        ? await this.getUserAccessToken()
+        : undefined)
+
+    const query = `
+      query GetEvents($code: String!, $fightId: Int!, $startTime: Float, $endTime: Float) {
+        reportData {
+          report(code: $code) {
+            events(
+              fightIDs: [$fightId]
+              startTime: $startTime
+              endTime: $endTime
+              limit: ${wclEventsPageLimit}
+              includeResources: true
+            ) {
+              data
+              nextPageTimestamp
+            }
+          }
+        }
+      }
+    `
+
+    const data = await this.query<WCLEventsResponse['data']>(
+      query,
+      {
+        code,
+        endTime,
+        fightId,
+        startTime,
+      },
+      {
+        accessToken,
+      },
+    )
+
+    const page: WclEventsPage = {
+      data: data.reportData.report.events.data,
+      nextPageTimestamp: data.reportData.report.events.nextPageTimestamp,
+    }
+    await this.cache.set(cacheKey, page)
+
+    return page
+  }
+
+  /**
+   * Get fight events using visibility-specific cache scope and token selection.
+   */
   async getEvents(
     code: string,
     fightId: number,
@@ -1680,7 +1764,7 @@ export class WCLClient {
     startTime?: number,
     endTime?: number,
     options: { bypassCache?: boolean } = {},
-  ): Promise<unknown[]> {
+  ): Promise<WCLEvent[]> {
     const { bypassCache = false } = options
     const normalizedVisibility = normalizeVisibility(visibility)
     const cacheKey = CacheKeys.events(
@@ -1693,62 +1777,49 @@ export class WCLClient {
     )
 
     if (!bypassCache) {
-      const cached = await this.cache.get<unknown[]>(cacheKey)
+      const cached = await this.cache.get<WCLEvent[]>(cacheKey)
       if (cached) {
         return cached
       }
     }
 
+    const allEvents: WCLEvent[] = []
+    let requestStartTime = startTime
     const accessToken =
       normalizedVisibility === 'private'
         ? await this.getUserAccessToken()
         : undefined
 
-    const allEvents: unknown[] = []
-    let requestStartTime = startTime
-
     while (true) {
-      const query = `
-        query GetEvents($code: String!, $fightId: Int!, $startTime: Float, $endTime: Float) {
-          reportData {
-            report(code: $code) {
-              events(
-                fightIDs: [$fightId]
-                startTime: $startTime
-                endTime: $endTime
-                limit: 10000
-                includeResources: true
-              ) {
-                data
-                nextPageTimestamp
-              }
-            }
-          }
-        }
-      `
-
-      const data = await this.query<WCLEventsResponse['data']>(
-        query,
-        {
-          code,
-          endTime,
-          fightId,
-          startTime: requestStartTime,
-        },
+      const page = await this.getEventsPage(
+        code,
+        fightId,
+        visibility,
+        requestStartTime ?? startTime ?? 0,
+        endTime ?? Number.MAX_SAFE_INTEGER,
         {
           accessToken,
+          bypassCache,
         },
       )
-      const events = data.reportData.report.events
-      allEvents.push(...events.data)
+      allEvents.push(...page.data)
 
-      if (!events.nextPageTimestamp) {
+      if (!page.nextPageTimestamp) {
         break
       }
-      requestStartTime = events.nextPageTimestamp
+      requestStartTime = page.nextPageTimestamp
     }
 
-    await this.cache.set(cacheKey, allEvents)
+    if (allEvents.length <= maxCacheableWclEvents) {
+      await this.cache.set(cacheKey, allEvents)
+    } else {
+      console.info('[WCL] Skipping raw events cache for large payload', {
+        code,
+        eventCount: allEvents.length,
+        fightId,
+        maxCacheableWclEvents,
+      })
+    }
     return allEvents
   }
 }

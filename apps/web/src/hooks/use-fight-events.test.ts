@@ -1,21 +1,31 @@
 /**
  * Unit tests for fight events query hook wiring.
  */
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
+import {
+  useQuery,
+  useQueryClient,
+  useSuspenseQuery,
+} from '@tanstack/react-query'
 import { renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { fightEventsQueryKey, getFightEvents } from '../api/reports'
+import { fightEventsQueryKey } from '../api/reports'
 import { useFightEvents, useSuspenseFightEvents } from './use-fight-events'
 
 vi.mock('@tanstack/react-query', () => ({
   useQuery: vi.fn(),
+  useQueryClient: vi.fn(() => ({
+    ensureQueryData: vi.fn(),
+  })),
   useSuspenseQuery: vi.fn(),
 }))
 
 vi.mock('../api/reports', () => ({
   fightEventsQueryKey: vi.fn(() => ['fight-events-query-key']),
-  getFightEvents: vi.fn(),
+  fightQueryKey: vi.fn(() => ['fight-query-key']),
+  getFight: vi.fn(),
+  getReport: vi.fn(),
+  reportQueryKey: vi.fn(() => ['report-query-key']),
 }))
 
 describe('useFightEvents', () => {
@@ -39,7 +49,7 @@ describe('useFightEvents', () => {
       },
     } as never)
     vi.mocked(fightEventsQueryKey).mockClear()
-    vi.mocked(getFightEvents).mockClear()
+    vi.mocked(useQueryClient).mockClear()
   })
 
   it('keeps query disabled when enabled flag is false', () => {
@@ -71,12 +81,14 @@ describe('useFightEvents', () => {
       'ABC123xyz',
       12,
       false,
+      'client',
     )
     expect(fightEventsQueryKey).toHaveBeenNthCalledWith(
       2,
       'ABC123xyz',
       12,
       true,
+      'client',
     )
   })
 

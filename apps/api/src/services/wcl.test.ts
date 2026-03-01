@@ -702,6 +702,239 @@ describe('WCLClient.getEvents', () => {
     })
     expect(firestoreCalls).toHaveLength(0)
   })
+
+  it('returns cached events for cacheable payload sizes', async () => {
+    const graphqlCalls: string[] = []
+    const mockFetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString()
+
+      if (url.includes('warcraftlogs.com/oauth/token')) {
+        return new Response(
+          JSON.stringify({
+            access_token: 'client-token',
+            expires_in: 3600,
+            token_type: 'Bearer',
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+
+      if (url.includes('warcraftlogs.com/api/v2/client')) {
+        graphqlCalls.push(url)
+        return new Response(
+          JSON.stringify({
+            data: {
+              reportData: {
+                report: {
+                  events: {
+                    data: [{ type: 'damage', timestamp: 100 }],
+                    nextPageTimestamp: null,
+                  },
+                },
+              },
+            },
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+
+      return new Response(null, { status: 404 })
+    })
+    vi.stubGlobal('fetch', mockFetch)
+
+    const client = new WCLClient(createMockBindings(), 'wcl:12345')
+    const first = await client.getEvents('CACHEABLE1', 1, 'public', 0, 1000)
+    const second = await client.getEvents('CACHEABLE1', 1, 'public', 0, 1000)
+
+    expect(first).toHaveLength(1)
+    expect(second).toHaveLength(1)
+    expect(graphqlCalls).toHaveLength(1)
+  })
+
+  it('skips aggregate events cache for oversized payloads', async () => {
+    const largePayload = Array.from({ length: 15001 }, (_, index) => ({
+      amount: 1,
+      sourceID: 1,
+      targetID: 2,
+      timestamp: 1000 + index,
+      type: 'damage',
+    }))
+    const graphqlCalls: string[] = []
+    const mockFetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString()
+
+      if (url.includes('warcraftlogs.com/oauth/token')) {
+        return new Response(
+          JSON.stringify({
+            access_token: 'client-token',
+            expires_in: 3600,
+            token_type: 'Bearer',
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+
+      if (url.includes('warcraftlogs.com/api/v2/client')) {
+        graphqlCalls.push(url)
+        return new Response(
+          JSON.stringify({
+            data: {
+              reportData: {
+                report: {
+                  events: {
+                    data: largePayload,
+                    nextPageTimestamp: null,
+                  },
+                },
+              },
+            },
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+
+      return new Response(null, { status: 404 })
+    })
+    vi.stubGlobal('fetch', mockFetch)
+
+    const client = new WCLClient(createMockBindings(), 'wcl:12345')
+    const first = await client.getEvents('OVERSIZED1', 1, 'public', 0, 1000)
+    const second = await client.getEvents('OVERSIZED1', 1, 'public', 0, 1000)
+
+    expect(first).toHaveLength(15001)
+    expect(second).toHaveLength(15001)
+    expect(graphqlCalls).toHaveLength(1)
+  })
+})
+
+describe('WCLClient.getEventsPage', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-01-15T00:00:00Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('returns cached page payload for repeated requests', async () => {
+    const graphqlCalls: string[] = []
+    const mockFetch = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString()
+
+        if (url.includes('warcraftlogs.com/oauth/token')) {
+          return new Response(
+            JSON.stringify({
+              access_token: 'client-token',
+              expires_in: 3600,
+              token_type: 'Bearer',
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          )
+        }
+
+        if (url.includes('warcraftlogs.com/api/v2/client')) {
+          graphqlCalls.push(url)
+          const requestBody = init?.body
+            ? JSON.parse(init.body.toString())
+            : null
+          expect(requestBody?.query).toContain('includeResources: true')
+
+          return new Response(
+            JSON.stringify({
+              data: {
+                reportData: {
+                  report: {
+                    events: {
+                      data: [{ type: 'damage', timestamp: 1500 }],
+                      nextPageTimestamp: 5000,
+                    },
+                  },
+                },
+              },
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          )
+        }
+
+        return new Response(null, { status: 404 })
+      },
+    )
+    vi.stubGlobal('fetch', mockFetch)
+
+    const client = new WCLClient(createMockBindings(), 'wcl:12345')
+    const first = await client.getEventsPage(
+      'PAGECACHE1',
+      8,
+      'public',
+      1000,
+      9000,
+    )
+    const second = await client.getEventsPage(
+      'PAGECACHE1',
+      8,
+      'public',
+      1000,
+      9000,
+    )
+
+    expect(first.data).toHaveLength(1)
+    expect(second.data).toHaveLength(1)
+    expect(second.nextPageTimestamp).toBe(5000)
+    expect(graphqlCalls).toHaveLength(1)
+  })
+
+  it('bypasses page cache when explicitly requested', async () => {
+    const graphqlCalls: string[] = []
+    const mockFetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString()
+
+      if (url.includes('warcraftlogs.com/oauth/token')) {
+        return new Response(
+          JSON.stringify({
+            access_token: 'client-token',
+            expires_in: 3600,
+            token_type: 'Bearer',
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+
+      if (url.includes('warcraftlogs.com/api/v2/client')) {
+        graphqlCalls.push(url)
+        return new Response(
+          JSON.stringify({
+            data: {
+              reportData: {
+                report: {
+                  events: {
+                    data: [{ type: 'damage', timestamp: 2500 }],
+                    nextPageTimestamp: null,
+                  },
+                },
+              },
+            },
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+
+      return new Response(null, { status: 404 })
+    })
+    vi.stubGlobal('fetch', mockFetch)
+
+    const client = new WCLClient(createMockBindings(), 'wcl:12345')
+    await client.getEventsPage('PAGEBYPASS1', 8, 'public', 1000, 9000, {
+      bypassCache: true,
+    })
+    await client.getEventsPage('PAGEBYPASS1', 8, 'public', 1000, 9000, {
+      bypassCache: true,
+    })
+
+    expect(graphqlCalls).toHaveLength(2)
+  })
 })
 
 describe('WCLClient.getFriendlyBuffAurasAtFightStart', () => {

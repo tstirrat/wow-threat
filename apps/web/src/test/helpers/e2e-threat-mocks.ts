@@ -6,6 +6,7 @@ import type { Page } from '@playwright/test'
 import type {
   AugmentedEventsResponse,
   FightsResponse,
+  RawFightEventsResponse,
   RecentReportsResponse,
   ReportActorSummary,
   ReportFightParticipant,
@@ -706,6 +707,27 @@ const fightEventsById: Record<number, AugmentedEventsResponse> = {
   30: grobbulusEvents,
 }
 
+function toRawFightEventsResponse(
+  response: AugmentedEventsResponse,
+): RawFightEventsResponse {
+  return {
+    reportCode: response.reportCode,
+    fightId: response.fightId,
+    fightName: response.fightName,
+    gameVersion: response.gameVersion,
+    configVersion: response.configVersion,
+    process: 'raw',
+    events: response.events as RawFightEventsResponse['events'],
+    nextPageTimestamp: null,
+    initialAurasByActor: response.initialAurasByActor,
+  }
+}
+
+const rawFightEventsById: Record<number, RawFightEventsResponse> = {
+  26: toRawFightEventsResponse(patchwerkEvents),
+  30: toRawFightEventsResponse(grobbulusEvents),
+}
+
 function jsonResponse(body: unknown): {
   body: string
   contentType: string
@@ -813,9 +835,18 @@ export async function setupThreatApiMocks(
     if (eventsMatch) {
       const requestedReportId = eventsMatch[1]
       const fightId = Number.parseInt(eventsMatch[2] ?? '', 10)
-      if (requestedReportId === e2eReportId && fightEventsById[fightId]) {
+      const processParam = url.searchParams.get('process')
+      const wantsRaw =
+        processParam === 'false' ||
+        processParam === '0' ||
+        processParam === 'raw'
+      const fightEvents = wantsRaw
+        ? rawFightEventsById[fightId]
+        : fightEventsById[fightId]
+
+      if (requestedReportId === e2eReportId && fightEvents) {
         await delayResponse(eventsResponseDelayMs)
-        await route.fulfill(jsonResponse(fightEventsById[fightId]))
+        await route.fulfill(jsonResponse(fightEvents))
         return
       }
 

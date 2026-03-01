@@ -22,7 +22,10 @@ import {
 } from '../../test/helpers/mock-fetch'
 import { createMockBindings } from '../../test/setup'
 import app from '../index'
-import type { AugmentedEventsResponse } from './events'
+import type {
+  AugmentedEventsResponse,
+  RawFightEventsResponse,
+} from '../types/api'
 
 // Sample events fixture
 const mockEvents = [
@@ -326,6 +329,89 @@ describe('Events API', () => {
       const data: AugmentedEventsResponse = await res.json()
       expect(data.events).toHaveLength(3)
       expect(data.events.some((event) => event.timestamp === 65000)).toBe(true)
+    })
+
+    it('returns raw events passthrough with page cursor metadata when process=false', async () => {
+      const firstFight = reportData.fights[0]
+      const rawPageEvent = {
+        abilityGameID: 23922,
+        amount: 2500,
+        customRawField: 'preserve-me',
+        sourceID: 1,
+        targetID: 25,
+        timestamp: 2100,
+        type: 'damage',
+      }
+      mockFetch({
+        report: reportData,
+        eventsPages: [
+          {
+            startTime: firstFight?.startTime,
+            data: [rawPageEvent],
+            nextPageTimestamp: 31000,
+          },
+        ],
+      })
+
+      const res = await app.request(
+        `http://localhost/v1/reports/RAWPAGE1/fights/1/events?process=false&cv=${configCacheVersion}&refresh=1`,
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(200)
+      expect(res.headers.get('X-Events-Mode')).toBe('raw')
+      expect(res.headers.get('X-Next-Page-Timestamp')).toBe('31000')
+      expect(res.headers.get('Cache-Control')).toContain('immutable')
+
+      const data: RawFightEventsResponse = await res.json()
+      expect(data.process).toBe('raw')
+      expect(data.events).toHaveLength(1)
+      expect(data.events[0]).toMatchObject(rawPageEvent)
+      expect(data.nextPageTimestamp).toBe(31000)
+    })
+
+    it('respects raw page cursor when process=false', async () => {
+      const cursor = 45000
+      const cursorPageEvent = createDamageEvent({
+        timestamp: cursor + 10,
+      })
+      mockFetch({
+        report: reportData,
+        eventsPages: [
+          {
+            startTime: cursor,
+            data: [cursorPageEvent],
+            nextPageTimestamp: null,
+          },
+        ],
+      })
+
+      const res = await app.request(
+        `http://localhost/v1/reports/RAWCURSOR1/fights/1/events?process=false&cursor=${cursor}&refresh=1`,
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(200)
+
+      const data: RawFightEventsResponse = await res.json()
+      expect(data.events).toHaveLength(1)
+      expect(data.events[0]?.timestamp).toBe(cursor + 10)
+      expect(data.nextPageTimestamp).toBeNull()
+    })
+
+    it('returns 400 for invalid raw events cursor', async () => {
+      const res = await app.request(
+        'http://localhost/v1/reports/ABC123xyz/fights/1/events?process=false&cursor=abc',
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(400)
+
+      const data: ApiError = await res.json()
+      expect(data.error.code).toBe('INVALID_EVENTS_CURSOR')
     })
 
     it('returns 404 for non-existent fight', async () => {

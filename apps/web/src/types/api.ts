@@ -2,7 +2,12 @@
  * Frontend API response contract types.
  */
 import type { AugmentedEvent } from '@wow-threat/shared'
-import type { PlayerClass, ReportVisibility, Zone } from '@wow-threat/wcl-types'
+import type {
+  PlayerClass,
+  ReportVisibility,
+  WCLEvent,
+  Zone,
+} from '@wow-threat/wcl-types'
 
 export type ReportActorType = 'Player' | 'NPC' | 'Pet'
 export type ReportActorSubType = PlayerClass | 'Boss' | 'NPC'
@@ -155,6 +160,23 @@ export interface AugmentedEventsResponse {
   fightName: string
   gameVersion: number
   configVersion: string
+  process?: 'processed'
   events: AugmentedEvent[]
   initialAurasByActor?: Record<string, number[]>
 }
+
+export interface RawFightEventsResponse {
+  reportCode: string
+  fightId: number
+  fightName: string
+  gameVersion: number
+  configVersion: string
+  process: 'raw'
+  events: WCLEvent[]
+  nextPageTimestamp: number | null
+  initialAurasByActor?: Record<string, number[]>
+}
+
+export type FightEventsResponse =
+  | AugmentedEventsResponse
+  | RawFightEventsResponse

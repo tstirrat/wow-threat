@@ -13,6 +13,7 @@ import {
   getEntityReports,
   getFight,
   getFightEvents,
+  getFightEventsRawPage,
   getRecentReports,
   getReport,
   recentReportsQueryKey,
@@ -32,7 +33,7 @@ describe('reports api helpers', () => {
     await getFightEvents('ABC123xyz', 12, true)
 
     expect(requestJson).toHaveBeenCalledWith(
-      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events?cv=${configCacheVersion}&inferThreatReduction=true`,
+      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events?cv=${configCacheVersion}&process=true&inferThreatReduction=true`,
     )
   })
 
@@ -40,17 +41,35 @@ describe('reports api helpers', () => {
     await getFightEvents('ABC123xyz', 12, false)
 
     expect(requestJson).toHaveBeenCalledWith(
-      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events?cv=${configCacheVersion}&inferThreatReduction=false`,
+      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events?cv=${configCacheVersion}&process=true&inferThreatReduction=false`,
     )
   })
 
-  it('includes config cache version and inferThreatReduction in fight events query keys', () => {
+  it('requests raw event pages with process=false and cursor when provided', async () => {
+    await getFightEventsRawPage('ABC123xyz', 12, 45000)
+
+    expect(requestJson).toHaveBeenCalledWith(
+      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events?cv=${configCacheVersion}&process=false&cursor=45000`,
+    )
+  })
+
+  it('includes config version, inferThreatReduction, and mode in fight events query keys', () => {
     expect(fightEventsQueryKey('ABC123xyz', 12, true)).toEqual([
       'fight-events',
       'ABC123xyz',
       12,
       configCacheVersion,
       true,
+      'server',
+    ])
+
+    expect(fightEventsQueryKey('ABC123xyz', 12, true, 'client')).toEqual([
+      'fight-events',
+      'ABC123xyz',
+      12,
+      configCacheVersion,
+      true,
+      'client',
     ])
   })
 

@@ -9,10 +9,13 @@ import type {
   AugmentedEventsResponse,
   EntityReportsResponse,
   FightsResponse,
+  RawFightEventsResponse,
   RecentReportsResponse,
   ReportResponse,
 } from '../types/api'
 import { requestJson } from './client'
+
+export type FightEventsProcessingMode = 'server' | 'client'
 
 /** Fetch report metadata for a report code. */
 export function getReport(reportId: string): Promise<ReportResponse> {
@@ -47,12 +50,32 @@ export function getFightEvents(
 ): Promise<AugmentedEventsResponse> {
   const searchParams = new URLSearchParams({
     cv: configCacheVersion,
+    process: 'true',
   })
   searchParams.set('inferThreatReduction', String(inferThreatReduction))
   const query = searchParams.toString()
 
   return requestJson<AugmentedEventsResponse>(
     `${defaultApiBaseUrl}/v1/reports/${reportId}/fights/${fightId}/events${query ? `?${query}` : ''}`,
+  )
+}
+
+/** Fetch one raw events page for a report + fight. */
+export function getFightEventsRawPage(
+  reportId: string,
+  fightId: number,
+  cursor?: number,
+): Promise<RawFightEventsResponse> {
+  const searchParams = new URLSearchParams({
+    cv: configCacheVersion,
+    process: 'false',
+  })
+  if (typeof cursor === 'number' && Number.isFinite(cursor)) {
+    searchParams.set('cursor', String(Math.trunc(cursor)))
+  }
+
+  return requestJson<RawFightEventsResponse>(
+    `${defaultApiBaseUrl}/v1/reports/${reportId}/fights/${fightId}/events?${searchParams.toString()}`,
   )
 }
 
@@ -149,10 +172,19 @@ export const fightEventsQueryKey = (
   reportId: string,
   fightId: number,
   inferThreatReduction: boolean,
-): readonly ['fight-events', string, number, string, boolean] => [
+  processingMode: FightEventsProcessingMode = 'server',
+): readonly [
+  'fight-events',
+  string,
+  number,
+  string,
+  boolean,
+  FightEventsProcessingMode,
+] => [
   'fight-events',
   reportId,
   fightId,
   configCacheVersion,
   inferThreatReduction,
+  processingMode,
 ]
