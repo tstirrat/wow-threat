@@ -31,7 +31,7 @@
     "echarts-for-react": "^3.0.2",
     "firebase": "^12.6.0",
     "fuse.js": "^7.1.0",
-    "lucide-react": "^0.564.0",
+    "lucide-react": "^0.575.0",
     "radix-ui": "^1.4.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
