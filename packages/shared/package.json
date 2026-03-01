@@ -13,7 +13,7 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
+    "@eslint/js": "^10.0.1",
     "@wow-threat/typescript-config": "workspace:*",
     "@wow-threat/wcl-types": "workspace:*",
     "eslint": "^9.39.2",
