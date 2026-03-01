@@ -21,7 +21,7 @@
     "@wow-threat/shared": "workspace:*",
     "@wow-threat/typescript-config": "workspace:*",
     "eslint": "^9.39.2",
-    "globals": "^17.3.0",
+    "globals": "^17.4.0",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.54.0",
     "vitest": "^2.1.0"
