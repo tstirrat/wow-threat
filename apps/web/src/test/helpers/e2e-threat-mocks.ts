@@ -5,8 +5,8 @@ import type { Page } from '@playwright/test'
 
 import type {
   AugmentedEventsResponse,
+  FightEventsResponse,
   FightsResponse,
-  RawFightEventsResponse,
   RecentReportsResponse,
   ReportActorSummary,
   ReportFightParticipant,
@@ -533,7 +533,6 @@ const patchwerkEvents: AugmentedEventsResponse = {
       amount: 200,
       sourceID: 3,
       targetID: 3,
-      targetIsFriendly: true,
       threat: {
         calculation: calculationFor({
           amount: 200,
@@ -702,30 +701,24 @@ const grobbulusEvents: AugmentedEventsResponse = {
   reportCode: e2eReportId,
 }
 
-const fightEventsById: Record<number, AugmentedEventsResponse> = {
-  26: patchwerkEvents,
-  30: grobbulusEvents,
-}
-
-function toRawFightEventsResponse(
+function toFightEventsResponse(
   response: AugmentedEventsResponse,
-): RawFightEventsResponse {
+): FightEventsResponse {
   return {
     reportCode: response.reportCode,
     fightId: response.fightId,
     fightName: response.fightName,
     gameVersion: response.gameVersion,
     configVersion: response.configVersion,
-    process: 'raw',
-    events: response.events as RawFightEventsResponse['events'],
+    events: response.events as FightEventsResponse['events'],
     nextPageTimestamp: null,
     initialAurasByActor: response.initialAurasByActor,
   }
 }
 
-const rawFightEventsById: Record<number, RawFightEventsResponse> = {
-  26: toRawFightEventsResponse(patchwerkEvents),
-  30: toRawFightEventsResponse(grobbulusEvents),
+const fightEventsById: Record<number, FightEventsResponse> = {
+  26: toFightEventsResponse(patchwerkEvents),
+  30: toFightEventsResponse(grobbulusEvents),
 }
 
 function jsonResponse(body: unknown): {
@@ -835,14 +828,7 @@ export async function setupThreatApiMocks(
     if (eventsMatch) {
       const requestedReportId = eventsMatch[1]
       const fightId = Number.parseInt(eventsMatch[2] ?? '', 10)
-      const processParam = url.searchParams.get('process')
-      const wantsRaw =
-        processParam === 'false' ||
-        processParam === '0' ||
-        processParam === 'raw'
-      const fightEvents = wantsRaw
-        ? rawFightEventsById[fightId]
-        : fightEventsById[fightId]
+      const fightEvents = fightEventsById[fightId]
 
       if (requestedReportId === e2eReportId && fightEvents) {
         await delayResponse(eventsResponseDelayMs)

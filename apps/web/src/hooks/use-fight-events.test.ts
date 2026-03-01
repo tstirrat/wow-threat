@@ -77,18 +77,8 @@ describe('useFightEvents', () => {
     renderHook(() => useFightEvents('ABC123xyz', 12, false, true))
     renderHook(() => useFightEvents('ABC123xyz', 12, true, true))
 
-    expect(fightEventsQueryKey).toHaveBeenCalledWith(
-      'ABC123xyz',
-      12,
-      false,
-      'client',
-    )
-    expect(fightEventsQueryKey).toHaveBeenCalledWith(
-      'ABC123xyz',
-      12,
-      true,
-      'client',
-    )
+    expect(fightEventsQueryKey).toHaveBeenCalledWith('ABC123xyz', 12, false)
+    expect(fightEventsQueryKey).toHaveBeenCalledWith('ABC123xyz', 12, true)
   })
 
   it('uses suspense query wiring for suspense consumers', () => {

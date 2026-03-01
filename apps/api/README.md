@@ -73,25 +73,25 @@ Response type: `FightsResponse` (`apps/api/src/types/api.ts`).
 
 ### `GET /v1/reports/:code/fights/:id/events`
 
-Returns threat-augmented events for the fight.
+Returns one raw WCL events page for the fight.
 
-Response type: `AugmentedEventsResponse` (`apps/api/src/types/api.ts`).
+Response type: `FightEventsResponse` (`apps/api/src/types/api.ts`).
 
 Query params:
 
-- `configVersion` (optional): must match the active config version for the report `gameVersion`; otherwise returns `400 INVALID_CONFIG_VERSION`.
+- `cv` (optional): must match the active config cache version; otherwise returns `400 INVALID_CONFIG_VERSION`.
+- `cursor` (optional): page cursor timestamp for subsequent events pages.
+- `refresh` (optional): bypasses internal raw cache when truthy (`1`/`true`).
 
 Behavior notes:
 
-- The endpoint returns events that the threat engine processes, not every raw WCL event type.
-- Threat is currently calculated for `damage`, `heal`, `energize`, `cast`, `death`, and aura events including apply/refresh/stack/remove phases (`applybuff`, `refreshbuff`, `applybuffstack`, `removebuff`, `removebuffstack`, `applydebuff`, `refreshdebuff`, `applydebuffstack`, `removedebuff`, `removedebuffstack`).
-- Each returned event includes a `threat` object with a calculation breakdown and optional threat `changes`.
-- Fixate/taunt chart-state markers are derived from aura phase events (apply/refresh/stack/remove). AoE fixate/taunt charting assumes logs emit per-target debuff aura events for each affected enemy.
+- The endpoint is a passthrough for WCL `WCLEvent` payloads and does not run server-side threat processing.
+- Paging uses `nextPageTimestamp` in the response body and `X-Next-Page-Timestamp` response header.
 
 ## Cache Headers
 
 Production/staging responses are immutable for report/fight responses and for
-versioned event responses (`?configVersion=<active-version>`):
+versioned event responses (`?cv=<active-version>`):
 
 - `Cache-Control: public, max-age=31536000, immutable`
 
@@ -105,6 +105,7 @@ Development responses disable caching:
 
 The events endpoint also returns:
 
-- `X-Cache-Status: HIT|MISS`
+- `X-Events-Mode: raw`
 - `X-Game-Version`
 - `X-Config-Version`
+- `X-Next-Page-Timestamp`

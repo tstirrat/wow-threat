@@ -3,7 +3,6 @@
  *
  * Frontend-facing response contracts for the public HTTP API.
  */
-import type { AugmentedEvent } from '@wow-threat/shared'
 import type {
   PlayerClass,
   ReportVisibility,
@@ -156,29 +155,13 @@ export interface FightsResponse {
   actors: ReportActorSummary[]
 }
 
-export interface AugmentedEventsResponse {
+export interface FightEventsResponse {
   reportCode: string
   fightId: number
   fightName: string
   gameVersion: number
   configVersion: string
-  process?: 'processed'
-  events: AugmentedEvent[]
-  initialAurasByActor?: Record<string, number[]>
-}
-
-export interface RawFightEventsResponse {
-  reportCode: string
-  fightId: number
-  fightName: string
-  gameVersion: number
-  configVersion: string
-  process: 'raw'
   events: WCLEvent[]
   nextPageTimestamp: number | null
   initialAurasByActor?: Record<string, number[]>
 }
-
-export type FightEventsResponse =
-  | AugmentedEventsResponse
-  | RawFightEventsResponse

@@ -18,7 +18,6 @@ import {
   reportQueryKey,
 } from '../api/reports'
 import { getFightEventsClientSide } from '../lib/client-threat-engine'
-import { useClientThreatEngine } from '../lib/constants'
 import {
   loadFightEventsResultCache,
   saveFightEventsResultCache,
@@ -90,7 +89,6 @@ async function fetchFightEvents(params: {
     reportData,
     fightData,
     inferThreatReduction,
-    preferWorker: useClientThreatEngine,
     signal,
     onProgress: (progress) => {
       onProgressMessage?.(progress.message)
@@ -133,7 +131,6 @@ export function useFightEvents(
       reportId,
       fightId,
       inferThreatReduction,
-      'client',
     )
     return () => {
       activeRequestIdRef.current += 1
@@ -144,12 +141,7 @@ export function useFightEvents(
   }, [queryClient, reportId, fightId, inferThreatReduction])
 
   const query = useQuery({
-    queryKey: fightEventsQueryKey(
-      reportId,
-      fightId,
-      inferThreatReduction,
-      'client',
-    ),
+    queryKey: fightEventsQueryKey(reportId, fightId, inferThreatReduction),
     queryFn: ({ signal }) => {
       const requestId = activeRequestIdRef.current + 1
       activeRequestIdRef.current = requestId
@@ -191,12 +183,7 @@ export function useSuspenseFightEvents(
 } {
   const queryClient = useQueryClient()
   const query = useSuspenseQuery({
-    queryKey: fightEventsQueryKey(
-      reportId,
-      fightId,
-      inferThreatReduction,
-      'client',
-    ),
+    queryKey: fightEventsQueryKey(reportId, fightId, inferThreatReduction),
     queryFn: ({ signal }) =>
       fetchFightEvents({
         reportId,

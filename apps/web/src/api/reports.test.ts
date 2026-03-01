@@ -12,8 +12,7 @@ import {
   fightEventsQueryKey,
   getEntityReports,
   getFight,
-  getFightEvents,
-  getFightEventsRawPage,
+  getFightEventsPage,
   getRecentReports,
   getReport,
   recentReportsQueryKey,
@@ -29,50 +28,24 @@ describe('reports api helpers', () => {
     vi.mocked(requestJson).mockResolvedValue({} as never)
   })
 
-  it('includes cv in fight events requests', async () => {
-    await getFightEvents('ABC123xyz', 12, true)
+  it('requests raw event pages with cursor when provided', async () => {
+    await getFightEventsPage('ABC123xyz', 12, 45000)
 
     expect(requestJson).toHaveBeenCalledWith(
-      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events?cv=${configCacheVersion}&process=true&inferThreatReduction=true`,
-    )
-  })
-
-  it('includes inferThreatReduction=false in fight events requests', async () => {
-    await getFightEvents('ABC123xyz', 12, false)
-
-    expect(requestJson).toHaveBeenCalledWith(
-      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events?cv=${configCacheVersion}&process=true&inferThreatReduction=false`,
-    )
-  })
-
-  it('requests raw event pages with process=false and cursor when provided', async () => {
-    await getFightEventsRawPage('ABC123xyz', 12, 45000)
-
-    expect(requestJson).toHaveBeenCalledWith(
-      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events?cv=${configCacheVersion}&process=false&cursor=45000`,
+      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events?cv=${configCacheVersion}&cursor=45000`,
       {
         signal: undefined,
       },
     )
   })
 
-  it('includes config version, inferThreatReduction, and mode in fight events query keys', () => {
+  it('includes config version and inferThreatReduction in fight events query keys', () => {
     expect(fightEventsQueryKey('ABC123xyz', 12, true)).toEqual([
       'fight-events',
       'ABC123xyz',
       12,
       configCacheVersion,
       true,
-      'server',
-    ])
-
-    expect(fightEventsQueryKey('ABC123xyz', 12, true, 'client')).toEqual([
-      'fight-events',
-      'ABC123xyz',
-      12,
-      configCacheVersion,
-      true,
-      'client',
     ])
   })
 

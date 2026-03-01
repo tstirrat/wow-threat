@@ -1,14 +1,13 @@
 /**
  * Events Routes
  *
- * GET /reports/:code/fights/:id/events - Get events with threat calculations
+ * GET /reports/:code/fights/:id/events - Get one raw event page passthrough
  */
 import {
   configCacheVersion,
   getSupportedGameVersions,
   resolveConfigOrNull,
 } from '@wow-threat/config'
-import { ThreatEngine, buildThreatEngineInput } from '@wow-threat/engine'
 import { Hono } from 'hono'
 
 import {
@@ -20,17 +19,12 @@ import {
   reportNotFound,
   unauthorized,
 } from '../middleware/error'
-import { CacheKeys, createCache, normalizeVisibility } from '../services/cache'
+import { normalizeVisibility } from '../services/cache'
 import { WCLClient } from '../services/wcl'
-import type {
-  AugmentedEventsResponse,
-  RawFightEventsResponse,
-  ReportActorRole,
-} from '../types/api'
+import type { FightEventsResponse } from '../types/api'
 import type { Bindings, Variables } from '../types/bindings'
 import {
   estimateArrayPayloadBytes,
-  getUtf8ByteLength,
   logEventsMemoryCheckpoint,
   monotonicNowMs,
 } from './events-logging'
@@ -40,41 +34,8 @@ export const eventsRoutes = new Hono<{
   Variables: Variables
 }>()
 
-const threatEngine = new ThreatEngine()
-const maxCacheableAugmentedEvents = 15000
-
-function countSerializedInitialAuraIds(
-  initialAurasByActor: Record<string, number[]> | undefined,
-): number {
-  if (!initialAurasByActor) {
-    return 0
-  }
-
-  return Object.values(initialAurasByActor).reduce(
-    (totalAuraIds, auraIds) => totalAuraIds + auraIds.length,
-    0,
-  )
-}
-
-function countInitialAuraIds(
-  initialAurasByActor: Map<number, readonly number[]>,
-): number {
-  return [...initialAurasByActor.values()].reduce(
-    (totalAuraIds, auraIds) => totalAuraIds + auraIds.length,
-    0,
-  )
-}
-
 function isTruthyQueryParam(value: string | undefined): boolean {
   return value === '1' || value === 'true'
-}
-
-function shouldProcessEvents(value: string | undefined): boolean {
-  if (!value) {
-    return true
-  }
-
-  return !(value === '0' || value === 'false' || value === 'raw')
 }
 
 function parseEventsCursor(value: string | undefined): number | undefined {
@@ -102,27 +63,31 @@ function serializeInitialAurasByActor(
   )
 }
 
+function countSerializedInitialAuraIds(
+  initialAurasByActor: Record<string, number[]>,
+): number {
+  return Object.values(initialAurasByActor).reduce(
+    (totalAuraIds, auraIds) => totalAuraIds + auraIds.length,
+    0,
+  )
+}
+
 /**
  * GET /reports/:code/fights/:id/events
- * Returns threat-augmented events for supported combat event types
+ * Returns raw WCL events page passthrough plus paging metadata.
  */
 eventsRoutes.get('/', async (c) => {
   const code = c.req.param('code')!
   const idParam = c.req.param('id')!
   const configVersionParam = c.req.query('cv')
-  const processParam = c.req.query('process')
   const cursorParam = c.req.query('cursor')
   const refreshParam = c.req.query('refresh')
-  const inferThreatReductionParam = c.req.query('inferThreatReduction')
   const debugMemoryParam = c.req.query('debugMemory')
-  const bypassAugmentedCache = isTruthyQueryParam(refreshParam)
-  const inferThreatReduction = isTruthyQueryParam(inferThreatReductionParam)
-  const processEvents = shouldProcessEvents(processParam)
+  const bypassRawCache = isTruthyQueryParam(refreshParam)
   const cursor = parseEventsCursor(cursorParam)
   const debugMemory = isTruthyQueryParam(debugMemoryParam)
   const requestStartedAtMs = monotonicNowMs()
 
-  // Validate fight ID
   const fightId = parseInt(idParam, 10)
   if (Number.isNaN(fightId)) {
     throw invalidFightId(idParam)
@@ -135,7 +100,6 @@ eventsRoutes.get('/', async (c) => {
 
   const wcl = new WCLClient(c.env, uid)
 
-  // Get report to find game version and fight info
   const reportData = await wcl.getReport(code)
   if (!reportData?.reportData?.report) {
     throw reportNotFound(code)
@@ -143,7 +107,9 @@ eventsRoutes.get('/', async (c) => {
 
   const report = reportData.reportData.report
   const visibility = normalizeVisibility(report.visibility)
-  const fight = report.fights.find((f) => f.id === fightId)
+  const fight = report.fights.find(
+    (candidateFight) => candidateFight.id === fightId,
+  )
   if (!fight) {
     throw fightNotFound(code, fightId)
   }
@@ -168,11 +134,11 @@ eventsRoutes.get('/', async (c) => {
       ),
     })
   }
+
   if (configVersionParam && configVersionParam !== configCacheVersion) {
     throw invalidConfigVersion(configVersionParam, configCacheVersion)
   }
-  const configVersion = configCacheVersion
-  const isVersionedRequest = configVersionParam === configVersion
+  const isVersionedRequest = configVersionParam === configCacheVersion
 
   const cacheControl =
     visibility === 'public'
@@ -187,267 +153,67 @@ eventsRoutes.get('/', async (c) => {
     ...(fight.friendlyPlayers ?? []),
     ...(fight.friendlyPets ?? []).map((pet) => pet.id),
   ])
+  const requestStartTime = cursor ?? fight.startTime
 
-  if (!processEvents) {
-    const requestStartTime = cursor ?? fight.startTime
-    const [eventsPage, initialAurasByActor] = await Promise.all([
-      wcl.getEventsPage(
-        code,
-        fightId,
-        visibility,
-        requestStartTime,
-        fight.endTime,
-        {
-          bypassCache: bypassAugmentedCache,
-        },
-      ),
-      wcl.getFriendlyBuffAurasAtFightStart(
-        code,
-        fightId,
-        visibility,
-        fight.startTime,
-        fightFriendlyActorIds,
-        {
-          bypassCache: bypassAugmentedCache,
-        },
-      ),
-    ])
-    const serializedInitialAurasByActor =
-      serializeInitialAurasByActor(initialAurasByActor)
-
-    logEventsMemoryCheckpoint({
+  const [eventsPage, initialAurasByActor] = await Promise.all([
+    wcl.getEventsPage(
       code,
-      debugMemory,
-      details: {
-        durationMs: Math.round(monotonicNowMs() - requestStartedAtMs),
-        nextPageTimestamp: eventsPage.nextPageTimestamp ?? undefined,
-        rawEventCount: eventsPage.data.length,
-        rawEventsEstimatedBytes: estimateArrayPayloadBytes(eventsPage.data),
-        requestStartTime,
+      fightId,
+      visibility,
+      requestStartTime,
+      fight.endTime,
+      {
+        bypassCache: bypassRawCache,
       },
-      fightId,
-      phase: 'raw-page-response',
-    })
-
-    const response: RawFightEventsResponse = {
-      reportCode: code,
-      fightId,
-      fightName: fight.name,
-      gameVersion,
-      configVersion,
-      process: 'raw',
-      events: eventsPage.data,
-      nextPageTimestamp: eventsPage.nextPageTimestamp,
-      initialAurasByActor: serializedInitialAurasByActor,
-    }
-
-    return c.json(response, 200, {
-      'Cache-Control': cacheControl,
-      'X-Events-Mode': 'raw',
-      'X-Game-Version': String(gameVersion),
-      'X-Config-Version': configVersion,
-      'X-Next-Page-Timestamp': String(eventsPage.nextPageTimestamp ?? ''),
-    })
-  }
-
-  // Check augmented cache
-  const augmentedCache = createCache(c.env, 'augmented')
-  const cacheKey = CacheKeys.augmentedEvents(
-    code,
-    fightId,
-    configVersion,
-    inferThreatReduction,
-    visibility,
-    visibility === 'private' ? uid : undefined,
-  )
-  const cached = bypassAugmentedCache
-    ? null
-    : await augmentedCache.get<AugmentedEventsResponse>(cacheKey)
-
-  if (cached) {
-    logEventsMemoryCheckpoint({
+    ),
+    wcl.getFriendlyBuffAurasAtFightStart(
       code,
-      debugMemory,
-      details: {
-        cacheStatus: 'HIT',
-        durationMs: Math.round(monotonicNowMs() - requestStartedAtMs),
-        initialAuraActors: Object.keys(cached.initialAurasByActor ?? {}).length,
-        responseEventCount: cached.events.length,
-        responseEstimatedBytes: estimateArrayPayloadBytes(cached.events),
+      fightId,
+      visibility,
+      fight.startTime,
+      fightFriendlyActorIds,
+      {
+        bypassCache: bypassRawCache,
       },
-      fightId,
-      phase: 'cache-hit',
-    })
-    const serializedInitialAuras = cached.initialAurasByActor ?? {}
-    console.info('[Events] Returning augmented cache hit', {
-      code,
-      fightId,
-      buffBandFetchSkipped: true,
-      cachedInitialAuraActors: Object.keys(serializedInitialAuras).length,
-      cachedInitialAuraIds: countSerializedInitialAuraIds(
-        serializedInitialAuras,
-      ),
-    })
-    return c.json(cached, 200, {
-      'Cache-Control': cacheControl,
-      'X-Cache-Status': 'HIT',
-      'X-Game-Version': String(gameVersion),
-      'X-Config-Version': configVersion,
-    })
-  }
-
-  const fightFriendlyPlayers = report.masterData.actors.flatMap((actor) =>
-    actor.type === 'Player' && (fight.friendlyPlayers ?? []).includes(actor.id)
-      ? [
-          {
-            id: actor.id,
-            name: actor.name,
-          },
-        ]
-      : [],
-  )
-  const friendlyPlayerRolesPromise = inferThreatReduction
-    ? wcl.getFightPlayerRoles(code, fightId, visibility, fightFriendlyPlayers, {
-        bypassCache: bypassAugmentedCache,
-      })
-    : Promise.resolve(new Map<number, ReportActorRole>())
-
-  const [rawEvents, initialAurasByActor, friendlyPlayerRoles] =
-    await Promise.all([
-      wcl.getEvents(code, fightId, visibility, fight.startTime, fight.endTime, {
-        bypassCache: bypassAugmentedCache,
-      }),
-      wcl.getFriendlyBuffAurasAtFightStart(
-        code,
-        fightId,
-        visibility,
-        fight.startTime,
-        fightFriendlyActorIds,
-        {
-          bypassCache: bypassAugmentedCache,
-        },
-      ),
-      friendlyPlayerRolesPromise,
-    ])
-  const tankActorIds = new Set(
-    [...friendlyPlayerRoles.entries()]
-      .filter(([, role]) => role === 'Tank')
-      .map(([actorId]) => actorId),
-  )
+    ),
+  ])
+  const serializedInitialAurasByActor =
+    serializeInitialAurasByActor(initialAurasByActor)
 
   logEventsMemoryCheckpoint({
     code,
     debugMemory,
     details: {
       durationMs: Math.round(monotonicNowMs() - requestStartedAtMs),
-      inferThreatReduction,
-      initialAuraActorsBeforeProcessors: initialAurasByActor.size,
-      rawEventCount: rawEvents.length,
-      rawEventsEstimatedBytes: estimateArrayPayloadBytes(rawEvents),
-      resolvedTankActorIds: tankActorIds.size,
+      initialAuraActors: Object.keys(serializedInitialAurasByActor).length,
+      initialAuraIds: countSerializedInitialAuraIds(
+        serializedInitialAurasByActor,
+      ),
+      nextPageTimestamp: eventsPage.nextPageTimestamp ?? undefined,
+      rawEventCount: eventsPage.data.length,
+      rawEventsEstimatedBytes: estimateArrayPayloadBytes(eventsPage.data),
+      requestStartTime,
     },
     fightId,
-    phase: 'after-raw-fetch',
+    phase: 'raw-page-response',
   })
 
-  console.info('[Events] Loaded fight events and initial aura seeds', {
-    code,
-    fightId,
-    rawEvents: rawEvents.length,
-    fightFriendlyActors: fightFriendlyActorIds.size,
-    fightFriendlyPlayers: fightFriendlyPlayers.length,
-    inferThreatReduction,
-    inferredTankActors: tankActorIds.size,
-    initialAuraActorsBeforeProcessors: initialAurasByActor.size,
-    initialAuraIdsBeforeProcessors: countInitialAuraIds(initialAurasByActor),
-  })
-
-  const { actorMap, friendlyActorIds, enemies, abilitySchoolMap } =
-    buildThreatEngineInput({
-      fight,
-      actors: report.masterData.actors,
-      abilities: report.masterData.abilities,
-    })
-
-  // Process events and calculate threat using the threat engine
-  const { augmentedEvents, initialAurasByActor: effectiveInitialAurasByActor } =
-    threatEngine.processEvents({
-      rawEvents,
-      initialAurasByActor,
-      actorMap,
-      friendlyActorIds,
-      abilitySchoolMap,
-      enemies,
-      encounterId: fight.encounterID ?? null,
-      report,
-      fight,
-      inferThreatReduction,
-      tankActorIds,
-      config,
-    })
-  const serializedInitialAurasByActor = serializeInitialAurasByActor(
-    effectiveInitialAurasByActor,
-  )
-  logEventsMemoryCheckpoint({
-    code,
-    debugMemory,
-    details: {
-      augmentedEventCount: augmentedEvents.length,
-      augmentedEventsEstimatedBytes: estimateArrayPayloadBytes(augmentedEvents),
-      durationMs: Math.round(monotonicNowMs() - requestStartedAtMs),
-      initialAuraActorsAfterProcessors: effectiveInitialAurasByActor.size,
-    },
-    fightId,
-    phase: 'after-augmentation',
-  })
-  rawEvents.length = 0
-
-  const response: AugmentedEventsResponse = {
+  const response: FightEventsResponse = {
     reportCode: code,
     fightId,
     fightName: fight.name,
     gameVersion,
-    configVersion,
-    process: 'processed',
-    events: augmentedEvents,
+    configVersion: configCacheVersion,
+    events: eventsPage.data,
+    nextPageTimestamp: eventsPage.nextPageTimestamp,
     initialAurasByActor: serializedInitialAurasByActor,
   }
-  const serializedResponse = JSON.stringify(response)
-  const responseBytes = getUtf8ByteLength(serializedResponse)
-  logEventsMemoryCheckpoint({
-    code,
-    debugMemory,
-    details: {
-      durationMs: Math.round(monotonicNowMs() - requestStartedAtMs),
-      responseBytes,
-      responseEventCount: response.events.length,
-    },
-    fightId,
-    phase: 'before-response',
-  })
 
-  if (response.events.length <= maxCacheableAugmentedEvents) {
-    await augmentedCache.set(cacheKey, response)
-  } else {
-    console.info('[Events] Skipping augmented cache for large payload', {
-      code,
-      fightId,
-      eventCount: response.events.length,
-      maxCacheableAugmentedEvents,
-    })
-  }
-
-  return new Response(serializedResponse, {
-    headers: {
-      'Cache-Control': cacheControl,
-      'Content-Type': 'application/json; charset=UTF-8',
-      'X-Cache-Status': 'MISS',
-      'X-Game-Version': String(gameVersion),
-      'X-Config-Version': configVersion,
-      ETag: `"${code}-${fightId}-${configVersion}-${inferThreatReduction ? 'infer' : 'standard'}"`,
-    },
-    status: 200,
+  return c.json(response, 200, {
+    'Cache-Control': cacheControl,
+    'X-Events-Mode': 'raw',
+    'X-Game-Version': String(gameVersion),
+    'X-Config-Version': configCacheVersion,
+    'X-Next-Page-Timestamp': String(eventsPage.nextPageTimestamp ?? ''),
   })
 })
-
-export type { AugmentedEventsResponse } from '../types/api'

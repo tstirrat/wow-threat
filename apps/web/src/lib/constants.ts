@@ -5,8 +5,6 @@ import type { ExampleReportLink, WarcraftLogsHost } from '../types/app'
 
 export const defaultApiBaseUrl =
   import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8787'
-export const useClientThreatEngine =
-  import.meta.env.VITE_USE_CLIENT_THREAT_ENGINE === 'true'
 
 export const recentReportsStorageKey = 'wow-threat.recent-reports'
 export const accountRecentReportsStorageKey =

@@ -10,11 +10,11 @@ import type {
   WCLEvent,
 } from '@wow-threat/wcl-types'
 
-import { getFightEventsRawPage } from '../api/reports'
+import { getFightEventsPage } from '../api/reports'
 import type {
   AugmentedEventsResponse,
+  FightEventsResponse,
   FightsResponse,
-  RawFightEventsResponse,
   ReportAbilitySummary,
   ReportActorSummary,
   ReportFightParticipant,
@@ -27,7 +27,6 @@ import type {
   ThreatEngineWorkerResponse,
   ThreatEngineWorkerSuccessResponse,
 } from '../workers/threat-engine-worker-types'
-import { useClientThreatEngine } from './constants'
 
 const fallbackThreatEngine = new ThreatEngine()
 
@@ -401,18 +400,18 @@ async function fetchAllRawEvents(
     | undefined,
 ): Promise<{
   events: WCLEvent[]
-  metadata: RawFightEventsResponse
+  metadata: FightEventsResponse
   pageCount: number
 }> {
   const allEvents: WCLEvent[] = []
   const seenCursors = new Set<number>()
   let cursor: number | undefined
   let pageCount = 0
-  let metadata: RawFightEventsResponse | null = null
+  let metadata: FightEventsResponse | null = null
 
   while (true) {
     throwIfAborted(signal)
-    const page = await getFightEventsRawPage(reportId, fightId, cursor, signal)
+    const page = await getFightEventsPage(reportId, fightId, cursor, signal)
     throwIfAborted(signal)
     pageCount += 1
     if (!metadata) {
@@ -462,7 +461,6 @@ export async function getFightEventsClientSide(params: {
   reportData: ReportResponse
   fightData: FightsResponse
   inferThreatReduction: boolean
-  preferWorker?: boolean
   signal?: AbortSignal
   onProgress?: (progress: ClientThreatEngineProgressUpdate) => void
 }): Promise<AugmentedEventsResponse> {
@@ -472,7 +470,6 @@ export async function getFightEventsClientSide(params: {
     reportData,
     fightData,
     inferThreatReduction,
-    preferWorker = useClientThreatEngine,
     signal,
     onProgress,
   } = params
@@ -526,48 +523,43 @@ export async function getFightEventsClientSide(params: {
     pagesLoaded: pageCount,
     eventsLoaded: rawEvents.length,
     message: `Processing ${formatEventCount(rawEvents.length)} events`,
-    mode: preferWorker ? 'worker' : 'main-thread',
+    mode: 'worker',
   })
-  if (preferWorker) {
-    const workerAttemptStartedAt = performance.now()
-    try {
-      const workerResponse = await runThreatEngineWorker(workerPayload, signal)
-      if (workerResponse.status === 'error') {
-        console.warn('[Events] Threat worker returned error response', {
-          debug: workerResponse.debug,
-          error: workerResponse.error,
-          errorName: workerResponse.errorName,
-          errorStack: workerResponse.errorStack,
-          fightId,
-          reportId,
-        })
+  const workerAttemptStartedAt = performance.now()
+  try {
+    const workerResponse = await runThreatEngineWorker(workerPayload, signal)
+    if (workerResponse.status === 'error') {
+      console.warn('[Events] Threat worker returned error response', {
+        debug: workerResponse.debug,
+        error: workerResponse.error,
+        errorName: workerResponse.errorName,
+        errorStack: workerResponse.errorStack,
+        fightId,
+        reportId,
+      })
 
-        throw new Error(
-          `Threat worker returned status=error: ${workerResponse.errorName ?? 'Error'}: ${workerResponse.error}`,
-        )
-      }
-
-      mode = 'worker'
-      processed = workerResponse.payload
-    } catch (error) {
-      throwIfAborted(signal)
-      console.warn(
-        '[Events] Worker threat processing failed, falling back to main thread',
-        {
-          error: toErrorDetails(error),
-          fallbackMode: 'main-thread',
-          fightId,
-          rawEventCount: rawEvents.length,
-          reportId,
-          workerAttemptElapsedMs: Math.round(
-            performance.now() - workerAttemptStartedAt,
-          ),
-        },
+      throw new Error(
+        `Threat worker returned status=error: ${workerResponse.errorName ?? 'Error'}: ${workerResponse.error}`,
       )
-      processed = processThreatEventsOnMainThread(workerPayload)
     }
-  } else {
+
+    mode = 'worker'
+    processed = workerResponse.payload
+  } catch (error) {
     throwIfAborted(signal)
+    console.warn(
+      '[Events] Worker threat processing failed, falling back to main thread',
+      {
+        error: toErrorDetails(error),
+        fallbackMode: 'main-thread',
+        fightId,
+        rawEventCount: rawEvents.length,
+        reportId,
+        workerAttemptElapsedMs: Math.round(
+          performance.now() - workerAttemptStartedAt,
+        ),
+      },
+    )
     processed = processThreatEventsOnMainThread(workerPayload)
   }
 
@@ -591,7 +583,6 @@ export async function getFightEventsClientSide(params: {
     fightName: metadata.fightName,
     gameVersion: metadata.gameVersion,
     configVersion: metadata.configVersion,
-    process: 'processed',
     events: processed.augmentedEvents,
     initialAurasByActor: processed.initialAurasByActor,
   }

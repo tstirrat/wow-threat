@@ -16,7 +16,6 @@ const testResponse: AugmentedEventsResponse = {
   fightName: 'Patchwerk',
   gameVersion: 2,
   configVersion: '974',
-  process: 'processed',
   events: [],
   initialAurasByActor: {},
 }
