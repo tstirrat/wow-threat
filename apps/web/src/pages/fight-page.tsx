@@ -2,7 +2,7 @@
  * Fight-level page with target filter and player-focused chart interactions.
  */
 import { ExternalLink } from 'lucide-react'
-import { type FC, Suspense, useEffect, useMemo } from 'react'
+import { type FC, useEffect, useMemo } from 'react'
 import { useHotkeys, useHotkeysContext } from 'react-hotkeys-hook'
 import { useLocation, useParams } from 'react-router-dom'
 
@@ -13,10 +13,7 @@ import { TargetSelector } from '../components/target-selector'
 import { ThreatChart, type ThreatChartProps } from '../components/threat-chart'
 import { Skeleton } from '../components/ui/skeleton'
 import { useFightData } from '../hooks/use-fight-data'
-import {
-  useFightEvents,
-  useSuspenseFightEvents,
-} from '../hooks/use-fight-events'
+import { useFightEvents } from '../hooks/use-fight-events'
 import { useUserSettings } from '../hooks/use-user-settings'
 import { formatClockDuration } from '../lib/format'
 import { resolveCurrentThreatConfig } from '../lib/threat-config'
@@ -46,7 +43,9 @@ const FightPageLoadingSkeleton: FC = () => {
   )
 }
 
-const FightChartLoadingSkeleton: FC = () => {
+const FightChartLoadingSkeleton: FC<{
+  loadingMessage?: string
+}> = ({ loadingMessage = 'Loading fight events' }) => {
   return (
     <section
       aria-label="Loading fight events chart"
@@ -55,32 +54,18 @@ const FightChartLoadingSkeleton: FC = () => {
     >
       <div className="space-y-3">
         <Skeleton className="h-8 w-64" />
-        <Skeleton
-          className="h-[560px] w-full"
-          data-testid="fight-chart-skeleton"
-        />
+        <div className="relative h-[560px] w-full">
+          <Skeleton
+            className="h-full w-full"
+            data-testid="fight-chart-skeleton"
+          />
+          <p className="pointer-events-none absolute inset-0 flex items-center justify-center px-4 text-center text-sm text-muted-foreground">
+            {loadingMessage}
+          </p>
+        </div>
       </div>
     </section>
   )
-}
-
-const FightTimelineContent: FC<{
-  reportId: string
-  fightId: number
-  inferThreatReduction: boolean
-  chartProps: ThreatChartProps
-}> = ({ reportId, fightId, inferThreatReduction, chartProps }) => {
-  useSuspenseFightEvents(reportId, fightId, inferThreatReduction)
-
-  if (chartProps.series.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        No threat points are available for this target.
-      </p>
-    )
-  }
-
-  return <ThreatChart {...chartProps} />
 }
 
 export const FightPage: FC = () => {
@@ -327,16 +312,19 @@ export const FightPage: FC = () => {
             No valid targets available for this fight.
           </p>
         ) : isUserSettingsLoading ? (
-          <FightChartLoadingSkeleton />
+          <FightChartLoadingSkeleton loadingMessage="Loading fight settings" />
+        ) : eventsQuery.isLoading ? (
+          <FightChartLoadingSkeleton
+            loadingMessage={
+              eventsQuery.loadingMessage || 'Loading fight events'
+            }
+          />
+        ) : chartProps.series.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No threat points are available for this target.
+          </p>
         ) : (
-          <Suspense fallback={<FightChartLoadingSkeleton />}>
-            <FightTimelineContent
-              reportId={reportId}
-              fightId={fightId}
-              inferThreatReduction={userSettings.inferThreatReduction}
-              chartProps={chartProps}
-            />
-          </Suspense>
+          <ThreatChart {...chartProps} />
         )}
       </SectionCard>
 

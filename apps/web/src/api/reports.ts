@@ -65,6 +65,7 @@ export function getFightEventsRawPage(
   reportId: string,
   fightId: number,
   cursor?: number,
+  signal?: AbortSignal,
 ): Promise<RawFightEventsResponse> {
   const searchParams = new URLSearchParams({
     cv: configCacheVersion,
@@ -76,6 +77,9 @@ export function getFightEventsRawPage(
 
   return requestJson<RawFightEventsResponse>(
     `${defaultApiBaseUrl}/v1/reports/${reportId}/fights/${fightId}/events?${searchParams.toString()}`,
+    {
+      signal,
+    },
   )
 }
 

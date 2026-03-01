@@ -31,6 +31,36 @@ import { useClientThreatEngine } from './constants'
 
 const fallbackThreatEngine = new ThreatEngine()
 
+export type ThreatEngineProcessMode = 'worker' | 'main-thread'
+
+export interface ClientThreatEngineProgressUpdate {
+  phase: 'loading-pages' | 'processing' | 'complete'
+  message: string
+  pagesLoaded: number
+  eventsLoaded: number
+  mode?: ThreatEngineProcessMode
+}
+
+function createAbortError(): Error {
+  if (typeof DOMException === 'function') {
+    return new DOMException('Threat event loading was cancelled', 'AbortError')
+  }
+
+  const fallbackError = new Error('Threat event loading was cancelled')
+  fallbackError.name = 'AbortError'
+  return fallbackError
+}
+
+function throwIfAborted(signal: AbortSignal | undefined): void {
+  if (signal?.aborted) {
+    throw createAbortError()
+  }
+}
+
+function formatEventCount(eventCount: number): string {
+  return new Intl.NumberFormat().format(eventCount)
+}
+
 function toReportFightParticipant(
   participant: ReportFightParticipant,
 ): ReportFight['enemyNPCs'][number] {
@@ -148,10 +178,13 @@ function createThreatEngineWorker(): Worker {
 
 async function runThreatEngineWorker(
   payload: ThreatEngineWorkerPayload,
+  signal?: AbortSignal,
 ): Promise<ThreatEngineWorkerResponse> {
   if (typeof Worker === 'undefined') {
     throw new Error('Web Workers are unavailable in this environment')
   }
+
+  throwIfAborted(signal)
 
   const worker = createThreatEngineWorker()
   const requestId = createWorkerRequestId()
@@ -166,11 +199,17 @@ async function runThreatEngineWorker(
       reject(new Error('Threat engine worker timed out'))
     }, 120_000)
 
+    const handleAbort = (): void => {
+      cleanup()
+      reject(createAbortError())
+    }
+
     const cleanup = (): void => {
       globalThis.clearTimeout(timeoutHandle)
       worker.removeEventListener('message', handleMessage)
       worker.removeEventListener('error', handleError)
       worker.removeEventListener('messageerror', handleMessageError)
+      signal?.removeEventListener('abort', handleAbort)
       worker.terminate()
     }
 
@@ -198,6 +237,10 @@ async function runThreatEngineWorker(
     worker.addEventListener('message', handleMessage)
     worker.addEventListener('error', handleError)
     worker.addEventListener('messageerror', handleMessageError)
+    signal?.addEventListener('abort', handleAbort, {
+      once: true,
+    })
+    throwIfAborted(signal)
     worker.postMessage(request)
   })
 }
@@ -303,21 +346,38 @@ function processThreatEventsOnMainThread(
 async function fetchAllRawEvents(
   reportId: string,
   fightId: number,
+  signal: AbortSignal | undefined,
+  onProgress:
+    | ((progress: ClientThreatEngineProgressUpdate) => void)
+    | undefined,
 ): Promise<{
   events: WCLEvent[]
   metadata: RawFightEventsResponse
+  pageCount: number
 }> {
   const allEvents: WCLEvent[] = []
   const seenCursors = new Set<number>()
   let cursor: number | undefined
+  let pageCount = 0
   let metadata: RawFightEventsResponse | null = null
 
   while (true) {
-    const page = await getFightEventsRawPage(reportId, fightId, cursor)
+    throwIfAborted(signal)
+    const page = await getFightEventsRawPage(reportId, fightId, cursor, signal)
+    throwIfAborted(signal)
+    pageCount += 1
     if (!metadata) {
       metadata = page
     }
     allEvents.push(...page.events)
+    onProgress?.({
+      phase: 'loading-pages',
+      pagesLoaded: pageCount,
+      eventsLoaded: allEvents.length,
+      message: `Loading events pages (${pageCount} loaded, ${formatEventCount(
+        allEvents.length,
+      )} events)`,
+    })
 
     const nextPageTimestamp = page.nextPageTimestamp
     if (nextPageTimestamp === null) {
@@ -340,6 +400,7 @@ async function fetchAllRawEvents(
   return {
     events: allEvents,
     metadata,
+    pageCount,
   }
 }
 
@@ -353,6 +414,8 @@ export async function getFightEventsClientSide(params: {
   fightData: FightsResponse
   inferThreatReduction: boolean
   preferWorker?: boolean
+  signal?: AbortSignal
+  onProgress?: (progress: ClientThreatEngineProgressUpdate) => void
 }): Promise<AugmentedEventsResponse> {
   const {
     reportId,
@@ -361,7 +424,10 @@ export async function getFightEventsClientSide(params: {
     fightData,
     inferThreatReduction,
     preferWorker = useClientThreatEngine,
+    signal,
+    onProgress,
   } = params
+  throwIfAborted(signal)
 
   const reportFights = reportData.fights.map(toReportFight)
   const reportActors = toReportActors(reportData.actors)
@@ -389,10 +455,12 @@ export async function getFightEventsClientSide(params: {
     archiveStatus: reportData.archiveStatus ?? null,
   }
 
-  const { events: rawEvents, metadata } = await fetchAllRawEvents(
-    reportId,
-    fightId,
-  )
+  const {
+    events: rawEvents,
+    metadata,
+    pageCount,
+  } = await fetchAllRawEvents(reportId, fightId, signal, onProgress)
+  throwIfAborted(signal)
   const tankActorIds = extractTankActorIds(fightData)
   const workerPayload: ThreatEngineWorkerPayload = {
     fightId,
@@ -404,9 +472,16 @@ export async function getFightEventsClientSide(params: {
   }
   let mode: 'worker' | 'main-thread' = 'main-thread'
   let processed: ThreatEngineWorkerSuccessResponse['payload']
+  onProgress?.({
+    phase: 'processing',
+    pagesLoaded: pageCount,
+    eventsLoaded: rawEvents.length,
+    message: `Processing ${formatEventCount(rawEvents.length)} events`,
+    mode: preferWorker ? 'worker' : 'main-thread',
+  })
   if (preferWorker) {
     try {
-      const workerResponse = await runThreatEngineWorker(workerPayload)
+      const workerResponse = await runThreatEngineWorker(workerPayload, signal)
       if (workerResponse.status === 'error') {
         throw new Error(workerResponse.error)
       }
@@ -414,6 +489,7 @@ export async function getFightEventsClientSide(params: {
       mode = 'worker'
       processed = workerResponse.payload
     } catch (error) {
+      throwIfAborted(signal)
       console.warn(
         '[Events] Worker threat processing failed, falling back to main thread',
         {
@@ -425,6 +501,7 @@ export async function getFightEventsClientSide(params: {
       processed = processThreatEventsOnMainThread(workerPayload)
     }
   } else {
+    throwIfAborted(signal)
     processed = processThreatEventsOnMainThread(workerPayload)
   }
 
@@ -433,6 +510,13 @@ export async function getFightEventsClientSide(params: {
     mode,
     processDurationMs: processed.processDurationMs,
     reportId,
+  })
+  onProgress?.({
+    phase: 'complete',
+    pagesLoaded: pageCount,
+    eventsLoaded: rawEvents.length,
+    message: `Processed ${formatEventCount(rawEvents.length)} events`,
+    mode,
   })
 
   return {

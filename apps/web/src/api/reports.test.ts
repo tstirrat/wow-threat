@@ -50,6 +50,9 @@ describe('reports api helpers', () => {
 
     expect(requestJson).toHaveBeenCalledWith(
       `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events?cv=${configCacheVersion}&process=false&cursor=45000`,
+      {
+        signal: undefined,
+      },
     )
   })
 

@@ -9,7 +9,6 @@ import { FightPage } from './fight-page'
 
 const useFightDataMock = vi.fn()
 const useFightEventsMock = vi.fn()
-const useSuspenseFightEventsMock = vi.fn()
 const useFightQueryStateMock = vi.fn()
 const useUserSettingsMock = vi.fn()
 const useReportRouteContextMock = vi.fn()
@@ -20,8 +19,6 @@ vi.mock('../hooks/use-fight-data', () => ({
 }))
 vi.mock('../hooks/use-fight-events', () => ({
   useFightEvents: (...args: unknown[]) => useFightEventsMock(...args),
-  useSuspenseFightEvents: (...args: unknown[]) =>
-    useSuspenseFightEventsMock(...args),
 }))
 vi.mock('../hooks/use-fight-query-state', () => ({
   useFightQueryState: () => useFightQueryStateMock(),
@@ -41,7 +38,6 @@ describe('FightPage inferThreatReduction startup behavior', () => {
   beforeEach(() => {
     useFightDataMock.mockReset()
     useFightEventsMock.mockReset()
-    useSuspenseFightEventsMock.mockReset()
     useFightQueryStateMock.mockReset()
     useUserSettingsMock.mockReset()
     useReportRouteContextMock.mockReset()
@@ -56,17 +52,7 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       data: undefined,
       error: null,
       isLoading: false,
-    })
-    useSuspenseFightEventsMock.mockReturnValue({
-      data: {
-        configVersion: 'test',
-        events: [],
-        fightId: 9,
-        fightName: 'Patchwerk',
-        gameVersion: 2,
-        initialAurasByActor: {},
-        reportCode: 'WaxMPvZrAHT9gJhc',
-      },
+      loadingMessage: 'Loading fight events',
     })
     useFightQueryStateMock.mockReturnValue({
       setFocusAndPlayers: vi.fn(),

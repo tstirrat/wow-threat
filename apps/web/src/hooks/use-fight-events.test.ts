@@ -15,6 +15,7 @@ import { useFightEvents, useSuspenseFightEvents } from './use-fight-events'
 vi.mock('@tanstack/react-query', () => ({
   useQuery: vi.fn(),
   useQueryClient: vi.fn(() => ({
+    cancelQueries: vi.fn(),
     ensureQueryData: vi.fn(),
   })),
   useSuspenseQuery: vi.fn(),
@@ -76,15 +77,13 @@ describe('useFightEvents', () => {
     renderHook(() => useFightEvents('ABC123xyz', 12, false, true))
     renderHook(() => useFightEvents('ABC123xyz', 12, true, true))
 
-    expect(fightEventsQueryKey).toHaveBeenNthCalledWith(
-      1,
+    expect(fightEventsQueryKey).toHaveBeenCalledWith(
       'ABC123xyz',
       12,
       false,
       'client',
     )
-    expect(fightEventsQueryKey).toHaveBeenNthCalledWith(
-      2,
+    expect(fightEventsQueryKey).toHaveBeenCalledWith(
       'ABC123xyz',
       12,
       true,
