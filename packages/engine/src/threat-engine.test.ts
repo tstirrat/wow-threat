@@ -711,6 +711,116 @@ describe('threat-engine', () => {
         })
       })
 
+      it('does not apply absorbed threat to dead enemies', () => {
+        const actorMap = new Map<number, Actor>([
+          [warriorActor.id, warriorActor],
+          [priestActor.id, priestActor],
+        ])
+        const deathEvent: WCLEvent = {
+          timestamp: 1500,
+          type: 'death',
+          sourceID: warriorActor.id,
+          sourceIsFriendly: true,
+          targetID: bossEnemy.id,
+          targetIsFriendly: false,
+        }
+
+        const events: WCLEvent[] = [
+          createAbsorbedEvent({
+            timestamp: 1000,
+            sourceID: priestActor.id,
+            targetID: warriorActor.id,
+            attackerID: bossEnemy.id,
+            amount: 200,
+          }),
+          deathEvent,
+          createAbsorbedEvent({
+            timestamp: 2000,
+            sourceID: priestActor.id,
+            targetID: warriorActor.id,
+            attackerID: bossEnemy.id,
+            amount: 300,
+          }),
+        ]
+
+        const result = processEvents({
+          rawEvents: events,
+          actorMap,
+          enemies: [bossEnemy],
+          config: mockConfig,
+        })
+
+        expect(result.augmentedEvents[0]?.threat?.changes).toEqual([
+          {
+            sourceId: priestActor.id,
+            targetId: bossEnemy.id,
+            targetInstance: bossEnemy.instance,
+            operator: 'add',
+            amount: 200,
+            total: 200,
+          },
+        ])
+        expect(result.augmentedEvents[2]?.threat?.calculation.baseThreat).toBe(
+          300,
+        )
+        expect(result.augmentedEvents[2]?.threat?.changes).toBeUndefined()
+      })
+
+      it('uses a living enemy instance for absorbed threat when IDs are shared', () => {
+        const actorMap = new Map<number, Actor>([
+          [warriorActor.id, warriorActor],
+          [priestActor.id, priestActor],
+        ])
+        const deadBoss: Enemy = {
+          id: bossEnemy.id,
+          name: bossEnemy.name,
+          instance: 0,
+        }
+        const aliveBoss: Enemy = {
+          id: bossEnemy.id,
+          name: bossEnemy.name,
+          instance: 1,
+        }
+        const deathEvent: WCLEvent = {
+          timestamp: 1000,
+          type: 'death',
+          sourceID: warriorActor.id,
+          sourceIsFriendly: true,
+          targetID: deadBoss.id,
+          targetInstance: deadBoss.instance,
+          targetIsFriendly: false,
+        }
+
+        const events: WCLEvent[] = [
+          deathEvent,
+          createAbsorbedEvent({
+            timestamp: 2000,
+            sourceID: priestActor.id,
+            targetID: warriorActor.id,
+            attackerID: bossEnemy.id,
+            amount: 400,
+          }),
+        ]
+
+        const result = processEvents({
+          rawEvents: events,
+          actorMap,
+          enemies: [deadBoss, aliveBoss],
+          config: mockConfig,
+        })
+
+        expect(result.augmentedEvents[1]?.threat?.changes).toEqual([
+          {
+            sourceId: priestActor.id,
+            targetId: aliveBoss.id,
+            targetInstance: aliveBoss.instance,
+            operator: 'add',
+            amount: 400,
+            total: 400,
+          },
+        ])
+      })
+
       it('wipes player threat on death using set operations to zero', () => {
         const actorMap = new Map<number, Actor>([
           [warriorActor.id, warriorActor],

@@ -656,8 +656,18 @@ function applyThreat(
       }
     }
   } else if (shouldApplyBaseThreat && calculation.modifiedThreat !== 0) {
-    const threatTarget = resolveThreatTarget(event, enemies)
+    const threatTarget = resolveThreatTarget(event, enemies, fightState)
     if (!threatTarget) {
+      return changes
+    }
+    if (
+      !canApplyThreatToTarget({
+        event,
+        fightState,
+        targetId: threatTarget.targetId,
+        targetInstance: threatTarget.targetInstance,
+      })
+    ) {
       return changes
     }
 
@@ -678,9 +688,15 @@ function applyThreat(
 function resolveThreatTarget(
   event: FriendlyResolvedEvent,
   enemies: Enemy[],
+  fightState: FightState,
 ): { targetId: number; targetInstance: number } | null {
   if (event.type === 'absorbed' && typeof event.attackerID === 'number') {
-    const matchedEnemy = enemies.find((enemy) => enemy.id === event.attackerID)
+    const matchedEnemies = enemies.filter(
+      (enemy) => enemy.id === event.attackerID,
+    )
+    const matchedEnemy = matchedEnemies.find((enemy) =>
+      fightState.isActorAlive({ id: enemy.id, instanceId: enemy.instance }),
+    )
     if (matchedEnemy) {
       return {
         targetId: matchedEnemy.id,
@@ -701,6 +717,31 @@ function resolveThreatTarget(
     targetId: matchedEnemy.id,
     targetInstance: matchedEnemy.instance,
   }
+}
+
+function canApplyThreatToTarget({
+  event,
+  fightState,
+  targetId,
+  targetInstance,
+}: {
+  event: FriendlyResolvedEvent
+  fightState: FightState
+  targetId: number
+  targetInstance: number
+}): boolean {
+  if (fightState.isActorAlive({ id: targetId, instanceId: targetInstance })) {
+    return true
+  }
+
+  // fightState marks lethal damage targets dead before threat application.
+  // Keep killing-blow threat attribution for that final event.
+  return (
+    event.type === 'damage' &&
+    event.overkill > 0 &&
+    event.targetID === targetId &&
+    (event.targetInstance ?? 0) === targetInstance
+  )
 }
 
 /** Apply additive threat change and return the effective delta after clamping */
