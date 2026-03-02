@@ -5,6 +5,7 @@
     "build": "turbo build",
     "dev": "turbo dev",
     "fmt": "turbo fmt",
+    "todo:validate": "node scripts/validate-todo-format.mjs",
     "test": "turbo test",
     "test:watch": "turbo test:watch",
     "lint": "turbo lint",
