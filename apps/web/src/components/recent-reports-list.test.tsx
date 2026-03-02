@@ -166,4 +166,33 @@ describe('RecentReportsList', () => {
     ).toBeNull()
     expect(screen.getByText('archived')).toBeVisible()
   })
+
+  it('renders example logs inside the empty-state card', () => {
+    const onRemoveReport = vi.fn()
+
+    render(
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <RecentReportsList
+          exampleReports={[
+            {
+              label: 'Fresh Example',
+              reportId: 'f9yPamzBxQqhGndZ',
+              host: 'fresh.warcraftlogs.com',
+              href: '/report/f9yPamzBxQqhGndZ',
+            },
+          ]}
+          onRemoveReport={onRemoveReport}
+          reports={[]}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('No recent reports yet (fresh)')).toBeVisible()
+    expect(screen.getByText('Example logs')).toBeVisible()
+    expect(
+      screen.getByRole('link', { name: 'Fresh Example', exact: true }),
+    ).toBeVisible()
+  })
 })

@@ -6,7 +6,12 @@ import { Link } from 'react-router-dom'
 
 import { formatReportHeaderDate } from '../lib/format'
 import { cn } from '../lib/utils'
-import type { RecentReportEntry, StarredReportEntry } from '../types/app'
+import type {
+  ExampleReportLink,
+  RecentReportEntry,
+  StarredReportEntry,
+} from '../types/app'
+import { ExampleReportList } from './example-report-list'
 import { ReportStarButton } from './report-star-button'
 import { Badge } from './ui/badge'
 import { Card, CardContent } from './ui/card'
@@ -14,6 +19,7 @@ import { Card, CardContent } from './ui/card'
 export type RecentReportsListProps = {
   reports: RecentReportEntry[]
   onRemoveReport: (reportId: string) => void
+  exampleReports?: ExampleReportLink[]
   starredReportIds?: Set<string>
   onToggleStarReport?: (
     report: Omit<StarredReportEntry, 'starredAt'> & { starredAt?: number },
@@ -60,19 +66,28 @@ function resolveSourceLabel(report: RecentReportEntry): string {
 export const RecentReportsList: FC<RecentReportsListProps> = ({
   reports,
   onRemoveReport,
+  exampleReports,
   starredReportIds,
   onToggleStarReport,
 }) => {
   if (reports.length === 0) {
     return (
       <Card className="bg-panel" size="sm">
-        <CardContent className="space-y-1">
+        <CardContent className="space-y-4">
           <p className="font-medium text-muted-foreground">
             No recent reports yet (fresh)
           </p>
           <p className="text-xs text-muted-foreground">
             Load a report to populate zone - date and time - boss count.
           </p>
+          {exampleReports && exampleReports.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Example logs
+              </p>
+              <ExampleReportList examples={exampleReports} />
+            </div>
+          ) : null}
         </CardContent>
       </Card>
     )

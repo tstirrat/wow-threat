@@ -37,7 +37,7 @@ export class RecentReportsObject {
   }
 
   exampleReportsSection(): Locator {
-    return this.page.getByRole('region', { name: 'Example reports' })
+    return this.recentReportsSection()
   }
 
   exampleReportsList(): Locator {

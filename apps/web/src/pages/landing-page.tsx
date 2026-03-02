@@ -6,7 +6,6 @@ import { ArrowUp, X } from 'lucide-react'
 import { type FC, useMemo, useState } from 'react'
 
 import { AccountRecentReportsList } from '../components/account-recent-reports-list'
-import { ExampleReportList } from '../components/example-report-list'
 import { RecentReportsList } from '../components/recent-reports-list'
 import { SectionCard } from '../components/section-card'
 import { StarredGuildReportsList } from '../components/starred-guild-reports-list'
@@ -129,6 +128,7 @@ export const LandingPage: FC = () => {
                 Recent
               </h3>
               <RecentReportsList
+                exampleReports={exampleReports}
                 onRemoveReport={(reportId) => {
                   removeRecentReport(reportId)
                 }}
@@ -218,15 +218,6 @@ export const LandingPage: FC = () => {
           )}
         </SectionCard>
       </div>
-
-      {recentReports.length === 0 ? (
-        <SectionCard
-          title="Example reports"
-          subtitle="Starter links for Fresh, Season of Discovery, and Vanilla Era."
-        >
-          <ExampleReportList examples={exampleReports} />
-        </SectionCard>
-      ) : null}
     </div>
   )
 }
