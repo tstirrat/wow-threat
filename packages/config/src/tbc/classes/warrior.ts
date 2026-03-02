@@ -232,9 +232,9 @@ export const warriorConfig: ClassThreatConfig = {
     [Spells.RevengeR8]: threatOnSuccessfulHit({ bonus: 200 }),
     [Spells.RevengeStun]: threatOnSuccessfulHit({ bonus: 20 }),
 
-    [Spells.DevastateR1]: threatOnSuccessfulHit({ bonus: 401.5 }),
-    [Spells.DevastateR2]: threatOnSuccessfulHit({ bonus: 401.5 }),
-    [Spells.DevastateR3]: threatOnSuccessfulHit({ bonus: 401.5 }),
+    [Spells.DevastateR1]: threatOnSuccessfulHit({ bonus: 301.5 }),
+    [Spells.DevastateR2]: threatOnSuccessfulHit({ bonus: 301.5 }),
+    [Spells.DevastateR3]: threatOnSuccessfulHit({ bonus: 301.5 }),
 
     [Spells.ThunderClapR1]: threat({ modifier: 1.75 }),
     [Spells.ThunderClapR2]: threat({ modifier: 1.75 }),
