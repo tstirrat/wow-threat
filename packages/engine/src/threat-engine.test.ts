@@ -3011,6 +3011,33 @@ describe('threat-engine', () => {
       expect(result.augmentedEvents[0]?.threat!.changes).toBeUndefined()
     })
 
+    it('does not apply base split threat for hostile self-heal events', () => {
+      const actorMap = new Map<number, Actor>([
+        [warriorActor.id, warriorActor],
+        [bossEnemy.id, { id: bossEnemy.id, name: 'Boss', class: null }],
+        [addEnemy.id, { id: addEnemy.id, name: 'Add', class: null }],
+      ])
+      const friendlyActorIds = new Set([warriorActor.id])
+      const bossSelfHealEvent = createHealEvent({
+        sourceID: bossEnemy.id,
+        targetID: bossEnemy.id,
+        amount: 1000,
+      })
+      const events: WCLEvent[] = [bossSelfHealEvent]
+
+      const result = processEvents({
+        rawEvents: events,
+        actorMap,
+        friendlyActorIds,
+        enemies,
+        config: mockConfig,
+      })
+
+      expect(result.augmentedEvents).toHaveLength(1)
+      expect(result.augmentedEvents[0]?.threat).toBeDefined()
+      expect(result.augmentedEvents[0]?.threat!.changes).toBeUndefined()
+    })
+
     it('includes threat payload for resourcechange events', () => {
       const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
       const events: WCLEvent[] = [

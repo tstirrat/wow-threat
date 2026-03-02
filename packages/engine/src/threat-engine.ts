@@ -595,6 +595,10 @@ function applyThreat(
 ): ThreatChange[] {
   const changes: ThreatChange[] = []
   const threatRecipient = threatRecipientOverride ?? event.sourceID
+  // Base threat should only come from friendly sources unless a processor
+  // explicitly overrides the recipient.
+  const shouldApplyBaseThreat =
+    event.sourceIsFriendly || threatRecipientOverride !== undefined
 
   // Handle player death - wipe all threat for the dead player
   if (event.type === 'death' && event.targetIsFriendly) {
@@ -626,7 +630,11 @@ function applyThreat(
   }
 
   // split threat among alive enemies only
-  if (calculation.isSplit && calculation.modifiedThreat !== 0) {
+  if (
+    shouldApplyBaseThreat &&
+    calculation.isSplit &&
+    calculation.modifiedThreat !== 0
+  ) {
     // Filter to alive enemies only
     const aliveEnemies = enemies.filter((e) =>
       fightState.isActorAlive({ id: e.id, instanceId: e.instance }),
@@ -647,7 +655,7 @@ function applyThreat(
         }
       }
     }
-  } else if (calculation.modifiedThreat !== 0) {
+  } else if (shouldApplyBaseThreat && calculation.modifiedThreat !== 0) {
     const threatTarget = resolveThreatTarget(event, enemies)
     if (!threatTarget) {
       return changes

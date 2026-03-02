@@ -227,7 +227,6 @@ export function tauntTarget(options: TauntOptions = {}): FormulaFn {
       return undefined
     }
 
-    const bonusThreat = ctx.amount * modifier + bonus
     const sourceId = ctx.sourceActor.id
     const targetId = ctx.targetActor.id
     const targetInstance = ctx.event.targetInstance ?? 0
@@ -235,25 +234,19 @@ export function tauntTarget(options: TauntOptions = {}): FormulaFn {
       id: targetId,
       instanceId: targetInstance,
     })
-    const topThreat =
-      ctx.actors.getTopActorsByThreat(
-        {
-          id: targetId,
-          instanceId: targetInstance,
-        },
-        1,
-      )[0]?.threat ?? 0
-    const nextThreat = Math.max(currentThreat, topThreat + bonusThreat)
-    const spellModifier = createSpellModifier({
-      modifier,
-      bonus,
-    })
+    const topThreatTarget = ctx.actors.getTopActorsByThreat(
+      { id: targetId, instanceId: targetInstance },
+      1,
+    )[0]
+    const topThreat = topThreatTarget?.threat ?? 0
+    const nextThreat = Math.max(currentThreat, topThreat + bonus)
+    const spellModifier = createSpellModifier({ modifier, bonus })
 
     return {
       value: 0,
       splitAmongEnemies: false,
       ...(spellModifier ? { spellModifier } : {}),
-      note: 'taunt(topThreat+bonusThreat)',
+      note: `taunt(topThreat(${topThreatTarget?.actorId})${bonus ? `+${bonus}` : ''}${modifier ? `*${modifier}` : ''})`,
       effects: [
         {
           type: 'customThreat',
@@ -264,7 +257,6 @@ export function tauntTarget(options: TauntOptions = {}): FormulaFn {
               targetInstance,
               operator: 'set',
               amount: nextThreat,
-              total: nextThreat,
             },
           ],
         },

@@ -166,7 +166,7 @@ describe('formulas', () => {
       )
 
       expect(result.value).toBe(0)
-      expect(result.note).toBe('taunt(topThreat+bonusThreat)')
+      expect(result.note).toBe('taunt(topThreat(99)+100*1)')
       expect(result.spellModifier).toEqual({
         type: 'spell',
         bonus: 100,
@@ -179,8 +179,7 @@ describe('formulas', () => {
             targetId: 2,
             targetInstance: 0,
             operator: 'set',
-            amount: 900,
-            total: 900,
+            amount: 500 + 100,
           },
         ],
       })
