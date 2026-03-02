@@ -36,7 +36,7 @@ export function useUserRecentReports(
   limit = defaultRecentReportsLimit,
   options: UseUserRecentReportsOptions = {},
 ): UseUserRecentReportsResult {
-  const { authEnabled, user } = useAuth()
+  const { authEnabled, user, wclUserId } = useAuth()
   const uid = user?.uid ?? null
   const cached = uid ? loadAccountRecentReportsCache(uid) : null
   const isEnabled = options.enabled ?? true
@@ -47,7 +47,7 @@ export function useUserRecentReports(
       const response = await getRecentReports(limit)
       return response.reports
     },
-    enabled: isEnabled && authEnabled && Boolean(uid),
+    enabled: isEnabled && authEnabled && Boolean(uid) && Boolean(wclUserId),
     staleTime: options.staleTimeMs ?? accountRecentReportsCacheTtlMs,
     initialData: cached?.reports,
     initialDataUpdatedAt: cached?.fetchedAtMs,

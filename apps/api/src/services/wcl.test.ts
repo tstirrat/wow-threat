@@ -1461,7 +1461,24 @@ describe('WCLClient.getGuildReports', () => {
           )
         }
 
-        if (url.includes('warcraftlogs.com/api/v2/user')) {
+        if (
+          url.includes('warcraftlogs.com/oauth/token') &&
+          init?.body?.toString().includes('client_credentials')
+        ) {
+          return new Response(
+            JSON.stringify({
+              access_token: 'client-token',
+              expires_in: 3600,
+              token_type: 'Bearer',
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          )
+        }
+
+        if (
+          url.includes('warcraftlogs.com/api/v2/client') ||
+          url.includes('warcraftlogs.com/api/v2/user')
+        ) {
           const body = init?.body ? JSON.parse(init.body.toString()) : {}
           const query = body.query as string
           const variables = body.variables as Record<string, unknown>

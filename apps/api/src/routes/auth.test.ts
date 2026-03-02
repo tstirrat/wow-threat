@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMockBindings } from '../../test/setup'
 import app from '../index'
 import { AuthStore } from '../services/auth-store'
+import { FirestoreClient } from '../services/firestore-client'
 
 interface FirestoreDocument {
   fields: Record<string, unknown>
@@ -16,6 +17,33 @@ const firestorePrefix =
   'https://firestore.googleapis.com/v1/projects/wow-threat/databases/(default)/documents/'
 const firestoreRunQueryPath =
   'https://firestore.googleapis.com/v1/projects/wow-threat/databases/(default)/documents:runQuery'
+
+async function issueBridgeCode(bindings: ReturnType<typeof createMockBindings>) {
+  const loginRes = await app.request(
+    'http://localhost/auth/wcl/login?origin=http://localhost:5173',
+    {},
+    bindings,
+  )
+  const loginLocation = new URL(loginRes.headers.get('Location')!)
+  const state = loginLocation.searchParams.get('state')
+  expect(state).toBeTruthy()
+
+  const callbackRes = await app.request(
+    `http://localhost/auth/wcl/callback?code=oauth-code-123&state=${encodeURIComponent(state!)}`,
+    {},
+    bindings,
+  )
+  expect(callbackRes.status).toBe(302)
+
+  const callbackLocation = new URL(callbackRes.headers.get('Location')!)
+  const callbackHash = callbackLocation.hash.startsWith('#')
+    ? callbackLocation.hash.slice(1)
+    : callbackLocation.hash
+  const bridgeCode = new URLSearchParams(callbackHash).get('bridge')
+  expect(bridgeCode).toBeTruthy()
+
+  return bridgeCode!
+}
 
 function createAuthFetchMock() {
   const documents = new Map<string, FirestoreDocument>()
@@ -428,6 +456,115 @@ describe('Auth Routes', () => {
       bindings,
     )
     expect(reuseRes.status).toBe(401)
+  })
+
+  it('returns canonical wcl uid when exchanging bridge code from anonymous session', async () => {
+    const bindings = createMockBindings()
+    const authStore = new AuthStore(bindings)
+    const bridgeCode = await issueBridgeCode(bindings)
+
+    const exchangeRes = await app.request(
+      'http://localhost/auth/firebase-custom-token',
+      {
+        body: JSON.stringify({
+          bridgeCode,
+        }),
+        headers: {
+          Authorization: 'Bearer test-firebase-id-token:anon-user:anonymous',
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      },
+      bindings,
+    )
+    expect(exchangeRes.status).toBe(200)
+
+    const exchangeBody = (await exchangeRes.json()) as {
+      customToken: string
+      uid: string
+    }
+    expect(exchangeBody.customToken).toBe('test-custom-token:wcl:12345')
+    expect(exchangeBody.uid).toBe('wcl:12345')
+
+    const canonicalTokens = await authStore.getWclTokens('wcl:12345')
+    expect(canonicalTokens).toMatchObject({
+      uid: 'wcl:12345',
+      wclUserId: '12345',
+      wclUserName: 'TestWclUser',
+    })
+  })
+
+  it('migrates anonymous settings to canonical uid when canonical settings do not exist', async () => {
+    const bindings = createMockBindings()
+    const firestore = new FirestoreClient(bindings)
+    await firestore.patchDocument('settings', 'anon-user', {
+      showBossMelee: { booleanValue: true },
+    })
+
+    const bridgeCode = await issueBridgeCode(bindings)
+
+    const exchangeRes = await app.request(
+      'http://localhost/auth/firebase-custom-token',
+      {
+        body: JSON.stringify({
+          bridgeCode,
+        }),
+        headers: {
+          Authorization: 'Bearer test-firebase-id-token:anon-user:anonymous',
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      },
+      bindings,
+    )
+    expect(exchangeRes.status).toBe(200)
+
+    const canonicalSettings = await firestore.getDocument('settings', 'wcl:12345')
+    expect(canonicalSettings?.fields?.showBossMelee).toEqual({
+      booleanValue: true,
+    })
+
+    const sourceSettings = await firestore.getDocument('settings', 'anon-user')
+    expect(sourceSettings).toBeNull()
+  })
+
+  it('does not overwrite canonical settings when exchanging from anonymous session', async () => {
+    const bindings = createMockBindings()
+    const firestore = new FirestoreClient(bindings)
+    await firestore.patchDocument('settings', 'anon-user', {
+      showBossMelee: { booleanValue: true },
+    })
+    await firestore.patchDocument('settings', 'wcl:12345', {
+      showBossMelee: { booleanValue: false },
+    })
+
+    const bridgeCode = await issueBridgeCode(bindings)
+
+    const exchangeRes = await app.request(
+      'http://localhost/auth/firebase-custom-token',
+      {
+        body: JSON.stringify({
+          bridgeCode,
+        }),
+        headers: {
+          Authorization: 'Bearer test-firebase-id-token:anon-user:anonymous',
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      },
+      bindings,
+    )
+    expect(exchangeRes.status).toBe(200)
+
+    const canonicalSettings = await firestore.getDocument('settings', 'wcl:12345')
+    expect(canonicalSettings?.fields?.showBossMelee).toEqual({
+      booleanValue: false,
+    })
+
+    const sourceSettings = await firestore.getDocument('settings', 'anon-user')
+    expect(sourceSettings?.fields?.showBossMelee).toEqual({
+      booleanValue: true,
+    })
   })
 
   it('deletes stored WCL tokens during logout', async () => {

@@ -1281,7 +1281,7 @@ export class WCLClient {
   }
 
   private async getGuildByIdentifier(
-    accessToken: string,
+    accessToken: string | undefined,
     options: {
       guildId?: number
       guildName?: string
@@ -1346,7 +1346,7 @@ export class WCLClient {
   }
 
   private async getRecentReportsByOwner(
-    accessToken: string,
+    accessToken: string | undefined,
     options:
       | {
           userId: number
@@ -1435,19 +1435,42 @@ export class WCLClient {
       )
     }
 
-    const accessToken = await this.getUserAccessToken()
     const normalizedGuildId =
       hasGuildId && options.guildId !== undefined
         ? Math.trunc(options.guildId)
         : undefined
-    const guild = await this.getGuildByIdentifier(accessToken, {
+    const guildLookup = {
       guildId: normalizedGuildId,
       guildName: hasGuildLookupByName ? options.guildName?.trim() : undefined,
       serverSlug: hasGuildLookupByName ? options.serverSlug?.trim() : undefined,
       serverRegion: hasGuildLookupByName
         ? options.serverRegion?.trim()
         : undefined,
-    })
+    }
+
+    try {
+      const guild = await this.getGuildByIdentifier(undefined, guildLookup)
+      const reports = await this.getRecentReportsByOwner(
+        undefined,
+        {
+          source: 'guild',
+          guildId: guild.id,
+        },
+        boundedLimit,
+      )
+
+      return {
+        guild,
+        reports,
+      }
+    } catch (error) {
+      if (!shouldFallbackToUserToken(error)) {
+        throw error
+      }
+    }
+
+    const accessToken = await this.getUserAccessToken()
+    const guild = await this.getGuildByIdentifier(accessToken, guildLookup)
     const reports = await this.getRecentReportsByOwner(
       accessToken,
       {

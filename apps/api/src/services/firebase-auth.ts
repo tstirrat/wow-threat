@@ -77,7 +77,7 @@ export async function verifyFirebaseIdToken(
   env: Bindings,
 ): Promise<VerifiedFirebaseIdToken> {
   if (env.ENVIRONMENT === 'test') {
-    const [prefix, testUid, tokenState] = idToken.split(':')
+    const [prefix, testUid, tokenState, tokenProvider] = idToken.split(':')
     if (prefix !== 'test-firebase-id-token') {
       throw unauthorized('Invalid Firebase ID token')
     }
@@ -86,11 +86,22 @@ export async function verifyFirebaseIdToken(
     }
 
     const uid = testUid || 'wcl-test-user'
+    const signInProvider =
+      tokenProvider === 'anonymous' || tokenState === 'anonymous'
+        ? 'anonymous'
+        : undefined
 
     return {
       uid,
       claims: {
         aud: env.FIREBASE_PROJECT_ID,
+        ...(signInProvider
+          ? {
+              firebase: {
+                sign_in_provider: signInProvider,
+              },
+            }
+          : {}),
         iss: `https://securetoken.google.com/${env.FIREBASE_PROJECT_ID}`,
         sub: uid,
       },

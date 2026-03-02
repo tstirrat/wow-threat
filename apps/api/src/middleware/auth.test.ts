@@ -19,6 +19,7 @@ authTestApp.use('/secure/*', authMiddleware)
 authTestApp.get('/secure/resource', (c) =>
   c.json({
     uid: c.get('uid') ?? null,
+    wclUserId: c.get('wclUserId') ?? null,
   }),
 )
 
@@ -76,7 +77,21 @@ describe('authMiddleware', () => {
     )
 
     expect(res.status).toBe(200)
-    const data = (await res.json()) as { uid: string }
+    const data = (await res.json()) as { uid: string; wclUserId: string | null }
     expect(data.uid).toBe('test-user')
+    expect(data.wclUserId).toBeNull()
+  })
+
+  it('seeds uid and wcl identity in test environment without auth header', async () => {
+    const res = await authTestApp.request(
+      'http://localhost/secure/resource',
+      {},
+      createMockBindings(),
+    )
+
+    expect(res.status).toBe(200)
+    const data = (await res.json()) as { uid: string; wclUserId: string }
+    expect(data.uid).toBe('wcl-test-user')
+    expect(data.wclUserId).toBe('12345')
   })
 })

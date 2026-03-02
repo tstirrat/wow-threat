@@ -5,6 +5,7 @@ import type { IdTokenResult, User } from 'firebase/auth'
 import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
+  signInAnonymously,
   signInWithCustomToken,
 } from 'firebase/auth'
 import {
@@ -273,6 +274,7 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
   const authEnabled = isFirebaseAuthEnabled
   const auth = getFirebaseAuth()
   const loginInFlightRef = useRef(false)
+  const anonymousSignInInFlightRef = useRef(false)
   const [user, setUser] = useState<User | null>(null)
   const [wclUserId, setWclUserId] = useState<string | null>(null)
   const [wclUserName, setWclUserName] = useState<string | null>(null)
@@ -301,6 +303,28 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
       setAuthError(null)
     }
   }, [user])
+
+  useEffect(() => {
+    if (!authEnabled || !auth || isInitializing || user) {
+      return
+    }
+    if (anonymousSignInInFlightRef.current) {
+      return
+    }
+
+    anonymousSignInInFlightRef.current = true
+    void signInAnonymously(auth)
+      .catch((error: unknown) => {
+        const nextMessage =
+          error instanceof Error
+            ? error.message
+            : 'Unable to initialize anonymous session.'
+        setAuthError(nextMessage)
+      })
+      .finally(() => {
+        anonymousSignInInFlightRef.current = false
+      })
+  }, [auth, authEnabled, isInitializing, user])
 
   useEffect(() => {
     if (!user) {
@@ -342,6 +366,14 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
     if (!authEnabled || !auth) {
       throw new Error('Firebase auth is not configured')
     }
+    const idToken = auth.currentUser
+      ? await auth.currentUser.getIdToken()
+      : null
+    const headers = new Headers()
+    headers.set('Content-Type', 'application/json')
+    if (idToken) {
+      headers.set('Authorization', `Bearer ${idToken}`)
+    }
 
     const response = await fetch(
       `${defaultApiBaseUrl}/auth/firebase-custom-token`,
@@ -349,9 +381,7 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
         body: JSON.stringify({
           bridgeCode,
         }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         method: 'POST',
       },
     )

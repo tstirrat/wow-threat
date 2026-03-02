@@ -35,14 +35,15 @@ export interface UseEntityReportsResult {
 export function useEntityReports(
   options: UseEntityReportsOptions,
 ): UseEntityReportsResult {
-  const { authEnabled, user } = useAuth()
+  const { user } = useAuth()
   const uid = user?.uid ?? null
+  const cacheUid = uid ?? 'public'
   const limit = options.limit ?? 10
   const entityCacheKey = buildEntityReportsCacheKey({
     ...options,
     limit,
   })
-  const cached = uid ? loadEntityReportsCache(uid, entityCacheKey) : null
+  const cached = loadEntityReportsCache(cacheUid, entityCacheKey)
 
   const query = useQuery({
     queryKey: entityReportsQueryKey(
@@ -57,7 +58,7 @@ export function useEntityReports(
         ...options,
         limit,
       }),
-    enabled: authEnabled && Boolean(uid),
+    enabled: true,
     staleTime: starredGuildReportsCacheTtlMs,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -66,12 +67,17 @@ export function useEntityReports(
   })
 
   useEffect(() => {
-    if (!uid || !query.data || query.dataUpdatedAt <= 0) {
+    if (!query.data || query.dataUpdatedAt <= 0) {
       return
     }
 
-    saveEntityReportsCache(uid, entityCacheKey, query.data, query.dataUpdatedAt)
-  }, [uid, entityCacheKey, query.data, query.dataUpdatedAt])
+    saveEntityReportsCache(
+      cacheUid,
+      entityCacheKey,
+      query.data,
+      query.dataUpdatedAt,
+    )
+  }, [cacheUid, entityCacheKey, query.data, query.dataUpdatedAt])
 
   return {
     response: query.data ?? null,

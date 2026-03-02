@@ -411,7 +411,10 @@ describe('Reports API', () => {
             )
           }
 
-          if (url.includes('warcraftlogs.com/api/v2/user')) {
+          if (
+            url.includes('warcraftlogs.com/api/v2/client') ||
+            url.includes('warcraftlogs.com/api/v2/user')
+          ) {
             const body = init?.body ? JSON.parse(String(init.body)) : {}
             const query = body.query as string
             const variables = (body.variables ?? {}) as Record<string, unknown>
@@ -532,6 +535,20 @@ describe('Reports API', () => {
         },
       ])
     })
+
+    it('rejects requests without a linked Warcraft Logs account claim', async () => {
+      const res = await app.request(
+        'http://localhost/v1/reports/recent?limit=10',
+        {
+          headers: {
+            Authorization: 'Bearer test-firebase-id-token:anon-user',
+          },
+        },
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(401)
+    })
   })
 
   describe('GET /v1/reports/entities/:entityType/reports', () => {
@@ -567,7 +584,27 @@ describe('Reports API', () => {
             )
           }
 
-          if (url.includes('warcraftlogs.com/api/v2/user')) {
+          if (
+            url.includes('warcraftlogs.com/oauth/token') &&
+            init?.body?.toString().includes('client_credentials')
+          ) {
+            return new Response(
+              JSON.stringify({
+                access_token: 'client-token',
+                expires_in: 3600,
+                token_type: 'Bearer',
+              }),
+              {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            )
+          }
+
+          if (
+            url.includes('warcraftlogs.com/api/v2/client') ||
+            url.includes('warcraftlogs.com/api/v2/user')
+          ) {
             const body = init?.body ? JSON.parse(String(init.body)) : {}
             const query = body.query as string
             const variables = (body.variables ?? {}) as Record<string, unknown>
@@ -678,6 +715,107 @@ describe('Reports API', () => {
           guildFaction: 'Alliance',
         },
       ])
+    })
+
+    it('allows anonymous firebase auth for guild report discovery via client scope', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          const url = typeof input === 'string' ? input : input.toString()
+
+          if (
+            url.includes('warcraftlogs.com/oauth/token') &&
+            init?.body?.toString().includes('client_credentials')
+          ) {
+            return new Response(
+              JSON.stringify({
+                access_token: 'client-token',
+                expires_in: 3600,
+                token_type: 'Bearer',
+              }),
+              {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            )
+          }
+
+          if (url.includes('warcraftlogs.com/api/v2/client')) {
+            const body = init?.body ? JSON.parse(String(init.body)) : {}
+            const query = body.query as string
+            const variables = (body.variables ?? {}) as Record<string, unknown>
+
+            if (query.includes('GuildLookup')) {
+              expect(variables.id).toBe(777)
+              return new Response(
+                JSON.stringify({
+                  data: {
+                    guildData: {
+                      guild: {
+                        id: 777,
+                        name: 'Threat Guild',
+                        faction: { name: 'Alliance' },
+                        server: {
+                          slug: 'benediction',
+                          region: { slug: 'US' },
+                        },
+                      },
+                    },
+                  },
+                }),
+                {
+                  status: 200,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              )
+            }
+
+            if (query.includes('RecentReports') && variables.guildID === 777) {
+              return new Response(
+                JSON.stringify({
+                  data: {
+                    reportData: {
+                      reports: {
+                        data: [
+                          {
+                            code: 'GUILD-LATEST',
+                            title: 'Guild latest',
+                            startTime: 1900,
+                            endTime: 1999,
+                            zone: { name: "Ahn'Qiraj" },
+                            guild: {
+                              name: 'Threat Guild',
+                              faction: { name: 'Alliance' },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  },
+                }),
+                {
+                  status: 200,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              )
+            }
+          }
+
+          return new Response(null, { status: 404 })
+        }),
+      )
+
+      const res = await app.request(
+        'http://localhost/v1/reports/entities/guild/reports?guildId=777&limit=10',
+        {
+          headers: {
+            Authorization: 'Bearer test-firebase-id-token:anon-user',
+          },
+        },
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(200)
     })
 
     it('returns 400 for unsupported entity types', async () => {

@@ -19,9 +19,9 @@ export interface UseWclRateLimitResult {
 
 /** Fetch WCL rate-limit usage for the current signed-in account context. */
 export function useWclRateLimit(): UseWclRateLimitResult {
-  const { authEnabled, user } = useAuth()
+  const { authEnabled, user, wclUserId } = useAuth()
   const uid = user?.uid ?? null
-  const canQuery = authEnabled && Boolean(uid)
+  const canQuery = authEnabled && Boolean(uid) && Boolean(wclUserId)
 
   const query = useQuery({
     queryKey: wclRateLimitQueryKey(uid),

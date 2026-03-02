@@ -127,6 +127,10 @@ reportRoutes.get('/recent', async (c) => {
   if (!uid) {
     throw unauthorized('Missing authenticated uid context')
   }
+  const wclUserId = c.get('wclUserId')
+  if (!wclUserId) {
+    throw unauthorized('Sign in with Warcraft Logs for personal reports')
+  }
 
   const requestedLimit = c.req.query('limit')
   const parsedLimit = requestedLimit ? Number.parseInt(requestedLimit, 10) : NaN

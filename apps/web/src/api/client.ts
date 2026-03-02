@@ -1,7 +1,7 @@
 /**
  * Minimal fetch client for API requests.
  */
-import { signOut as firebaseSignOut } from 'firebase/auth'
+import { type Auth, signInAnonymously } from 'firebase/auth'
 
 import { getFirebaseAuth } from '../lib/firebase'
 
@@ -14,13 +14,32 @@ export class ApiClientError extends Error {
   }
 }
 
+let inFlightAnonymousSignIn: Promise<string | null> | null = null
+
+async function getFirebaseIdToken(auth: Auth): Promise<string | null> {
+  if (auth.currentUser) {
+    return auth.currentUser.getIdToken()
+  }
+
+  if (!inFlightAnonymousSignIn) {
+    inFlightAnonymousSignIn = signInAnonymously(auth)
+      .then((credential) => credential.user.getIdToken())
+      .catch(() => null)
+      .finally(() => {
+        inFlightAnonymousSignIn = null
+      })
+  }
+
+  return inFlightAnonymousSignIn
+}
+
 /** Execute a JSON request and return parsed data. */
 export async function requestJson<T>(
   url: string,
   init: RequestInit = {},
 ): Promise<T> {
   const auth = getFirebaseAuth()
-  const idToken = auth?.currentUser ? await auth.currentUser.getIdToken() : null
+  const idToken = auth ? await getFirebaseIdToken(auth) : null
   const headers = new Headers(init.headers)
   headers.set('Accept', 'application/json')
   if (idToken) {
@@ -33,10 +52,6 @@ export async function requestJson<T>(
   })
 
   if (!response.ok) {
-    if (response.status === 401 && auth?.currentUser) {
-      await firebaseSignOut(auth)
-    }
-
     const body = await response.text()
     let message = body || `Request failed with status ${response.status}`
 

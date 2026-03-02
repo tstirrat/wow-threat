@@ -93,7 +93,7 @@ const ReportIndexContext = createContext<UseReportIndexResult | null>(null)
 
 /** Provides shared report-index state and search helpers to the app tree. */
 export const ReportIndexProvider: FC<PropsWithChildren> = ({ children }) => {
-  const { authEnabled, user } = useAuth()
+  const { authEnabled, isBusy, user, wclUserId } = useAuth()
   const { settings } = useUserSettings()
   const uid = user?.uid ?? null
 
@@ -116,14 +116,16 @@ export const ReportIndexProvider: FC<PropsWithChildren> = ({ children }) => {
     [persistedSnapshot?.recentReports, recentReportsState, uid],
   )
 
-  const shouldFetchRemote = authEnabled && Boolean(uid)
+  const shouldFetchPersonalReports =
+    !isBusy && authEnabled && Boolean(uid) && Boolean(wclUserId)
+  const shouldFetchGuildReports = !isBusy
 
   const personalReportsQuery = useUserRecentReports(20, {
-    enabled: shouldFetchRemote,
+    enabled: shouldFetchPersonalReports,
     staleTimeMs: reportSearchIndexRefreshIntervalMs,
   })
   const guildReportsQuery = useStarredGuildReports(20, {
-    enabled: shouldFetchRemote,
+    enabled: shouldFetchGuildReports,
     staleTimeMs: reportSearchIndexRefreshIntervalMs,
   })
 

@@ -22,7 +22,7 @@ import { superKey } from '../lib/keyboard-shortcut'
 const reportHintDismissedStorageKey = 'landing-report-hint-dismissed'
 
 export const LandingPage: FC = () => {
-  const { authEnabled, user } = useAuth()
+  const { authEnabled, wclUserId } = useAuth()
   const {
     recentReports,
     removeRecentReport,
@@ -44,7 +44,7 @@ export const LandingPage: FC = () => {
         .length,
     [settings.starredEntities],
   )
-  const shouldShowAccountReports = authEnabled && Boolean(user)
+  const isPersonalLogsEnabled = authEnabled && Boolean(wclUserId)
   const starredReportIds = useMemo(
     () => new Set(settings.starredReports.map((report) => report.reportId)),
     [settings.starredReports],
@@ -172,9 +172,9 @@ export const LandingPage: FC = () => {
             <StarredGuildReportsList reports={starredGuildReports} />
           )}
         </SectionCard>
-        {shouldShowAccountReports ? (
-          <SectionCard
-            headerRight={
+        <SectionCard
+          headerRight={
+            isPersonalLogsEnabled ? (
               <Button
                 disabled={isRefreshingAccountReports}
                 size="sm"
@@ -186,11 +186,13 @@ export const LandingPage: FC = () => {
               >
                 {isRefreshingAccountReports ? 'Refreshing...' : 'Refresh'}
               </Button>
-            }
-            title="Personal logs"
-            subtitle="Latest logs for your signed-in account."
-          >
-            {isLoadingAccountReports ? (
+            ) : undefined
+          }
+          title="Personal logs"
+          subtitle="Latest logs for your signed-in account."
+        >
+          {isPersonalLogsEnabled ? (
+            isLoadingAccountReports ? (
               <p aria-live="polite" className="text-sm text-muted-foreground">
                 Loading recent Warcraft Logs...
               </p>
@@ -202,9 +204,19 @@ export const LandingPage: FC = () => {
               </Alert>
             ) : (
               <AccountRecentReportsList reports={accountRecentReports} />
-            )}
-          </SectionCard>
-        ) : null}
+            )
+          ) : (
+            <div className="space-y-3">
+              <p className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                <ArrowUp
+                  aria-hidden="true"
+                  className="size-4 text-primary motion-safe:animate-bounce"
+                />
+                Sign in for personal logs.
+              </p>
+            </div>
+          )}
+        </SectionCard>
       </div>
 
       {recentReports.length === 0 ? (

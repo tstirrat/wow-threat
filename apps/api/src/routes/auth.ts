@@ -8,8 +8,10 @@ import { unauthorized } from '../middleware/error'
 import { AuthStore } from '../services/auth-store'
 import {
   createFirebaseCustomToken,
+  type VerifiedFirebaseIdToken,
   verifyFirebaseIdToken,
 } from '../services/firebase-auth'
+import { FirestoreClient } from '../services/firestore-client'
 import { isOriginAllowed, parseAllowedOrigins } from '../services/origins'
 import { createRandomBase64Url } from '../services/token-utils'
 import { WCLClient } from '../services/wcl'
@@ -23,6 +25,7 @@ import type { Bindings, Variables } from '../types/bindings'
 
 const OAUTH_STATE_TTL_SECONDS = 600
 const BRIDGE_CODE_TTL_SECONDS = 300
+const USER_SETTINGS_COLLECTION = 'settings'
 
 interface OAuthStatePayload {
   nonce: string
@@ -114,6 +117,54 @@ function parseBearerToken(authHeader: string | undefined): string {
   }
 
   return token
+}
+
+function isAnonymousFirebaseUser(
+  verifiedToken: VerifiedFirebaseIdToken,
+): boolean {
+  const firebaseClaim = verifiedToken.claims.firebase
+  if (
+    typeof firebaseClaim !== 'object' ||
+    firebaseClaim === null ||
+    Array.isArray(firebaseClaim)
+  ) {
+    return false
+  }
+
+  const signInProvider = (firebaseClaim as { sign_in_provider?: unknown })
+    .sign_in_provider
+  return signInProvider === 'anonymous'
+}
+
+async function migrateAnonymousSettingsToCanonicalUid(
+  env: Bindings,
+  sourceUid: string,
+  targetUid: string,
+): Promise<void> {
+  if (sourceUid === targetUid) {
+    return
+  }
+
+  const firestore = new FirestoreClient(env)
+  const [sourceSettings, targetSettings] = await Promise.all([
+    firestore.getDocument(USER_SETTINGS_COLLECTION, sourceUid),
+    firestore.getDocument(USER_SETTINGS_COLLECTION, targetUid),
+  ])
+
+  if (targetSettings || !sourceSettings?.fields) {
+    return
+  }
+
+  if (Object.keys(sourceSettings.fields).length === 0) {
+    return
+  }
+
+  await firestore.patchDocument(
+    USER_SETTINGS_COLLECTION,
+    targetUid,
+    sourceSettings.fields,
+  )
+  await firestore.deleteDocument(USER_SETTINGS_COLLECTION, sourceUid)
 }
 
 export const authRoutes = new Hono<{
@@ -212,20 +263,40 @@ authRoutes.post('/firebase-custom-token', async (c) => {
     throw unauthorized('Invalid or expired bridge code')
   }
 
+  const targetUid = bridgePayload.uid
+  const authHeader = c.req.header('authorization')
+  if (authHeader) {
+    const sourceToken = await verifyFirebaseIdToken(
+      parseBearerToken(authHeader),
+      c.env,
+    )
+
+    if (
+      sourceToken.uid !== targetUid &&
+      isAnonymousFirebaseUser(sourceToken)
+    ) {
+      await migrateAnonymousSettingsToCanonicalUid(
+        c.env,
+        sourceToken.uid,
+        targetUid,
+      )
+    }
+  }
+
   const customToken = await createFirebaseCustomToken(
     {
       claims: {
         wclUserId: bridgePayload.wclUserId,
         wclUserName: bridgePayload.wclUserName,
       },
-      uid: bridgePayload.uid,
+      uid: targetUid,
     },
     c.env,
   )
 
   return c.json({
     customToken,
-    uid: bridgePayload.uid,
+    uid: targetUid,
   })
 })
 

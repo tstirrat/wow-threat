@@ -39,8 +39,9 @@ export function useStarredGuildReports(
   limit = defaultGuildReportsLimit,
   options: UseStarredGuildReportsOptions = {},
 ): UseStarredGuildReportsResult {
-  const { authEnabled, user } = useAuth()
+  const { user } = useAuth()
   const uid = user?.uid ?? null
+  const cacheUid = uid ?? 'public'
   const isEnabled = options.enabled ?? true
   const { settings } = useUserSettings()
   const starredGuilds = useMemo(
@@ -60,12 +61,10 @@ export function useStarredGuildReports(
     () => buildStarredGuildSignature(guildKeys),
     [guildKeys],
   )
-  const cached = uid
-    ? loadStarredGuildReportsCache(uid, guildSignature, limit)
-    : null
+  const cached = loadStarredGuildReportsCache(cacheUid, guildSignature, limit)
 
   const query = useQuery({
-    queryKey: ['starred-guild-reports', uid, guildSignature, limit],
+    queryKey: ['starred-guild-reports', cacheUid, guildSignature, limit],
     queryFn: async (): Promise<StarredGuildReportEntry[]> => {
       const reportsByGuild = await Promise.all(
         starredGuilds.map(async (guild) => {
@@ -109,8 +108,7 @@ export function useStarredGuildReports(
 
       return Array.from(dedupedReports.values()).slice(0, limit)
     },
-    enabled:
-      isEnabled && authEnabled && Boolean(uid) && starredGuilds.length > 0,
+    enabled: isEnabled && starredGuilds.length > 0,
     staleTime: options.staleTimeMs ?? starredGuildReportsCacheTtlMs,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -119,18 +117,18 @@ export function useStarredGuildReports(
   })
 
   useEffect(() => {
-    if (!uid || !query.data || query.dataUpdatedAt <= 0) {
+    if (!query.data || query.dataUpdatedAt <= 0) {
       return
     }
 
     saveStarredGuildReportsCache(
-      uid,
+      cacheUid,
       guildSignature,
       limit,
       query.data,
       query.dataUpdatedAt,
     )
-  }, [uid, guildSignature, limit, query.data, query.dataUpdatedAt])
+  }, [cacheUid, guildSignature, limit, query.data, query.dataUpdatedAt])
 
   return {
     reports: query.data ?? [],

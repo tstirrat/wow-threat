@@ -1,5 +1,5 @@
 /**
- * Unit tests for auth gate state rendering in RootLayout.
+ * Unit tests for RootLayout account controls and shell behavior.
  */
 import type { AuthContextValue } from '@/auth/auth-provider'
 import type { UseWclRateLimitResult } from '@/hooks/use-wcl-rate-limit'
@@ -100,38 +100,25 @@ describe('RootLayout', () => {
     })
   })
 
-  it('shows sign-in required state when idle and signed out', () => {
+  it('shows sign-in button but keeps outlet visible when signed out', () => {
     useWclRateLimitMock.mockReturnValue(createMockWclRateLimitValue())
     useAuthMock.mockReturnValue(createMockAuthValue({ isBusy: false }))
 
     renderLayout('/')
 
     expect(
-      screen.getByRole('heading', { name: 'Sign in required' }),
+      screen.getByRole('button', { name: 'Sign in with Warcraft Logs' }),
     ).toBeTruthy()
-    expect(
-      screen.getByRole('button', { name: 'Continue with Warcraft Logs' }),
-    ).toBeTruthy()
-    expect(screen.queryByText('Finishing authentication...')).toBeNull()
+    expect(screen.getByText('child outlet')).toBeTruthy()
   })
 
-  it('shows completing sign-in loader state while popup flow is finalizing', () => {
+  it('shows header busy state while popup flow is finalizing', () => {
     useWclRateLimitMock.mockReturnValue(createMockWclRateLimitValue())
     useAuthMock.mockReturnValue(createMockAuthValue({ isBusy: true }))
 
     renderLayout('/')
 
-    expect(
-      screen.getByRole('heading', { name: 'Completing sign-in' }),
-    ).toBeTruthy()
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Finishing authentication...',
-    )
-    expect(
-      screen.getByText('Logging in...', {
-        selector: 'span',
-      }),
-    ).toBeTruthy()
+    expect(screen.getByText('Logging in...')).toBeTruthy()
     expect(
       screen.queryByRole('button', { name: 'Sign in with Warcraft Logs' }),
     ).toBeNull()
@@ -144,6 +131,7 @@ describe('RootLayout', () => {
         user: {
           uid: 'wcl:12345',
         } as AuthContextValue['user'],
+        wclUserId: '12345',
         wclUserName: 'TestUser',
       }),
     )
@@ -180,6 +168,7 @@ describe('RootLayout', () => {
         user: {
           uid: 'wcl:12345',
         } as AuthContextValue['user'],
+        wclUserId: '12345',
         wclUserName: 'TestUser',
       }),
     )
@@ -245,6 +234,7 @@ describe('RootLayout', () => {
         user: {
           uid: 'wcl:12345',
         } as AuthContextValue['user'],
+        wclUserId: '12345',
       }),
     )
     useUserSettingsMock.mockReturnValue({
@@ -309,7 +299,7 @@ describe('RootLayout', () => {
     expect(reportInput).toHaveFocus()
 
     await userEvent.click(
-      screen.getByRole('button', { name: 'Continue with Warcraft Logs' }),
+      screen.getByRole('button', { name: 'Sign in with Warcraft Logs' }),
     )
 
     expect(screen.getByTestId('report-input-container')).toHaveAttribute(

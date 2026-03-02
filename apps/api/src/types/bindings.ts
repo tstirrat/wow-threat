@@ -34,6 +34,7 @@ export interface Variables {
   requestId: string
   startTime: number
   uid?: string
+  wclUserId?: string
 }
 
 export interface HealthCheckResponse {

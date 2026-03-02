@@ -15,11 +15,13 @@ import {
 
 const onAuthStateChangedMock = vi.fn()
 const signInWithCustomTokenMock = vi.fn()
+const signInAnonymouslyMock = vi.fn()
 const firebaseSignOutMock = vi.fn()
 const getFirebaseAuthMock = vi.fn()
 
 vi.mock('firebase/auth', () => ({
   onAuthStateChanged: (...args: unknown[]) => onAuthStateChangedMock(...args),
+  signInAnonymously: (...args: unknown[]) => signInAnonymouslyMock(...args),
   signInWithCustomToken: (...args: unknown[]) =>
     signInWithCustomTokenMock(...args),
   signOut: (...args: unknown[]) => firebaseSignOutMock(...args),
@@ -60,6 +62,11 @@ describe('AuthProvider', () => {
       },
     )
     signInWithCustomTokenMock.mockResolvedValue(undefined)
+    signInAnonymouslyMock.mockResolvedValue({
+      user: {
+        getIdToken: vi.fn(async () => 'anonymous-id-token'),
+      },
+    })
     firebaseSignOutMock.mockResolvedValue(undefined)
     vi.stubGlobal('fetch', vi.fn())
 
