@@ -24,6 +24,10 @@ export class ThreatChartObject {
     return this.section.getByLabel('Target')
   }
 
+  resetZoomButton(): Locator {
+    return this.section.getByRole('button', { name: 'Reset zoom' })
+  }
+
   legendRoot(): Locator {
     return this.section.locator('[aria-label="Threat legend"]')
   }

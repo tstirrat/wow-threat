@@ -6,7 +6,10 @@ import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
 import type { ReportResponse } from '../types/api'
-import { ReportSummaryHeader } from './report-summary-header'
+import {
+  ReportSummaryHeader,
+  ReportSummaryHeaderSkeleton,
+} from './report-summary-header'
 
 function createReportResponse(
   overrides: Partial<ReportResponse> = {},
@@ -171,5 +174,12 @@ describe('ReportSummaryHeader', () => {
       'href',
       '/reports/guild/777?name=Threat+Guild&serverSlug=benediction&serverRegion=US',
     )
+  })
+
+  it('renders header-shaped skeleton while report metadata is loading', () => {
+    render(<ReportSummaryHeaderSkeleton />)
+
+    expect(screen.getByLabelText('Loading report header')).toBeVisible()
+    expect(screen.getByTestId('report-summary-header-skeleton')).toBeVisible()
   })
 })

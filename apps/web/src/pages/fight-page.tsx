@@ -2,7 +2,7 @@
  * Fight-level page with target filter and player-focused chart interactions.
  */
 import { ExternalLink } from 'lucide-react'
-import { type FC, useEffect, useMemo } from 'react'
+import { type FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { useHotkeys, useHotkeysContext } from 'react-hotkeys-hook'
 import { useLocation, useParams } from 'react-router-dom'
 
@@ -11,6 +11,7 @@ import { PlayerSummaryTable } from '../components/player-summary-table'
 import { SectionCard } from '../components/section-card'
 import { TargetSelector } from '../components/target-selector'
 import { ThreatChart, type ThreatChartProps } from '../components/threat-chart'
+import { ThreatChartControls } from '../components/threat-chart-controls'
 import { Skeleton } from '../components/ui/skeleton'
 import { useFightData } from '../hooks/use-fight-data'
 import { useFightEvents } from '../hooks/use-fight-events'
@@ -46,7 +47,11 @@ const FightPageLoadingSkeleton: FC = () => {
 
 const FightChartLoadingSkeleton: FC<{
   loadingMessage?: string
-}> = ({ loadingMessage = 'Loading fight events' }) => {
+  showControlsSkeleton?: boolean
+}> = ({
+  loadingMessage = 'Loading fight events',
+  showControlsSkeleton = true,
+}) => {
   return (
     <section
       aria-label="Loading fight events chart"
@@ -54,15 +59,32 @@ const FightChartLoadingSkeleton: FC<{
       role="status"
     >
       <div className="space-y-3">
-        <Skeleton className="h-8 w-64" />
-        <div className="relative h-[560px] w-full">
+        {showControlsSkeleton ? (
+          <div
+            className="flex flex-wrap items-center gap-2"
+            data-testid="fight-chart-controls-skeleton"
+          >
+            <Skeleton className="h-9 w-24" />
+            <Skeleton className="h-5 w-36" />
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-5 w-52" />
+          </div>
+        ) : null}
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_14rem]">
+          <div className="relative h-[560px] w-full">
+            <Skeleton
+              className="h-full w-full"
+              data-testid="fight-chart-skeleton"
+            />
+            <p className="pointer-events-none absolute inset-0 flex items-center justify-center px-4 text-center text-sm text-muted-foreground">
+              {loadingMessage}
+            </p>
+          </div>
           <Skeleton
-            className="h-full w-full"
-            data-testid="fight-chart-skeleton"
+            className="h-[560px] w-full"
+            data-testid="fight-legend-skeleton"
           />
-          <p className="pointer-events-none absolute inset-0 flex items-center justify-center px-4 text-center text-sm text-muted-foreground">
-            {loadingMessage}
-          </p>
         </div>
       </div>
     </section>
@@ -126,6 +148,7 @@ export const FightPage: FC = () => {
     handleBossDamageModeChange,
     handleInferThreatReductionChange,
     handleSeriesClick,
+    handleShowFixateBandsChange,
     handleShowEnergizeEventsChange,
     handleShowPetsChange,
     handleTogglePinnedPlayer,
@@ -143,6 +166,17 @@ export const FightPage: FC = () => {
       : 'melee'
     : 'off'
   const { disableScope, enableScope } = useHotkeysContext()
+  const [isChartReady, setIsChartReady] = useState(false)
+  const [registeredResetZoom, setRegisteredResetZoom] = useState<
+    (() => void) | null
+  >(null)
+
+  const handleRegisterResetZoom = useCallback(
+    (resetZoom: (() => void) | null): void => {
+      setRegisteredResetZoom(() => resetZoom)
+    },
+    [],
+  )
 
   useEffect(() => {
     enableScope('fight-page')
@@ -272,11 +306,10 @@ export const FightPage: FC = () => {
     showPets: userSettings.showPets,
     onShowPetsChange: handleShowPetsChange,
     showEnergizeEvents: userSettings.showEnergizeEvents,
-    onShowEnergizeEventsChange: handleShowEnergizeEventsChange,
     bossDamageMode,
-    onBossDamageModeChange: handleBossDamageModeChange,
-    inferThreatReduction: userSettings.inferThreatReduction,
-    onInferThreatReductionChange: handleInferThreatReductionChange,
+    showFixateBands: userSettings.showFixateBands,
+    onChartReadyChange: setIsChartReady,
+    onRegisterResetZoom: handleRegisterResetZoom,
   }
 
   const fightTimelineTitle = (
@@ -321,17 +354,35 @@ export const FightPage: FC = () => {
           )
         }
       >
-        {selectedTarget === null ? (
+        {isUserSettingsLoading ? (
+          <FightChartLoadingSkeleton loadingMessage="Loading fight settings" />
+        ) : (
+          <ThreatChartControls
+            onResetZoom={() => {
+              registeredResetZoom?.()
+            }}
+            isResetZoomDisabled={!isChartReady || registeredResetZoom === null}
+            showFixateBands={userSettings.showFixateBands}
+            onShowFixateBandsChange={handleShowFixateBandsChange}
+            showEnergizeEvents={userSettings.showEnergizeEvents}
+            onShowEnergizeEventsChange={handleShowEnergizeEventsChange}
+            bossDamageMode={bossDamageMode}
+            onBossDamageModeChange={handleBossDamageModeChange}
+            inferThreatReduction={userSettings.inferThreatReduction}
+            onInferThreatReductionChange={handleInferThreatReductionChange}
+          />
+        )}
+
+        {isUserSettingsLoading ? null : selectedTarget === null ? (
           <p className="text-sm text-muted-foreground">
             No valid targets available for this fight.
           </p>
-        ) : isUserSettingsLoading ? (
-          <FightChartLoadingSkeleton loadingMessage="Loading fight settings" />
         ) : eventsQuery.isLoading ? (
           <FightChartLoadingSkeleton
             loadingMessage={
               eventsQuery.loadingMessage || 'Loading fight events'
             }
+            showControlsSkeleton={false}
           />
         ) : chartProps.series.length === 0 ? (
           <p className="text-sm text-muted-foreground">

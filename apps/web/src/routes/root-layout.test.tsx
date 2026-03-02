@@ -91,6 +91,7 @@ describe('RootLayout', () => {
     useUserSettingsMock.mockReturnValue({
       settings: {
         showPets: false,
+        showFixateBands: true,
         showEnergizeEvents: false,
         inferThreatReduction: false,
         starredReports: [],
@@ -240,6 +241,7 @@ describe('RootLayout', () => {
     useUserSettingsMock.mockReturnValue({
       settings: {
         showPets: false,
+        showFixateBands: true,
         showEnergizeEvents: false,
         inferThreatReduction: false,
         starredReports: [

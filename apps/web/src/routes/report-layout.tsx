@@ -6,8 +6,10 @@ import { Outlet, useLocation, useParams } from 'react-router-dom'
 
 import { ErrorState } from '../components/error-state'
 import { FightQuickSwitcher } from '../components/fight-quick-switcher'
-import { LoadingState } from '../components/loading-state'
-import { ReportSummaryHeader } from '../components/report-summary-header'
+import {
+  ReportSummaryHeader,
+  ReportSummaryHeaderSkeleton,
+} from '../components/report-summary-header'
 import { useReportData } from '../hooks/use-report-data'
 import { useReportIndex } from '../hooks/use-report-index'
 import { useUserSettings } from '../hooks/use-user-settings'
@@ -75,7 +77,7 @@ export const ReportLayout: FC = () => {
   }
 
   if (isLoading) {
-    return <LoadingState message="Loading report metadata..." />
+    return <ReportSummaryHeaderSkeleton />
   }
 
   if (error || !data) {
@@ -89,7 +91,7 @@ export const ReportLayout: FC = () => {
 
   const threatConfig = resolveCurrentThreatConfig(data)
   const threatConfigLabel = threatConfig
-    ? `${threatConfig.displayName} ${threatConfig.version}`
+    ? `${threatConfig.displayName} v${threatConfig.version}`
     : 'No supported config'
   const selectedFightId = Number.isNaN(fightId) ? null : fightId
   const outletContext: ReportRouteContext = {

@@ -66,6 +66,7 @@ function createSnapshot({
         inferThreatReduction: false,
         showBossMelee: true,
         showAllBossDamageEvents: false,
+        showFixateBands: true,
         showEnergizeEvents: false,
         showPets: false,
         starredReports: [],
@@ -91,6 +92,7 @@ function Harness(): JSX.Element {
       <p data-testid="infer-threat-reduction">
         {String(settings.inferThreatReduction)}
       </p>
+      <p data-testid="show-fixate-bands">{String(settings.showFixateBands)}</p>
       <p data-testid="error">{error?.message ?? ''}</p>
       <p data-testid="starred-count">
         {String(settings.starredReports.length)}
@@ -107,6 +109,16 @@ function Harness(): JSX.Element {
         }}
       >
         toggle infer threat reduction
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          void updateSettings({
+            showFixateBands: !settings.showFixateBands,
+          })
+        }}
+      >
+        toggle show fixate bands
       </button>
       <button
         type="button"
@@ -208,6 +220,7 @@ describe('UserSettingsProvider', () => {
             inferThreatReduction: true,
             showBossMelee: true,
             showAllBossDamageEvents: false,
+            showFixateBands: true,
             showEnergizeEvents: false,
             showPets: false,
             starredReports: [],
@@ -357,6 +370,7 @@ describe('UserSettingsProvider', () => {
             inferThreatReduction: false,
             showBossMelee: true,
             showAllBossDamageEvents: false,
+            showFixateBands: true,
             showEnergizeEvents: false,
             showPets: false,
             starredReports: [existingStarred],
@@ -386,6 +400,7 @@ describe('UserSettingsProvider', () => {
         showEnergizeEvents: false,
         showBossMelee: true,
         showAllBossDamageEvents: false,
+        showFixateBands: true,
         inferThreatReduction: false,
         starredReports: expect.arrayContaining([
           expect.objectContaining({
@@ -461,6 +476,61 @@ describe('UserSettingsProvider', () => {
             name: 'Threat Guild',
           }),
         ]),
+      }),
+      {
+        merge: true,
+      },
+    )
+  })
+
+  it('updates show fixate bands in persisted user settings', async () => {
+    useAuthMock.mockReturnValue(
+      createAuthValue({
+        user: {
+          uid: 'wcl:12345',
+        } as User,
+      }),
+    )
+
+    let nextSnapshot:
+      | ((snapshot: ReturnType<typeof createSnapshot>) => void)
+      | undefined
+    onSnapshotMock.mockImplementation(
+      (
+        _documentRef: unknown,
+        onNext: (snapshot: ReturnType<typeof createSnapshot>) => void,
+      ) => {
+        nextSnapshot = onNext
+        return vi.fn()
+      },
+    )
+
+    render(
+      <UserSettingsProvider>
+        <Harness />
+      </UserSettingsProvider>,
+    )
+
+    act(() => {
+      nextSnapshot?.(createSnapshot({ exists: false }))
+    })
+    await waitFor(() => {
+      expect(screen.getByTestId('is-loading')).toHaveTextContent('false')
+    })
+
+    await act(async () => {
+      screen
+        .getByRole('button', {
+          name: 'toggle show fixate bands',
+        })
+        .click()
+    })
+
+    expect(screen.getByTestId('show-fixate-bands')).toHaveTextContent('false')
+    expect(setDocMock).toHaveBeenCalledWith(
+      'settings-doc-ref',
+      expect.objectContaining({
+        showFixateBands: false,
       }),
       {
         merge: true,

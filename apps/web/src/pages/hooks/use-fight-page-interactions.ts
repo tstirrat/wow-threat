@@ -28,6 +28,7 @@ export interface UseFightPageInteractionsResult {
   handleClearSelections: () => void
   handleInferThreatReductionChange: (inferThreatReduction: boolean) => void
   handleSeriesClick: (playerId: number) => void
+  handleShowFixateBandsChange: (showFixateBands: boolean) => void
   handleShowEnergizeEventsChange: (showEnergizeEvents: boolean) => void
   handleShowPetsChange: (showPets: boolean) => void
   handleTogglePinnedPlayer: (playerId: number) => void
@@ -167,6 +168,15 @@ export function useFightPageInteractions({
     [updateUserSettings],
   )
 
+  const handleShowFixateBandsChange = useCallback(
+    (showFixateBands: boolean): void => {
+      void updateUserSettings({
+        showFixateBands,
+      })
+    },
+    [updateUserSettings],
+  )
+
   const handleBossDamageModeChange = useCallback(
     (bossDamageMode: BossDamageMode): void => {
       void updateUserSettings({
@@ -193,6 +203,7 @@ export function useFightPageInteractions({
     handleBossDamageModeChange,
     handleInferThreatReductionChange,
     handleSeriesClick,
+    handleShowFixateBandsChange,
     handleShowEnergizeEventsChange,
     handleShowPetsChange,
     handleTogglePinnedPlayer,

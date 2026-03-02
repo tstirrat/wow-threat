@@ -19,6 +19,7 @@ import {
 
 export interface ThreatChartControlsProps {
   onResetZoom: () => void
+  isResetZoomDisabled?: boolean
   showFixateBands: boolean
   onShowFixateBandsChange: (showFixateBands: boolean) => void
   showEnergizeEvents: boolean
@@ -31,6 +32,7 @@ export interface ThreatChartControlsProps {
 
 export const ThreatChartControls: FC<ThreatChartControlsProps> = ({
   onResetZoom,
+  isResetZoomDisabled = false,
   showFixateBands,
   onShowFixateBandsChange,
   showEnergizeEvents,
@@ -48,7 +50,13 @@ export const ThreatChartControls: FC<ThreatChartControlsProps> = ({
   return (
     <TooltipProvider>
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" type="button" variant="outline" onClick={onResetZoom}>
+        <Button
+          size="sm"
+          type="button"
+          variant="outline"
+          disabled={isResetZoomDisabled}
+          onClick={onResetZoom}
+        >
           Reset zoom
         </Button>
         <div className="flex items-center gap-2">

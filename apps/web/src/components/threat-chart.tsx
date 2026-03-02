@@ -17,16 +17,11 @@ import { useThreatChartVisiblePlayers } from '../hooks/use-threat-chart-visible-
 import { useThreatChartZoom } from '../hooks/use-threat-chart-zoom'
 import { formatTimelineTime } from '../lib/format'
 import { resolveSeriesWindowBounds } from '../lib/threat-aggregation'
-import {
-  loadShowFixateBandsPreference,
-  saveShowFixateBandsPreference,
-} from '../lib/threat-chart-fixate-bands-preference'
 import { resolvePointSize } from '../lib/threat-chart-point-size'
 import { createThreatChartTooltipFormatter } from '../lib/threat-chart-tooltip'
 import type { SeriesChartPoint } from '../lib/threat-chart-types'
 import { buildAuraMarkArea } from '../lib/threat-chart-visuals'
 import type { BossDamageMode, ThreatSeries } from '../types/app'
-import { ThreatChartControls } from './threat-chart-controls'
 import { ThreatChartLegend } from './threat-chart-legend'
 import { ThreatChartPlayerSearch } from './threat-chart-player-search'
 
@@ -48,11 +43,10 @@ export type ThreatChartProps = {
   showPets: boolean
   onShowPetsChange: (showPets: boolean) => void
   showEnergizeEvents: boolean
-  onShowEnergizeEventsChange: (showEnergizeEvents: boolean) => void
   bossDamageMode: BossDamageMode
-  onBossDamageModeChange: (bossDamageMode: BossDamageMode) => void
-  inferThreatReduction: boolean
-  onInferThreatReductionChange: (inferThreatReduction: boolean) => void
+  showFixateBands: boolean
+  onChartReadyChange?: (isReady: boolean) => void
+  onRegisterResetZoom?: (resetZoom: (() => void) | null) => void
 }
 
 export const ThreatChart: FC<ThreatChartProps> = ({
@@ -73,17 +67,13 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   showPets,
   onShowPetsChange,
   showEnergizeEvents,
-  onShowEnergizeEventsChange,
   bossDamageMode,
-  onBossDamageModeChange,
-  inferThreatReduction,
-  onInferThreatReductionChange,
+  showFixateBands,
+  onChartReadyChange,
+  onRegisterResetZoom,
 }) => {
   const chartRef = useRef<ReactEChartsCore>(null)
   const [isChartReady, setIsChartReady] = useState(false)
-  const [showFixateBands, setShowFixateBands] = useState(
-    loadShowFixateBandsPreference,
-  )
   const themeColors = useThreatChartThemeColors()
   const {
     visibleSeries,
@@ -154,8 +144,24 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   }, [allPlayerIds, clearIsolate, onClearSelections, onVisiblePlayerIdsChange])
 
   useEffect(() => {
-    saveShowFixateBandsPreference(showFixateBands)
-  }, [showFixateBands])
+    onChartReadyChange?.(isChartReady)
+  }, [isChartReady, onChartReadyChange])
+
+  useEffect(() => {
+    return () => {
+      onChartReadyChange?.(false)
+    }
+  }, [onChartReadyChange])
+
+  useEffect(() => {
+    onRegisterResetZoom?.(() => {
+      resetZoom()
+    })
+
+    return () => {
+      onRegisterResetZoom?.(null)
+    }
+  }, [onRegisterResetZoom, resetZoom])
 
   useHotkeys(
     '/',
@@ -357,17 +363,6 @@ export const ThreatChart: FC<ThreatChartProps> = ({
 
   return (
     <div className="space-y-3">
-      <ThreatChartControls
-        onResetZoom={resetZoom}
-        showFixateBands={showFixateBands}
-        onShowFixateBandsChange={setShowFixateBands}
-        showEnergizeEvents={showEnergizeEvents}
-        onShowEnergizeEventsChange={onShowEnergizeEventsChange}
-        bossDamageMode={bossDamageMode}
-        onBossDamageModeChange={onBossDamageModeChange}
-        inferThreatReduction={inferThreatReduction}
-        onInferThreatReductionChange={onInferThreatReductionChange}
-      />
       <ThreatChartPlayerSearch
         isOpen={isPlayerSearchOpen}
         query={playerSearchQuery}

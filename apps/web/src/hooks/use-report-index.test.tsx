@@ -160,6 +160,7 @@ describe('ReportIndexProvider', () => {
         inferThreatReduction: false,
         showBossMelee: true,
         showAllBossDamageEvents: false,
+        showFixateBands: true,
         showEnergizeEvents: false,
         showPets: false,
         starredReports: [],

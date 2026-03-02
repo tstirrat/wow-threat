@@ -174,6 +174,7 @@ describe('useFightPageInteractions', () => {
       result.current.handleWindowChange(1000, 5000)
       result.current.handleShowPetsChange(true)
       result.current.handleShowEnergizeEventsChange(true)
+      result.current.handleShowFixateBandsChange(false)
       result.current.handleBossDamageModeChange('all')
       result.current.handleInferThreatReductionChange(true)
     })
@@ -189,10 +190,13 @@ describe('useFightPageInteractions', () => {
       showEnergizeEvents: true,
     })
     expect(updateUserSettings).toHaveBeenNthCalledWith(3, {
+      showFixateBands: false,
+    })
+    expect(updateUserSettings).toHaveBeenNthCalledWith(4, {
       showBossMelee: true,
       showAllBossDamageEvents: true,
     })
-    expect(updateUserSettings).toHaveBeenNthCalledWith(4, {
+    expect(updateUserSettings).toHaveBeenNthCalledWith(5, {
       inferThreatReduction: true,
     })
   })

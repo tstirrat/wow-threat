@@ -12,6 +12,7 @@ import type { ReportResponse } from '../types/api'
 import type { WarcraftLogsHost } from '../types/app'
 import { ReportStarButton } from './report-star-button'
 import { Card, CardHeader, CardTitle } from './ui/card'
+import { Skeleton } from './ui/skeleton'
 
 type ReportGuildFaction = 'alliance' | 'horde' | null
 
@@ -173,6 +174,39 @@ export const ReportSummaryHeader: FC<ReportSummaryHeaderProps> = ({
           </div>
           <div className="shrink-0 text-right text-xs text-muted-foreground">
             <p>Threat config: {threatConfigLabel}</p>
+          </div>
+        </CardHeader>
+      </Card>
+    </section>
+  )
+}
+
+/** Render report-header skeleton while metadata is loading. */
+export const ReportSummaryHeaderSkeleton: FC = () => {
+  return (
+    <section
+      aria-label="Loading report header"
+      aria-live="polite"
+      role="status"
+    >
+      <Card data-testid="report-summary-header-skeleton">
+        <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 space-y-2">
+            <CardTitle className="flex flex-wrap items-center gap-2">
+              <Skeleton className="h-5 w-56" />
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-5 w-28" />
+              <Skeleton className="h-8 w-8 rounded-full" />
+            </CardTitle>
+            <div className="flex flex-wrap items-center gap-2">
+              <Skeleton className="h-4 w-36" />
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-12" />
+            </div>
+          </div>
+          <div className="shrink-0">
+            <Skeleton className="h-4 w-44" />
           </div>
         </CardHeader>
       </Card>
