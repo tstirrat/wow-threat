@@ -19,6 +19,7 @@ import { formatTimelineTime } from '../lib/format'
 import { resolveSeriesWindowBounds } from '../lib/threat-aggregation'
 import { resolvePointSize } from '../lib/threat-chart-point-size'
 import { createThreatChartTooltipFormatter } from '../lib/threat-chart-tooltip'
+import { deathMarkerColor } from '../lib/threat-chart-tooltip-colors'
 import type { SeriesChartPoint } from '../lib/threat-chart-types'
 import { buildAuraMarkArea } from '../lib/threat-chart-visuals'
 import type { BossDamageMode, ThreatSeries } from '../types/app'
@@ -45,6 +46,7 @@ export type ThreatChartProps = {
   showEnergizeEvents: boolean
   bossDamageMode: BossDamageMode
   showFixateBands: boolean
+  targetDeathTimeMs?: number | null
   onChartReadyChange?: (isReady: boolean) => void
   onRegisterResetZoom?: (resetZoom: (() => void) | null) => void
 }
@@ -69,6 +71,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   showEnergizeEvents,
   bossDamageMode,
   showFixateBands,
+  targetDeathTimeMs = null,
   onChartReadyChange,
   onRegisterResetZoom,
 }) => {
@@ -356,6 +359,24 @@ export const ThreatChart: FC<ThreatChartProps> = ({
             : [],
           invulnerabilityWindows: [],
         }),
+        ...(seriesIndex === 0 && targetDeathTimeMs !== null
+          ? {
+              markLine: {
+                silent: true,
+                symbol: ['none', 'none'],
+                lineStyle: {
+                  color: deathMarkerColor,
+                  type: 'solid',
+                  width: 2,
+                },
+                label: {
+                  formatter: 'Target death',
+                  color: deathMarkerColor,
+                },
+                data: [{ xAxis: targetDeathTimeMs }],
+              },
+            }
+          : {}),
         data: item.data,
       }
     }),

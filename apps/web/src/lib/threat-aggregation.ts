@@ -118,6 +118,20 @@ type ThreatChange = NonNullable<
   NonNullable<ThreatEvent['threat']>['changes']
 >[number]
 
+interface BuildThreatSeriesParams {
+  events: AugmentedEventsResponse['events']
+  actors: ReportActorSummary[]
+  abilities: ReportAbilitySummary[]
+  fightStartTime: number
+  fightEndTime: number
+  target: FightTarget
+}
+
+interface BuildThreatSeriesWithTargetDeathTimeResult {
+  series: ThreatSeries[]
+  targetDeathTimeMs: number | null
+}
+
 interface OrderedEventVisitContext {
   event: ThreatEvent
   timeMs: number
@@ -150,6 +164,14 @@ interface OrderedEventVisitor<TContext extends OrderedEventVisitContext> {
 
 const defaultTargetInstance = 0
 
+/**
+ * Shared event traversal for aggregation passes.
+ *
+ * Performance note: avoid adding new top-level `events` scans in this module
+ * for data that can be derived during existing passes. Prefer attaching a new
+ * visitor to an existing `visitOrderedEvents` call so multiple derivations
+ * share a single traversal.
+ */
 function visitOrderedEvents<TContext extends OrderedEventVisitContext>({
   events,
   fightStartTime,
@@ -1030,21 +1052,21 @@ export function selectDefaultTarget(
 }
 
 /** Build chartable threat series for a target from augmented events. */
-export function buildThreatSeries({
+export function buildThreatSeries(
+  params: BuildThreatSeriesParams,
+): ThreatSeries[] {
+  return buildThreatSeriesWithTargetDeathTime(params).series
+}
+
+/** Build chartable threat series for a target and resolve target death time in that same pass. */
+export function buildThreatSeriesWithTargetDeathTime({
   events,
   actors,
   abilities,
   fightStartTime,
   fightEndTime,
   target,
-}: {
-  events: AugmentedEventsResponse['events']
-  actors: ReportActorSummary[]
-  abilities: ReportAbilitySummary[]
-  fightStartTime: number
-  fightEndTime: number
-  target: FightTarget
-}): ThreatSeries[] {
+}: BuildThreatSeriesParams): BuildThreatSeriesWithTargetDeathTimeResult {
   const actorsById = new Map(actors.map((actor) => [actor.id, actor]))
   const abilityById = createAbilityMap(abilities)
   const firstTimestamp = events[0]?.timestamp ?? fightStartTime
@@ -1259,6 +1281,18 @@ export function buildThreatSeries({
       })
     },
   }
+  let targetDeathTimeMs: number | null = null
+  const targetDeathVisitor: OrderedEventVisitor<SeriesEventVisitContext> = {
+    visit: ({ event, timeMs }) => {
+      if (
+        event.type === 'death' &&
+        event.targetID === target.id &&
+        (event.targetInstance ?? defaultTargetInstance) === target.instance
+      ) {
+        targetDeathTimeMs = timeMs
+      }
+    },
+  }
 
   visitOrderedEvents<SeriesEventVisitContext>({
     events,
@@ -1297,7 +1331,11 @@ export function buildThreatSeries({
         invulnerabilityStartActorIds,
       }
     },
-    visitors: [stateTransitionCollector.visitor, seriesPointVisitor],
+    visitors: [
+      stateTransitionCollector.visitor,
+      targetDeathVisitor,
+      seriesPointVisitor,
+    ],
   })
 
   stateTransitionCollector.transitionsByActor.forEach(
@@ -1315,9 +1353,12 @@ export function buildThreatSeries({
     },
   )
 
-  return [...accumulators.values()]
-    .filter((series) => series.points.length > 0)
-    .sort((a, b) => b.maxThreat - a.maxThreat)
+  return {
+    series: [...accumulators.values()]
+      .filter((series) => series.points.length > 0)
+      .sort((a, b) => b.maxThreat - a.maxThreat),
+    targetDeathTimeMs,
+  }
 }
 
 /** Filter visible chart series based on selected player IDs. */

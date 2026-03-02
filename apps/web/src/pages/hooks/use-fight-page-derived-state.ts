@@ -10,7 +10,7 @@ import {
   buildFightTargetOptions,
   buildFocusedPlayerAggregation,
   buildInitialAurasDisplay,
-  buildThreatSeries,
+  buildThreatSeriesWithTargetDeathTime,
   resolveSeriesWindowBounds,
   selectDefaultTarget,
 } from '../../lib/threat-aggregation'
@@ -92,6 +92,7 @@ export interface UseFightPageDerivedStateResult {
   initialAuras: ReturnType<typeof buildInitialAurasDisplay>
   queryState: ReturnType<typeof useFightQueryState>
   selectedTarget: FightTarget | null
+  targetDeathTimeMs: number | null
   targetOptions: ReturnType<typeof buildFightTargetOptions>
   validPlayerIds: Set<number>
   visibleSeries: ThreatSeries[]
@@ -195,13 +196,15 @@ export function useFightPageDerivedState({
       targetOptions,
     ],
   )
-
-  const allSeries = useMemo(() => {
+  const { allSeries, targetDeathTimeMs } = useMemo(() => {
     if (!selectedTarget || !eventsData || !fightData) {
-      return []
+      return {
+        allSeries: [],
+        targetDeathTimeMs: null,
+      }
     }
 
-    const threatSeries = buildThreatSeries({
+    const threatSeriesResult = buildThreatSeriesWithTargetDeathTime({
       events: eventsData.events,
       actors: fightData.actors,
       abilities: reportData.abilities,
@@ -210,14 +213,17 @@ export function useFightPageDerivedState({
       target: selectedTarget,
     })
 
-    return threatSeries.map((series) => {
-      if (series.actorType !== 'Player') {
-        return series
-      }
+    return {
+      allSeries: threatSeriesResult.series.map((series) => {
+        if (series.actorType !== 'Player') {
+          return series
+        }
 
-      const actorRole = actorRoleById.get(series.actorId)
-      return actorRole ? { ...series, actorRole } : series
-    })
+        const actorRole = actorRoleById.get(series.actorId)
+        return actorRole ? { ...series, actorRole } : series
+      }),
+      targetDeathTimeMs: threatSeriesResult.targetDeathTimeMs,
+    }
   }, [
     actorRoleById,
     eventsData,
@@ -305,6 +311,7 @@ export function useFightPageDerivedState({
     initialAuras,
     queryState,
     selectedTarget,
+    targetDeathTimeMs,
     targetOptions,
     validPlayerIds,
     visibleSeries,

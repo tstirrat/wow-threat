@@ -130,6 +130,7 @@ export const FightPage: FC = () => {
     initialAuras,
     queryState,
     selectedTarget,
+    targetDeathTimeMs,
     targetOptions,
     validPlayerIds,
     visibleSeries,
@@ -313,6 +314,7 @@ export const FightPage: FC = () => {
     showFixateBands: userSettings.showFixateBands,
     onChartReadyChange: setIsChartReady,
     onRegisterResetZoom: handleRegisterResetZoom,
+    targetDeathTimeMs,
   }
 
   const fightTimelineTitle = (

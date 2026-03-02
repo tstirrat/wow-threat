@@ -14,6 +14,7 @@ import {
   buildFocusedPlayerThreatRows,
   buildInitialAurasDisplay,
   buildThreatSeries,
+  buildThreatSeriesWithTargetDeathTime,
   filterSeriesByPlayers,
   getInitialAuras,
   getNotableAuraIds,
@@ -125,6 +126,127 @@ describe('threat-aggregation', () => {
       'Deathknight Understudy (10.3)',
     ])
     expect(options.map((option) => option.isBoss)).toEqual([true, false, false])
+  })
+
+  it('resolves selected target death time while building series', () => {
+    const actors: ReportActorSummary[] = [
+      {
+        id: 1,
+        name: 'Tank',
+        type: 'Player',
+        subType: 'Warrior',
+      },
+      {
+        id: 10,
+        name: 'Boss',
+        type: 'NPC',
+        subType: 'Boss',
+      },
+    ]
+    const abilities: ReportAbilitySummary[] = [
+      {
+        gameID: 100,
+        icon: null,
+        name: 'Sunder Armor',
+        type: '1',
+      },
+    ]
+    const events = [
+      {
+        timestamp: 1000,
+        type: 'damage',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 10,
+        targetIsFriendly: false,
+        abilityGameID: 100,
+        amount: 100,
+        threat: {
+          changes: [
+            {
+              sourceId: 1,
+              targetId: 10,
+              targetInstance: 0,
+              operator: 'add',
+              amount: 100,
+              total: 100,
+            },
+          ],
+          calculation: {
+            formula: 'damage',
+            amount: 100,
+            baseThreat: 100,
+            modifiedThreat: 100,
+            isSplit: false,
+            modifiers: [],
+          },
+        },
+      },
+      {
+        timestamp: 1300,
+        type: 'death',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 10,
+        targetInstance: 1,
+        targetIsFriendly: false,
+      },
+      {
+        timestamp: 1500,
+        type: 'death',
+        sourceID: 1,
+        sourceIsFriendly: true,
+        targetID: 10,
+        targetInstance: 0,
+        targetIsFriendly: false,
+      },
+    ]
+
+    expect(
+      buildThreatSeriesWithTargetDeathTime({
+        events: events as never,
+        actors,
+        abilities,
+        target: {
+          id: 10,
+          instance: 0,
+        },
+        fightStartTime: 1000,
+        fightEndTime: 2000,
+      }),
+    ).toMatchObject({
+      targetDeathTimeMs: 500,
+    })
+    expect(
+      buildThreatSeriesWithTargetDeathTime({
+        events: events as never,
+        actors,
+        abilities,
+        target: {
+          id: 10,
+          instance: 1,
+        },
+        fightStartTime: 1000,
+        fightEndTime: 2000,
+      }),
+    ).toMatchObject({
+      targetDeathTimeMs: 300,
+    })
+    expect(
+      buildThreatSeriesWithTargetDeathTime({
+        events: events as never,
+        actors,
+        abilities,
+        target: {
+          id: 11,
+          instance: 0,
+        },
+        fightStartTime: 1000,
+        fightEndTime: 2000,
+      }),
+    ).toMatchObject({
+      targetDeathTimeMs: null,
+    })
   })
 
   it('filters pet lines by owner when player filter is applied', () => {
