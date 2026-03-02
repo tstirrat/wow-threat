@@ -50,6 +50,7 @@ async function fetchFightEvents(params: {
   reportId: string
   fightId: number
   inferThreatReduction: boolean
+  forceFresh: boolean
   queryClient: QueryClient
   signal?: AbortSignal
   onProgressMessage?: (message: string) => void
@@ -58,21 +59,26 @@ async function fetchFightEvents(params: {
     reportId,
     fightId,
     inferThreatReduction,
+    forceFresh,
     queryClient,
     signal,
     onProgressMessage,
   } = params
   throwIfAborted(signal)
 
-  const cached = await loadFightEventsResultCache({
-    reportCode: reportId,
-    fightId,
-    configVersion: configCacheVersion,
-    inferThreatReduction,
-  })
-  if (cached) {
-    onProgressMessage?.(`Loaded cached events (${cached.events.length} events)`)
-    return cached
+  if (!forceFresh) {
+    const cached = await loadFightEventsResultCache({
+      reportCode: reportId,
+      fightId,
+      configVersion: configCacheVersion,
+      inferThreatReduction,
+    })
+    if (cached) {
+      onProgressMessage?.(
+        `Loaded cached events (${cached.events.length} events)`,
+      )
+      return cached
+    }
   }
 
   const [reportData, fightData] = await Promise.all([
@@ -86,18 +92,27 @@ async function fetchFightEvents(params: {
     }),
   ])
   throwIfAborted(signal)
-  const rawEventsData = await queryClient.ensureQueryData({
-    queryKey: fightRawEventsQueryKey(reportId, fightId),
-    queryFn: ({ signal: rawEventsSignal }) =>
-      getFightRawEventsClientSide({
+  const rawEventsData = forceFresh
+    ? await getFightRawEventsClientSide({
         reportId,
         fightId,
-        signal: rawEventsSignal,
+        signal,
         onProgress: (progress) => {
           onProgressMessage?.(progress.message)
         },
-      }),
-  })
+      })
+    : await queryClient.ensureQueryData({
+        queryKey: fightRawEventsQueryKey(reportId, fightId),
+        queryFn: ({ signal: rawEventsSignal }) =>
+          getFightRawEventsClientSide({
+            reportId,
+            fightId,
+            signal: rawEventsSignal,
+            onProgress: (progress) => {
+              onProgressMessage?.(progress.message)
+            },
+          }),
+      })
   throwIfAborted(signal)
 
   const response = await getFightEventsClientSide({
@@ -113,15 +128,17 @@ async function fetchFightEvents(params: {
     },
   })
 
-  await saveFightEventsResultCache({
-    key: {
-      reportCode: reportId,
-      fightId,
-      configVersion: response.configVersion,
-      inferThreatReduction,
-    },
-    response,
-  })
+  if (!forceFresh) {
+    await saveFightEventsResultCache({
+      key: {
+        reportCode: reportId,
+        fightId,
+        configVersion: response.configVersion,
+        inferThreatReduction,
+      },
+      response,
+    })
+  }
 
   return response
 }
@@ -132,6 +149,7 @@ export function useFightEvents(
   fightId: number,
   inferThreatReduction: boolean,
   enabled = true,
+  forceFresh = false,
 ): {
   data: AugmentedEventsResponse | undefined
   isLoading: boolean
@@ -149,6 +167,7 @@ export function useFightEvents(
       reportId,
       fightId,
       inferThreatReduction,
+      forceFresh,
     )
     return () => {
       activeRequestIdRef.current += 1
@@ -156,10 +175,15 @@ export function useFightEvents(
         queryKey,
       })
     }
-  }, [queryClient, reportId, fightId, inferThreatReduction])
+  }, [queryClient, reportId, fightId, inferThreatReduction, forceFresh])
 
   const query = useQuery({
-    queryKey: fightEventsQueryKey(reportId, fightId, inferThreatReduction),
+    queryKey: fightEventsQueryKey(
+      reportId,
+      fightId,
+      inferThreatReduction,
+      forceFresh,
+    ),
     queryFn: ({ signal }) => {
       const requestId = activeRequestIdRef.current + 1
       activeRequestIdRef.current = requestId
@@ -169,6 +193,7 @@ export function useFightEvents(
         reportId,
         fightId,
         inferThreatReduction,
+        forceFresh,
         queryClient,
         signal,
         onProgressMessage: (message) => {
@@ -181,6 +206,10 @@ export function useFightEvents(
       })
     },
     placeholderData: (previousData) => {
+      if (forceFresh) {
+        return undefined
+      }
+
       if (
         previousData?.reportCode === reportId &&
         previousData.fightId === fightId
@@ -206,17 +235,24 @@ export function useSuspenseFightEvents(
   reportId: string,
   fightId: number,
   inferThreatReduction: boolean,
+  forceFresh = false,
 ): {
   data: AugmentedEventsResponse
 } {
   const queryClient = useQueryClient()
   const query = useSuspenseQuery({
-    queryKey: fightEventsQueryKey(reportId, fightId, inferThreatReduction),
+    queryKey: fightEventsQueryKey(
+      reportId,
+      fightId,
+      inferThreatReduction,
+      forceFresh,
+    ),
     queryFn: ({ signal }) =>
       fetchFightEvents({
         reportId,
         fightId,
         inferThreatReduction,
+        forceFresh,
         queryClient,
         signal,
       }),

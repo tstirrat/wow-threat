@@ -100,6 +100,8 @@ export const FightPage: FC = () => {
     new URLSearchParams(location.search).get('renderer') === 'svg'
       ? 'svg'
       : 'canvas'
+  const forceFreshEvents =
+    new URLSearchParams(location.search).get('fresh') === '1'
   const {
     settings: userSettings,
     isLoading: isUserSettingsLoading,
@@ -118,6 +120,7 @@ export const FightPage: FC = () => {
     fightId,
     userSettings.inferThreatReduction,
     eventsQueryEnabled,
+    forceFreshEvents,
   )
   const eventsData = eventsQuery.data ?? null
 

@@ -10,7 +10,10 @@ import { renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { fightEventsQueryKey, fightRawEventsQueryKey } from '../api/reports'
-import { getFightEventsClientSide } from '../lib/client-threat-engine'
+import {
+  getFightEventsClientSide,
+  getFightRawEventsClientSide,
+} from '../lib/client-threat-engine'
 import { useFightEvents, useSuspenseFightEvents } from './use-fight-events'
 
 vi.mock('@tanstack/react-query', () => ({
@@ -71,6 +74,21 @@ describe('useFightEvents', () => {
       initialAurasByActor: {},
       reportCode: 'ABC123xyz',
     })
+    vi.mocked(getFightRawEventsClientSide).mockReset()
+    vi.mocked(getFightRawEventsClientSide).mockResolvedValue({
+      events: [],
+      metadata: {
+        configVersion: 'test',
+        events: [],
+        fightId: 12,
+        fightName: 'Patchwerk',
+        gameVersion: 2,
+        initialAurasByActor: {},
+        nextPageTimestamp: null,
+        reportCode: 'ABC123xyz',
+      },
+      pageCount: 1,
+    })
     vi.mocked(fightEventsQueryKey).mockClear()
     vi.mocked(fightRawEventsQueryKey).mockClear()
     vi.mocked(useQueryClient).mockClear()
@@ -117,8 +135,29 @@ describe('useFightEvents', () => {
     renderHook(() => useFightEvents('ABC123xyz', 12, false, true))
     renderHook(() => useFightEvents('ABC123xyz', 12, true, true))
 
-    expect(fightEventsQueryKey).toHaveBeenCalledWith('ABC123xyz', 12, false)
-    expect(fightEventsQueryKey).toHaveBeenCalledWith('ABC123xyz', 12, true)
+    expect(fightEventsQueryKey).toHaveBeenCalledWith(
+      'ABC123xyz',
+      12,
+      false,
+      false,
+    )
+    expect(fightEventsQueryKey).toHaveBeenCalledWith(
+      'ABC123xyz',
+      12,
+      true,
+      false,
+    )
+  })
+
+  it('passes forceFresh through query key generation', () => {
+    renderHook(() => useFightEvents('ABC123xyz', 12, true, true, true))
+
+    expect(fightEventsQueryKey).toHaveBeenCalledWith(
+      'ABC123xyz',
+      12,
+      true,
+      true,
+    )
   })
 
   it('uses suspense query wiring for suspense consumers', () => {
@@ -171,6 +210,28 @@ describe('useFightEvents', () => {
       2,
       expect.objectContaining({
         inferThreatReduction: true,
+        rawEventsData: expect.objectContaining({
+          pageCount: 1,
+        }),
+      }),
+    )
+  })
+
+  it('bypasses react-query raw events cache when forceFresh is enabled', async () => {
+    renderHook(() => useFightEvents('ABC123xyz', 12, false, true, true))
+
+    const queryCall = vi.mocked(useQuery).mock.calls[0]?.[0]
+    expect(queryCall).toBeDefined()
+
+    await queryCall?.queryFn({
+      signal: new AbortController().signal,
+    })
+
+    expect(fightRawEventsQueryKey).not.toHaveBeenCalled()
+    expect(getFightRawEventsClientSide).toHaveBeenCalledTimes(1)
+    expect(getFightEventsClientSide).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inferThreatReduction: false,
         rawEventsData: expect.objectContaining({
           pageCount: 1,
         }),

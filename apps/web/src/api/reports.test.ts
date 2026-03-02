@@ -47,6 +47,7 @@ describe('reports api helpers', () => {
       12,
       configCacheVersion,
       true,
+      false,
     ])
   })
 

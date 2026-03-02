@@ -164,10 +164,12 @@ export const fightEventsQueryKey = (
   reportId: string,
   fightId: number,
   inferThreatReduction: boolean,
-): readonly ['fight-events', string, number, string, boolean] => [
+  forceFresh = false,
+): readonly ['fight-events', string, number, string, boolean, boolean] => [
   'fight-events',
   reportId,
   fightId,
   configCacheVersion,
   inferThreatReduction,
+  forceFresh,
 ]
