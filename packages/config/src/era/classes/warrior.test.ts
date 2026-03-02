@@ -530,7 +530,6 @@ describe('era warrior config', () => {
 
         expect(result.spellModifier).toEqual({
           type: 'spell',
-          value: 0,
           bonus: 43,
         })
         expect(result.value).toBe(43)
@@ -551,7 +550,6 @@ describe('era warrior config', () => {
 
         expect(result.spellModifier).toEqual({
           type: 'spell',
-          value: 0,
           bonus: 43,
         })
         expect(result.value).toBe(43)
@@ -586,7 +584,6 @@ describe('era warrior config', () => {
               targetInstance: 0,
               operator: 'set',
               amount: 500,
-              total: 500,
             },
           ],
         })

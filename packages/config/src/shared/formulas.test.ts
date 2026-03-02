@@ -256,7 +256,6 @@ describe('formulas', () => {
       expect(result.value).toBe(120)
       expect(result.spellModifier).toEqual({
         type: 'spell',
-        value: 0,
         bonus: 120,
       })
     })
@@ -314,7 +313,6 @@ describe('formulas', () => {
 
       expect(applyResult.spellModifier).toEqual({
         type: 'spell',
-        value: 0,
         bonus: 120,
       })
       expect(refreshResult.value).toBe(120)

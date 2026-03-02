@@ -337,7 +337,7 @@ export function threatOnDebuff(value: number): FormulaFn {
       return undefined
     }
 
-    const spellModifier = createSpellModifier({ modifier: 0, bonus: value })
+    const spellModifier = createSpellModifier({ modifier: 1, bonus: value })
 
     return {
       value,
@@ -358,7 +358,7 @@ export function threatOnDebuffOrDamage(value: number): FormulaFn {
       ctx.event.type === 'refreshdebuff' ||
       ctx.event.type === 'applydebuffstack'
     ) {
-      const spellModifier = createSpellModifier({ modifier: 0, bonus: value })
+      const spellModifier = createSpellModifier({ modifier: 1, bonus: value })
 
       return {
         value,

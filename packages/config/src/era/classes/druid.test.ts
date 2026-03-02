@@ -165,7 +165,6 @@ describe('Druid Config', () => {
               targetInstance: 0,
               operator: 'set',
               amount: 500,
-              total: 500,
             },
           ],
         })
@@ -215,7 +214,6 @@ describe('Druid Config', () => {
 
         expect(result.spellModifier).toEqual({
           type: 'spell',
-          value: 0,
           bonus: 108,
         })
         expect(result.value).toBe(108)

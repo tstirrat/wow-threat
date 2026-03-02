@@ -43,7 +43,7 @@ T         | Spell                          | Amount  | Spell Mod      | Note    
 00:04.747 | Melee (damage)                 | 267.00  | -              | -                                   | 399.16  | 399.16    | 3941.57   | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
 00:05.079 | Heroic Strike (damage)         | 998.00  | +173.00        | -                                   | 1750.64 | 1750.64   | 5692.21   | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
 00:05.207 | Razorhide (damage)             | 14.00   | -              | -                                   | 20.93   | 20.93     | 5713.14   | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
-00:06.110 | Gift of Arthas (applydebuff)   | 0.00    | x0.00 + 90.00  | -                                   | 134.55  | 134.55    | 5847.69   | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
+00:06.110 | Gift of Arthas (applydebuff)   | 0.00    | +90.00         | -                                   | 134.55  | 134.55    | 5847.69   | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
 00:06.110 | Razorhide (damage)             | 14.00   | -              | -                                   | 20.93   | 20.93     | 5868.62   | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
 00:06.181 | Hateful Strike (damage)        | 7018.00 | -              | hurtfulStrike(MT=1000, target=2000) | 0.00    | 1000.00   | 6868.62   | -
 00:06.235 | Melee (damage)                 | 316.00  | -              | -                                   | 472.42  | 472.42    | 7341.04   | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
@@ -80,7 +80,7 @@ T         | Spell                          | Amount  | Spell Mod      | Note    
 00:24.841 | Melee (damage)                 | 324.00  | -              | -                                   | 484.38  | 484.38    | 35175.39  | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
 00:25.518 | Revenge (damage)               | 211.00  | +175.00        | -                                   | 577.07  | 577.07    | 35752.46  | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
 00:25.601 | Hateful Strike (damage)        | 8120.00 | -              | hurtfulStrike(MT=1000, target=2000) | 0.00    | 2000.00   | 37752.46  | -
-00:25.621 | Gift of Arthas (applydebuff)   | 0.00    | x0.00 + 90.00  | -                                   | 134.55  | 134.55    | 37887.01  | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
+00:25.621 | Gift of Arthas (applydebuff)   | 0.00    | +90.00         | -                                   | 134.55  | 134.55    | 37887.01  | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
 00:25.621 | Razorhide (damage)             | 14.00   | -              | -                                   | 20.93   | 20.93     | 37907.94  | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
 00:26.314 | Heroic Strike (damage)         | 1309.00 | +173.00        | -                                   | 2215.59 | 2215.59   | 40123.53  | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
 00:26.329 | Melee (damage)                 | 1035.00 | -              | -                                   | 1547.32 | 1547.32   | 41670.85  | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
@@ -130,13 +130,13 @@ T         | Spell                          | Amount  | Spell Mod      | Note    
 00:44.206 | Diamond Flask (heal)           | 9.00    | x0.50          | -                                   | 6.73    | 6.73      | 76638.87  | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
 00:44.324 | Bloodrage (resourcechange)     | 1.00    | x5.00          | -                                   | 5.00    | 5.00      | 76643.87  | -
 00:45.012 | Hateful Strike (damage)        | 5601.00 | -              | hurtfulStrike(MT=1000, target=2000) | 0.00    | 2000.00   | 78643.87  | -
-00:45.035 | Gift of Arthas (applydebuff)   | 0.00    | x0.00 + 90.00  | -                                   | 134.55  | 134.55    | 78778.42  | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
+00:45.035 | Gift of Arthas (applydebuff)   | 0.00    | +90.00         | -                                   | 134.55  | 134.55    | 78778.42  | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
 00:45.035 | Razorhide (damage)             | 12.00   | -              | -                                   | 17.94   | 17.94     | 78796.36  | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
 00:46.510 | Heroic Strike (damage)         | 538.00  | +173.00        | -                                   | 1062.94 | 1062.95   | 79859.31  | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
 00:47.255 | Bloodthirst (damage)           | 1952.00 | -              | -                                   | 2918.24 | 2918.24   | 82777.55  | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
 00:47.320 | Bloodrage (resourcechange)     | 1.00    | x5.00          | -                                   | 5.00    | 5.00      | 82782.55  | -
 00:47.420 | Hateful Strike (damage)        | 5817.00 | -              | hurtfulStrike(MT=1000, target=2000) | 0.00    | 2000.00   | 84782.55  | -
-00:47.421 | Gift of Arthas (refreshdebuff) | 0.00    | x0.00 + 90.00  | -                                   | 134.55  | 134.55    | 84917.10  | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
+00:47.421 | Gift of Arthas (refreshdebuff) | 0.00    | +90.00         | -                                   | 134.55  | 134.55    | 84917.10  | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
 00:47.422 | Razorhide (damage)             | 12.00   | -              | -                                   | 17.94   | 17.94     | 84935.04  | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
 00:47.962 | Melee (damage)                 | 813.00  | -              | -                                   | 1215.43 | 1215.43   | 86150.47  | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15
 00:47.963 | Thunderfury (damage)           | 297.00  | x0.50 + 63.00  | -                                   | 316.19  | 316.19    | 86466.67  | Defensive Stance (stance) x1.30, Defiance (Rank 3) (talent) x1.15

@@ -95,7 +95,6 @@ describe('Warlock Config', () => {
 
       expect(debuffResult?.spellModifier).toEqual({
         type: 'spell',
-        value: 0,
         bonus: 120,
       })
       expect(debuffResult?.value).toBe(120)
@@ -122,7 +121,6 @@ describe('Warlock Config', () => {
 
       expect(debuffResult?.spellModifier).toEqual({
         type: 'spell',
-        value: 0,
         bonus: 60,
       })
       expect(debuffResult?.value).toBe(60)

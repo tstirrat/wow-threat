@@ -10,15 +10,15 @@ T         | Spell                          | Amount  | Spell Mod      | Note    
 00:03.122 | Melee (damage)                 | 212.00  | -              | -                                 | 316.94  | 316.94    | 816.94    | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:03.779 | Bloodthirst (damage)           | 1550.00 | -              | -                                 | 2317.25 | 2317.25   | 3134.19   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:03.804 | Melee (damage)                 | 382.00  | -              | -                                 | 571.09  | 571.09    | 3705.28   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
-00:03.804 | Thunderfury (applydebuff)      | 0.00    | x0.00 + 90.00  | -                                 | 134.55  | 134.55    | 3839.83   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:03.804 | Thunderfury (applydebuff)      | 0.00    | +90.00         | -                                 | 134.55  | 134.55    | 3839.83   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:03.804 | Thunderfury (damage)           | 297.00  | -              | -                                 | 444.01  | 444.02    | 4283.85   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
-00:03.805 | Thunderfury (applydebuff)      | 0.00    | x0.00 + 145.00 | -                                 | 216.77  | 216.77    | 4500.62   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:03.805 | Thunderfury (applydebuff)      | 0.00    | +145.00        | -                                 | 216.77  | 216.77    | 4500.62   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:04.295 | Razorhide (damage)             | 14.00   | -              | -                                 | 20.93   | 20.93     | 4521.55   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:04.747 | Melee (damage)                 | 267.00  | -              | -                                 | 399.16  | 399.16    | 4920.72   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:04.973 | Hateful Strike (damage)        | 0.00    | x0.00 + 500.00 | hatefulStrike(target+nearbyMelee) | 500.00  | 500.00    | 5420.72   | -
 00:05.079 | Heroic Strike (damage)         | 998.00  | +175.00        | -                                 | 1753.63 | 1753.64   | 7174.35   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:05.207 | Razorhide (damage)             | 14.00   | -              | -                                 | 20.93   | 20.93     | 7195.28   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
-00:06.110 | Gift of Arthas (applydebuff)   | 0.00    | x0.00 + 90.00  | -                                 | 134.55  | 134.55    | 7329.83   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:06.110 | Gift of Arthas (applydebuff)   | 0.00    | +90.00         | -                                 | 134.55  | 134.55    | 7329.83   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:06.110 | Razorhide (damage)             | 14.00   | -              | -                                 | 20.93   | 20.93     | 7350.76   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:06.181 | Hateful Strike (damage)        | 7018.00 | x0.00 + 500.00 | hatefulStrike(target+nearbyMelee) | 500.00  | 500.00    | 7850.76   | -
 00:06.235 | Melee (damage)                 | 316.00  | -              | -                                 | 472.42  | 472.42    | 8323.18   | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
@@ -46,9 +46,9 @@ T         | Spell                          | Amount  | Spell Mod      | Note    
 00:15.894 | Hateful Strike (damage)        | 7539.00 | x0.00 + 500.00 | hatefulStrike(target+nearbyMelee) | 500.00  | 500.00    | 24902.11  | -
 00:16.299 | Melee (damage)                 | 794.00  | -              | -                                 | 1187.03 | 1187.03   | 26089.14  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:16.381 | Heroic Strike (damage)         | 687.00  | +175.00        | -                                 | 1288.69 | 1288.69   | 27377.83  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
-00:16.382 | Thunderfury (applydebuff)      | 0.00    | x0.00 + 90.00  | -                                 | 134.55  | 134.55    | 27512.38  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:16.382 | Thunderfury (applydebuff)      | 0.00    | +90.00         | -                                 | 134.55  | 134.55    | 27512.38  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:16.382 | Thunderfury (damage)           | 446.00  | -              | -                                 | 666.77  | 666.77    | 28179.15  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
-00:16.382 | Thunderfury (applydebuff)      | 0.00    | x0.00 + 145.00 | -                                 | 216.77  | 216.78    | 28395.93  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:16.382 | Thunderfury (applydebuff)      | 0.00    | +145.00        | -                                 | 216.77  | 216.78    | 28395.93  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:16.920 | Bloodthirst (damage)           | 1292.00 | -              | -                                 | 1931.54 | 1931.54   | 30327.47  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:17.017 | Hateful Strike (damage)        | 0.00    | x0.00 + 500.00 | hatefulStrike(target+nearbyMelee) | 500.00  | 500.00    | 30827.47  | -
 00:17.643 | Heroic Strike (damage)         | 728.00  | +175.00        | -                                 | 1349.98 | 1349.99   | 32177.45  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
@@ -61,9 +61,9 @@ T         | Spell                          | Amount  | Spell Mod      | Note    
 00:20.725 | Hateful Strike (damage)        | 0.00    | x0.00 + 500.00 | hatefulStrike(target+nearbyMelee) | 500.00  | 500.00    | 37194.44  | -
 00:21.019 | Melee (damage)                 | 349.00  | -              | -                                 | 521.75  | 521.75    | 37716.19  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:21.350 | Heroic Strike (damage)         | 707.00  | +175.00        | -                                 | 1318.59 | 1318.59   | 39034.78  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
-00:21.350 | Thunderfury (applydebuff)      | 0.00    | x0.00 + 90.00  | -                                 | 134.55  | 134.55    | 39169.33  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:21.350 | Thunderfury (applydebuff)      | 0.00    | +90.00         | -                                 | 134.55  | 134.55    | 39169.33  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:21.350 | Thunderfury (damage)           | 297.00  | -              | -                                 | 444.01  | 444.01    | 39613.35  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
-00:21.351 | Thunderfury (applydebuff)      | 0.00    | x0.00 + 145.00 | -                                 | 216.77  | 216.78    | 39830.12  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:21.351 | Thunderfury (applydebuff)      | 0.00    | +145.00        | -                                 | 216.77  | 216.78    | 39830.12  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:21.964 | Hateful Strike (damage)        | 7771.00 | x0.00 + 500.00 | hatefulStrike(target+nearbyMelee) | 500.00  | 500.00    | 40330.12  | -
 00:21.965 | Razorhide (damage)             | 15.00   | -              | -                                 | 22.42   | 22.43     | 40352.55  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:22.933 | Melee (damage)                 | 356.00  | -              | -                                 | 532.22  | 532.22    | 40884.77  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
@@ -73,7 +73,7 @@ T         | Spell                          | Amount  | Spell Mod      | Note    
 00:24.841 | Melee (damage)                 | 324.00  | -              | -                                 | 484.38  | 484.38    | 43636.91  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:25.518 | Revenge (damage)               | 211.00  | x2.25 + 270.00 | -                                 | 1113.40 | 1113.40   | 44750.31  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:25.601 | Hateful Strike (damage)        | 8120.00 | x0.00 + 500.00 | hatefulStrike(target+nearbyMelee) | 500.00  | 500.00    | 45250.31  | -
-00:25.621 | Gift of Arthas (applydebuff)   | 0.00    | x0.00 + 90.00  | -                                 | 134.55  | 134.55    | 45384.86  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:25.621 | Gift of Arthas (applydebuff)   | 0.00    | +90.00         | -                                 | 134.55  | 134.55    | 45384.86  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:25.621 | Razorhide (damage)             | 14.00   | -              | -                                 | 20.93   | 20.93     | 45405.79  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:26.314 | Heroic Strike (damage)         | 1309.00 | +175.00        | -                                 | 2218.58 | 2218.58   | 47624.37  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:26.329 | Melee (damage)                 | 1035.00 | -              | -                                 | 1547.32 | 1547.32   | 49171.69  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
@@ -99,9 +99,9 @@ T         | Spell                          | Amount  | Spell Mod      | Note    
 00:34.084 | Hateful Strike (damage)        | 6406.00 | x0.00 + 500.00 | hatefulStrike(target+nearbyMelee) | 500.00  | 500.00    | 64064.34  | -
 00:34.197 | Diamond Flask (heal)           | 9.00    | x0.50          | -                                 | 6.73    | 6.73      | 64071.07  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:34.630 | Heroic Strike (damage)         | 592.00  | +175.00        | -                                 | 1146.66 | 1146.67   | 65217.73  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
-00:34.631 | Thunderfury (applydebuff)      | 0.00    | x0.00 + 90.00  | -                                 | 134.55  | 134.55    | 65352.28  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:34.631 | Thunderfury (applydebuff)      | 0.00    | +90.00         | -                                 | 134.55  | 134.55    | 65352.28  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:34.631 | Thunderfury (damage)           | 297.00  | -              | -                                 | 444.01  | 444.02    | 65796.30  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
-00:34.631 | Thunderfury (applydebuff)      | 0.00    | x0.00 + 145.00 | -                                 | 216.77  | 216.77    | 66013.07  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:34.631 | Thunderfury (applydebuff)      | 0.00    | +145.00        | -                                 | 216.77  | 216.77    | 66013.07  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:35.245 | Bloodthirst (damage)           | 976.00  | -              | -                                 | 1459.12 | 1459.12   | 67472.19  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:35.312 | Hateful Strike (damage)        | 4992.00 | x0.00 + 500.00 | hatefulStrike(target+nearbyMelee) | 500.00  | 500.00    | 67972.19  | -
 00:35.313 | Razorhide (damage)             | 12.00   | -              | -                                 | 17.94   | 17.94     | 67990.13  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
@@ -126,9 +126,9 @@ T         | Spell                          | Amount  | Spell Mod      | Note    
 00:42.577 | Hateful Strike (damage)        | 5619.00 | x0.00 + 500.00 | hatefulStrike(target+nearbyMelee) | 500.00  | 500.00    | 77141.13  | -
 00:42.591 | Razorhide (damage)             | 12.00   | -              | -                                 | 17.94   | 17.94     | 77159.07  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:42.673 | Heroic Strike (damage)         | 1064.00 | +175.00        | -                                 | 1852.30 | 1852.30   | 79011.37  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
-00:42.674 | Thunderfury (applydebuff)      | 0.00    | x0.00 + 90.00  | -                                 | 134.55  | 134.55    | 79145.92  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:42.674 | Thunderfury (applydebuff)      | 0.00    | +90.00         | -                                 | 134.55  | 134.55    | 79145.92  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:42.674 | Thunderfury (damage)           | 297.00  | -              | -                                 | 444.01  | 444.01    | 79589.94  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
-00:42.675 | Thunderfury (applydebuff)      | 0.00    | x0.00 + 145.00 | -                                 | 216.77  | 216.77    | 79806.71  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:42.675 | Thunderfury (applydebuff)      | 0.00    | +145.00        | -                                 | 216.77  | 216.77    | 79806.71  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:42.749 | Revenge (damage)               | 178.00  | x2.25 + 270.00 | -                                 | 1002.40 | 1002.40   | 80809.11  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:43.325 | Bloodrage (resourcechange)     | 1.00    | x5.00          | -                                 | 5.00    | 5.00      | 80814.11  | -
 00:43.797 | Hateful Strike (damage)        | 5586.00 | x0.00 + 500.00 | hatefulStrike(target+nearbyMelee) | 500.00  | 500.00    | 81314.11  | -
@@ -136,19 +136,19 @@ T         | Spell                          | Amount  | Spell Mod      | Note    
 00:44.206 | Diamond Flask (heal)           | 9.00    | x0.50          | -                                 | 6.73    | 6.73      | 82370.33  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:44.324 | Bloodrage (resourcechange)     | 1.00    | x5.00          | -                                 | 5.00    | 5.00      | 82375.33  | -
 00:45.012 | Hateful Strike (damage)        | 5601.00 | x0.00 + 500.00 | hatefulStrike(target+nearbyMelee) | 500.00  | 500.00    | 82875.33  | -
-00:45.035 | Gift of Arthas (applydebuff)   | 0.00    | x0.00 + 90.00  | -                                 | 134.55  | 134.55    | 83009.88  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:45.035 | Gift of Arthas (applydebuff)   | 0.00    | +90.00         | -                                 | 134.55  | 134.55    | 83009.88  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:45.035 | Razorhide (damage)             | 12.00   | -              | -                                 | 17.94   | 17.94     | 83027.82  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:46.195 | Hateful Strike (damage)        | 0.00    | x0.00 + 500.00 | hatefulStrike(target+nearbyMelee) | 500.00  | 500.00    | 83527.82  | -
 00:46.510 | Heroic Strike (damage)         | 538.00  | +175.00        | -                                 | 1065.93 | 1065.93   | 84593.75  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:47.255 | Bloodthirst (damage)           | 1952.00 | -              | -                                 | 2918.24 | 2918.24   | 87511.99  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:47.320 | Bloodrage (resourcechange)     | 1.00    | x5.00          | -                                 | 5.00    | 5.00      | 87516.99  | -
 00:47.420 | Hateful Strike (damage)        | 5817.00 | x0.00 + 500.00 | hatefulStrike(target+nearbyMelee) | 500.00  | 500.00    | 88016.99  | -
-00:47.421 | Gift of Arthas (refreshdebuff) | 0.00    | x0.00 + 90.00  | -                                 | 134.55  | 134.55    | 88151.54  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:47.421 | Gift of Arthas (refreshdebuff) | 0.00    | +90.00         | -                                 | 134.55  | 134.55    | 88151.54  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:47.422 | Razorhide (damage)             | 12.00   | -              | -                                 | 17.94   | 17.94     | 88169.48  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:47.962 | Melee (damage)                 | 813.00  | -              | -                                 | 1215.43 | 1215.43   | 89384.92  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
-00:47.963 | Thunderfury (applydebuff)      | 0.00    | x0.00 + 90.00  | -                                 | 134.55  | 134.55    | 89519.47  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:47.963 | Thunderfury (applydebuff)      | 0.00    | +90.00         | -                                 | 134.55  | 134.55    | 89519.47  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:47.963 | Thunderfury (damage)           | 297.00  | -              | -                                 | 444.01  | 444.01    | 89963.48  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
-00:47.964 | Thunderfury (applydebuff)      | 0.00    | x0.00 + 145.00 | -                                 | 216.77  | 216.77    | 90180.26  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:47.964 | Thunderfury (applydebuff)      | 0.00    | +145.00        | -                                 | 216.77  | 216.77    | 90180.26  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:47.964 | Bloodthirst (heal)             | 20.00   | x0.50          | -                                 | 14.95   | 14.95     | 90195.21  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:48.616 | Hateful Strike (damage)        | 0.00    | x0.00 + 500.00 | hatefulStrike(target+nearbyMelee) | 500.00  | 500.00    | 90695.21  | -
 00:48.930 | Revenge (damage)               | 170.00  | x2.25 + 270.00 | -                                 | 975.49  | 975.49    | 91670.70  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
@@ -161,15 +161,15 @@ T         | Spell                          | Amount  | Spell Mod      | Note    
 00:52.255 | Hateful Strike (damage)        | 0.00    | x0.00 + 500.00 | hatefulStrike(target+nearbyMelee) | 500.00  | 500.00    | 97056.20  | -
 00:52.576 | Melee (damage)                 | 819.00  | -              | -                                 | 1224.40 | 1224.40   | 98280.61  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:53.250 | Bloodthirst (damage)           | 930.00  | -              | -                                 | 1390.35 | 1390.35   | 99670.96  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
-00:53.251 | Thunderfury (applydebuff)      | 0.00    | x0.00 + 90.00  | -                                 | 134.55  | 134.55    | 99805.51  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:53.251 | Thunderfury (applydebuff)      | 0.00    | +90.00         | -                                 | 134.55  | 134.55    | 99805.51  | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:53.251 | Thunderfury (damage)           | 297.00  | -              | -                                 | 444.01  | 444.01    | 100249.52 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
-00:53.252 | Thunderfury (applydebuff)      | 0.00    | x0.00 + 145.00 | -                                 | 216.77  | 216.77    | 100466.30 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:53.252 | Thunderfury (applydebuff)      | 0.00    | +145.00        | -                                 | 216.77  | 216.77    | 100466.30 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:53.490 | Hateful Strike (damage)        | 6067.00 | x0.00 + 500.00 | hatefulStrike(target+nearbyMelee) | 500.00  | 500.00    | 100966.30 | -
 00:53.506 | Razorhide (damage)             | 12.00   | -              | -                                 | 17.94   | 17.94     | 100984.24 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:53.871 | Melee (damage)                 | 751.00  | -              | -                                 | 1122.74 | 1122.74   | 102106.98 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
-00:53.871 | Thunderfury (refreshdebuff)    | 0.00    | x0.00 + 90.00  | -                                 | 134.55  | 134.55    | 102241.53 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:53.871 | Thunderfury (refreshdebuff)    | 0.00    | +90.00         | -                                 | 134.55  | 134.55    | 102241.53 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:53.871 | Thunderfury (damage)           | 445.00  | -              | -                                 | 665.27  | 665.27    | 102906.81 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
-00:53.886 | Thunderfury (refreshdebuff)    | 0.00    | x0.00 + 145.00 | -                                 | 216.77  | 216.77    | 103123.58 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:53.886 | Thunderfury (refreshdebuff)    | 0.00    | +145.00        | -                                 | 216.77  | 216.77    | 103123.58 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:53.903 | Bloodthirst (heal)             | 20.00   | x0.50          | -                                 | 14.95   | 14.95     | 103138.53 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:54.215 | Diamond Flask (heal)           | 9.00    | x0.50          | -                                 | 6.73    | 6.73      | 103145.26 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:54.701 | Hateful Strike (damage)        | 4760.00 | x0.00 + 500.00 | hatefulStrike(target+nearbyMelee) | 500.00  | 500.00    | 103645.26 | -
@@ -183,9 +183,9 @@ T         | Spell                          | Amount  | Spell Mod      | Note    
 00:56.411 | Heroic Strike (damage)         | 1075.00 | +175.00        | -                                 | 1868.75 | 1868.75   | 109505.58 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:56.429 | Bloodthirst (heal)             | 30.00   | x0.50          | -                                 | 22.42   | 22.43     | 109528.01 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:56.784 | Heroic Strike (damage)         | 1156.00 | +175.00        | -                                 | 1989.84 | 1989.85   | 111517.85 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
-00:56.785 | Thunderfury (applydebuff)      | 0.00    | x0.00 + 90.00  | -                                 | 134.55  | 134.55    | 111652.40 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:56.785 | Thunderfury (applydebuff)      | 0.00    | +90.00         | -                                 | 134.55  | 134.55    | 111652.40 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:56.785 | Thunderfury (damage)           | 297.00  | -              | -                                 | 444.01  | 444.01    | 112096.42 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
-00:56.786 | Thunderfury (applydebuff)      | 0.00    | x0.00 + 145.00 | -                                 | 216.77  | 216.77    | 112313.19 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
+00:56.786 | Thunderfury (applydebuff)      | 0.00    | +145.00        | -                                 | 216.77  | 216.77    | 112313.19 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:57.115 | Hateful Strike (damage)        | 6202.00 | x0.00 + 500.00 | hatefulStrike(target+nearbyMelee) | 500.00  | 500.00    | 112813.19 | -
 00:58.058 | Heroic Strike (damage)         | 1183.00 | +175.00        | -                                 | 2030.21 | 2030.21   | 114843.40 | Defensive Stance (stance) x1.30, Defiance (Rank 5) (talent) x1.15
 00:58.327 | Hateful Strike (damage)        | 4849.00 | x0.00 + 500.00 | hatefulStrike(target+nearbyMelee) | 500.00  | 500.00    | 115343.40 | -
