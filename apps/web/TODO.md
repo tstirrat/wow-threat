@@ -28,6 +28,7 @@
 - [x] WEB-026: Clear isolate button should be near legend
 - [ ] WEB-027: Toggled players in legend should be visually more prominent
 - [ ] WEB-028: Symbol/icon for healers
-- [ ] WEB-029: Improved skeleton loading states for the chart. Chart controls (checkboxes) can render while the event/chart is loading.
-- [ ] WEB-030: Split out the spell modifier so that we can include spell mods in the table and its clearer on the tooltip
+- [x] WEB-029: Improved skeleton loading states for the chart. Chart controls (checkboxes) can render while the event/chart is loading.
+- [x] WEB-030: Split out the spell modifier so that we can include spell mods in the table and its clearer on the tooltip
 - [x] WEB-031: Increase the page sizes from 5000 back to 10000 now that there's no BE processing?
+- [ ] WEB-032: Perf: batch and stream events to/from the webworker and to the indexdb store to prevent long frames?
