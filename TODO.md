@@ -1,5 +1,22 @@
 # Remaining tasks
 
+## API
+
+- [x] API-001: KV payload compression for cached event/report data
+- [x] API-002: Fix perf regression where /fights/:id takes multiple seconds.
+- [x] API-003: Include spell multiplier in calculation.modifiers for better UI representation, incl bonus threat separately
+- [x] API-004: Remove the totals data in the API response, not used
+- [ ] API-005: Anonymous account cleanup: track per-user `updatedAt` and periodically delete stale anonymous user records (for example older than 60 days).
+
+## Engine
+
+- [x] ENG-001: minmax-salvation: for realism, it should only apply Salv if the current player has less Blessings than the total paladin count.
+- [x] ENG-002: infer-initial-salvation: Apply this same inference for all buffs, not just Salvation. As long as it is performant
+- [x] ENG-003: check that encounter preprocessors work by downloading this Arlokk report https://fresh.warcraftlogs.com/reports/bK8PNcdMQ7GRfgpF?fight=41
+- [ ] ENG-004: Apply Earth Shield threat to the tank, not the caster
+
+## Web
+
 - [x] WEB-001: Boss attacks (melee) should show as red dots on the aggro target
 - [x] WEB-002: Implement exact Time Lapse behavior for spells `23310`, `23311`, `23312` with the legacy target-threat scaling model.
 - [x] WEB-003: Validate and port remaining SoD paladin talent interactions (`Improved Righteous Fury`, `Vengeance`) from upstream.

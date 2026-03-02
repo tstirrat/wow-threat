@@ -1,4 +1,0 @@
-- [x] ENG-001: minmax-salvation: for realism, it should only apply Salv if the current player has less Blessings than the total paladin count.
-- [x] ENG-002: infer-initial-salvation: Apply this same inference for all buffs, not just Salvation. As long as it is performant
-- [x] ENG-003: check that encounter preprocessors work by downloading this Arlokk report https://fresh.warcraftlogs.com/reports/bK8PNcdMQ7GRfgpF?fight=41
-- [ ] ENG-004: Apply Earth Shield threat to the tank, not the caster
