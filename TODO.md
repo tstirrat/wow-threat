@@ -35,22 +35,22 @@
 
 ## Task Index (Open)
 
-| ID      | Package              | Status      | Priority | Size | Title                                                     |
-| ------- | -------------------- | ----------- | -------- | ---- | --------------------------------------------------------- |
-| API-005 | `@wow-threat/api`    | READY       | P1       | M    | Anonymous account cleanup                                 |
-| ENG-004 | `@wow-threat/engine` | READY       | P1       | S    | Apply Earth Shield threat to the tank, not the caster     |
-| WEB-012 | `@wow-threat/web`    | DISCOVERY   | P2       | M    | Add Starred, Guild lists at top                           |
-| WEB-014 | `@wow-threat/web`    | READY       | P2       | S    | Focused player links back to WCL                          |
-| WEB-015 | `@wow-threat/web`    | READY       | P2       | S    | Isolate key toggles between isolated and previous players |
-| WEB-016 | `@wow-threat/web`    | READY       | P2       | S    | Zoom key toggles between no zoom and previous zoom        |
-| WEB-017 | `@wow-threat/web`    | DISCOVERY   | P2       | M    | Fuzzy target selector                                     |
-| WEB-018 | `@wow-threat/web`    | DISCOVERY   | P2       | M    | Fuzzy fight selector                                      |
-| WEB-019 | `@wow-threat/web`    | DISCOVERY   | P0       | M    | Fight event pagination currently blocks the UI thread     |
-| WEB-021 | `@wow-threat/web`    | READY       | P2       | S    | Keyboard shortcut for filter to tanks only                |
-| WEB-024 | `@wow-threat/web`    | READY       | P3       | XS   | Fixate band styling + legend explanation                  |
-| WEB-027 | `@wow-threat/web`    | IN_PROGRESS | P3       | XS   | Make toggled players in legend more prominent             |
-| WEB-028 | `@wow-threat/web`    | READY       | P3       | XS   | Add symbol/icon for healers                               |
-| WEB-032 | `@wow-threat/web`    | DISCOVERY   | P0       | L    | Batch + stream events to worker/IndexedDB to prevent jank |
+| ID      | Package              | Status    | Priority | Size | Title                                                     |
+| ------- | -------------------- | --------- | -------- | ---- | --------------------------------------------------------- |
+| API-005 | `@wow-threat/api`    | READY     | P1       | M    | Anonymous account cleanup                                 |
+| ENG-004 | `@wow-threat/engine` | READY     | P1       | S    | Apply Earth Shield threat to the tank, not the caster     |
+| WEB-012 | `@wow-threat/web`    | DISCOVERY | P2       | M    | Add Starred, Guild lists at top                           |
+| WEB-014 | `@wow-threat/web`    | READY     | P2       | S    | Focused player links back to WCL                          |
+| WEB-015 | `@wow-threat/web`    | READY     | P2       | S    | Isolate key toggles between isolated and previous players |
+| WEB-016 | `@wow-threat/web`    | READY     | P2       | S    | Zoom key toggles between no zoom and previous zoom        |
+| WEB-017 | `@wow-threat/web`    | DISCOVERY | P2       | M    | Fuzzy target selector                                     |
+| WEB-018 | `@wow-threat/web`    | DISCOVERY | P2       | M    | Fuzzy fight selector                                      |
+| WEB-019 | `@wow-threat/web`    | DISCOVERY | P0       | M    | Fight event pagination currently blocks the UI thread     |
+| WEB-021 | `@wow-threat/web`    | READY     | P2       | S    | Keyboard shortcut for filter to tanks only                |
+| WEB-024 | `@wow-threat/web`    | READY     | P3       | XS   | Fixate band styling + legend explanation                  |
+| WEB-027 | `@wow-threat/web`    | IN_REVIEW | P3       | XS   | Make toggled players in legend more prominent             |
+| WEB-028 | `@wow-threat/web`    | READY     | P3       | XS   | Add symbol/icon for healers                               |
+| WEB-032 | `@wow-threat/web`    | DISCOVERY | P0       | L    | Batch + stream events to worker/IndexedDB to prevent jank |
 
 ## Historical Completed IDs
 
@@ -430,7 +430,7 @@ commit_sha: null
 id: WEB-027
 title: Toggled players in legend should be visually more prominent
 package: @wow-threat/web
-status: IN_PROGRESS
+status: IN_REVIEW
 priority: P3
 size: XS
 depends_on: []
@@ -450,8 +450,8 @@ validation:
 branch_name: codex/web-027-legend-prominence
 worktree_path: ../wow-threat-web-027
 publish: auto_push_pr
-pr_url: null
-commit_sha: null
+pr_url: https://github.com/tstirrat/wow-threat/pull/41
+commit_sha: 7ce99ddff58a57d1a188f1cb3338571f8e65d6f2
 ```
 
 ### WEB-028 - Add healer icon/symbol
