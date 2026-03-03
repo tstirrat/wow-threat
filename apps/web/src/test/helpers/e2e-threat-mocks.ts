@@ -472,7 +472,7 @@ const patchwerkEvents: AugmentedEventsResponse = {
         }),
         changes: [],
       },
-      timestamp: 1103200,
+      timestamp: 1102100,
       type: 'applybuff',
     },
     {
@@ -594,7 +594,7 @@ const patchwerkEvents: AugmentedEventsResponse = {
         }),
         changes: [],
       },
-      timestamp: 1106200,
+      timestamp: 1108400,
       type: 'removebuff',
     },
     {
