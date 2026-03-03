@@ -11,10 +11,11 @@ Prepare local changes, keep branch hygiene, and ensure the linked GitHub PR refl
 
 1. Verify git context and branch/worktree state.
 2. Fetch latest `origin/main` and ensure work is on a feature branch.
-3. Commit local changes with Conventional Commits.
-4. Push branch and create or update the PR.
-5. Refresh PR title/body when the branch intent has drifted.
-6. Add visual proof for UI-visible changes.
+3. Check divergence from `origin/main` and back-merge when significantly behind.
+4. Commit local changes with Conventional Commits.
+5. Push branch and create or update the PR.
+6. Refresh PR title/body when the branch intent has drifted.
+7. Add visual proof for UI-visible changes.
 
 ## 1) Verify Context
 
@@ -32,16 +33,43 @@ If in a worktree, still use the current worktree branch from `git branch --show-
 
 ## 2) Fetch Latest Main and Ensure Feature Branch
 
+Always fetch before continuing:
+
+```bash
+git fetch origin --prune
+```
+
 If already on a feature branch, keep it.
 
 If on `main`, detached `HEAD`, or an unnamed branch, create a new feature branch from the latest `origin/main` (worktree-safe):
 
 ```bash
-git fetch origin --prune
 git checkout -b codex/<short-task-slug> origin/main
 ```
 
-## 3) Commit Local Changes
+## 3) Check Mainline Divergence and Back-Merge
+
+Measure how far the branch has drifted from latest `origin/main`:
+
+```bash
+divergence="$(git rev-list --left-right --count origin/main...HEAD)"
+behind="${divergence%% *}"
+ahead="${divergence##* }"
+echo "behind=$behind ahead=$ahead"
+```
+
+Treat divergence as significant when `behind` is greater than or equal to `5` commits by default. You can override this threshold with `PUSH_PR_DIVERGENCE_THRESHOLD`.
+
+```bash
+threshold="${PUSH_PR_DIVERGENCE_THRESHOLD:-5}"
+if [ "$behind" -ge "$threshold" ]; then
+  git merge --no-edit origin/main
+fi
+```
+
+If conflicts occur, resolve them before proceeding. The goal is to keep the PR branch reasonably current with `origin/main` when drift is high.
+
+## 4) Commit Local Changes
 
 1. Inspect pending changes: `git status --short`.
 2. If there are changes, stage them: `git add -A`.
@@ -69,7 +97,7 @@ git commit -m "<type>(<scope>): <summary>" -m "<details and rationale>"
 
 For later commits, keep the message concise unless extra context is needed.
 
-## 4) Push and Create/Update PR
+## 5) Push and Create/Update PR
 
 1. Ensure `gh` auth works: `gh auth status`.
 2. Push with upstream tracking when needed:
@@ -110,7 +138,7 @@ gh pr create --title "feat(web): add tank filter to threat chart" --body-file <t
 
 If a PR exists, push new commits and continue to drift checks.
 
-## 5) Handle Branch Drift
+## 6) Handle Branch Drift
 
 When branch intent changes (for example a `fix` branch becomes a `feat`, scope changes, or implementation focus shifts):
 
@@ -125,7 +153,7 @@ Use:
 gh pr edit <number> --title "<new-title>" --body-file <temp-body-file>
 ```
 
-## 6) Add Visual Evidence for UI Changes
+## 7) Add Visual Evidence for UI Changes
 
 If changes are visually verifiable (UI/layout/styling/interaction):
 
@@ -160,8 +188,9 @@ Preferred markdown format:
 After running this skill, leave the repository in this state:
 
 1. Current branch is a non-`main` feature branch.
-2. Local changes are committed with Conventional Commit messages.
-3. Branch is pushed to origin.
-4. PR exists and points to the current branch state.
-5. PR title/body are up to date with branch intent.
-6. Visual proof is attached in PR description when applicable, without committing image files to the repository.
+2. Branch is back-merged from `origin/main` when significant divergence is detected.
+3. Local changes are committed with Conventional Commit messages.
+4. Branch is pushed to origin.
+5. PR exists and points to the current branch state.
+6. PR title/body are up to date with branch intent.
+7. Visual proof is attached in PR description when applicable, without committing image files to the repository.
