@@ -48,7 +48,6 @@
 | WEB-019 | `@wow-threat/web`    | DISCOVERY   | P0       | M    | Fight event pagination currently blocks the UI thread     |
 | WEB-021 | `@wow-threat/web`    | READY       | P2       | S    | Keyboard shortcut for filter to tanks only                |
 | WEB-027 | `@wow-threat/web`    | READY       | P3       | XS   | Make toggled players in legend more prominent             |
-| WEB-028 | `@wow-threat/web`    | IN_PROGRESS | P3       | XS   | Add symbol/icon for healers                               |
 | WEB-032 | `@wow-threat/web`    | DISCOVERY   | P0       | L    | Batch + stream events to worker/IndexedDB to prevent jank |
 
 ## Historical Completed IDs
@@ -78,6 +77,7 @@
 - WEB-024
 - WEB-025
 - WEB-026
+- WEB-028
 - WEB-029
 - WEB-030
 - WEB-031
@@ -419,36 +419,6 @@ validation:
   - pnpm --filter @wow-threat/web exec playwright test src/pages/fight-page.spec.ts
 branch_name: codex/web-027-legend-prominence
 worktree_path: ../wow-threat-web-027
-publish: auto_push_pr
-pr_url: null
-commit_sha: null
-```
-
-### WEB-028 - Add healer icon/symbol
-
-```yaml
-id: WEB-028
-title: Symbol or icon for healers
-package: @wow-threat/web
-status: IN_PROGRESS
-priority: P3
-size: XS
-depends_on: []
-files_hint:
-  - apps/web/src/components/threat-chart-legend.tsx
-  - apps/web/src/components/threat-chart-tooltip.tsx
-  - apps/web/src/pages/fight-page.spec.ts
-acceptance_criteria:
-  - Healers are represented by a consistent symbol/icon in legend and related UI.
-  - Icon is accessible and visually distinct from tank/DPS indicators.
-  - Existing role labeling behavior remains intact.
-validation:
-  - pnpm --filter @wow-threat/web lint
-  - pnpm --filter @wow-threat/web typecheck
-  - pnpm --filter @wow-threat/web test
-  - pnpm --filter @wow-threat/web exec playwright test src/pages/fight-page.spec.ts
-branch_name: codex/web-028-healer-icon
-worktree_path: ../wow-threat-web-028
 publish: auto_push_pr
 pr_url: null
 commit_sha: null
