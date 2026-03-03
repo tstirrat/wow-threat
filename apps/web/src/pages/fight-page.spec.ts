@@ -2,7 +2,9 @@
  * Playwright coverage for fight page chart and interaction flows.
  */
 import { type Page, expect, test } from '@playwright/test'
+import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import {
   e2eReportId,
@@ -11,20 +13,18 @@ import {
 import { FightPageObject } from '../test/page-objects/fight-page'
 
 const svgFightUrl = `/report/${e2eReportId}/fight/26?renderer=svg`
+const repoRoot = path.resolve(
+  fileURLToPath(new URL('.', import.meta.url)),
+  '../../../..',
+)
+const screenshotPath = path.join(repoRoot, 'output', 'fight-page.png')
 
-async function maybeCaptureFightScreenshot({
-  page,
-  screenshotName,
-}: {
-  page: Page
-  screenshotName: string
-}): Promise<void> {
-  const screenshotDir = process.env.PLAYWRIGHT_SCREENSHOT_DIR
-  if (!screenshotDir) {
+async function maybeCaptureScreenshot(page: Page): Promise<void> {
+  if (!process.env.PLAYWRIGHT_SCREENSHOT) {
     return
   }
 
-  const screenshotPath = path.join(screenshotDir, `${screenshotName}.png`)
+  await mkdir(path.dirname(screenshotPath), { recursive: true })
   await page.screenshot({
     path: screenshotPath,
     fullPage: true,
@@ -79,10 +79,7 @@ test.describe('fight page', () => {
     await expect(fightPage.chart.legendFocus('Aegistank')).toBeVisible()
     await expect(page.getByText('Fixate/Taunt')).toBeVisible()
     await expect(fightPage.chart.legendToggle('Wolfie')).toHaveCount(0)
-    await maybeCaptureFightScreenshot({
-      page,
-      screenshotName: 'fight-page-fixate-bands',
-    })
+    await maybeCaptureScreenshot(page)
 
     await expect(fightPage.chart.showEnergizeEventsCheckbox()).not.toBeChecked()
     await expect(fightPage.chart.showFixateBandsCheckbox()).toBeChecked()

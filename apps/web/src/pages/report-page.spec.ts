@@ -1,13 +1,34 @@
 /**
  * Playwright coverage for report page critical flows.
  */
-import { expect, test } from '@playwright/test'
+import { type Page, expect, test } from '@playwright/test'
+import { mkdir } from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import {
   e2eReportId,
   setupThreatApiMocks,
 } from '../test/helpers/e2e-threat-mocks'
 import { FightQuickSwitcherObject } from '../test/page-objects/components/fight-quick-switcher-object'
+
+const repoRoot = path.resolve(
+  fileURLToPath(new URL('.', import.meta.url)),
+  '../../../..',
+)
+const screenshotPath = path.join(repoRoot, 'output', 'report-page.png')
+
+async function maybeCaptureScreenshot(page: Page): Promise<void> {
+  if (!process.env.PLAYWRIGHT_SCREENSHOT) {
+    return
+  }
+
+  await mkdir(path.dirname(screenshotPath), { recursive: true })
+  await page.screenshot({
+    path: screenshotPath,
+    fullPage: true,
+  })
+}
 
 test.describe('report page', () => {
   test.beforeEach(async ({ page }) => {
@@ -27,6 +48,7 @@ test.describe('report page', () => {
         'Choose a fight from the quick switcher to view the chart and legend.',
       ),
     ).toBeVisible()
+    await maybeCaptureScreenshot(page)
   })
 
   test('shows only boss kills in quick switch order', async ({ page }) => {

@@ -90,15 +90,19 @@ gh pr view --json number,title,body,url,headRefName,baseRefName
 
 ```markdown
 ## Description
+
 <what changed>
 
 ## Validation
+
 - <test or check>
 
 ## Risks
+
 - <known risk or `None`>
 
 ## Visuals
+
 - <GitHub attachment URL or `N/A`>
 ```
 
@@ -129,23 +133,19 @@ gh pr edit <number> --title "<new-title>" --body-file <temp-body-file>
 
 If changes are visually verifiable (UI/layout/styling/interaction):
 
-1. Resolve the correct local dev server for this change:
-   - Prefer a server started in the current session for the current worktree/branch.
-   - If multiple local dev servers exist, choose the one associated with the files changed in this task.
-   - If no suitable server is running, start the relevant local dev server from this worktree and use its reported `Local` URL.
-   - If server ownership is ambiguous, start a fresh server in the current worktree and use that URL for screenshots.
-2. Invoke `$playwright` against that selected local URL to capture at least one representative screenshot.
-3. Save screenshot(s) outside the repo, for example in a temp directory:
+1. Use the page specs in `apps/web/src/pages/*.spec.ts` for screenshots.
+2. Each page spec should include `maybeCaptureScreenshot(page)` that:
+   - Returns immediately unless `process.env.PLAYWRIGHT_SCREENSHOT` is set.
+   - Writes to `<repoRoot>/output/<page>.png` (`landing-page.png`, `report-page.png`, `fight-page.png`).
+3. Ensure each page spec uses appropriate mocks so the captured page is a valid state for PR context.
+4. Run the specific page spec with screenshots enabled, for example:
 
 ```bash
-tmp_dir="$(mktemp -d)"
-# store screenshots under "$tmp_dir"
+PLAYWRIGHT_SCREENSHOT=1 pnpm --filter @wow-threat/web exec playwright test src/pages/landing-page.spec.ts
 ```
 
-4. Never add screenshot files to git or commit them to the branch.
-5. Upload screenshot(s) to GitHub as PR attachments (for example by editing the PR description in GitHub and attaching the local temp files so GitHub returns `github.com/user-attachments/...` URLs).
-6. Insert those GitHub attachment links in the PR body `## Visuals` section.
-7. Remove local temp screenshots after the PR body is updated.
+5. Use the generated `<repoRoot>/output/<page>.png` image in the PR `## Visuals` section (upload as a GitHub attachment and include the resulting URL).
+6. Leave screenshot files in `output/`; this path is gitignored and images are expected to be overwritten on future runs.
 
 Preferred markdown format:
 
@@ -164,4 +164,4 @@ After running this skill, leave the repository in this state:
 3. Branch is pushed to origin.
 4. PR exists and points to the current branch state.
 5. PR title/body are up to date with branch intent.
-6. Visual proof is attached in PR description when applicable, without committing image files to the repository.
+6. Visual proof is attached in PR description when applicable, sourced from `<repoRoot>/output/<page>.png` screenshots without committing image files.
