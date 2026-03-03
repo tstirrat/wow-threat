@@ -71,7 +71,20 @@ describe('threat-chart-visuals', () => {
     expect(markArea).toEqual({
       silent: true,
       itemStyle: {
-        color: fixateMarkAreaColor,
+        color: {
+          type: 'linear',
+          x: 0,
+          y: 0,
+          x2: 1,
+          y2: 0,
+          colorStops: [
+            { offset: 0, color: 'rgba(249, 115, 22, 0.78)' },
+            { offset: 0.004, color: 'rgba(249, 115, 22, 0.78)' },
+            { offset: 0.004, color: 'rgba(255, 212, 173, 0.42)' },
+            { offset: 1, color: 'rgba(255, 212, 173, 0.42)' },
+          ],
+          global: false,
+        },
       },
       data: [
         [{ xAxis: 25 }, { xAxis: 75 }],

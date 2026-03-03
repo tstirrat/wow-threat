@@ -92,9 +92,9 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
           </div>
         </CardAction>
       </CardHeader>
-      <CardContent className="min-h-0 flex-1 p-0">
+      <CardContent className="min-h-0 flex flex-1 flex-col p-0">
         <TooltipProvider delayDuration={0}>
-          <ScrollArea className="h-full">
+          <ScrollArea className="min-h-0 flex-1">
             <ul className="py-1">
               {series.map((item) => {
                 const isVisible = isActorVisible(item.actorId)
@@ -217,6 +217,19 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
             </ul>
           </ScrollArea>
         </TooltipProvider>
+        <div className="border-t border-border px-2 py-1 text-[11px] text-muted-foreground">
+          <span className="inline-flex items-center gap-2">
+            <span
+              aria-hidden="true"
+              className="h-3 w-5 rounded-[2px]"
+              style={{
+                background:
+                  'linear-gradient(90deg, rgba(249, 115, 22, 0.9) 0%, rgba(249, 115, 22, 0.9) 12%, rgba(251, 146, 60, 0.22) 12%, rgba(251, 146, 60, 0.22) 100%)',
+              }}
+            />
+            <span>Fixate/Taunt</span>
+          </span>
+        </div>
       </CardContent>
     </Card>
   )

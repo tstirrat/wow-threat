@@ -47,7 +47,6 @@
 | WEB-018 | `@wow-threat/web`    | DISCOVERY   | P2       | M    | Fuzzy fight selector                                      |
 | WEB-019 | `@wow-threat/web`    | DISCOVERY   | P0       | M    | Fight event pagination currently blocks the UI thread     |
 | WEB-021 | `@wow-threat/web`    | READY       | P2       | S    | Keyboard shortcut for filter to tanks only                |
-| WEB-024 | `@wow-threat/web`    | READY       | P3       | XS   | Fixate band styling + legend explanation                  |
 | WEB-027 | `@wow-threat/web`    | READY       | P3       | XS   | Make toggled players in legend more prominent             |
 | WEB-028 | `@wow-threat/web`    | IN_PROGRESS | P3       | XS   | Add symbol/icon for healers                               |
 | WEB-032 | `@wow-threat/web`    | DISCOVERY   | P0       | L    | Batch + stream events to worker/IndexedDB to prevent jank |
@@ -76,6 +75,7 @@
 - WEB-020
 - WEB-022
 - WEB-023
+- WEB-024
 - WEB-025
 - WEB-026
 - WEB-029
@@ -389,36 +389,6 @@ validation:
   - pnpm --filter @wow-threat/web exec playwright test src/pages/fight-page.spec.ts
 branch_name: codex/web-021-keyboard-filter-cycle
 worktree_path: ../wow-threat-web-021
-publish: auto_push_pr
-pr_url: null
-commit_sha: null
-```
-
-### WEB-024 - Fixate band styling and legend explanation
-
-```yaml
-id: WEB-024
-title: Fixate band should have orange left border and legend explanation
-package: @wow-threat/web
-status: READY
-priority: P3
-size: XS
-depends_on: []
-files_hint:
-  - apps/web/src/components/threat-chart.tsx
-  - apps/web/src/components/threat-chart-legend.tsx
-  - apps/web/src/pages/fight-page.spec.ts
-acceptance_criteria:
-  - Fixate band has distinct orange-toned background and left-edge orange border.
-  - Legend clearly explains fixate band visual meaning.
-  - Styling remains readable in current theme and does not obscure data points.
-validation:
-  - pnpm --filter @wow-threat/web lint
-  - pnpm --filter @wow-threat/web typecheck
-  - pnpm --filter @wow-threat/web test
-  - pnpm --filter @wow-threat/web exec playwright test src/pages/fight-page.spec.ts
-branch_name: codex/web-024-fixate-band-legend
-worktree_path: ../wow-threat-web-024
 publish: auto_push_pr
 pr_url: null
 commit_sha: null

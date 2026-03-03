@@ -2,6 +2,7 @@
  * Shared mocked report/fight/events fixtures for Playwright page specs.
  */
 import type { Page } from '@playwright/test'
+import type { ThreatEffect } from '@wow-threat/shared'
 
 import type {
   AugmentedEventsResponse,
@@ -16,6 +17,7 @@ import type {
 export const e2eReportId = 'f9yPamzBxQqhGndZ'
 export const e2eReportTitle = 'Threat Regression Raid'
 export const e2eValidFreshReportUrl = `https://fresh.warcraftlogs.com/reports/${e2eReportId}?view=rankings&fight=26`
+const fixateSpellId = 6795
 
 const reportActors: ReportActorSummary[] = [
   {
@@ -137,6 +139,12 @@ export const e2eReportResponse: ReportResponse = {
       gameID: 75,
       icon: 'inv_weapon_bow_07',
       name: 'Auto Shot',
+      type: 'ability',
+    },
+    {
+      gameID: fixateSpellId,
+      icon: 'ability_physical_taunt',
+      name: 'Growl',
       type: 'ability',
     },
     {
@@ -327,10 +335,12 @@ function calculationFor({
   amount,
   baseThreat,
   modifiedThreat,
+  effects,
 }: {
   amount: number
   baseThreat: number
   modifiedThreat: number
+  effects?: ThreatEffect[]
 }): NonNullable<
   AugmentedEventsResponse['events'][number]['threat']
 >['calculation'] {
@@ -340,6 +350,29 @@ function calculationFor({
     isSplit: false,
     modifiedThreat,
     modifiers: [],
+    ...(effects ? { effects } : {}),
+  }
+}
+
+function createFixateStateEffect({
+  actorId,
+  phase,
+  targetId,
+}: {
+  actorId: number
+  phase: 'start' | 'end'
+  targetId: number
+}): ThreatEffect {
+  return {
+    type: 'state',
+    state: {
+      kind: 'fixate',
+      phase,
+      spellId: fixateSpellId,
+      actorId,
+      targetId,
+      targetInstance: 0,
+    },
   }
 }
 
@@ -420,6 +453,28 @@ const patchwerkEvents: AugmentedEventsResponse = {
       },
       timestamp: 1103000,
       type: 'damage',
+    },
+    {
+      abilityGameID: fixateSpellId,
+      sourceID: 1,
+      targetID: 100,
+      threat: {
+        calculation: calculationFor({
+          amount: 0,
+          baseThreat: 0,
+          modifiedThreat: 0,
+          effects: [
+            createFixateStateEffect({
+              actorId: 1,
+              phase: 'start',
+              targetId: 100,
+            }),
+          ],
+        }),
+        changes: [],
+      },
+      timestamp: 1103100,
+      type: 'applydebuff',
     },
     {
       abilityGameID: 25258,
@@ -520,6 +575,28 @@ const patchwerkEvents: AugmentedEventsResponse = {
       },
       timestamp: 1106000,
       type: 'damage',
+    },
+    {
+      abilityGameID: fixateSpellId,
+      sourceID: 1,
+      targetID: 100,
+      threat: {
+        calculation: calculationFor({
+          amount: 0,
+          baseThreat: 0,
+          modifiedThreat: 0,
+          effects: [
+            createFixateStateEffect({
+              actorId: 1,
+              phase: 'end',
+              targetId: 100,
+            }),
+          ],
+        }),
+        changes: [],
+      },
+      timestamp: 1106100,
+      type: 'removedebuff',
     },
     {
       abilityGameID: 2054,

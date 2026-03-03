@@ -11,13 +11,39 @@ export const stateColorByKind = {
   aggroLoss: '#ff0',
 } as const
 
+type LinearGradientColor = {
+  type: 'linear'
+  x: number
+  y: number
+  x2: number
+  y2: number
+  colorStops: Array<{
+    offset: number
+    color: string
+  }>
+  global: boolean
+}
+
 const stateLabelByKind = {
   fixate: 'fixate',
   invulnerable: 'invulnerability',
   aggroLoss: 'aggro loss',
 } as const
 
-export const fixateMarkAreaColor = 'rgba(255, 173, 177, 0.4)'
+export const fixateMarkAreaColor: LinearGradientColor = {
+  type: 'linear',
+  x: 0,
+  y: 0,
+  x2: 1,
+  y2: 0,
+  colorStops: [
+    { offset: 0, color: 'rgba(249, 115, 22, 0.78)' },
+    { offset: 0.004, color: 'rgba(249, 115, 22, 0.78)' },
+    { offset: 0.004, color: 'rgba(255, 212, 173, 0.42)' },
+    { offset: 1, color: 'rgba(255, 212, 173, 0.42)' },
+  ],
+  global: false,
+}
 export const invulnerabilityMarkAreaColor = 'rgba(15, 255, 15, 0.14)'
 
 function buildFixateMarkAreaData(
