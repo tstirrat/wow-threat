@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "firebase deploy",
+    "upload:github-image": "node scripts/upload-github-user-attachment.mjs",
     "fmt": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
