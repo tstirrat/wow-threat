@@ -1,0 +1,4 @@
+interface:
+  display_name: "Push PR"
+  short_description: "Commit changes and create or update GitHub PRs safely"
+  default_prompt: "Use $push-pr to commit my local changes, push the branch, and create or update the matching GitHub PR with refreshed title, body, and screenshots when needed."
