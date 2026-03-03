@@ -172,8 +172,17 @@ If changes are visually verifiable (UI/layout/styling/interaction):
 PLAYWRIGHT_SCREENSHOT=1 pnpm --filter @wow-threat/web exec playwright test src/pages/landing-page.spec.ts
 ```
 
-5. Use the generated `<repoRoot>/output/<page>.png` image in the PR `## Visuals` section (upload as a GitHub attachment and include the resulting URL).
-6. Leave screenshot files in `output/`; this path is gitignored and images are expected to be overwritten on future runs.
+5. Upload each generated `<repoRoot>/output/<page>.png` via the image uploader tool and capture the returned GitHub attachment URL:
+   - The uploader runs headless by default and only switches to headed mode when GitHub login is required.
+
+```bash
+image_path="<repoRoot>/output/landing-page.png"
+image_url="$(pnpm --filter @wow-threat/web upload:github-image -- "$image_path" | tail -n 1)"
+echo "$image_url"
+```
+
+6. Insert the returned `https://github.com/user-attachments/assets/...` URL into PR `## Visuals` markdown.
+7. Leave screenshot files in `output/`; this path is gitignored and images are expected to be overwritten on future runs.
 
 Preferred markdown format:
 
