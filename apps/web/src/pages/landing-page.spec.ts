@@ -2,6 +2,9 @@
  * Playwright coverage for landing page critical flows.
  */
 import { type Page, expect, test } from '@playwright/test'
+import { mkdir } from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import {
   e2eReportId,
@@ -12,10 +15,28 @@ import {
 import { KeyboardShortcutsOverlayObject } from '../test/page-objects/components/keyboard-shortcuts-overlay-object'
 import { RecentReportsObject } from '../test/page-objects/landing-page/recent-reports-object'
 
+const repoRoot = path.resolve(
+  fileURLToPath(new URL('.', import.meta.url)),
+  '../../../..',
+)
+const screenshotPath = path.join(repoRoot, 'output', 'landing-page.png')
+
 async function fillReportInput(page: Page, value: string): Promise<void> {
   const reportInput = page.getByRole('combobox', { name: 'Open report' })
   await reportInput.click()
   await reportInput.fill(value)
+}
+
+async function maybeCaptureScreenshot(page: Page): Promise<void> {
+  if (!process.env.PLAYWRIGHT_SCREENSHOT) {
+    return
+  }
+
+  await mkdir(path.dirname(screenshotPath), { recursive: true })
+  await page.screenshot({
+    path: screenshotPath,
+    fullPage: true,
+  })
 }
 
 test.describe('landing page', () => {
@@ -81,6 +102,7 @@ test.describe('landing page', () => {
     await expect(page.getByText(/Ctrl|⌘/)).toBeVisible()
     await expect(recentReports.exampleReportsSection()).toBeVisible()
     await expect(recentReports.exampleReportsList()).toBeVisible()
+    await maybeCaptureScreenshot(page)
     await recentReports.exampleReportLink('Fresh Example').click()
 
     await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}`))
