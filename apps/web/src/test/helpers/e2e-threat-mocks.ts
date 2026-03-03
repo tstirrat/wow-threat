@@ -17,6 +17,7 @@ import type {
 export const e2eReportId = 'f9yPamzBxQqhGndZ'
 export const e2eReportTitle = 'Threat Regression Raid'
 export const e2eValidFreshReportUrl = `https://fresh.warcraftlogs.com/reports/${e2eReportId}?view=rankings&fight=26`
+const fixateSpellId = 6795
 
 const reportActors: ReportActorSummary[] = [
   {
@@ -141,9 +142,9 @@ export const e2eReportResponse: ReportResponse = {
       type: 'ability',
     },
     {
-      gameID: 355,
-      icon: 'ability_warrior_punishingblow',
-      name: 'Mocking Blow',
+      gameID: fixateSpellId,
+      icon: 'ability_physical_taunt',
+      name: 'Growl',
       type: 'ability',
     },
     {
@@ -367,7 +368,7 @@ function createFixateStateEffect({
     state: {
       kind: 'fixate',
       phase,
-      spellId: 355,
+      spellId: fixateSpellId,
       actorId,
       targetId,
       targetInstance: 0,
@@ -454,9 +455,9 @@ const patchwerkEvents: AugmentedEventsResponse = {
       type: 'damage',
     },
     {
-      abilityGameID: 355,
+      abilityGameID: fixateSpellId,
       sourceID: 1,
-      targetID: 1,
+      targetID: 100,
       threat: {
         calculation: calculationFor({
           amount: 0,
@@ -472,8 +473,8 @@ const patchwerkEvents: AugmentedEventsResponse = {
         }),
         changes: [],
       },
-      timestamp: 1102100,
-      type: 'applybuff',
+      timestamp: 1103100,
+      type: 'applydebuff',
     },
     {
       abilityGameID: 25258,
@@ -576,9 +577,9 @@ const patchwerkEvents: AugmentedEventsResponse = {
       type: 'damage',
     },
     {
-      abilityGameID: 355,
+      abilityGameID: fixateSpellId,
       sourceID: 1,
-      targetID: 1,
+      targetID: 100,
       threat: {
         calculation: calculationFor({
           amount: 0,
@@ -594,8 +595,8 @@ const patchwerkEvents: AugmentedEventsResponse = {
         }),
         changes: [],
       },
-      timestamp: 1108400,
-      type: 'removebuff',
+      timestamp: 1106100,
+      type: 'removedebuff',
     },
     {
       abilityGameID: 2054,

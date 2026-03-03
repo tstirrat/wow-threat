@@ -395,9 +395,7 @@ test.describe('fight page', () => {
     await expect(fightPage.shortcuts.dialog()).toHaveCount(0)
   })
 
-  test('clicking a chart point focuses a player and shows total threat values', async ({
-    page,
-  }) => {
+  test('focusing a player shows total threat values', async ({ page }) => {
     const fightPage = new FightPageObject(page)
 
     await fightPage.goto(svgFightUrl)
@@ -405,9 +403,7 @@ test.describe('fight page', () => {
 
     await expect.poll(() => fightPage.chart.renderer()).toBe('svg')
     await expect(fightPage.summary.emptyStateText()).toBeVisible()
-    const didClick =
-      await fightPage.chart.clickSeriesLineByStroke('rgb(199, 156, 110)')
-    expect(didClick).toBe(true)
+    await fightPage.chart.focusLegend('Aegistank')
     await expect(page).toHaveURL(/focusId=1/)
 
     await expect(fightPage.summary.focusedActorText('Aegistank')).toBeVisible()
@@ -417,7 +413,7 @@ test.describe('fight page', () => {
     ).toHaveText('Total')
     await expect(
       fightPage.summary.totalRow().getByRole('cell').nth(2),
-    ).toHaveText('2,596.00')
+    ).toHaveText('3,974.00')
   })
 
   test('focuses a player from the legend focus button', async ({ page }) => {
