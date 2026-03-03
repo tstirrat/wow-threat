@@ -161,9 +161,7 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
                             >
                               <Plus
                                 aria-hidden="true"
-                                className={`inline h-3 w-3 flex-shrink-0 ${
-                                  isVisible ? 'text-red-600' : 'text-red-600/60'
-                                }`}
+                                className="inline h-3 w-3 flex-shrink-0"
                               />
                             </span>
                           ) : null}

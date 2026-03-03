@@ -143,11 +143,7 @@ export const ThreatChartTooltipContent: FC<ThreatChartTooltipContentProps> = ({
                   aria-label="Healer role"
                   style={{ marginLeft: 4, display: 'inline-flex' }}
                 >
-                  <Plus
-                    aria-hidden="true"
-                    size={12}
-                    style={{ color: '#dc2626' }}
-                  />
+                  <Plus aria-hidden="true" size={12} />
                 </span>
               ) : null}
             </strong>
