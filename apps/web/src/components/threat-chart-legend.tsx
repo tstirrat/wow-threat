@@ -1,7 +1,7 @@
 /**
  * Scrollable legend for threat chart actor visibility and isolation controls.
  */
-import { Eye, HeartPulse, Pin, RotateCcw, Shield } from 'lucide-react'
+import { Eye, Pin, Plus, RotateCcw, Shield } from 'lucide-react'
 import { type FC, useId } from 'react'
 
 import type { ThreatSeries } from '../types/app'
@@ -159,12 +159,10 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
                               aria-label="Healer role"
                               className="ml-1 inline-flex"
                             >
-                              <HeartPulse
+                              <Plus
                                 aria-hidden="true"
                                 className={`inline h-3 w-3 flex-shrink-0 ${
-                                  isVisible
-                                    ? 'text-emerald-500'
-                                    : 'text-emerald-500/60'
+                                  isVisible ? 'text-red-600' : 'text-red-600/60'
                                 }`}
                               />
                             </span>

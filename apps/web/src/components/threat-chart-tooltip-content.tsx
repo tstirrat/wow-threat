@@ -1,7 +1,7 @@
 /**
  * Render-only tooltip content component for threat chart point details.
  */
-import { HeartPulse } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import type { FC } from 'react'
 
 import { formatTimelineTime } from '../lib/format'
@@ -143,10 +143,10 @@ export const ThreatChartTooltipContent: FC<ThreatChartTooltipContentProps> = ({
                   aria-label="Healer role"
                   style={{ marginLeft: 4, display: 'inline-flex' }}
                 >
-                  <HeartPulse
+                  <Plus
                     aria-hidden="true"
                     size={12}
-                    style={{ color: '#10b981' }}
+                    style={{ color: '#dc2626' }}
                   />
                 </span>
               ) : null}
