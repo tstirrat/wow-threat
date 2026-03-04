@@ -55,5 +55,11 @@ export const priestConfig: ClassThreatConfig = {
     [Spells.MindBlastR9]: threat({ modifier: 1 }),
     [Spells.MindBlastR10]: threat({ modifier: 1 }),
     [Spells.MindBlastR11]: threat({ modifier: 1 }),
+    [Spells.PrayerOfMending]: threat({
+      modifier: 0.5,
+      split: true,
+      eventTypes: ['heal'],
+      recipient: 'target',
+    }),
   },
 }

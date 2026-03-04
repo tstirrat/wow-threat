@@ -52,7 +52,6 @@ export const miscAbilities: Record<number, ThreatFormula> = {
   // Thunderfury behavior differs in TBC.
   21992: threatOnSuccessfulHit({ modifier: 0.5, bonus: 63 }),
   26992: threat({ modifier: 1 }),
-  33110: threat({ modifier: 0.5, split: true, eventTypes: ['heal'] }), // Prayer of Mending
 
   ...Object.fromEntries(
     ENGINEERING_DAMAGE_SPELLS.map((spellId) => [
