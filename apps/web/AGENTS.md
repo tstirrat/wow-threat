@@ -179,8 +179,7 @@ Playwright e2e stability findings:
 - Do not add unrelated/no-op interactions (for example random clicks) as timing guards unless no deterministic app-state wait exists.
 - When adding or modifying a specific e2e test, run a deflake pass by isolating that test and repeating it with `--repeat-each` greater than `20` (for example `--repeat-each=25`) before finalizing:
   - `pnpm --filter @wow-threat/web exec playwright test <spec> -g "<test name>" --repeat-each=25`
-- After the targeted deflake pass succeeds, run a smaller whole-suite deflake pass with `--repeat-each=5` to catch broader flakiness:
-  - `pnpm --filter @wow-threat/web exec playwright test --repeat-each=5`
+- Do not run full-suite repeat-each deflake by default; only do that when explicitly requested.
 
 Critical e2e flows:
 
