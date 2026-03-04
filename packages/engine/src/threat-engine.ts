@@ -47,6 +47,7 @@ import { getActiveModifiers, getTotalMultiplier } from './utils'
 
 const ENVIRONMENT_TARGET_ID = -1
 const BOSS_MELEE_SPELL_ID = 1
+const EARTH_SHIELD_SPELL_ID = 379
 
 interface PreparedThreatConfig {
   mergedAbilities: Record<number, ThreatFormula>
@@ -594,11 +595,11 @@ function applyThreat(
   threatRecipientOverride?: number,
 ): ThreatChange[] {
   const changes: ThreatChange[] = []
-  const threatRecipient = threatRecipientOverride ?? event.sourceID
+  const threatRecipient = resolveThreatRecipient(event, threatRecipientOverride)
   // Base threat should only come from friendly sources unless a processor
   // explicitly overrides the recipient.
   const shouldApplyBaseThreat =
-    event.sourceIsFriendly || threatRecipientOverride !== undefined
+    event.sourceIsFriendly || threatRecipient !== event.sourceID
 
   // Handle player death - wipe all threat for the dead player
   if (event.type === 'death' && event.targetIsFriendly) {
@@ -683,6 +684,31 @@ function applyThreat(
     }
   }
   return changes
+}
+
+function resolveThreatRecipient(
+  event: FriendlyResolvedEvent,
+  threatRecipientOverride?: number,
+): number {
+  if (threatRecipientOverride !== undefined) {
+    return threatRecipientOverride
+  }
+
+  if (isEarthShieldThreatEvent(event)) {
+    return event.targetID
+  }
+
+  return event.sourceID
+}
+
+function isEarthShieldThreatEvent(
+  event: FriendlyResolvedEvent,
+): event is Extract<FriendlyResolvedEvent, { type: 'heal' }> {
+  return (
+    event.type === 'heal' &&
+    event.abilityGameID === EARTH_SHIELD_SPELL_ID &&
+    event.targetIsFriendly
+  )
 }
 
 function resolveThreatTarget(

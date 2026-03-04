@@ -37,7 +37,6 @@
 
 | ID      | Package              | Status      | Priority | Size | Title                                                     |
 | ------- | -------------------- | ----------- | -------- | ---- | --------------------------------------------------------- |
-| ENG-004 | `@wow-threat/engine` | READY       | P1       | S    | Apply Earth Shield threat to the tank, not the caster     |
 | WEB-012 | `@wow-threat/web`    | DISCOVERY   | P2       | M    | Add Starred, Guild lists at top                           |
 | WEB-014 | `@wow-threat/web`    | READY       | P2       | S    | Focused player links back to WCL                          |
 | WEB-015 | `@wow-threat/web`    | READY       | P2       | S    | Isolate key toggles between isolated and previous players |
@@ -81,40 +80,9 @@
 - WEB-030
 - WEB-031
 - API-005
+- ENG-004
 
 ## Task Cards (Open)
-
-### ENG-004 - Apply Earth Shield threat to tank, not caster
-
-```yaml
-id: ENG-004
-title: Apply Earth Shield threat to tank, not caster
-package: @wow-threat/engine
-status: READY
-priority: P1
-size: S
-depends_on: []
-files_hint:
-  - packages/engine/src/threat-engine.ts
-  - packages/engine/src/fight-state.ts
-  - packages/engine/src/actor-state.ts
-  - packages/engine/src/threat-engine.test.ts
-acceptance_criteria:
-  - Earth Shield threat attribution is applied to the tank receiving the proc.
-  - Threat is no longer attributed to the Earth Shield caster for this scenario.
-  - Existing threat attribution behavior for unrelated spells remains unchanged.
-  - Add or update tests that reproduce and verify the attribution rule.
-validation:
-  - pnpm --filter @wow-threat/engine lint
-  - pnpm --filter @wow-threat/engine typecheck
-  - pnpm --filter @wow-threat/engine test
-  - pnpm --filter @wow-threat/engine exec vitest run src/threat-engine.test.ts
-branch_name: codex/eng-004-earth-shield-threat-to-tank
-worktree_path: ../wow-threat-eng-004
-publish: auto_push_pr
-pr_url: null
-commit_sha: null
-```
 
 ### WEB-012 - Add starred and guild lists at top
 

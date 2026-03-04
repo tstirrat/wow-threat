@@ -4845,6 +4845,74 @@ describe('threat-engine', () => {
     })
 
     describe('threatRecipientOverride', () => {
+      describe('earth shield threat attribution', () => {
+        const EARTH_SHIELD_SPELL = 379
+        const PRAYER_OF_MENDING_SPELL = 33110
+        const shamanActor: Actor = { id: 14, name: 'Shaman', class: 'shaman' }
+        const tankActor: Actor = { id: 15, name: 'Tank', class: 'warrior' }
+        const actorMap = new Map<number, Actor>([
+          [shamanActor.id, shamanActor],
+          [tankActor.id, tankActor],
+        ])
+        const config = createMockThreatConfig({
+          abilities: {
+            [EARTH_SHIELD_SPELL]: (ctx) => ({
+              formula: '0.5 * heal',
+              value: ctx.amount * 0.5,
+              splitAmongEnemies: true,
+            }),
+          },
+        })
+
+        it('attributes earth shield threat to the healed target', () => {
+          const result = processEvents({
+            rawEvents: [
+              createHealEvent({
+                sourceID: shamanActor.id,
+                targetID: tankActor.id,
+                abilityGameID: EARTH_SHIELD_SPELL,
+                amount: 1000,
+              }),
+            ],
+            actorMap,
+            enemies: [bossEnemy, addEnemy],
+            config,
+          })
+
+          const earthShieldEvent = result.augmentedEvents[0]
+          expect(earthShieldEvent?.threat?.changes).toHaveLength(2)
+          const sourceIds = new Set(
+            (earthShieldEvent?.threat?.changes ?? []).map(
+              (change) => change.sourceId,
+            ),
+          )
+          expect(sourceIds).toEqual(new Set([tankActor.id]))
+        })
+
+        it('keeps non-earth-shield heal threat attribution unchanged', () => {
+          const result = processEvents({
+            rawEvents: [
+              createHealEvent({
+                sourceID: shamanActor.id,
+                targetID: tankActor.id,
+                abilityGameID: PRAYER_OF_MENDING_SPELL,
+                amount: 1000,
+              }),
+            ],
+            actorMap,
+            enemies: [bossEnemy, addEnemy],
+            config,
+          })
+
+          const healEvent = result.augmentedEvents[0]
+          expect(healEvent?.threat?.changes).toHaveLength(2)
+          const sourceIds = new Set(
+            (healEvent?.threat?.changes ?? []).map((change) => change.sourceId),
+          )
+          expect(sourceIds).toEqual(new Set([shamanActor.id]))
+        })
+      })
+
       describe('negative threat deltas', () => {
         const NEGATIVE_THREAT_SPELL = 99991
 
