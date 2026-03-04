@@ -239,10 +239,9 @@ def task_branch_name(task: TaskCard) -> str:
 
 
 def task_worktree_path(task: TaskCard) -> str:
-  task_slug = task.id.lower()
-  if task.worktree_path and task_slug in task.worktree_path.lower():
+  if task.worktree_path:
     return task.worktree_path
-  return f'../wow-threat-{task_slug}'
+  return f'../wow-threat-{task.id.lower()}'
 
 
 def resolve_repo_root(start_dir: Path) -> Path:

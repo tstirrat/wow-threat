@@ -1,6 +1,6 @@
 ---
 name: take-task
-description: Select and execute the next ready task from TODO.md or todo.md by applying backlog priority rules, claiming the task via shared lease files in $CODEX_HOME (fallback ~/.codex), creating an ID-based worktree/branch, implementing and validating the change, publishing with $push-pr, marking the task complete in the same PR, and setting up periodic PR comment triage with $gh-address-comments. Use when asked to take the next task or run backlog work end to end.
+description: Select and execute the next ready task from TODO.md or todo.md by applying backlog priority rules, claiming the task via shared lease files in $CODEX_HOME (fallback ~/.codex), reusing the current worktree/branch when present (or creating task-linked branch/worktree when needed), implementing and validating the change, publishing with $push-pr, marking the task complete in the same PR, and setting up periodic PR comment triage with $gh-address-comments. Use when asked to take the next task or run backlog work end to end.
 ---
 
 # Take Task
@@ -13,7 +13,7 @@ Use `scripts/todo_task.py` for deterministic task selection, shared task leases,
 ## Workflow
 
 1. Identify and claim the next eligible task.
-2. Create or reuse a worktree named with the task ID and switch to the task branch.
+2. Reuse the current worktree/branch when available; otherwise create or switch to task-linked branch/worktree context.
 3. Implement the task and pass task-scoped validation.
 4. Archive the task as complete in `TODO.md` in the same PR.
 5. Publish with `$push-pr` and ensure PR title includes the task ID in Conventional Commit format.
@@ -48,6 +48,7 @@ claim_output="$(python3 .agents/skills/take-task/scripts/todo_task.py claim)"
 printf '%s\n' "$claim_output"
 
 task_id="$(printf '%s\n' "$claim_output" | awk -F= '/^id=/{print $2}')"
+title="$(printf '%s\n' "$claim_output" | sed -n 's/^title=//p')"
 branch_name="$(printf '%s\n' "$claim_output" | awk -F= '/^branch_name=/{print $2}')"
 worktree_path="$(printf '%s\n' "$claim_output" | awk -F= '/^worktree_path=/{print $2}')"
 claim_file="$(printf '%s\n' "$claim_output" | awk -F= '/^claim_file=/{print $2}')"
@@ -65,16 +66,21 @@ Aggressive cleanup (no grace period):
 python3 .agents/skills/take-task/scripts/todo_task.py --stale-seconds 0 reap
 ```
 
-## 2) Create Or Reuse Task Worktree
+## 2) Reuse Current Worktree/Branch Or Create One
 
-Worktree naming must include the task ID. If the provided path does not include it, normalize:
+Default behavior:
+
+- if current working directory is already inside a git worktree, keep using it
+- if that worktree already has a checked-out branch, keep it as-is
+- only create a new branch when the current checkout is detached; use a task-linked name
+- only create a new worktree when not already inside one
+
+Use a task-linked branch fallback (`task-id` + short description) only when creating a new branch:
 
 ```bash
 task_id_slug="$(printf '%s' "$task_id" | tr '[:upper:]' '[:lower:]')"
-case "$worktree_path" in
-  *"$task_id_slug"*) ;;
-  *) worktree_path="../wow-threat-$task_id_slug" ;;
-esac
+title_slug="$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g; s/-+/-/g' | cut -d- -f1-6)"
+default_branch="codex/${task_id_slug}${title_slug:+-$title_slug}"
 ```
 
 Create/switch:
@@ -82,14 +88,39 @@ Create/switch:
 ```bash
 git fetch origin --prune
 
-if [ -d "$worktree_path/.git" ] || [ -d "$worktree_path" ]; then
-  git -C "$worktree_path" checkout "$branch_name"
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  worktree_path="$(git rev-parse --show-toplevel)"
+  current_branch="$(git symbolic-ref --short -q HEAD || true)"
+
+  if [ -n "$current_branch" ]; then
+    branch_name="$current_branch"
+  else
+    case "$branch_name" in
+      *"$task_id_slug"*) ;;
+      *) branch_name="$default_branch" ;;
+    esac
+    git checkout -b "$branch_name"
+  fi
 else
-  git worktree add "$worktree_path" -b "$branch_name" origin/main
+  case "$branch_name" in
+    *"$task_id_slug"*) ;;
+    *) branch_name="$default_branch" ;;
+  esac
+
+  if git -C "$worktree_path" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    existing_branch="$(git -C "$worktree_path" symbolic-ref --short -q HEAD || true)"
+    if [ -n "$existing_branch" ]; then
+      branch_name="$existing_branch"
+    else
+      git -C "$worktree_path" checkout -b "$branch_name"
+    fi
+  else
+    git worktree add "$worktree_path" -b "$branch_name" origin/main
+  fi
 fi
 ```
 
-Run all coding, validation, and file updates inside that worktree.
+Run all coding, validation, and file updates inside `"$worktree_path"`.
 
 ## 3) Implement And Validate
 
@@ -156,7 +187,7 @@ If automations are unavailable, rerun `$gh-address-comments` manually whenever t
 After completing this skill:
 
 1. One eligible task is claimed and implemented.
-2. Task worktree and branch are created using task metadata.
+2. Existing worktree/branch context is reused when present; new task-linked branch/worktree is only created when needed.
 3. Validation commands for the chosen task pass.
 4. `TODO.md` archives the task from open sections and records its ID under historical completed IDs.
 5. Branch is published through `$push-pr` with task ID in PR title.
