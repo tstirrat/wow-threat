@@ -418,27 +418,13 @@ export const FightPage: FC = () => {
         <SectionCard
           title="Focused player summary"
           subtitle="Totals and ability TPS are calculated from the currently visible chart window."
-          headerRight={
-            focusedPlayerActor && focusedPlayerWclUrl ? (
-              <a
-                aria-label={`Open ${focusedPlayerActor.name} on Warcraft Logs`}
-                className="inline-flex items-center gap-1 text-xs font-medium leading-none hover:opacity-80"
-                href={focusedPlayerWclUrl}
-                rel="noopener noreferrer"
-                target="_blank"
-                title={`Open ${focusedPlayerActor.name} on Warcraft Logs`}
-              >
-                <span>WCL</span>
-                <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
-              </a>
-            ) : null
-          }
         >
           <PlayerSummaryTable
             summary={focusedPlayerSummary}
             rows={focusedPlayerRows}
             initialAuras={initialAuras}
             wowhead={wowheadLinksConfig}
+            warcraftLogsUrl={focusedPlayerWclUrl}
           />
         </SectionCard>
       ) : null}

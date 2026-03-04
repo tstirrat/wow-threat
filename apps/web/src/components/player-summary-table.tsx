@@ -1,6 +1,7 @@
 /**
  * Focused player metadata and per-ability threat breakdown table.
  */
+import { ExternalLink } from 'lucide-react'
 import type { CSSProperties, FC } from 'react'
 
 import { formatNumber } from '../lib/format'
@@ -39,6 +40,7 @@ export type PlayerSummaryTableProps = {
   rows: FocusedPlayerThreatRow[]
   initialAuras: InitialAuraDisplay[]
   wowhead: WowheadLinksConfig
+  warcraftLogsUrl?: string | null
 }
 
 const modifierValueTolerance = 0.0005
@@ -187,6 +189,7 @@ export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
   rows,
   initialAuras,
   wowhead,
+  warcraftLogsUrl = null,
 }) => {
   if (!summary) {
     return (
@@ -205,8 +208,21 @@ export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
           <div className="text-xs uppercase tracking-wide text-foreground">
             Focused actor
           </div>
-          <div className="text-base">
+          <div className="flex items-center gap-2 text-base">
             <PlayerName color={summary.color} label={summary.label} />
+            {warcraftLogsUrl ? (
+              <a
+                aria-label={`Open ${summary.label} on Warcraft Logs`}
+                className="inline-flex items-center gap-1 text-xs font-medium leading-none hover:opacity-80"
+                href={warcraftLogsUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+                title={`Open ${summary.label} on Warcraft Logs`}
+              >
+                <span>WCL</span>
+                <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+              </a>
+            ) : null}
           </div>
           <div className="text-sm text-muted-foreground">
             {formatFocusedActorDetails(summary)}

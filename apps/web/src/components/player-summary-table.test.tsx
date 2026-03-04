@@ -44,6 +44,31 @@ function openModifierTooltip(buttonLabel: string): HTMLElement {
 }
 
 describe('PlayerSummaryTable', () => {
+  it('renders warcraft logs link next to focused actor name when provided', () => {
+    render(
+      <PlayerSummaryTable
+        summary={summary}
+        rows={rows}
+        initialAuras={[]}
+        wowhead={{
+          domain: 'tbc',
+        }}
+        warcraftLogsUrl="https://fresh.warcraftlogs.com/character/us/benediction/aegistank"
+      />,
+    )
+
+    const warcraftLogsLink = screen.getByRole('link', {
+      name: 'Open Aegistank on Warcraft Logs',
+    })
+    expect(warcraftLogsLink).toHaveAttribute(
+      'href',
+      'https://fresh.warcraftlogs.com/character/us/benediction/aegistank',
+    )
+    expect(warcraftLogsLink).toHaveAttribute('target', '_blank')
+    expect(warcraftLogsLink).toHaveAttribute('rel', 'noopener noreferrer')
+    expect(warcraftLogsLink).toHaveTextContent('WCL')
+  })
+
   it('renders focused actor details as spec class with talent points', () => {
     render(
       <PlayerSummaryTable
