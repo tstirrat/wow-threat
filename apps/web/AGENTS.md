@@ -168,6 +168,16 @@ Playwright page object conventions:
 - Page objects may compose other page objects (sub-page objects) when it improves reuse and clarity.
 - When updating UI components, check whether related page objects and specs need updates before finalizing the change and invoking `$push-pr`.
 
+Playwright e2e stability findings:
+
+- Prefer Playwright-native URL predicate assertions for query params and path checks:
+  - `await expect(page).toHaveURL((url) => url.searchParams.get('players') === '2')`
+  - `await expect(page).toHaveURL((url) => url.pathname === '/report/<id>/fight/<id>')`
+- Prefer semantic URL predicates over regexes that depend on query-param ordering.
+- Avoid `page.evaluate`-based URL polling (`window.location.search`) for assertion waits; it is more prone to timing races with router updates.
+- When a keyboard shortcut depends on recently updated React state, wait for deterministic UI state before sending the next keypress (for example: wait for focused-player summary text before pressing isolate hotkeys).
+- Do not add unrelated/no-op interactions (for example random clicks) as timing guards unless no deterministic app-state wait exists.
+
 Critical e2e flows:
 
 - Load report from pasted Warcraft Logs URL.
