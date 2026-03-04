@@ -16,7 +16,10 @@ import {
 
 const WCL_TOKENS_COLLECTION = 'wcl_auth_tokens'
 const BRIDGE_CODES_COLLECTION = 'wcl_bridge_codes'
+const ANONYMOUS_USERS_COLLECTION = 'anonymous_users'
 const BRIDGE_CODE_CLEANUP_BATCH_SIZE = 25
+const ANONYMOUS_USER_CLEANUP_BATCH_SIZE = 25
+const ANONYMOUS_USER_RETENTION_MS = 60 * 24 * 60 * 60 * 1000
 
 export interface StoredWclTokenRecord {
   accessToken: string
@@ -242,6 +245,48 @@ export class AuthStore {
   /** Delete stored WCL tokens for a Firebase uid. */
   async deleteWclTokens(uid: string): Promise<void> {
     await this.firestoreClient.deleteDocument(WCL_TOKENS_COLLECTION, uid)
+  }
+
+  /** Refresh anonymous account activity for stale cleanup tracking. */
+  async touchAnonymousUser(uid: string): Promise<void> {
+    const nowMs = Date.now()
+    const nowIso = new Date(nowMs).toISOString()
+
+    await this.firestoreClient.patchDocument(ANONYMOUS_USERS_COLLECTION, uid, {
+      uid: stringField(uid),
+      updatedAt: timestampField(nowIso),
+      updatedAtMs: integerField(nowMs),
+    })
+  }
+
+  /** Delete stale anonymous tracking records and return removed uids. */
+  async cleanupStaleAnonymousUsers(): Promise<string[]> {
+    try {
+      const staleThresholdMs = Date.now() - ANONYMOUS_USER_RETENTION_MS
+      const staleAnonymousUids =
+        await this.firestoreClient.queryDocumentIdsByIntegerField(
+          ANONYMOUS_USERS_COLLECTION,
+          'updatedAtMs',
+          staleThresholdMs,
+          ANONYMOUS_USER_CLEANUP_BATCH_SIZE,
+        )
+
+      await Promise.all(
+        staleAnonymousUids.map((staleUid) =>
+          this.firestoreClient.deleteDocument(
+            ANONYMOUS_USERS_COLLECTION,
+            staleUid,
+          ),
+        ),
+      )
+
+      return staleAnonymousUids
+    } catch (error) {
+      console.warn('[AuthStore] Failed to cleanup stale anonymous users', {
+        error,
+      })
+      return []
+    }
   }
 
   /** Create a one-time bridge code with Firestore-backed single-use state. */

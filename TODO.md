@@ -37,7 +37,7 @@
 
 | ID      | Package              | Status      | Priority | Size | Title                                                     |
 | ------- | -------------------- | ----------- | -------- | ---- | --------------------------------------------------------- |
-| API-005 | `@wow-threat/api`    | READY       | P1       | M    | Anonymous account cleanup                                 |
+| API-005 | `@wow-threat/api`    | DONE        | P1       | M    | Anonymous account cleanup                                 |
 | ENG-004 | `@wow-threat/engine` | READY       | P1       | S    | Apply Earth Shield threat to the tank, not the caster     |
 | WEB-012 | `@wow-threat/web`    | DISCOVERY   | P2       | M    | Add Starred, Guild lists at top                           |
 | WEB-014 | `@wow-threat/web`    | READY       | P2       | S    | Focused player links back to WCL                          |
@@ -90,7 +90,7 @@
 id: API-005
 title: Anonymous account cleanup
 package: @wow-threat/api
-status: READY
+status: DONE
 priority: P1
 size: M
 depends_on: []
