@@ -1,3 +1,4 @@
+import { type Plugin } from '@eslint/core'
 import js from '@eslint/js'
 import markdown from '@eslint/markdown'
 import { defineConfig } from 'eslint/config'
@@ -20,7 +21,7 @@ export default defineConfig([
   tseslint.configs.recommended,
   {
     files: ['**/*.md'],
-    plugins: { markdown },
+    plugins: { markdown: markdown as unknown as Plugin },
     language: 'markdown/gfm',
     extends: ['markdown/recommended'],
   },

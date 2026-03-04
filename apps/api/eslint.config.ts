@@ -34,7 +34,7 @@ export default defineConfig([
   },
   {
     files: ['**/*.md'],
-    plugins: { markdown },
+    plugins: { markdown: markdown as unknown as Plugin },
     language: 'markdown/gfm',
     extends: ['markdown/recommended'],
   },
