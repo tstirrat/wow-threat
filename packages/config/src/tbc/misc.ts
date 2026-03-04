@@ -52,10 +52,6 @@ export const miscAbilities: Record<number, ThreatFormula> = {
   // Thunderfury behavior differs in TBC.
   21992: threatOnSuccessfulHit({ modifier: 0.5, bonus: 63 }),
   26992: threat({ modifier: 1 }),
-  // Upstream redirects this threat to the healed target. The current engine
-  // does not expose full enemy iteration in formula context, so this keeps the
-  // same threat value while preserving spell coverage.
-  379: threat({ modifier: 0.5, split: true, eventTypes: ['heal'] }), // Earth Shield
   33110: threat({ modifier: 0.5, split: true, eventTypes: ['heal'] }), // Prayer of Mending
 
   ...Object.fromEntries(

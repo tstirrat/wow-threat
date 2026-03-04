@@ -4845,8 +4845,8 @@ describe('threat-engine', () => {
     })
 
     describe('threatRecipientOverride', () => {
-      describe('earth shield threat attribution', () => {
-        const EARTH_SHIELD_SPELL = 379
+      describe('formula threat recipient attribution', () => {
+        const TARGET_RECIPIENT_HEAL_SPELL = 379
         const PRAYER_OF_MENDING_SPELL = 33110
         const shamanActor: Actor = { id: 14, name: 'Shaman', class: 'shaman' }
         const tankActor: Actor = { id: 15, name: 'Tank', class: 'warrior' }
@@ -4856,21 +4856,22 @@ describe('threat-engine', () => {
         ])
         const config = createMockThreatConfig({
           abilities: {
-            [EARTH_SHIELD_SPELL]: (ctx) => ({
+            [TARGET_RECIPIENT_HEAL_SPELL]: (ctx) => ({
               formula: '0.5 * heal',
               value: ctx.amount * 0.5,
               splitAmongEnemies: true,
+              threatRecipient: 'target',
             }),
           },
         })
 
-        it('attributes earth shield threat to the healed target', () => {
+        it('attributes threat to the heal target when formula opts in', () => {
           const result = processEvents({
             rawEvents: [
               createHealEvent({
                 sourceID: shamanActor.id,
                 targetID: tankActor.id,
-                abilityGameID: EARTH_SHIELD_SPELL,
+                abilityGameID: TARGET_RECIPIENT_HEAL_SPELL,
                 amount: 1000,
               }),
             ],
@@ -4889,7 +4890,7 @@ describe('threat-engine', () => {
           expect(sourceIds).toEqual(new Set([tankActor.id]))
         })
 
-        it('keeps non-earth-shield heal threat attribution unchanged', () => {
+        it('keeps source attribution when formula does not opt in', () => {
           const result = processEvents({
             rawEvents: [
               createHealEvent({

@@ -47,7 +47,6 @@ import { getActiveModifiers, getTotalMultiplier } from './utils'
 
 const ENVIRONMENT_TARGET_ID = -1
 const BOSS_MELEE_SPELL_ID = 1
-const EARTH_SHIELD_SPELL_ID = 379
 
 interface PreparedThreatConfig {
   mergedAbilities: Record<number, ThreatFormula>
@@ -595,7 +594,11 @@ function applyThreat(
   threatRecipientOverride?: number,
 ): ThreatChange[] {
   const changes: ThreatChange[] = []
-  const threatRecipient = resolveThreatRecipient(event, threatRecipientOverride)
+  const threatRecipient = resolveThreatRecipient({
+    event,
+    formulaThreatRecipient: calculation.threatRecipient,
+    threatRecipientOverride,
+  })
   // Base threat should only come from friendly sources unless a processor
   // explicitly overrides the recipient.
   const shouldApplyBaseThreat =
@@ -686,29 +689,24 @@ function applyThreat(
   return changes
 }
 
-function resolveThreatRecipient(
-  event: FriendlyResolvedEvent,
-  threatRecipientOverride?: number,
-): number {
+function resolveThreatRecipient({
+  event,
+  formulaThreatRecipient,
+  threatRecipientOverride,
+}: {
+  event: FriendlyResolvedEvent
+  formulaThreatRecipient: ThreatCalculation['threatRecipient']
+  threatRecipientOverride?: number
+}): number {
   if (threatRecipientOverride !== undefined) {
     return threatRecipientOverride
   }
 
-  if (isEarthShieldThreatEvent(event)) {
+  if (formulaThreatRecipient === 'target') {
     return event.targetID
   }
 
   return event.sourceID
-}
-
-function isEarthShieldThreatEvent(
-  event: FriendlyResolvedEvent,
-): event is Extract<FriendlyResolvedEvent, { type: 'heal' }> {
-  return (
-    event.type === 'heal' &&
-    event.abilityGameID === EARTH_SHIELD_SPELL_ID &&
-    event.targetIsFriendly
-  )
 }
 
 function resolveThreatTarget(
@@ -1287,6 +1285,7 @@ export function calculateModifiedThreat(
     spellModifier: formulaResult.spellModifier,
     note: formulaResult.note,
     modifiers: allModifiers,
+    threatRecipient: formulaResult.threatRecipient,
     effects: formulaResult.effects,
   }
 }
