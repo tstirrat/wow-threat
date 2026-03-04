@@ -175,4 +175,87 @@ describe('AuthStore', () => {
     expect(payload).toBeNull()
     expect(firestoreClient.patchDocument).not.toHaveBeenCalled()
   })
+
+  it('touches anonymous users with updatedAt fields', async () => {
+    const nowMs = 1_700_000_000_000
+    vi.spyOn(Date, 'now').mockReturnValue(nowMs)
+
+    const firestoreClient = createMockFirestoreClient()
+    const store = new AuthStore(
+      createMockBindings(),
+      firestoreClient as unknown as FirestoreClient,
+    )
+    await store.touchAnonymousUser('anon-user')
+
+    expect(firestoreClient.patchDocument).toHaveBeenCalledWith(
+      'anonymous_users',
+      'anon-user',
+      expect.objectContaining({
+        uid: {
+          stringValue: 'anon-user',
+        },
+        updatedAt: {
+          timestampValue: new Date(nowMs).toISOString(),
+        },
+        updatedAtMs: {
+          integerValue: String(nowMs),
+        },
+      }),
+    )
+  })
+
+  it('cleans stale anonymous users and returns deleted uids', async () => {
+    const nowMs = 1_700_000_000_000
+    vi.spyOn(Date, 'now').mockReturnValue(nowMs)
+
+    const firestoreClient = createMockFirestoreClient()
+    firestoreClient.queryDocumentIdsByIntegerField.mockResolvedValue([
+      'anon-stale-1',
+      'anon-stale-2',
+    ])
+
+    const store = new AuthStore(
+      createMockBindings(),
+      firestoreClient as unknown as FirestoreClient,
+    )
+    const deletedUids = await store.cleanupStaleAnonymousUsers()
+
+    expect(deletedUids).toEqual(['anon-stale-1', 'anon-stale-2'])
+    expect(firestoreClient.queryDocumentIdsByIntegerField).toHaveBeenCalledWith(
+      'anonymous_users',
+      'updatedAtMs',
+      nowMs - 60 * 24 * 60 * 60 * 1000,
+      25,
+    )
+    expect(firestoreClient.deleteDocument).toHaveBeenCalledTimes(2)
+    expect(firestoreClient.deleteDocument).toHaveBeenCalledWith(
+      'anonymous_users',
+      'anon-stale-1',
+    )
+    expect(firestoreClient.deleteDocument).toHaveBeenCalledWith(
+      'anonymous_users',
+      'anon-stale-2',
+    )
+  })
+
+  it('returns empty stale anonymous cleanup result when cleanup fails', async () => {
+    const firestoreClient = createMockFirestoreClient()
+    firestoreClient.queryDocumentIdsByIntegerField.mockRejectedValue(
+      new Error('cleanup failed'),
+    )
+
+    const store = new AuthStore(
+      createMockBindings(),
+      firestoreClient as unknown as FirestoreClient,
+    )
+    const deletedUids = await store.cleanupStaleAnonymousUsers()
+
+    expect(deletedUids).toEqual([])
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[AuthStore] Failed to cleanup stale anonymous users',
+      expect.objectContaining({
+        error: expect.any(Error),
+      }),
+    )
+  })
 })

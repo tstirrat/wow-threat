@@ -64,7 +64,7 @@ def parse_args() -> argparse.Namespace:
 
   complete_parser = subparsers.add_parser(
     'complete',
-    help='Mark a task complete and optionally update PR metadata.',
+    help='Update task status; DONE archives from open sections to historical IDs.',
   )
   complete_parser.add_argument('--id', required=True, help='Task ID, for example WEB-014.')
   complete_parser.add_argument(
@@ -161,6 +161,28 @@ def parse_historical_done_ids(text: str) -> set[str]:
     if bullet:
       done_ids.add(bullet.group(1))
   return done_ids
+
+
+def add_historical_done_id(text: str, task_id: str) -> str:
+  match = re.search(
+    r'## Historical Completed IDs\s*\n(?P<body>.*?)(?=\n## |\Z)',
+    text,
+    flags=re.DOTALL,
+  )
+  if not match:
+    return text
+
+  body = match.group('body')
+  done_ids = parse_historical_done_ids(text)
+  if task_id in done_ids:
+    return text
+
+  new_body = body.rstrip('\n')
+  if new_body:
+    new_body = f'{new_body}\n'
+  new_body = f'{new_body}- {task_id}\n'
+
+  return f'{text[:match.start("body")]}{new_body}{text[match.end("body") :]}'
 
 
 def parse_task_cards(text: str) -> list[TaskCard]:
@@ -433,6 +455,54 @@ def update_task_index_status(text: str, task_id: str, status: str) -> str:
   return ''.join(lines)
 
 
+def remove_task_index_row(text: str, task_id: str) -> str:
+  lines = text.splitlines(keepends=True)
+  in_open_index = False
+
+  for idx, line in enumerate(lines):
+    if line.startswith('## Task Index (Open)'):
+      in_open_index = True
+      continue
+
+    if in_open_index and line.startswith('## ') and not line.startswith('## Task Index (Open)'):
+      break
+
+    if not in_open_index or not line.lstrip().startswith('|'):
+      continue
+
+    cells = line.split('|')
+    if len(cells) < 8:
+      continue
+
+    row_id = cells[1].strip()
+    if row_id != task_id:
+      continue
+
+    del lines[idx]
+    break
+
+  return ''.join(lines)
+
+
+def remove_task_card(text: str, task_id: str) -> str:
+  section_match = re.search(r'^## Task Cards \(Open\)\s*$', text, flags=re.MULTILINE)
+  if not section_match:
+    return text
+
+  section_start = section_match.end()
+  next_section = re.search(r'^\s*##\s+', text[section_start:], flags=re.MULTILINE)
+  section_end = (
+    section_start + next_section.start() if next_section is not None else len(text)
+  )
+
+  section_text = text[section_start:section_end]
+  card_pattern = re.compile(
+    rf'(?ms)^###\s+{re.escape(task_id)}\s+-.*?\n```yaml\n.*?\n```\n*',
+  )
+  updated_section_text = card_pattern.sub('', section_text, count=1)
+  return f'{text[:section_start]}{updated_section_text}{text[section_end:]}'
+
+
 def print_task(
   card: TaskCard,
   claims_dir: Path,
@@ -530,17 +600,30 @@ def command_complete(
   target = next((card for card in cards if card.id == task_id), None)
 
   if target is None:
+    if status == 'DONE' and task_id in parse_historical_done_ids(text):
+      print(f'id={task_id}')
+      print('status=DONE')
+      print(f'claims_dir={claims_dir}')
+      return 0
+
     print(f'Task not found: {task_id}', file=sys.stderr)
     return 1
 
-  updated_yaml = set_yaml_scalar(target.yaml_text, 'status', status)
-  if pr_url is not None:
-    updated_yaml = set_yaml_scalar(updated_yaml, 'pr_url', quote_yaml_string(pr_url))
-  if commit_sha is not None:
-    updated_yaml = set_yaml_scalar(updated_yaml, 'commit_sha', quote_yaml_string(commit_sha))
+  if status == 'DONE':
+    updated_text = remove_task_card(text, target.id)
+    updated_text = remove_task_index_row(updated_text, target.id)
+    updated_text = add_historical_done_id(updated_text, target.id)
+    updated_yaml = target.yaml_text
+  else:
+    updated_yaml = set_yaml_scalar(target.yaml_text, 'status', status)
+    if pr_url is not None:
+      updated_yaml = set_yaml_scalar(updated_yaml, 'pr_url', quote_yaml_string(pr_url))
+    if commit_sha is not None:
+      updated_yaml = set_yaml_scalar(updated_yaml, 'commit_sha', quote_yaml_string(commit_sha))
 
-  updated_text = replace_card_yaml(text, target, updated_yaml)
-  updated_text = update_task_index_status(updated_text, target.id, status)
+    updated_text = replace_card_yaml(text, target, updated_yaml)
+    updated_text = update_task_index_status(updated_text, target.id, status)
+
   todo_path.write_text(updated_text)
 
   # Keep claim files until the worktree disappears.

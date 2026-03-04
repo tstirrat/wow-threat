@@ -7,8 +7,8 @@ import { SignJWT, jwtVerify } from 'jose'
 import { unauthorized } from '../middleware/error'
 import { AuthStore } from '../services/auth-store'
 import {
-  createFirebaseCustomToken,
   type VerifiedFirebaseIdToken,
+  createFirebaseCustomToken,
   verifyFirebaseIdToken,
 } from '../services/firebase-auth'
 import { FirestoreClient } from '../services/firestore-client'
@@ -167,6 +167,30 @@ async function migrateAnonymousSettingsToCanonicalUid(
   await firestore.deleteDocument(USER_SETTINGS_COLLECTION, sourceUid)
 }
 
+async function cleanupStaleAnonymousUserSettings(
+  env: Bindings,
+  staleAnonymousUids: string[],
+): Promise<void> {
+  if (staleAnonymousUids.length === 0) {
+    return
+  }
+
+  const firestore = new FirestoreClient(env)
+  const uniqueStaleAnonymousUids = [...new Set(staleAnonymousUids)]
+
+  try {
+    await Promise.all(
+      uniqueStaleAnonymousUids.map((staleUid) =>
+        firestore.deleteDocument(USER_SETTINGS_COLLECTION, staleUid),
+      ),
+    )
+  } catch (error) {
+    console.warn('[AuthRoutes] Failed to cleanup stale anonymous settings', {
+      error,
+    })
+  }
+}
+
 export const authRoutes = new Hono<{
   Bindings: Bindings
   Variables: Variables
@@ -271,15 +295,18 @@ authRoutes.post('/firebase-custom-token', async (c) => {
       c.env,
     )
 
-    if (
-      sourceToken.uid !== targetUid &&
-      isAnonymousFirebaseUser(sourceToken)
-    ) {
-      await migrateAnonymousSettingsToCanonicalUid(
-        c.env,
-        sourceToken.uid,
-        targetUid,
-      )
+    if (isAnonymousFirebaseUser(sourceToken)) {
+      await authStore.touchAnonymousUser(sourceToken.uid)
+      const staleAnonymousUids = await authStore.cleanupStaleAnonymousUsers()
+      await cleanupStaleAnonymousUserSettings(c.env, staleAnonymousUids)
+
+      if (sourceToken.uid !== targetUid) {
+        await migrateAnonymousSettingsToCanonicalUid(
+          c.env,
+          sourceToken.uid,
+          targetUid,
+        )
+      }
     }
   }
 

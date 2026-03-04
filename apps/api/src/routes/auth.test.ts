@@ -17,8 +17,11 @@ const firestorePrefix =
   'https://firestore.googleapis.com/v1/projects/wow-threat/databases/(default)/documents/'
 const firestoreRunQueryPath =
   'https://firestore.googleapis.com/v1/projects/wow-threat/databases/(default)/documents:runQuery'
+const anonymousUserRetentionMs = 60 * 24 * 60 * 60 * 1000
 
-async function issueBridgeCode(bindings: ReturnType<typeof createMockBindings>) {
+async function issueBridgeCode(
+  bindings: ReturnType<typeof createMockBindings>,
+) {
   const loginRes = await app.request(
     'http://localhost/auth/wcl/login?origin=http://localhost:5173',
     {},
@@ -244,12 +247,91 @@ function createAuthFetchMock() {
     }
 
     if (url.toString() === firestoreRunQueryPath) {
-      return new Response(JSON.stringify([]), {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
+      if ((init?.method ?? 'GET') !== 'POST') {
+        throw new Error(`Unexpected runQuery method: ${init?.method}`)
+      }
+
+      const body = init?.body
+        ? (JSON.parse(init.body as string) as {
+            structuredQuery?: {
+              from?: Array<{ collectionId?: string }>
+              limit?: number
+              where?: {
+                fieldFilter?: {
+                  field?: { fieldPath?: string }
+                  value?: { integerValue?: string }
+                }
+              }
+            }
+          })
+        : {}
+      const collectionId = body.structuredQuery?.from?.[0]?.collectionId
+      const fieldPath =
+        body.structuredQuery?.where?.fieldFilter?.field?.fieldPath
+      const integerValue = Number.parseInt(
+        body.structuredQuery?.where?.fieldFilter?.value?.integerValue ?? '',
+        10,
+      )
+      const limit = body.structuredQuery?.limit ?? Number.MAX_SAFE_INTEGER
+
+      const matchingDocuments = [...documents.entries()]
+        .filter(([path, document]) => {
+          if (!collectionId || !fieldPath || !Number.isFinite(integerValue)) {
+            return false
+          }
+          if (!path.startsWith(`${collectionId}/`)) {
+            return false
+          }
+
+          const fieldValue = document.fields[fieldPath]
+          if (
+            typeof fieldValue !== 'object' ||
+            fieldValue === null ||
+            !('integerValue' in fieldValue)
+          ) {
+            return false
+          }
+
+          const integerFieldValue = fieldValue as { integerValue: string }
+          const numericFieldValue = Number.parseInt(
+            integerFieldValue.integerValue,
+            10,
+          )
+          return (
+            Number.isFinite(numericFieldValue) &&
+            numericFieldValue <= integerValue
+          )
+        })
+        .sort(([, left], [, right]) => {
+          const leftField = left.fields[fieldPath!]
+          const rightField = right.fields[fieldPath!]
+          const leftValue = Number.parseInt(
+            String((leftField as { integerValue: string }).integerValue),
+            10,
+          )
+          const rightValue = Number.parseInt(
+            String((rightField as { integerValue: string }).integerValue),
+            10,
+          )
+          return leftValue - rightValue
+        })
+        .slice(0, limit)
+
+      return new Response(
+        JSON.stringify(
+          matchingDocuments.map(([path]) => ({
+            document: {
+              name: `projects/wow-threat/databases/(default)/documents/${path}`,
+            },
+          })),
+        ),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      })
+      )
     }
 
     throw new Error(`Unexpected fetch request in auth tests: ${requestUrl}`)
@@ -265,6 +347,7 @@ describe('Auth Routes', () => {
   })
 
   afterEach(() => {
+    vi.restoreAllMocks()
     vi.unstubAllGlobals()
   })
 
@@ -519,7 +602,10 @@ describe('Auth Routes', () => {
     )
     expect(exchangeRes.status).toBe(200)
 
-    const canonicalSettings = await firestore.getDocument('settings', 'wcl:12345')
+    const canonicalSettings = await firestore.getDocument(
+      'settings',
+      'wcl:12345',
+    )
     expect(canonicalSettings?.fields?.showBossMelee).toEqual({
       booleanValue: true,
     })
@@ -556,7 +642,10 @@ describe('Auth Routes', () => {
     )
     expect(exchangeRes.status).toBe(200)
 
-    const canonicalSettings = await firestore.getDocument('settings', 'wcl:12345')
+    const canonicalSettings = await firestore.getDocument(
+      'settings',
+      'wcl:12345',
+    )
     expect(canonicalSettings?.fields?.showBossMelee).toEqual({
       booleanValue: false,
     })
@@ -565,6 +654,110 @@ describe('Auth Routes', () => {
     expect(sourceSettings?.fields?.showBossMelee).toEqual({
       booleanValue: true,
     })
+  })
+
+  it('deletes stale anonymous records and settings during anonymous exchange', async () => {
+    const nowMs = Date.now()
+    vi.spyOn(Date, 'now').mockReturnValue(nowMs)
+
+    const bindings = createMockBindings()
+    const firestore = new FirestoreClient(bindings)
+    await firestore.patchDocument('anonymous_users', 'anon-stale', {
+      uid: { stringValue: 'anon-stale' },
+      updatedAt: {
+        timestampValue: new Date(
+          nowMs - anonymousUserRetentionMs - 60_000,
+        ).toISOString(),
+      },
+      updatedAtMs: {
+        integerValue: String(nowMs - anonymousUserRetentionMs - 60_000),
+      },
+    })
+    await firestore.patchDocument('settings', 'anon-stale', {
+      showBossMelee: { booleanValue: true },
+    })
+
+    const bridgeCode = await issueBridgeCode(bindings)
+
+    const exchangeRes = await app.request(
+      'http://localhost/auth/firebase-custom-token',
+      {
+        body: JSON.stringify({
+          bridgeCode,
+        }),
+        headers: {
+          Authorization: 'Bearer test-firebase-id-token:anon-user:anonymous',
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      },
+      bindings,
+    )
+    expect(exchangeRes.status).toBe(200)
+
+    const touchedAnonymousUser = await firestore.getDocument(
+      'anonymous_users',
+      'anon-user',
+    )
+    expect(touchedAnonymousUser?.fields?.updatedAtMs).toEqual({
+      integerValue: String(nowMs),
+    })
+
+    const staleAnonymousUser = await firestore.getDocument(
+      'anonymous_users',
+      'anon-stale',
+    )
+    expect(staleAnonymousUser).toBeNull()
+
+    const staleSettings = await firestore.getDocument('settings', 'anon-stale')
+    expect(staleSettings).toBeNull()
+  })
+
+  it('retains non-stale anonymous records and settings during anonymous exchange', async () => {
+    const nowMs = Date.now()
+    vi.spyOn(Date, 'now').mockReturnValue(nowMs)
+
+    const bindings = createMockBindings()
+    const firestore = new FirestoreClient(bindings)
+    await firestore.patchDocument('anonymous_users', 'anon-fresh', {
+      uid: { stringValue: 'anon-fresh' },
+      updatedAt: {
+        timestampValue: new Date(nowMs - 24 * 60 * 60 * 1000).toISOString(),
+      },
+      updatedAtMs: {
+        integerValue: String(nowMs - 24 * 60 * 60 * 1000),
+      },
+    })
+    await firestore.patchDocument('settings', 'anon-fresh', {
+      showBossMelee: { booleanValue: true },
+    })
+
+    const bridgeCode = await issueBridgeCode(bindings)
+
+    const exchangeRes = await app.request(
+      'http://localhost/auth/firebase-custom-token',
+      {
+        body: JSON.stringify({
+          bridgeCode,
+        }),
+        headers: {
+          Authorization: 'Bearer test-firebase-id-token:anon-user:anonymous',
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      },
+      bindings,
+    )
+    expect(exchangeRes.status).toBe(200)
+
+    const freshAnonymousUser = await firestore.getDocument(
+      'anonymous_users',
+      'anon-fresh',
+    )
+    expect(freshAnonymousUser).not.toBeNull()
+
+    const freshSettings = await firestore.getDocument('settings', 'anon-fresh')
+    expect(freshSettings).not.toBeNull()
   })
 
   it('deletes stored WCL tokens during logout', async () => {

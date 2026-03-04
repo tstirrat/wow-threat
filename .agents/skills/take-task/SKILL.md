@@ -15,7 +15,7 @@ Use `scripts/todo_task.py` for deterministic task selection, shared task leases,
 1. Identify and claim the next eligible task.
 2. Create or reuse a worktree named with the task ID and switch to the task branch.
 3. Implement the task and pass task-scoped validation.
-4. Mark the task complete in `TODO.md` in the same PR.
+4. Archive the task as complete in `TODO.md` in the same PR.
 5. Publish with `$push-pr` and ensure PR title includes the task ID in Conventional Commit format.
 6. Start periodic PR comment checks via `$gh-address-comments`.
 
@@ -99,7 +99,7 @@ Run all coding, validation, and file updates inside that worktree.
 4. Run every command listed under the card `validation` key.
 5. Stop if any validation command fails.
 
-## 4) Mark Task Complete In The Same PR
+## 4) Archive Completed Task In The Same PR
 
 Before publishing, mark the task complete in `TODO.md`:
 
@@ -107,7 +107,12 @@ Before publishing, mark the task complete in `TODO.md`:
 python3 .agents/skills/take-task/scripts/todo_task.py complete --id "$task_id" --status DONE
 ```
 
-This updates both the task card and the open-task index row.
+When status is `DONE`, this command:
+
+- removes the task from `Task Index (Open)`
+- removes the task from `Task Cards (Open)`
+- appends the task ID to `Historical Completed IDs`
+
 Lease files are intentionally retained until the worktree is removed; this prevents duplicate pickup from stale `TODO.md` copies in other worktrees.
 
 ## 5) Publish With Push-PR
@@ -153,6 +158,6 @@ After completing this skill:
 1. One eligible task is claimed and implemented.
 2. Task worktree and branch are created using task metadata.
 3. Validation commands for the chosen task pass.
-4. `TODO.md` marks the task as `DONE` in the same PR.
+4. `TODO.md` archives the task from open sections and records its ID under historical completed IDs.
 5. Branch is published through `$push-pr` with task ID in PR title.
 6. Periodic PR comment triage is configured or explicitly run.

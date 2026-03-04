@@ -37,7 +37,6 @@
 
 | ID      | Package              | Status      | Priority | Size | Title                                                     |
 | ------- | -------------------- | ----------- | -------- | ---- | --------------------------------------------------------- |
-| API-005 | `@wow-threat/api`    | READY       | P1       | M    | Anonymous account cleanup                                 |
 | ENG-004 | `@wow-threat/engine` | READY       | P1       | S    | Apply Earth Shield threat to the tank, not the caster     |
 | WEB-012 | `@wow-threat/web`    | DISCOVERY   | P2       | M    | Add Starred, Guild lists at top                           |
 | WEB-014 | `@wow-threat/web`    | READY       | P2       | S    | Focused player links back to WCL                          |
@@ -81,40 +80,9 @@
 - WEB-029
 - WEB-030
 - WEB-031
+- API-005
 
 ## Task Cards (Open)
-
-### API-005 - Anonymous account cleanup
-
-```yaml
-id: API-005
-title: Anonymous account cleanup
-package: @wow-threat/api
-status: READY
-priority: P1
-size: M
-depends_on: []
-files_hint:
-  - apps/api/src/services/auth-store.ts
-  - apps/api/src/routes/auth.ts
-  - apps/api/src/services/firestore-client.ts
-  - apps/api/src/routes/auth.test.ts
-acceptance_criteria:
-  - Track per-anonymous-user updatedAt timestamps on relevant read/write touch points.
-  - Periodically delete stale anonymous user records older than 60 days.
-  - Preserve behavior for non-anonymous accounts.
-  - Add tests covering stale deletion and non-stale retention paths.
-validation:
-  - pnpm --filter @wow-threat/api lint
-  - pnpm --filter @wow-threat/api typecheck
-  - pnpm --filter @wow-threat/api test
-  - pnpm --filter @wow-threat/api exec vitest run src/routes/auth.test.ts
-branch_name: codex/api-005-anonymous-account-cleanup
-worktree_path: ../wow-threat-api-005
-publish: auto_push_pr
-pr_url: null
-commit_sha: null
-```
 
 ### ENG-004 - Apply Earth Shield threat to tank, not caster
 
