@@ -18,6 +18,10 @@ const repoRoot = path.resolve(
 )
 const screenshotPath = path.join(repoRoot, 'output', 'report-page.png')
 
+async function expectPathname(page: Page, pathname: string): Promise<void> {
+  await expect(page).toHaveURL((url) => url.pathname === pathname)
+}
+
 async function maybeCaptureScreenshot(page: Page): Promise<void> {
   if (!process.env.PLAYWRIGHT_SCREENSHOT) {
     return
@@ -71,7 +75,7 @@ test.describe('report page', () => {
 
     await quickSwitch.clickFight('Patchwerk')
 
-    await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}/fight/26`))
+    await expectPathname(page, `/report/${e2eReportId}/fight/26`)
     await expect(page.getByRole('region', { name: /Patchwerk/ })).toBeVisible()
   })
 

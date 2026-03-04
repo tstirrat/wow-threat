@@ -27,14 +27,4 @@ export class FightPageObject {
   async goto(url: string): Promise<void> {
     await this.page.goto(url)
   }
-
-  async searchParam(paramName: string): Promise<string | null> {
-    return this.page.evaluate((name: string) => {
-      return new URLSearchParams(window.location.search).get(name)
-    }, paramName)
-  }
-
-  async searchString(): Promise<string> {
-    return this.page.evaluate(() => window.location.search)
-  }
 }

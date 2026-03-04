@@ -168,6 +168,20 @@ Playwright page object conventions:
 - Page objects may compose other page objects (sub-page objects) when it improves reuse and clarity.
 - When updating UI components, check whether related page objects and specs need updates before finalizing the change and invoking `$push-pr`.
 
+Playwright e2e stability findings:
+
+- Prefer Playwright-native URL predicate assertions for query params and path checks:
+  - `await expect(page).toHaveURL((url) => url.searchParams.get('players') === '2')`
+  - `await expect(page).toHaveURL((url) => url.pathname === '/report/<id>/fight/<id>')`
+- Prefer semantic URL predicates over regexes that depend on query-param ordering.
+- Avoid `page.evaluate`-based URL polling (`window.location.search`) for assertion waits; it is more prone to timing races with router updates.
+- When a keyboard shortcut depends on recently updated React state, wait for deterministic UI state before sending the next keypress (for example: wait for focused-player summary text before pressing isolate hotkeys).
+- Do not add unrelated/no-op interactions (for example random clicks) as timing guards unless no deterministic app-state wait exists.
+- When adding or modifying a specific e2e test, run a deflake pass by isolating that test and repeating it with `--repeat-each` greater than `20` (for example `--repeat-each=25`) before finalizing:
+  - `pnpm --filter @wow-threat/web exec playwright test <spec> -g "<test name>" --repeat-each=25`
+- After the single-test deflake pass succeeds, run a second deflake pass on the full spec file to catch test interaction flakiness (for example `--repeat-each=5`):
+  - `pnpm --filter @wow-threat/web exec playwright test <spec> --repeat-each=5`
+
 Critical e2e flows:
 
 - Load report from pasted Warcraft Logs URL.

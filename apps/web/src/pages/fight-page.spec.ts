@@ -31,6 +31,24 @@ async function maybeCaptureScreenshot(page: Page): Promise<void> {
   })
 }
 
+async function expectSearchParam(
+  page: Page,
+  paramName: string,
+  value: string | null,
+): Promise<void> {
+  await expect(page).toHaveURL(
+    (url) => url.searchParams.get(paramName) === value,
+  )
+}
+
+async function expectSearchString(page: Page, value: string): Promise<void> {
+  await expect(page).toHaveURL((url) => url.search === value)
+}
+
+async function expectPathname(page: Page, value: string): Promise<void> {
+  await expect(page).toHaveURL((url) => url.pathname === value)
+}
+
 test.describe('fight page', () => {
   test.beforeEach(async ({ page }) => {
     await setupThreatApiMocks(page)
@@ -42,7 +60,7 @@ test.describe('fight page', () => {
     const fightPage = new FightPageObject(page)
 
     await fightPage.goto(svgFightUrl)
-    await expect(page).toHaveURL(/renderer=svg/)
+    await expectSearchParam(page, 'renderer', 'svg')
 
     const header = fightPage.header.section()
     await expect(header).toBeVisible()
@@ -110,14 +128,14 @@ test.describe('fight page', () => {
       'aria-pressed',
       'false',
     )
-    await expect.poll(() => fightPage.searchParam('players')).toBe('1,3')
+    await expectSearchParam(page, 'players', '1,3')
 
     await fightPage.chart.toggleLegend('Bladefury')
     await expect(fightPage.chart.legendToggle('Bladefury')).toHaveAttribute(
       'aria-pressed',
       'true',
     )
-    await expect.poll(() => fightPage.searchParam('players')).toBeNull()
+    await expectSearchParam(page, 'players', null)
 
     await fightPage.chart.isolateLegend('Aegistank')
     await expect(fightPage.chart.legendToggle('Aegistank')).toHaveAttribute(
@@ -133,13 +151,13 @@ test.describe('fight page', () => {
       'aria-pressed',
       'true',
     )
-    await expect.poll(() => fightPage.searchParam('players')).toBeNull()
+    await expectSearchParam(page, 'players', null)
 
     await fightPage.chart.selectTarget('Hateful Strike Target (102)')
     await expect(fightPage.chart.targetControl()).toContainText(
       'Hateful Strike Target (102)',
     )
-    await expect(page).toHaveURL(/targetId=102/)
+    await expectSearchParam(page, 'targetId', '102')
   })
 
   test('applies players query param as initial legend visibility', async ({
@@ -166,14 +184,14 @@ test.describe('fight page', () => {
       'aria-pressed',
       'true',
     )
-    await expect.poll(() => fightPage.searchParam('players')).toBe('1,2')
+    await expectSearchParam(page, 'players', '1,2')
 
     await fightPage.chart.clearIsolate()
     await expect(fightPage.chart.legendToggle('Bladefury')).toHaveAttribute(
       'aria-pressed',
       'true',
     )
-    await expect.poll(() => fightPage.searchParam('players')).toBeNull()
+    await expectSearchParam(page, 'players', null)
   })
 
   test('quick switch links reset fight query params', async ({ page }) => {
@@ -189,8 +207,8 @@ test.describe('fight page', () => {
     )
     await fightPage.quickSwitch.clickFight('Grobbulus')
 
-    await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}/fight/30$`))
-    await expect.poll(() => fightPage.searchString()).toBe('')
+    await expectPathname(page, `/report/${e2eReportId}/fight/30`)
+    await expectSearchString(page, '')
   })
 
   test('pins players and keeps them on quick switch fight links', async ({
@@ -206,19 +224,17 @@ test.describe('fight page', () => {
       'aria-pressed',
       'true',
     )
-    await expect.poll(() => fightPage.searchParam('players')).toBeNull()
-    await expect.poll(() => fightPage.searchParam('pinnedPlayers')).toBe('1')
+    await expectSearchParam(page, 'players', null)
+    await expectSearchParam(page, 'pinnedPlayers', '1')
 
     await expect(fightPage.quickSwitch.fightLink('Grobbulus')).toHaveAttribute(
       'href',
       `/report/${e2eReportId}/fight/30?pinnedPlayers=1&players=1`,
     )
     await fightPage.quickSwitch.clickFight('Grobbulus')
-    await expect(page).toHaveURL(
-      new RegExp(
-        `/report/${e2eReportId}/fight/30\\?pinnedPlayers=1&players=1$`,
-      ),
-    )
+    await expectPathname(page, `/report/${e2eReportId}/fight/30`)
+    await expectSearchParam(page, 'pinnedPlayers', '1')
+    await expectSearchParam(page, 'players', '1')
     await expect(fightPage.chart.legendPin('Aegistank')).toHaveAttribute(
       'aria-pressed',
       'true',
@@ -236,8 +252,8 @@ test.describe('fight page', () => {
     await fightPage.chart.toggleLegendPin('Aegistank')
     await fightPage.chart.isolateLegend('Aegistank')
 
-    await expect.poll(() => fightPage.searchParam('pinnedPlayers')).toBe('1')
-    await expect.poll(() => fightPage.searchParam('players')).toBe('1')
+    await expectSearchParam(page, 'pinnedPlayers', '1')
+    await expectSearchParam(page, 'players', '1')
     await expect(fightPage.chart.clearIsolateButton()).toBeVisible()
 
     await fightPage.chart.clearIsolate()
@@ -246,8 +262,8 @@ test.describe('fight page', () => {
       'aria-pressed',
       'true',
     )
-    await expect.poll(() => fightPage.searchParam('pinnedPlayers')).toBe('1')
-    await expect.poll(() => fightPage.searchParam('players')).toBeNull()
+    await expectSearchParam(page, 'pinnedPlayers', '1')
+    await expectSearchParam(page, 'players', null)
   })
 
   test('persists show pets, show energize, show boss damage, and infer threat reduction toggles across fight switches', async ({
@@ -276,7 +292,7 @@ test.describe('fight page', () => {
     await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
 
     await fightPage.quickSwitch.clickFight('Grobbulus')
-    await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}/fight/30$`))
+    await expectPathname(page, `/report/${e2eReportId}/fight/30`)
     await expect(fightPage.chart.showEnergizeEventsCheckbox()).toBeChecked()
     await expect(fightPage.chart.showFixateBandsCheckbox()).not.toBeChecked()
     await expect(fightPage.chart.bossDamageOffToggle()).toBeChecked()
@@ -284,7 +300,7 @@ test.describe('fight page', () => {
     await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
 
     await fightPage.quickSwitch.clickFight('Patchwerk')
-    await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}/fight/26$`))
+    await expectPathname(page, `/report/${e2eReportId}/fight/26`)
     await expect(fightPage.chart.showEnergizeEventsCheckbox()).toBeChecked()
     await expect(fightPage.chart.showFixateBandsCheckbox()).not.toBeChecked()
     await expect(fightPage.chart.bossDamageOffToggle()).toBeChecked()
@@ -319,9 +335,10 @@ test.describe('fight page', () => {
     )
 
     await fightPage.chart.focusLegend('Bladefury')
-    await expect(page).toHaveURL(/focusId=2/)
+    await expectSearchParam(page, 'focusId', '2')
+    await expect(fightPage.summary.focusedActorText('Bladefury')).toBeVisible()
     await page.keyboard.press('i')
-    await expect.poll(() => fightPage.searchParam('players')).toBe('2')
+    await expectSearchParam(page, 'players', '2')
 
     const playerSearch = page.getByRole('dialog', {
       name: 'Player search',
@@ -336,16 +353,16 @@ test.describe('fight page', () => {
     await playerSearchInput.fill('aegi')
     await page.keyboard.press('Enter')
     await expect(playerSearch).toHaveCount(0)
-    await expect.poll(() => fightPage.searchParam('focusId')).toBe('1')
-    await expect.poll(() => fightPage.searchParam('players')).toBe('1')
+    await expectSearchParam(page, 'focusId', '1')
+    await expectSearchParam(page, 'players', '1')
 
     await page.keyboard.press('/')
     await expect(playerSearch).toBeVisible()
     await playerSearchInput.fill('blade')
     await page.keyboard.press('Shift+Enter')
     await expect(playerSearch).toHaveCount(0)
-    await expect.poll(() => fightPage.searchParam('focusId')).toBe('2')
-    await expect.poll(() => fightPage.searchParam('players')).toBe('1,2')
+    await expectSearchParam(page, 'focusId', '2')
+    await expectSearchParam(page, 'players', '1,2')
 
     await expect(fightPage.shortcuts.dialog()).toHaveCount(0)
     await fightPage.shortcuts.open()
@@ -394,12 +411,12 @@ test.describe('fight page', () => {
     const fightPage = new FightPageObject(page)
 
     await fightPage.goto(svgFightUrl)
-    await expect(page).toHaveURL(/renderer=svg/)
+    await expectSearchParam(page, 'renderer', 'svg')
 
     await expect.poll(() => fightPage.chart.renderer()).toBe('svg')
     await expect(fightPage.summary.emptyStateText()).toBeVisible()
     await fightPage.chart.focusLegend('Aegistank')
-    await expect(page).toHaveURL(/focusId=1/)
+    await expectSearchParam(page, 'focusId', '1')
 
     await expect(fightPage.summary.focusedActorText('Aegistank')).toBeVisible()
     await expect(fightPage.summary.metricText('Total threat')).toBeVisible()
@@ -417,7 +434,7 @@ test.describe('fight page', () => {
     await fightPage.goto(svgFightUrl)
     await fightPage.chart.focusLegend('Bladefury')
 
-    await expect(page).toHaveURL(/focusId=2/)
+    await expectSearchParam(page, 'focusId', '2')
     await expect(fightPage.summary.focusedActorText('Bladefury')).toBeVisible()
   })
 

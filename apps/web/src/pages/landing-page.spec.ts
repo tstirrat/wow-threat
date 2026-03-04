@@ -21,6 +21,10 @@ const repoRoot = path.resolve(
 )
 const screenshotPath = path.join(repoRoot, 'output', 'landing-page.png')
 
+async function expectPathname(page: Page, pathname: string): Promise<void> {
+  await expect(page).toHaveURL((url) => url.pathname === pathname)
+}
+
 async function fillReportInput(page: Page, value: string): Promise<void> {
   const reportInput = page.getByRole('combobox', { name: 'Open report' })
   await reportInput.click()
@@ -55,7 +59,7 @@ test.describe('landing page', () => {
     await fillReportInput(page, e2eValidFreshReportUrl)
     await page.getByRole('button', { name: 'Load report' }).click()
 
-    await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}`))
+    await expectPathname(page, `/report/${e2eReportId}`)
   })
 
   test('pasting an invalid link shows a parse error', async ({ page }) => {
@@ -66,7 +70,7 @@ test.describe('landing page', () => {
     )
     await page.getByRole('button', { name: 'Load report' }).click()
 
-    await expect(page).toHaveURL('/')
+    await expectPathname(page, '/')
     await expect(page.getByRole('alert')).toContainText(
       'Unable to parse report input',
     )
@@ -105,7 +109,7 @@ test.describe('landing page', () => {
     await maybeCaptureScreenshot(page)
     await recentReports.exampleReportLink('Fresh Example').click()
 
-    await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}`))
+    await expectPathname(page, `/report/${e2eReportId}`)
   })
 
   test('report history can be revisited from recent reports', async ({
@@ -117,17 +121,17 @@ test.describe('landing page', () => {
     await fillReportInput(page, e2eValidFreshReportUrl)
     await page.getByRole('button', { name: 'Load report' }).click()
 
-    await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}`))
+    await expectPathname(page, `/report/${e2eReportId}`)
     await expect(
       page.getByRole('region', { name: 'Report header' }),
     ).toContainText(e2eReportResponse.title)
 
     await page.goBack()
-    await expect(page).toHaveURL('/')
+    await expectPathname(page, '/')
 
     await expect(recentReports.recentReportsList()).toBeVisible()
     await recentReports.recentReportLink(e2eReportResponse.title).click()
-    await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}`))
+    await expectPathname(page, `/report/${e2eReportId}`)
   })
 
   test('recent report tiles can be removed manually', async ({ page }) => {
@@ -136,13 +140,13 @@ test.describe('landing page', () => {
     await page.goto('/')
     await fillReportInput(page, e2eValidFreshReportUrl)
     await page.getByRole('button', { name: 'Load report' }).click()
-    await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}`))
+    await expectPathname(page, `/report/${e2eReportId}`)
     await expect(
       page.getByRole('region', { name: 'Report header' }),
     ).toContainText(e2eReportResponse.title)
 
     await page.goBack()
-    await expect(page).toHaveURL('/')
+    await expectPathname(page, '/')
 
     await expect(recentReports.recentReportsList()).toBeVisible()
     await recentReports
@@ -157,7 +161,7 @@ test.describe('landing page', () => {
     await page.goto('/')
     await fillReportInput(page, e2eValidFreshReportUrl)
     await page.getByRole('button', { name: 'Load report' }).click()
-    await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}`))
+    await expectPathname(page, `/report/${e2eReportId}`)
 
     await page.getByRole('button', { name: 'Open report input' }).click()
 
@@ -174,6 +178,6 @@ test.describe('landing page', () => {
     await reportInput.fill(e2eValidFreshReportUrl)
     await reportInput.press('Enter')
 
-    await expect(page).toHaveURL(new RegExp(`/report/${e2eReportId}`))
+    await expectPathname(page, `/report/${e2eReportId}`)
   })
 })
