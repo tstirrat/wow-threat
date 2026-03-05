@@ -38,7 +38,6 @@
 | ID      | Package              | Status      | Priority | Size | Title                                                     |
 | ------- | -------------------- | ----------- | -------- | ---- | --------------------------------------------------------- |
 | WEB-012 | `@wow-threat/web`    | DISCOVERY   | P2       | M    | Add Starred, Guild lists at top                           |
-| WEB-014 | `@wow-threat/web`    | READY       | P2       | S    | Focused player links back to WCL                          |
 | WEB-015 | `@wow-threat/web`    | READY       | P2       | S    | Isolate key toggles between isolated and previous players |
 | WEB-016 | `@wow-threat/web`    | READY       | P2       | S    | Zoom key toggles between no zoom and previous zoom        |
 | WEB-017 | `@wow-threat/web`    | DISCOVERY   | P2       | M    | Fuzzy target selector                                     |
@@ -80,6 +79,7 @@
 - WEB-030
 - WEB-031
 - API-005
+- WEB-014
 - ENG-004
 
 ## Task Cards (Open)
@@ -109,37 +109,6 @@ validation:
   - pnpm --filter @wow-threat/web test
 branch_name: codex/web-012-starred-guild-lists
 worktree_path: ../wow-threat-web-012
-publish: auto_push_pr
-pr_url: null
-commit_sha: null
-```
-
-### WEB-014 - Focused player links back to WCL
-
-```yaml
-id: WEB-014
-title: Focused player links back to WCL
-package: @wow-threat/web
-status: READY
-priority: P2
-size: S
-depends_on: []
-files_hint:
-  - apps/web/src/pages/fight-page.tsx
-  - apps/web/src/lib/fight-navigation.ts
-  - apps/web/src/pages/fight-page.spec.ts
-acceptance_criteria:
-  - Focused player view includes a link to the matching Warcraft Logs report and fight.
-  - Link opens in a new tab with rel=noopener noreferrer.
-  - Host selection follows current branch domain logic.
-  - Add or update tests for link visibility and URL generation.
-validation:
-  - pnpm --filter @wow-threat/web lint
-  - pnpm --filter @wow-threat/web typecheck
-  - pnpm --filter @wow-threat/web test
-  - pnpm --filter @wow-threat/web exec playwright test src/pages/fight-page.spec.ts
-branch_name: codex/web-014-focused-player-link-to-wcl
-worktree_path: ../wow-threat-web-014
 publish: auto_push_pr
 pr_url: null
 commit_sha: null

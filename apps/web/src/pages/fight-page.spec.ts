@@ -419,6 +419,17 @@ test.describe('fight page', () => {
     await expectSearchParam(page, 'focusId', '1')
 
     await expect(fightPage.summary.focusedActorText('Aegistank')).toBeVisible()
+    const focusedPlayerWclLink = fightPage.summary.warcraftLogsLink('Aegistank')
+    await expect(focusedPlayerWclLink).toBeVisible()
+    await expect(focusedPlayerWclLink).toHaveAttribute(
+      'href',
+      'https://fresh.warcraftlogs.com/character/us/benediction/aegistank',
+    )
+    await expect(focusedPlayerWclLink).toHaveAttribute('target', '_blank')
+    await expect(focusedPlayerWclLink).toHaveAttribute(
+      'rel',
+      'noopener noreferrer',
+    )
     await expect(fightPage.summary.metricText('Total threat')).toBeVisible()
     await expect(
       fightPage.summary.totalRow().getByRole('cell').first(),

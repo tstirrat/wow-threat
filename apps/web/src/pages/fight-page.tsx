@@ -18,7 +18,7 @@ import { useFightEvents } from '../hooks/use-fight-events'
 import { useUserSettings } from '../hooks/use-user-settings'
 import { formatClockDuration } from '../lib/format'
 import { resolveCurrentThreatConfig } from '../lib/threat-config'
-import { buildFightRankingsUrl } from '../lib/wcl-url'
+import { buildCharacterUrl, buildFightRankingsUrl } from '../lib/wcl-url'
 import { useReportRouteContext } from '../routes/report-layout-context'
 import type { BossDamageMode } from '../types/app'
 import { useFightPageDerivedState } from './hooks/use-fight-page-derived-state'
@@ -338,6 +338,22 @@ export const FightPage: FC = () => {
       </a>
     </div>
   )
+  const focusedPlayerActor = focusedPlayerSummary
+    ? (fightData.actors.find(
+        (actor) =>
+          actor.id === focusedPlayerSummary.actorId && actor.type === 'Player',
+      ) ?? null)
+    : null
+  const focusedPlayerWclUrl =
+    focusedPlayerActor &&
+    reportData.guild?.serverRegion &&
+    reportData.guild.serverSlug
+      ? buildCharacterUrl(reportHost, {
+          characterName: focusedPlayerActor.name,
+          region: reportData.guild.serverRegion,
+          serverSlug: reportData.guild.serverSlug,
+        })
+      : null
 
   return (
     <div className="space-y-5">
@@ -408,6 +424,7 @@ export const FightPage: FC = () => {
             rows={focusedPlayerRows}
             initialAuras={initialAuras}
             wowhead={wowheadLinksConfig}
+            warcraftLogsUrl={focusedPlayerWclUrl}
           />
         </SectionCard>
       ) : null}

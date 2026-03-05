@@ -80,3 +80,23 @@ export function buildFightRankingsUrl(
   url.searchParams.set('type', 'summary')
   return url.toString()
 }
+
+/** Build a WCL character profile URL from host + character identity. */
+export function buildCharacterUrl(
+  host: WarcraftLogsHost,
+  {
+    characterName,
+    region,
+    serverSlug,
+  }: {
+    characterName: string
+    region: string
+    serverSlug: string
+  },
+): string {
+  const normalizedRegion = region.trim().toLowerCase()
+  const normalizedServerSlug = serverSlug.trim().toLowerCase()
+  const normalizedCharacterName = characterName.trim().toLowerCase()
+
+  return `https://${host}/character/${encodeURIComponent(normalizedRegion)}/${encodeURIComponent(normalizedServerSlug)}/${encodeURIComponent(normalizedCharacterName)}`
+}

@@ -31,6 +31,12 @@ export class FocusedPlayerSummaryObject {
     return this.section.getByText(name)
   }
 
+  warcraftLogsLink(playerName: string): Locator {
+    return this.section.getByRole('link', {
+      name: `Open ${playerName} on Warcraft Logs`,
+    })
+  }
+
   metricText(metricLabel: string): Locator {
     return this.section.getByText(metricLabel)
   }
