@@ -380,6 +380,9 @@ test.describe('fight page', () => {
       fightPage.shortcuts.shortcutListItem('Clear isolate'),
     ).toBeVisible()
     await expect(
+      fightPage.shortcuts.shortcutListItem('Toggle zoom window'),
+    ).toBeVisible()
+    await expect(
       fightPage.shortcuts.shortcutListItem('Isolate focused player'),
     ).toBeVisible()
     await expect(
@@ -398,6 +401,9 @@ test.describe('fight page', () => {
       fightPage.shortcuts.shortcutKey('Clear isolate', 'C'),
     ).toBeVisible()
     await expect(
+      fightPage.shortcuts.shortcutKey('Toggle zoom window', 'Z'),
+    ).toBeVisible()
+    await expect(
       fightPage.shortcuts.shortcutKey('Isolate focused player', 'I'),
     ).toBeVisible()
     await expect(
@@ -405,6 +411,36 @@ test.describe('fight page', () => {
     ).toBeVisible()
     await fightPage.shortcuts.closeWithEscape()
     await expect(fightPage.shortcuts.dialog()).toHaveCount(0)
+  })
+
+  test('toggles zoom window with keyboard shortcut and keeps summary window aligned', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(`${svgFightUrl}&focusId=1&startMs=1000&endMs=2000`)
+    await expect(fightPage.summary.focusedActorText('Aegistank')).toBeVisible()
+
+    const totalThreatCell = fightPage.summary
+      .totalRow()
+      .getByRole('cell')
+      .nth(2)
+    await expect(totalThreatCell).toHaveText(/[0-9,.]+/)
+
+    const zoomedWindowTotalThreat = (
+      await totalThreatCell.textContent()
+    )?.trim()
+    expect(zoomedWindowTotalThreat).toBeTruthy()
+
+    await page.keyboard.press('z')
+    await expectSearchParam(page, 'startMs', null)
+    await expectSearchParam(page, 'endMs', null)
+    await expect(totalThreatCell).toHaveText('3,974.00')
+
+    await page.keyboard.press('z')
+    await expectSearchParam(page, 'startMs', '1000')
+    await expectSearchParam(page, 'endMs', '2000')
+    await expect(totalThreatCell).toHaveText(zoomedWindowTotalThreat ?? '')
   })
 
   test('focusing a player shows total threat values', async ({ page }) => {

@@ -39,7 +39,6 @@
 | ------- | -------------------- | ----------- | -------- | ---- | --------------------------------------------------------- |
 | WEB-012 | `@wow-threat/web`    | READY       | P2       | M    | Add Starred, Guild lists at top                           |
 | WEB-015 | `@wow-threat/web`    | READY       | P2       | S    | Isolate key toggles between isolated and previous players |
-| WEB-016 | `@wow-threat/web`    | READY       | P2       | S    | Zoom key toggles between no zoom and previous zoom        |
 | WEB-017 | `@wow-threat/web`    | READY       | P2       | M    | Fuzzy target selector                                     |
 | WEB-018 | `@wow-threat/web`    | READY       | P2       | M    | Fuzzy fight selector                                      |
 | WEB-019 | `@wow-threat/web`    | READY       | P0       | M    | Fight event pagination currently blocks the UI thread     |
@@ -81,6 +80,7 @@
 - API-005
 - WEB-014
 - ENG-004
+- WEB-016
 
 ## Task Cards (Open)
 
@@ -145,37 +145,6 @@ validation:
   - pnpm --filter @wow-threat/web exec playwright test src/pages/fight-page.spec.ts
 branch_name: codex/web-015-isolate-key-toggle
 worktree_path: ../wow-threat-web-015
-publish: auto_push_pr
-pr_url: null
-commit_sha: null
-```
-
-### WEB-016 - Zoom key toggles previous zoom window
-
-```yaml
-id: WEB-016
-title: Zoom key toggles between no zoom and previous zoom
-package: @wow-threat/web
-status: READY
-priority: P2
-size: S
-depends_on: []
-files_hint:
-  - apps/web/src/components/threat-chart.tsx
-  - apps/web/src/hooks/use-threat-chart-zoom.ts
-  - apps/web/src/pages/fight-page.spec.ts
-acceptance_criteria:
-  - Pressing z toggles between full-fight range and the previous user-selected zoom range.
-  - If no previous zoom range exists, z leaves chart on full-fight range.
-  - Toggling keeps focus-player table window aligned to chart window.
-  - Add or update tests for keyboard zoom toggle behavior.
-validation:
-  - pnpm --filter @wow-threat/web lint
-  - pnpm --filter @wow-threat/web typecheck
-  - pnpm --filter @wow-threat/web test
-  - pnpm --filter @wow-threat/web exec playwright test src/pages/fight-page.spec.ts
-branch_name: codex/web-016-zoom-key-toggle
-worktree_path: ../wow-threat-web-016
 publish: auto_push_pr
 pr_url: null
 commit_sha: null

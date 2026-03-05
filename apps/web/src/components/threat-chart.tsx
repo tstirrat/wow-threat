@@ -9,7 +9,10 @@ import { useHotkeys } from 'react-hotkeys-hook'
 
 import { useThreatChartLegendState } from '../hooks/use-threat-chart-legend-state'
 import { useThreatChartPlayerSearch } from '../hooks/use-threat-chart-player-search'
-import { useThreatChartSelectedWindow } from '../hooks/use-threat-chart-selected-window'
+import {
+  type ThreatChartSelectedWindow,
+  useThreatChartSelectedWindow,
+} from '../hooks/use-threat-chart-selected-window'
 import { useThreatChartSeriesClickHandler } from '../hooks/use-threat-chart-series-click-handler'
 import { useThreatChartSeriesData } from '../hooks/use-threat-chart-series-data'
 import { useThreatChartThemeColors } from '../hooks/use-threat-chart-theme-colors'
@@ -92,6 +95,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     windowStartMs,
     windowEndMs,
   })
+  const previousZoomWindowRef = useRef<ThreatChartSelectedWindow | null>(null)
   const { consumeSuppressedSeriesClick, resetZoom, yAxisWindow } =
     useThreatChartZoom({
       bounds,
@@ -166,6 +170,33 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     }
   }, [onRegisterResetZoom, resetZoom])
 
+  const isFullFightWindow =
+    selectedWindow === null ||
+    (selectedWindow.start <= bounds.min && selectedWindow.end >= bounds.max)
+
+  useEffect(() => {
+    if (!selectedWindow || isFullFightWindow) {
+      return
+    }
+
+    previousZoomWindowRef.current = selectedWindow
+  }, [isFullFightWindow, selectedWindow])
+
+  const handleToggleZoomWindow = useCallback((): void => {
+    if (isFullFightWindow) {
+      const previousZoomWindow = previousZoomWindowRef.current
+      if (!previousZoomWindow) {
+        return
+      }
+
+      onWindowChange(previousZoomWindow.start, previousZoomWindow.end)
+      return
+    }
+
+    previousZoomWindowRef.current = selectedWindow
+    onWindowChange(null, null)
+  }, [isFullFightWindow, onWindowChange, selectedWindow])
+
   useHotkeys(
     '/',
     (event) => {
@@ -209,6 +240,23 @@ export const ThreatChart: FC<ThreatChartProps> = ({
       scopes: ['fight-page'],
     },
     [canClearIsolate, handleClearSelections],
+  )
+
+  useHotkeys(
+    'z',
+    (event) => {
+      event.preventDefault()
+      handleToggleZoomWindow()
+    },
+    {
+      description: 'Toggle zoom window',
+      metadata: {
+        order: 45,
+        showInFightOverlay: true,
+      },
+      scopes: ['fight-page'],
+    },
+    [handleToggleZoomWindow],
   )
 
   useHotkeys(
