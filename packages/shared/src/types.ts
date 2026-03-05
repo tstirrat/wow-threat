@@ -261,6 +261,8 @@ export interface SpellThreatModifier {
   bonus?: number
 }
 
+export type ThreatRecipient = 'source' | 'target'
+
 export interface ThreatFormulaResult {
   /** Threat value to apply to the target */
   value: number
@@ -272,6 +274,8 @@ export interface ThreatFormulaResult {
   note?: string
   /** Whether to apply player multipliers (class/aura/talent). Defaults to true. */
   applyPlayerMultipliers?: boolean
+  /** Who receives the generated threat. Defaults to source actor. */
+  threatRecipient?: ThreatRecipient
   /** Event effects (taunt, threat drop, custom threat, etc.) */
   effects?: ThreatEffect[]
 }
@@ -463,6 +467,8 @@ export interface ThreatCalculation {
   note?: string
   /** Modifiers applied (multiplicative with each other) */
   modifiers: AppliedThreatModifier[]
+  /** Who receives the generated threat. Defaults to source actor. */
+  threatRecipient?: ThreatRecipient
   /** Event effects (taunt, threat drop, custom threat, etc.) */
   effects?: ThreatEffect[]
 }
