@@ -66,12 +66,14 @@ export function useThreatChartPlayerSearch({
   focusedActorId,
   onFocusAndAddPlayer,
   onFocusAndIsolatePlayer,
+  onToggleFocusedPlayerIsolation,
   clearIsolate,
 }: {
   series: ThreatSeries[]
   focusedActorId: number | null
   onFocusAndAddPlayer: (playerId: number) => void
   onFocusAndIsolatePlayer: (playerId: number) => void
+  onToggleFocusedPlayerIsolation: (playerId: number) => void
   clearIsolate: () => void
 }): UseThreatChartPlayerSearchResult {
   const [isPlayerSearchOpen, setIsPlayerSearchOpen] = useState(false)
@@ -214,11 +216,8 @@ export function useThreatChartPlayerSearch({
       return
     }
 
-    selectPlayer({
-      playerId: focusedPlayerId,
-      shouldAddToFilter: false,
-    })
-  }, [focusedPlayerId, selectPlayer])
+    onToggleFocusedPlayerIsolation(focusedPlayerId)
+  }, [focusedPlayerId, onToggleFocusedPlayerIsolation])
 
   return {
     isPlayerSearchOpen,

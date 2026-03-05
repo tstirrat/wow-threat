@@ -337,8 +337,12 @@ test.describe('fight page', () => {
     await fightPage.chart.focusLegend('Bladefury')
     await expectSearchParam(page, 'focusId', '2')
     await expect(fightPage.summary.focusedActorText('Bladefury')).toBeVisible()
+    await fightPage.chart.toggleLegend('Arrowyn')
+    await expectSearchParam(page, 'players', '1,2')
     await page.keyboard.press('i')
     await expectSearchParam(page, 'players', '2')
+    await page.keyboard.press('i')
+    await expectSearchParam(page, 'players', '1,2')
 
     const playerSearch = page.getByRole('dialog', {
       name: 'Player search',
