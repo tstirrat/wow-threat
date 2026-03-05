@@ -37,7 +37,7 @@ const fakeAuth = {
 } as unknown as Auth
 
 const AuthHarness: FC = () => {
-  const { authError, isBusy, startWclLogin } = useAuth()
+  const { authError, isBusy, startWclLogin, wclUserId } = useAuth()
 
   return (
     <div>
@@ -46,6 +46,7 @@ const AuthHarness: FC = () => {
       </button>
       <p data-testid="auth-error">{authError ?? ''}</p>
       <p data-testid="busy-state">{isBusy ? 'busy' : 'idle'}</p>
+      <p data-testid="wcl-user-id">{wclUserId ?? ''}</p>
     </div>
   )
 }
@@ -430,5 +431,32 @@ describe('AuthProvider', () => {
         'WCL callback rejected',
       )
     })
+  })
+
+  it('derives wcl user id from canonical uid when claims are missing', async () => {
+    const linkedUser = {
+      getIdTokenResult: vi.fn(async () => ({
+        claims: {},
+      })),
+      uid: 'wcl:12345',
+    } as unknown as User
+
+    onAuthStateChangedMock.mockImplementation(
+      (_auth: Auth, callback: (user: User | null) => void) => {
+        callback(linkedUser)
+        return vi.fn()
+      },
+    )
+
+    render(
+      <AuthProvider>
+        <AuthHarness />
+      </AuthProvider>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('wcl-user-id')).toHaveTextContent('12345')
+    })
+    expect(signInAnonymouslyMock).not.toHaveBeenCalled()
   })
 })

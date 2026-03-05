@@ -9,8 +9,19 @@ import { verifyFirebaseIdToken } from '../services/firebase-auth'
 import type { Bindings, Variables } from '../types/bindings'
 import { unauthorized } from './error'
 
+const canonicalWclUidPrefix = 'wcl:'
+
 function readStringClaim(claim: unknown): string | null {
   return typeof claim === 'string' && claim.trim().length > 0 ? claim : null
+}
+
+function parseWclUserIdFromUid(uid: string): string | null {
+  if (!uid.startsWith(canonicalWclUidPrefix)) {
+    return null
+  }
+
+  const parsedWclUserId = uid.slice(canonicalWclUidPrefix.length).trim()
+  return parsedWclUserId.length > 0 ? parsedWclUserId : null
 }
 
 /**
@@ -42,7 +53,9 @@ export const authMiddleware: MiddlewareHandler<{
 
   const verifiedToken = await verifyFirebaseIdToken(token, c.env)
   c.set('uid', verifiedToken.uid)
-  const wclUserId = readStringClaim(verifiedToken.claims.wclUserId)
+  const wclUserId =
+    readStringClaim(verifiedToken.claims.wclUserId) ??
+    parseWclUserIdFromUid(verifiedToken.uid)
   if (wclUserId) {
     c.set('wclUserId', wclUserId)
   }

@@ -82,6 +82,23 @@ describe('authMiddleware', () => {
     expect(data.wclUserId).toBeNull()
   })
 
+  it('derives wcl user id from canonical uid when claim is absent', async () => {
+    const res = await authTestApp.request(
+      'http://localhost/secure/resource',
+      {
+        headers: {
+          Authorization: 'Bearer test-firebase-id-token:wcl%3A12345',
+        },
+      },
+      createMockBindings(),
+    )
+
+    expect(res.status).toBe(200)
+    const data = (await res.json()) as { uid: string; wclUserId: string }
+    expect(data.uid).toBe('wcl:12345')
+    expect(data.wclUserId).toBe('12345')
+  })
+
   it('seeds uid and wcl identity in test environment without auth header', async () => {
     const res = await authTestApp.request(
       'http://localhost/secure/resource',

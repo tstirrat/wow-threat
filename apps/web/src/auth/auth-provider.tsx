@@ -58,6 +58,7 @@ const popupClosedCoopProbeMs = 2000
 const popupClosedResultGraceMs = 5000
 const popupResultStaleToleranceMs = 30 * 1000
 const popupTimeoutMs = 3 * 60 * 1000
+const canonicalWclUidPrefix = 'wcl:'
 
 function readStringClaim(
   claims: IdTokenResult['claims'],
@@ -72,6 +73,15 @@ function parseWclIdentityClaims(tokenResult: IdTokenResult): WclIdentityClaims {
     wclUserId: readStringClaim(tokenResult.claims, 'wclUserId'),
     wclUserName: readStringClaim(tokenResult.claims, 'wclUserName'),
   }
+}
+
+function parseWclUserIdFromUid(uid: string): string | null {
+  if (!uid.startsWith(canonicalWclUidPrefix)) {
+    return null
+  }
+
+  const parsedWclUserId = uid.slice(canonicalWclUidPrefix.length).trim()
+  return parsedWclUserId.length > 0 ? parsedWclUserId : null
 }
 
 async function parseErrorMessage(response: Response): Promise<string> {
@@ -334,6 +344,7 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
     }
 
     let isCancelled = false
+    const fallbackWclUserId = parseWclUserIdFromUid(user.uid)
 
     void user
       .getIdTokenResult()
@@ -343,7 +354,7 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
         }
 
         const identity = parseWclIdentityClaims(tokenResult)
-        setWclUserId(identity.wclUserId)
+        setWclUserId(identity.wclUserId ?? fallbackWclUserId)
         setWclUserName(identity.wclUserName)
       })
       .catch(() => {
@@ -351,7 +362,7 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
           return
         }
 
-        setWclUserId(null)
+        setWclUserId(fallbackWclUserId)
         setWclUserName(null)
       })
 

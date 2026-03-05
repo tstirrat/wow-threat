@@ -85,7 +85,7 @@ export async function verifyFirebaseIdToken(
       throw unauthorized('Firebase ID token is expired')
     }
 
-    const uid = testUid || 'wcl-test-user'
+    const uid = testUid ? decodeURIComponent(testUid) : 'wcl-test-user'
     const signInProvider =
       tokenProvider === 'anonymous' || tokenState === 'anonymous'
         ? 'anonymous'
