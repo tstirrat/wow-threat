@@ -8,6 +8,7 @@ import {
   createApplyDebuffStackEvent,
   createCastEvent,
   createDamageEvent,
+  createHealEvent,
   createMockActorContext,
   createRefreshBuffEvent,
   createRefreshDebuffEvent,
@@ -116,6 +117,23 @@ describe('formulas', () => {
       )
 
       expect(result.applyPlayerMultipliers).toBe(false)
+    })
+
+    it('sets target threat recipient when configured', () => {
+      const result = assertDefined(
+        threat({
+          modifier: 0.5,
+          split: true,
+          eventTypes: ['heal'],
+          recipient: 'target',
+        })(
+          createMockContext({
+            event: createHealEvent(),
+          }),
+        ),
+      )
+
+      expect(result.threatRecipient).toBe('target')
     })
   })
 

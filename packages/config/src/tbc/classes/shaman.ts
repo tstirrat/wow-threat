@@ -36,6 +36,7 @@ export const Spells = {
   ShamanisticRageCast: 30823, // https://www.wowhead.com/tbc/spell=30823/
   ShamanisticRageBuff: 30824, // https://www.wowhead.com/tbc/spell=30824/
   Flurry: 16280, // https://www.wowhead.com/tbc/spell=16280/
+  EarthShieldHeal: 379, // https://www.wowhead.com/tbc/spell=379/
   WaterShieldCastR1: 24398, // https://www.wowhead.com/tbc/spell=24398/
   WaterShieldCastR2: 33736, // https://www.wowhead.com/tbc/spell=33736/
   WaterShieldManaR1: 23575, // https://www.wowhead.com/tbc/spell=23575/
@@ -144,6 +145,12 @@ export const shamanConfig: ClassThreatConfig = {
     [Spells.FrostShockR3]: threat({ modifier: 2 }),
     [Spells.FrostShockR4]: threat({ modifier: 2 }),
     [Spells.FrostShockR5]: threat({ modifier: 2 }),
+    [Spells.EarthShieldHeal]: threat({
+      modifier: 0.5,
+      split: true,
+      eventTypes: ['heal'],
+      recipient: 'target',
+    }),
 
     [Spells.Clearcasting]: noThreatFormula,
     [Spells.WindfuryAttackR1]: noThreatFormula,

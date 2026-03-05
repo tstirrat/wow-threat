@@ -8,6 +8,7 @@ import type {
   SpellThreatModifier,
   ThreatContext,
   ThreatFormulaResult,
+  ThreatRecipient,
 } from '@wow-threat/shared'
 import {
   type EventType,
@@ -37,6 +38,8 @@ export interface ThreatOptions {
   eventTypes?: EventType[]
   /** Whether to apply player multipliers (class/aura/talent). Defaults to true. */
   applyPlayerMultipliers?: boolean
+  /** Who receives generated threat. Defaults to source actor. */
+  recipient?: ThreatRecipient
 }
 
 const buffAuraEventTypes: EventType[] = [
@@ -139,6 +142,7 @@ export function threat(options: ThreatOptions = {}): FormulaFn {
     split = false,
     eventTypes = ['damage', 'heal'], // no double dip on cast+damage
     applyPlayerMultipliers,
+    recipient = 'source',
   } = options
 
   return (ctx) => {
@@ -155,6 +159,7 @@ export function threat(options: ThreatOptions = {}): FormulaFn {
     return {
       value,
       splitAmongEnemies: split,
+      threatRecipient: recipient,
       ...(spellModifier ? { spellModifier } : {}),
       applyPlayerMultipliers,
     }

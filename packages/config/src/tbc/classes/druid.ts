@@ -32,6 +32,7 @@ export const Spells = {
   MangleBearR1: 33878, // https://www.wowhead.com/tbc/spell=33878/
   MangleBearR2: 33986, // https://www.wowhead.com/tbc/spell=33986/
   MangleBearR3: 33987, // https://www.wowhead.com/tbc/spell=33987/
+  LifebloomFinalBloom: 33778, // https://www.wowhead.com/tbc/spell=33778/
   PrimalFury: 16959, // https://www.wowhead.com/tbc/spell=16959/
   ImprovedLeaderOfThePack: 34299, // https://www.wowhead.com/tbc/spell=34299/
   T6_2pcBuff: 38447, // https://www.wowhead.com/tbc/spell=38447/
@@ -204,6 +205,12 @@ export const druidConfig: ClassThreatConfig = {
     [Spells.MangleBearR1]: threat({ modifier: Mods.Mangle }),
     [Spells.MangleBearR2]: threat({ modifier: Mods.Mangle }),
     [Spells.MangleBearR3]: threat({ modifier: Mods.Mangle }),
+    [Spells.LifebloomFinalBloom]: threat({
+      modifier: 0.5,
+      split: true,
+      eventTypes: ['heal'],
+      recipient: 'target',
+    }),
 
     [Spells.CowerR4]: threatOnCastRollbackOnMiss(-800),
     [Spells.CowerR5]: threatOnCastRollbackOnMiss(-1170),
