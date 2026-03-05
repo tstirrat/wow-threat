@@ -56,6 +56,25 @@ function throwIfAborted(signal: AbortSignal | undefined): void {
   }
 }
 
+function throwIfRequestNotCurrent(
+  isRequestCurrent: (() => boolean) | undefined,
+): void {
+  if (isRequestCurrent && !isRequestCurrent()) {
+    throw createAbortError()
+  }
+}
+
+async function yieldToEventLoop(
+  signal: AbortSignal | undefined,
+  isRequestCurrent: (() => boolean) | undefined,
+): Promise<void> {
+  await new Promise<void>((resolve) => {
+    globalThis.setTimeout(resolve, 0)
+  })
+  throwIfAborted(signal)
+  throwIfRequestNotCurrent(isRequestCurrent)
+}
+
 function formatEventCount(eventCount: number): string {
   return new Intl.NumberFormat().format(eventCount)
 }
@@ -395,6 +414,7 @@ async function fetchAllRawEvents(
   reportId: string,
   fightId: number,
   signal: AbortSignal | undefined,
+  isRequestCurrent: (() => boolean) | undefined,
   onProgress:
     | ((progress: ClientThreatEngineProgressUpdate) => void)
     | undefined,
@@ -411,8 +431,10 @@ async function fetchAllRawEvents(
 
   while (true) {
     throwIfAborted(signal)
+    throwIfRequestNotCurrent(isRequestCurrent)
     const page = await getFightEventsPage(reportId, fightId, cursor, signal)
     throwIfAborted(signal)
+    throwIfRequestNotCurrent(isRequestCurrent)
     pageCount += 1
     if (!metadata) {
       metadata = page
@@ -426,6 +448,7 @@ async function fetchAllRawEvents(
         allEvents.length,
       )} events)`,
     })
+    await yieldToEventLoop(signal, isRequestCurrent)
 
     const nextPageTimestamp = page.nextPageTimestamp
     if (nextPageTimestamp === null) {
@@ -463,10 +486,17 @@ export async function getFightRawEventsClientSide(params: {
   reportId: string
   fightId: number
   signal?: AbortSignal
+  isRequestCurrent?: () => boolean
   onProgress?: (progress: ClientThreatEngineProgressUpdate) => void
 }): Promise<RawFightEventsData> {
-  const { reportId, fightId, signal, onProgress } = params
-  return fetchAllRawEvents(reportId, fightId, signal, onProgress)
+  const { reportId, fightId, signal, isRequestCurrent, onProgress } = params
+  return fetchAllRawEvents(
+    reportId,
+    fightId,
+    signal,
+    isRequestCurrent,
+    onProgress,
+  )
 }
 
 /**
@@ -526,7 +556,7 @@ export async function getFightEventsClientSide(params: {
     pageCount,
   } = rawEventsData
     ? rawEventsData
-    : await fetchAllRawEvents(reportId, fightId, signal, onProgress)
+    : await fetchAllRawEvents(reportId, fightId, signal, undefined, onProgress)
   throwIfAborted(signal)
   const tankActorIds = extractTankActorIds(fightData)
   const workerPayload: ThreatEngineWorkerPayload = {

@@ -35,17 +35,16 @@
 
 ## Task Index (Open)
 
-| ID      | Package              | Status      | Priority | Size | Title                                                     |
-| ------- | -------------------- | ----------- | -------- | ---- | --------------------------------------------------------- |
-| WEB-012 | `@wow-threat/web`    | READY       | P2       | M    | Add Starred, Guild lists at top                           |
-| WEB-015 | `@wow-threat/web`    | READY       | P2       | S    | Isolate key toggles between isolated and previous players |
-| WEB-016 | `@wow-threat/web`    | READY       | P2       | S    | Zoom key toggles between no zoom and previous zoom        |
-| WEB-017 | `@wow-threat/web`    | READY       | P2       | M    | Fuzzy target selector                                     |
-| WEB-018 | `@wow-threat/web`    | READY       | P2       | M    | Fuzzy fight selector                                      |
-| WEB-019 | `@wow-threat/web`    | READY       | P0       | M    | Fight event pagination currently blocks the UI thread     |
-| WEB-021 | `@wow-threat/web`    | READY       | P2       | S    | Keyboard shortcut for filter to tanks only                |
-| WEB-027 | `@wow-threat/web`    | READY       | P3       | XS   | Make toggled players in legend more prominent             |
-| WEB-032 | `@wow-threat/web`    | READY       | P0       | L    | Batch + stream events to worker/IndexedDB to prevent jank |
+| ID      | Package           | Status | Priority | Size | Title                                                     |
+| ------- | ----------------- | ------ | -------- | ---- | --------------------------------------------------------- |
+| WEB-012 | `@wow-threat/web` | READY  | P2       | M    | Add Starred, Guild lists at top                           |
+| WEB-015 | `@wow-threat/web` | READY  | P2       | S    | Isolate key toggles between isolated and previous players |
+| WEB-016 | `@wow-threat/web` | READY  | P2       | S    | Zoom key toggles between no zoom and previous zoom        |
+| WEB-017 | `@wow-threat/web` | READY  | P2       | M    | Fuzzy target selector                                     |
+| WEB-018 | `@wow-threat/web` | READY  | P2       | M    | Fuzzy fight selector                                      |
+| WEB-021 | `@wow-threat/web` | READY  | P2       | S    | Keyboard shortcut for filter to tanks only                |
+| WEB-027 | `@wow-threat/web` | READY  | P3       | XS   | Make toggled players in legend more prominent             |
+| WEB-032 | `@wow-threat/web` | READY  | P0       | L    | Batch + stream events to worker/IndexedDB to prevent jank |
 
 ## Historical Completed IDs
 
@@ -81,6 +80,7 @@
 - API-005
 - WEB-014
 - ENG-004
+- WEB-019
 
 ## Task Cards (Open)
 
@@ -241,38 +241,6 @@ validation:
   - pnpm --filter @wow-threat/web test
 branch_name: codex/web-018-fuzzy-fight-selector
 worktree_path: ../wow-threat-web-018
-publish: auto_push_pr
-pr_url: null
-commit_sha: null
-```
-
-### WEB-019 - Fix fight event pagination blocking UI thread
-
-```yaml
-id: WEB-019
-title: Fight event pagination retrieves all pages while blocking UI thread
-package: @wow-threat/web
-status: READY
-priority: P0
-size: M
-depends_on: []
-files_hint:
-  - apps/web/src/hooks/use-fight-events.ts
-  - apps/web/src/workers/threat-engine.worker.ts
-  - apps/web/src/lib/client-threat-engine.ts
-  - apps/web/src/pages/fight-page.spec.ts
-acceptance_criteria:
-  - Keep fight-event pagination sequential and cursor-driven (no parallel page fetching).
-  - Yield to the event loop after every page fetch iteration (for example setTimeout(0) or equivalent) so UI rendering/input is not starved.
-  - On context change/newer request, stop fetching subsequent pages and discard stale partial results.
-  - If a page fetch fails, fail fast with existing error handling and no automatic retries.
-  - Preserve page ordering and ensure successful loads still render fight page/chart end-to-end.
-validation:
-  - pnpm --filter @wow-threat/web lint
-  - pnpm --filter @wow-threat/web typecheck
-  - pnpm --filter @wow-threat/web test
-branch_name: codex/web-019-pagination-ui-thread
-worktree_path: ../wow-threat-web-019
 publish: auto_push_pr
 pr_url: null
 commit_sha: null
