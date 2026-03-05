@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Kbd, KbdGroup } from '@/components/ui/kbd'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Tooltip,
   TooltipContent,
@@ -36,6 +37,8 @@ import { useHotkeys, useHotkeysContext } from 'react-hotkeys-hook'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 const warcraftLogsHomeUrl = 'https://www.warcraftlogs.com'
+const authControlWidthClass = 'w-40'
+const authControlHeightClass = 'h-[30px]'
 
 function formatResetDuration(totalSeconds: number): string {
   const safeSeconds = Math.max(0, Math.floor(totalSeconds))
@@ -77,6 +80,7 @@ export const RootLayout: FC = () => {
     authEnabled,
     authError,
     isBusy,
+    isInitializing,
     signOut,
     startWclLogin,
     wclUserId,
@@ -386,14 +390,25 @@ export const RootLayout: FC = () => {
               <span className="text-sm text-muted-foreground">
                 Auth disabled
               </span>
+            ) : isInitializing ? (
+              <Skeleton
+                aria-hidden="true"
+                className={`${authControlHeightClass} ${authControlWidthClass}`}
+                data-testid="auth-header-loading-skeleton"
+              />
             ) : isWclAuthenticated ? (
               <DropdownMenu
                 open={isAccountMenuOpen}
                 onOpenChange={handleAccountMenuOpenChange}
               >
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" type="button" variant="outline">
-                    {displayUserName}
+                  <Button
+                    className={`${authControlHeightClass} ${authControlWidthClass} justify-between gap-2`}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    <span className="truncate">{displayUserName}</span>
                     <ChevronDown aria-hidden="true" className="size-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -473,20 +488,25 @@ export const RootLayout: FC = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : isBusy ? (
-              <span
+              <Skeleton
                 aria-live="polite"
-                className="text-sm text-muted-foreground"
+                className={`${authControlHeightClass} ${authControlWidthClass} flex items-center justify-center`}
+                data-testid="auth-header-busy-skeleton"
               >
-                Logging in...
-              </span>
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  Logging in...
+                </span>
+              </Skeleton>
             ) : (
               <Button
+                className={`${authControlHeightClass} ${authControlWidthClass}`}
                 disabled={isBusy}
                 size="sm"
                 type="button"
+                variant="outline"
                 onClick={startWclLogin}
               >
-                Sign in with Warcraft Logs
+                Sign in with WCL
               </Button>
             )}
           </div>

@@ -108,7 +108,7 @@ describe('RootLayout', () => {
     renderLayout('/')
 
     expect(
-      screen.getByRole('button', { name: 'Sign in with Warcraft Logs' }),
+      screen.getByRole('button', { name: 'Sign in with WCL' }),
     ).toBeTruthy()
     expect(screen.getByText('child outlet')).toBeTruthy()
   })
@@ -119,9 +119,26 @@ describe('RootLayout', () => {
 
     renderLayout('/')
 
+    expect(screen.getByTestId('auth-header-busy-skeleton')).toBeTruthy()
     expect(screen.getByText('Logging in...')).toBeTruthy()
     expect(
-      screen.queryByRole('button', { name: 'Sign in with Warcraft Logs' }),
+      screen.queryByRole('button', { name: 'Sign in with WCL' }),
+    ).toBeNull()
+  })
+
+  it('shows a loading skeleton while auth initialization is in progress', () => {
+    useWclRateLimitMock.mockReturnValue(createMockWclRateLimitValue())
+    useAuthMock.mockReturnValue(
+      createMockAuthValue({
+        isInitializing: true,
+      }),
+    )
+
+    renderLayout('/')
+
+    expect(screen.getByTestId('auth-header-loading-skeleton')).toBeTruthy()
+    expect(
+      screen.queryByRole('button', { name: 'Sign in with WCL' }),
     ).toBeNull()
   })
 
@@ -301,7 +318,7 @@ describe('RootLayout', () => {
     expect(reportInput).toHaveFocus()
 
     await userEvent.click(
-      screen.getByRole('button', { name: 'Sign in with Warcraft Logs' }),
+      screen.getByRole('button', { name: 'Sign in with WCL' }),
     )
 
     expect(screen.getByTestId('report-input-container')).toHaveAttribute(
