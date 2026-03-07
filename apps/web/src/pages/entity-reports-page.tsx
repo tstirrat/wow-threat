@@ -1,6 +1,7 @@
 /**
  * Entity report listing page (guild implementation with generic route shape).
  */
+import { ExternalLink } from 'lucide-react'
 import { useLocation, useParams, useSearchParams } from 'react-router-dom'
 
 import { ErrorState } from '../components/error-state'
@@ -12,6 +13,7 @@ import { Button } from '../components/ui/button'
 import { useEntityReports } from '../hooks/use-entity-reports'
 import { useUserSettings } from '../hooks/use-user-settings'
 import { defaultHost } from '../lib/constants'
+import { buildGuildUrl } from '../lib/wcl-url'
 import type { StarredGuildReportEntry, WarcraftLogsHost } from '../types/app'
 
 interface LocationState {
@@ -81,6 +83,12 @@ function GuildReportsPage({ entityId }: GuildReportsPageProps): JSX.Element {
   )
   const sourceHost =
     locationState?.host ?? existingStarredGuild?.sourceHost ?? defaultHost
+  const guildWclUrl = buildGuildUrl(sourceHost, {
+    guildId,
+    guildName: guildName ?? response.entity.name,
+    serverSlug: serverSlug ?? response.entity.serverSlug ?? undefined,
+    serverRegion: serverRegion ?? response.entity.serverRegion ?? undefined,
+  })
   const guildReports: StarredGuildReportEntry[] = response.reports.map(
     (report) => ({
       reportId: report.code,
@@ -108,6 +116,19 @@ function GuildReportsPage({ entityId }: GuildReportsPageProps): JSX.Element {
         subtitle={`Realm: ${serverLabel}`}
         headerRight={
           <div className="flex items-center gap-2">
+            {guildWclUrl ? (
+              <a
+                aria-label="View on Warcraft Logs"
+                className="inline-flex items-center gap-1 text-xs font-medium leading-none hover:opacity-80"
+                href={guildWclUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+                title="View on Warcraft Logs"
+              >
+                <span>WCL</span>
+                <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+              </a>
+            ) : null}
             <Button
               disabled={isRefreshingEntityReports}
               size="sm"
