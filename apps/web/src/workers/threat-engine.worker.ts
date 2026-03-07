@@ -10,6 +10,8 @@ import {
   saveThreatWorkerProcessedResult,
 } from '../lib/threat-engine-worker-cache'
 import type {
+  ThreatEngineWorkerDirectPayload,
+  ThreatEngineWorkerIndexedDbPayload,
   ThreatEngineWorkerPayload,
   ThreatEngineWorkerProcessedPayload,
   ThreatEngineWorkerRequest,
@@ -86,13 +88,15 @@ function toErrorStack(error: unknown): string | undefined {
   return undefined
 }
 
-async function getRawEvents(
-  payload: ThreatEngineWorkerPayload,
-): Promise<WCLEvent[]> {
-  if (payload.inputMode === 'direct') {
-    return payload.rawEvents
-  }
+function expectedRawEventCount(payload: ThreatEngineWorkerPayload): number {
+  return payload.inputMode === 'direct'
+    ? payload.rawEvents.length
+    : payload.rawEventCount
+}
 
+async function loadIndexedDbRawEvents(
+  payload: ThreatEngineWorkerIndexedDbPayload,
+): Promise<WCLEvent[]> {
   const chunkedEvents = await loadThreatWorkerRawEventChunks({
     jobKey: payload.jobKey,
     rawEventChunkCount: payload.rawEventChunkCount,
@@ -115,6 +119,198 @@ async function getRawEvents(
   return chunkedEvents
 }
 
+function processThreatEvents(params: {
+  payload: ThreatEngineWorkerPayload
+  rawEvents: WCLEvent[]
+  startedAt: number
+}): {
+  augmentedEventCount: number
+  processDurationMs: number
+  processedPayload: ThreatEngineWorkerProcessedPayload
+  rawEventCount: number
+} {
+  const { payload, rawEvents, startedAt } = params
+  const fight = payload.report.fights.find(
+    (candidateFight) => candidateFight.id === payload.fightId,
+  )
+  if (!fight) {
+    throw new Error(`fight ${payload.fightId} not found in report payload`)
+  }
+
+  const config = resolveConfigOrNull({
+    report: payload.report,
+  })
+  if (!config) {
+    throw new Error(
+      `no threat config for gameVersion ${payload.report.masterData.gameVersion}`,
+    )
+  }
+
+  const initialAurasByActor = deserializeInitialAurasByActor(
+    payload.initialAurasByActor,
+  )
+  const { actorMap, friendlyActorIds, enemies, abilitySchoolMap } =
+    buildThreatEngineInput({
+      fight,
+      actors: payload.report.masterData.actors,
+      abilities: payload.report.masterData.abilities,
+    })
+
+  const { augmentedEvents, initialAurasByActor: effectiveInitialAurasByActor } =
+    threatEngine.processEvents({
+      rawEvents,
+      initialAurasByActor,
+      actorMap,
+      friendlyActorIds,
+      abilitySchoolMap,
+      enemies,
+      encounterId: fight.encounterID ?? null,
+      report: payload.report,
+      fight,
+      inferThreatReduction: payload.inferThreatReduction,
+      tankActorIds: new Set(payload.tankActorIds),
+      config,
+    })
+
+  const processDurationMs = Math.round(performance.now() - startedAt)
+  return {
+    augmentedEventCount: augmentedEvents.length,
+    processDurationMs,
+    processedPayload: {
+      augmentedEvents,
+      initialAurasByActor: serializeInitialAurasByActor(
+        effectiveInitialAurasByActor,
+      ),
+      processDurationMs,
+    },
+    rawEventCount: rawEvents.length,
+  }
+}
+
+async function handleDirectModeRequest(params: {
+  payload: ThreatEngineWorkerDirectPayload
+  requestId: string
+  startedAt: number
+}): Promise<{
+  rawEventCount: number
+  response: ThreatEngineWorkerResponse
+}> {
+  const { payload, requestId, startedAt } = params
+  const {
+    augmentedEventCount,
+    processDurationMs,
+    processedPayload,
+    rawEventCount,
+  } = processThreatEvents({
+    payload,
+    rawEvents: payload.rawEvents,
+    startedAt,
+  })
+
+  const response: ThreatEngineWorkerResponse = {
+    requestId,
+    status: 'success',
+    outputMode: 'inline',
+    debug: {
+      processDurationMs,
+      rawEventCount,
+      augmentedEventCount,
+    },
+    payload: processedPayload,
+  }
+
+  console.info('[ThreatWorker] Completed inline request', {
+    ...response.debug,
+    requestId,
+  })
+
+  return {
+    rawEventCount,
+    response,
+  }
+}
+
+async function handleIndexedDbModeRequest(params: {
+  payload: ThreatEngineWorkerIndexedDbPayload
+  requestId: string
+  startedAt: number
+}): Promise<{
+  rawEventCount: number
+  response: ThreatEngineWorkerResponse
+}> {
+  const { payload, requestId, startedAt } = params
+  const rawEvents = await loadIndexedDbRawEvents(payload)
+  const {
+    augmentedEventCount,
+    processDurationMs,
+    processedPayload,
+    rawEventCount,
+  } = processThreatEvents({
+    payload,
+    rawEvents,
+    startedAt,
+  })
+
+  const didSaveProcessedResult = await saveThreatWorkerProcessedResult({
+    jobKey: payload.jobKey,
+    payload: processedPayload,
+  })
+  if (!didSaveProcessedResult) {
+    throw new Error(
+      `unable to persist indexeddb worker output for ${payload.jobKey}`,
+    )
+  }
+
+  const response: ThreatEngineWorkerResponse = {
+    requestId,
+    status: 'success',
+    outputMode: 'indexeddb',
+    jobKey: payload.jobKey,
+    rawEventChunkCount: payload.rawEventChunkCount,
+    rawEventCount,
+    debug: {
+      processDurationMs,
+      rawEventCount,
+      augmentedEventCount,
+    },
+  }
+
+  console.info('[ThreatWorker] Completed indexeddb request', {
+    ...response.debug,
+    requestId,
+  })
+
+  return {
+    rawEventCount,
+    response,
+  }
+}
+
+async function handleWorkerRequest(params: {
+  payload: ThreatEngineWorkerPayload
+  requestId: string
+  startedAt: number
+}): Promise<{
+  rawEventCount: number
+  response: ThreatEngineWorkerResponse
+}> {
+  const { payload, requestId, startedAt } = params
+
+  if (payload.inputMode === 'direct') {
+    return handleDirectModeRequest({
+      payload,
+      requestId,
+      startedAt,
+    })
+  }
+
+  return handleIndexedDbModeRequest({
+    payload,
+    requestId,
+    startedAt,
+  })
+}
+
 const workerContext = self as unknown as DedicatedWorkerGlobalScope
 
 workerContext.onmessage = (
@@ -123,128 +319,25 @@ workerContext.onmessage = (
   void (async () => {
     const startedAt = performance.now()
     const { payload, requestId } = message.data
-    const expectedRawEventCount =
-      payload.inputMode === 'direct'
-        ? payload.rawEvents.length
-        : payload.rawEventCount
-    let rawEventCount = expectedRawEventCount
+    let rawEventCount = expectedRawEventCount(payload)
 
     console.info('[ThreatWorker] Received request', {
       fightId: payload.fightId,
       inferThreatReduction: payload.inferThreatReduction,
       inputMode: payload.inputMode,
-      rawEventCount: expectedRawEventCount,
+      rawEventCount,
       reportCode: payload.report.code,
       requestId,
     })
 
     try {
-      const rawEvents = await getRawEvents(payload)
-      rawEventCount = rawEvents.length
-
-      const fight = payload.report.fights.find(
-        (candidateFight) => candidateFight.id === payload.fightId,
-      )
-      if (!fight) {
-        throw new Error(`fight ${payload.fightId} not found in report payload`)
-      }
-
-      const config = resolveConfigOrNull({
-        report: payload.report,
-      })
-      if (!config) {
-        throw new Error(
-          `no threat config for gameVersion ${payload.report.masterData.gameVersion}`,
-        )
-      }
-
-      const initialAurasByActor = deserializeInitialAurasByActor(
-        payload.initialAurasByActor,
-      )
-      const { actorMap, friendlyActorIds, enemies, abilitySchoolMap } =
-        buildThreatEngineInput({
-          fight,
-          actors: payload.report.masterData.actors,
-          abilities: payload.report.masterData.abilities,
-        })
-
-      const {
-        augmentedEvents,
-        initialAurasByActor: effectiveInitialAurasByActor,
-      } = threatEngine.processEvents({
-        rawEvents,
-        initialAurasByActor,
-        actorMap,
-        friendlyActorIds,
-        abilitySchoolMap,
-        enemies,
-        encounterId: fight.encounterID ?? null,
-        report: payload.report,
-        fight,
-        inferThreatReduction: payload.inferThreatReduction,
-        tankActorIds: new Set(payload.tankActorIds),
-        config,
-      })
-
-      const processDurationMs = Math.round(performance.now() - startedAt)
-      const processedPayload: ThreatEngineWorkerProcessedPayload = {
-        augmentedEvents,
-        initialAurasByActor: serializeInitialAurasByActor(
-          effectiveInitialAurasByActor,
-        ),
-        processDurationMs,
-      }
-
-      if (payload.inputMode === 'indexeddb') {
-        const didSaveProcessedResult = await saveThreatWorkerProcessedResult({
-          jobKey: payload.jobKey,
-          payload: processedPayload,
-        })
-        if (!didSaveProcessedResult) {
-          throw new Error(
-            `unable to persist indexeddb worker output for ${payload.jobKey}`,
-          )
-        }
-
-        const response: ThreatEngineWorkerResponse = {
-          requestId,
-          status: 'success',
-          outputMode: 'indexeddb',
-          jobKey: payload.jobKey,
-          rawEventChunkCount: payload.rawEventChunkCount,
-          rawEventCount,
-          debug: {
-            processDurationMs,
-            rawEventCount,
-            augmentedEventCount: augmentedEvents.length,
-          },
-        }
-
-        console.info('[ThreatWorker] Completed indexeddb request', {
-          ...response.debug,
-          requestId,
-        })
-        workerContext.postMessage(response)
-        return
-      }
-
-      const response: ThreatEngineWorkerResponse = {
+      const result = await handleWorkerRequest({
+        payload,
         requestId,
-        status: 'success',
-        outputMode: 'inline',
-        debug: {
-          processDurationMs,
-          rawEventCount,
-          augmentedEventCount: augmentedEvents.length,
-        },
-        payload: processedPayload,
-      }
-
-      console.info('[ThreatWorker] Completed inline request', {
-        ...response.debug,
-        requestId,
+        startedAt,
       })
-      workerContext.postMessage(response)
+      rawEventCount = result.rawEventCount
+      workerContext.postMessage(result.response)
     } catch (error) {
       const response: ThreatEngineWorkerResponse = {
         requestId,
