@@ -250,32 +250,46 @@ export const FightPage: FC = () => {
 
   if (!reportId || Number.isNaN(fightId)) {
     return (
-      <ErrorState
-        message="Fight route requires both reportId and fightId."
-        title="Invalid fight route"
-      />
+      <>
+        <title>Fight | WOW Threat</title>
+        <ErrorState
+          message="Fight route requires both reportId and fightId."
+          title="Invalid fight route"
+        />
+      </>
     )
   }
 
   if (fightQuery.isLoading) {
-    return <FightPageLoadingSkeleton />
+    return (
+      <>
+        <title>{`Fight ${fightId} | WOW Threat`}</title>
+        <FightPageLoadingSkeleton />
+      </>
+    )
   }
 
   if (fightQuery.error || !fightData) {
     return (
-      <ErrorState
-        message={fightQuery.error?.message ?? 'Fight metadata unavailable.'}
-        title="Unable to load fight"
-      />
+      <>
+        <title>{`Fight ${fightId} | WOW Threat`}</title>
+        <ErrorState
+          message={fightQuery.error?.message ?? 'Fight metadata unavailable.'}
+          title="Unable to load fight"
+        />
+      </>
     )
   }
 
   if (eventsQuery.error) {
     return (
-      <ErrorState
-        message={eventsQuery.error?.message ?? 'Fight events unavailable.'}
-        title="Unable to load threat events"
-      />
+      <>
+        <title>{`${fightData.name} | WOW Threat`}</title>
+        <ErrorState
+          message={eventsQuery.error?.message ?? 'Fight events unavailable.'}
+          title="Unable to load threat events"
+        />
+      </>
     )
   }
 
@@ -286,10 +300,13 @@ export const FightPage: FC = () => {
     !eventsData
   ) {
     return (
-      <ErrorState
-        message="Fight events unavailable."
-        title="Unable to load threat events"
-      />
+      <>
+        <title>{`${fightData.name} | WOW Threat`}</title>
+        <ErrorState
+          message="Fight events unavailable."
+          title="Unable to load threat events"
+        />
+      </>
     )
   }
 
@@ -357,80 +374,87 @@ export const FightPage: FC = () => {
           serverSlug: reportData.guild.serverSlug,
         })
       : null
+  const reportTitle = reportData.title.trim() || reportId
+  const pageTitle = `${fightData.name} | ${reportTitle} | WOW Threat`
 
   return (
-    <div className="space-y-5">
-      <SectionCard
-        title={fightTimelineTitle}
-        headerRight={
-          selectedTarget ? (
-            <div>
-              <TargetSelector
-                targets={targetOptions}
-                selectedTarget={selectedTarget}
-                onChange={handleTargetChange}
-              />
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No valid targets available.
-            </p>
-          )
-        }
-      >
-        {isUserSettingsLoading ? (
-          <FightChartLoadingSkeleton loadingMessage="Loading fight settings" />
-        ) : (
-          <ThreatChartControls
-            onResetZoom={() => {
-              registeredResetZoom?.()
-            }}
-            isResetZoomDisabled={!isChartReady || registeredResetZoom === null}
-            showFixateBands={userSettings.showFixateBands}
-            onShowFixateBandsChange={handleShowFixateBandsChange}
-            showEnergizeEvents={userSettings.showEnergizeEvents}
-            onShowEnergizeEventsChange={handleShowEnergizeEventsChange}
-            bossDamageMode={bossDamageMode}
-            onBossDamageModeChange={handleBossDamageModeChange}
-            inferThreatReduction={userSettings.inferThreatReduction}
-            onInferThreatReductionChange={handleInferThreatReductionChange}
-          />
-        )}
-
-        {isUserSettingsLoading ? null : selectedTarget === null ? (
-          <p className="text-sm text-muted-foreground">
-            No valid targets available for this fight.
-          </p>
-        ) : eventsQuery.isLoading ? (
-          <FightChartLoadingSkeleton
-            loadingMessage={
-              eventsQuery.loadingMessage || 'Loading fight events'
-            }
-            showControlsSkeleton={false}
-          />
-        ) : chartProps.series.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No threat points are available for this target.
-          </p>
-        ) : (
-          <ThreatChart {...chartProps} />
-        )}
-      </SectionCard>
-
-      {!isUserSettingsLoading && eventsData ? (
+    <>
+      <title>{pageTitle}</title>
+      <div className="space-y-5">
         <SectionCard
-          title="Focused player summary"
-          subtitle="Totals and ability TPS are calculated from the currently visible chart window."
+          title={fightTimelineTitle}
+          headerRight={
+            selectedTarget ? (
+              <div>
+                <TargetSelector
+                  targets={targetOptions}
+                  selectedTarget={selectedTarget}
+                  onChange={handleTargetChange}
+                />
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No valid targets available.
+              </p>
+            )
+          }
         >
-          <PlayerSummaryTable
-            summary={focusedPlayerSummary}
-            rows={focusedPlayerRows}
-            initialAuras={initialAuras}
-            wowhead={wowheadLinksConfig}
-            warcraftLogsUrl={focusedPlayerWclUrl}
-          />
+          {isUserSettingsLoading ? (
+            <FightChartLoadingSkeleton loadingMessage="Loading fight settings" />
+          ) : (
+            <ThreatChartControls
+              onResetZoom={() => {
+                registeredResetZoom?.()
+              }}
+              isResetZoomDisabled={
+                !isChartReady || registeredResetZoom === null
+              }
+              showFixateBands={userSettings.showFixateBands}
+              onShowFixateBandsChange={handleShowFixateBandsChange}
+              showEnergizeEvents={userSettings.showEnergizeEvents}
+              onShowEnergizeEventsChange={handleShowEnergizeEventsChange}
+              bossDamageMode={bossDamageMode}
+              onBossDamageModeChange={handleBossDamageModeChange}
+              inferThreatReduction={userSettings.inferThreatReduction}
+              onInferThreatReductionChange={handleInferThreatReductionChange}
+            />
+          )}
+
+          {isUserSettingsLoading ? null : selectedTarget === null ? (
+            <p className="text-sm text-muted-foreground">
+              No valid targets available for this fight.
+            </p>
+          ) : eventsQuery.isLoading ? (
+            <FightChartLoadingSkeleton
+              loadingMessage={
+                eventsQuery.loadingMessage || 'Loading fight events'
+              }
+              showControlsSkeleton={false}
+            />
+          ) : chartProps.series.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No threat points are available for this target.
+            </p>
+          ) : (
+            <ThreatChart {...chartProps} />
+          )}
         </SectionCard>
-      ) : null}
-    </div>
+
+        {!isUserSettingsLoading && eventsData ? (
+          <SectionCard
+            title="Focused player summary"
+            subtitle="Totals and ability TPS are calculated from the currently visible chart window."
+          >
+            <PlayerSummaryTable
+              summary={focusedPlayerSummary}
+              rows={focusedPlayerRows}
+              initialAuras={initialAuras}
+              wowhead={wowheadLinksConfig}
+              warcraftLogsUrl={focusedPlayerWclUrl}
+            />
+          </SectionCard>
+        ) : null}
+      </div>
+    </>
   )
 }

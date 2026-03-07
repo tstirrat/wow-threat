@@ -15,16 +15,19 @@ import {
 
 export const NotFoundPage: FC = () => {
   return (
-    <Card className="bg-panel shadow-sm">
-      <CardHeader>
-        <CardTitle className="text-lg">Page not found</CardTitle>
-        <CardDescription>The requested route does not exist.</CardDescription>
-      </CardHeader>
-      <CardFooter>
-        <Button asChild variant="outline">
-          <Link to="/">Return home</Link>
-        </Button>
-      </CardFooter>
-    </Card>
+    <>
+      <title>Page Not Found | WOW Threat</title>
+      <Card className="bg-panel shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-lg">Page not found</CardTitle>
+          <CardDescription>The requested route does not exist.</CardDescription>
+        </CardHeader>
+        <CardFooter>
+          <Button asChild variant="outline">
+            <Link to="/">Return home</Link>
+          </Button>
+        </CardFooter>
+      </Card>
+    </>
   )
 }
