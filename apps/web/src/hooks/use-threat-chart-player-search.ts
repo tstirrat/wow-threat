@@ -216,8 +216,9 @@ export function useThreatChartPlayerSearch({
       return
     }
 
+    clearIsolate()
     onToggleFocusedPlayerIsolation(focusedPlayerId)
-  }, [focusedPlayerId, onToggleFocusedPlayerIsolation])
+  }, [clearIsolate, focusedPlayerId, onToggleFocusedPlayerIsolation])
 
   return {
     isPlayerSearchOpen,

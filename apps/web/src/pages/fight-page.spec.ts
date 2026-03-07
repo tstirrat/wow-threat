@@ -342,6 +342,16 @@ test.describe('fight page', () => {
     await page.keyboard.press('i')
     await expectSearchParam(page, 'players', null)
 
+    await fightPage.chart.toggleLegend('Bladefury')
+    await expectSearchParam(page, 'players', '1,3')
+    await page.keyboard.press('i')
+    await expectSearchParam(page, 'players', '2')
+    await page.keyboard.press('i')
+    await expectSearchParam(page, 'players', '1,3')
+
+    await page.keyboard.press('c')
+    await expectSearchParam(page, 'players', null)
+
     await fightPage.chart.toggleLegend('Arrowyn')
     await expectSearchParam(page, 'players', '1,2')
     await page.keyboard.press('i')
