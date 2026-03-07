@@ -33,6 +33,7 @@ import type {
   ThreatEngineWorkerProcessedPayload,
   ThreatEngineWorkerRequest,
   ThreatEngineWorkerResponse,
+  ThreatEngineWorkerSuccessResponse,
 } from '../workers/threat-engine-worker-types'
 
 const fallbackThreatEngine = new ThreatEngine()
@@ -84,6 +85,14 @@ function toErrorDetails(error: unknown): {
   return {
     message: String(error),
   }
+}
+
+function isIndexedDbWorkerError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false
+  }
+
+  return error.message.toLowerCase().includes('indexeddb')
 }
 
 function toReportFightParticipant(
@@ -650,20 +659,51 @@ export async function getFightEventsClientSide(params: {
           rawEvents,
         }
 
-    const workerResponse = await runThreatEngineWorker(workerPayload, signal)
-    if (workerResponse.status === 'error') {
-      console.warn('[Events] Threat worker returned error response', {
-        debug: workerResponse.debug,
-        error: workerResponse.error,
-        errorName: workerResponse.errorName,
-        errorStack: workerResponse.errorStack,
-        fightId,
-        reportId,
-      })
+    const runWorkerAndThrowOnError = async (
+      payload: ThreatEngineWorkerPayload,
+    ): Promise<ThreatEngineWorkerSuccessResponse> => {
+      const response = await runThreatEngineWorker(payload, signal)
+      if (response.status === 'error') {
+        console.warn('[Events] Threat worker returned error response', {
+          debug: response.debug,
+          error: response.error,
+          errorName: response.errorName,
+          errorStack: response.errorStack,
+          fightId,
+          reportId,
+        })
 
-      throw new Error(
-        `Threat worker returned status=error: ${workerResponse.errorName ?? 'Error'}: ${workerResponse.error}`,
+        throw new Error(
+          `Threat worker returned status=error: ${response.errorName ?? 'Error'}: ${response.error}`,
+        )
+      }
+
+      return response
+    }
+
+    let workerResponse: ThreatEngineWorkerSuccessResponse
+    try {
+      workerResponse = await runWorkerAndThrowOnError(workerPayload)
+    } catch (error) {
+      const shouldRetryWithDirectMode =
+        workerPayload.inputMode === 'indexeddb' && isIndexedDbWorkerError(error)
+      if (!shouldRetryWithDirectMode) {
+        throw error
+      }
+
+      console.info(
+        '[Events] IndexedDB worker request failed, retrying with direct worker transfer',
+        {
+          error: toErrorDetails(error),
+          fightId,
+          reportId,
+        },
       )
+      workerResponse = await runWorkerAndThrowOnError({
+        ...workerPayloadBase,
+        inputMode: 'direct',
+        rawEvents,
+      })
     }
 
     mode = 'worker'

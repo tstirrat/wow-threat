@@ -86,4 +86,73 @@ describe('threat-engine-worker-cache', () => {
       })
     }
   })
+
+  it('waits for transaction completion before confirming processed result writes', async () => {
+    const originalIndexedDb = globalThis.indexedDB
+    const putRequest = {
+      onerror: null as IDBRequest<IDBValidKey>['onerror'],
+      onsuccess: null as IDBRequest<IDBValidKey>['onsuccess'],
+    } as IDBRequest<IDBValidKey>
+    const processedResultStore = {
+      put: vi.fn(() => putRequest),
+    } as IDBObjectStore
+    const transaction = {
+      onabort: null as IDBTransaction['onabort'],
+      oncomplete: null as IDBTransaction['oncomplete'],
+      onerror: null as IDBTransaction['onerror'],
+      objectStore: vi.fn(() => processedResultStore),
+    } as IDBTransaction
+    const database = {
+      createObjectStore: vi.fn(),
+      objectStoreNames: {
+        contains: vi.fn(() => true),
+      } as DOMStringList,
+      transaction: vi.fn(() => transaction),
+    } as IDBDatabase
+    const openRequest = {
+      onerror: null as IDBOpenDBRequest['onerror'],
+      onsuccess: null as IDBOpenDBRequest['onsuccess'],
+      onupgradeneeded: null as IDBOpenDBRequest['onupgradeneeded'],
+      result: database,
+    } as IDBOpenDBRequest
+    const indexedDbFactory = {
+      open: vi.fn(() => openRequest),
+    } as IDBFactory
+    Object.defineProperty(globalThis, 'indexedDB', {
+      configurable: true,
+      value: indexedDbFactory,
+    })
+
+    try {
+      const savePromise = saveThreatWorkerProcessedResult({
+        jobKey: 'job-2',
+        payload: {
+          augmentedEvents: [],
+          initialAurasByActor: {},
+          processDurationMs: 10,
+        },
+      })
+
+      openRequest.onsuccess?.(new Event('success'))
+      await Promise.resolve()
+      expect(database.transaction).toHaveBeenCalledTimes(1)
+      expect(processedResultStore.put).toHaveBeenCalledTimes(1)
+      putRequest.onsuccess?.(new Event('success'))
+
+      let hasResolved = false
+      void savePromise.then(() => {
+        hasResolved = true
+      })
+      await Promise.resolve()
+      expect(hasResolved).toBe(false)
+
+      transaction.oncomplete?.(new Event('complete'))
+      await expect(savePromise).resolves.toBe(true)
+    } finally {
+      Object.defineProperty(globalThis, 'indexedDB', {
+        configurable: true,
+        value: originalIndexedDb,
+      })
+    }
+  })
 })

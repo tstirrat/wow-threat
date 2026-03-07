@@ -228,6 +228,7 @@ function upsertProcessedResultRecord(
     const store = transaction.objectStore(processedResultStoreName)
     const request: IDBRequest<IDBValidKey> = store.put(record)
     let didSettle = false
+    let didRequestFail = false
 
     const settle = (result: boolean): void => {
       if (didSettle) {
@@ -238,11 +239,16 @@ function upsertProcessedResultRecord(
       resolve(result)
     }
 
-    request.onsuccess = () => {
-      settle(true)
-    }
+    request.onsuccess = () => {}
     request.onerror = () => {
+      didRequestFail = true
       console.warn('[Events] Failed to persist threat worker processed result')
+    }
+    transaction.oncomplete = () => {
+      settle(!didRequestFail)
+    }
+    transaction.onerror = () => {
+      console.warn('[Events] Failed while committing threat worker processed result')
       settle(false)
     }
     transaction.onabort = () => {
