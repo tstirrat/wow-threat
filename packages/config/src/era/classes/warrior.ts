@@ -78,7 +78,6 @@ export const Spells = {
   ThunderClapR4: 8205, // https://www.wowhead.com/classic/spell=8205/
   ThunderClapR5: 11580, // https://www.wowhead.com/classic/spell=11580/
   ThunderClapR6: 11581, // https://www.wowhead.com/classic/spell=11581/
-  ThunderClapR7: 23931, // https://www.wowhead.com/classic/spell=23931/
 
   // Hamstring
   HamstringR1: 1715, // https://www.wowhead.com/classic/spell=1715/
@@ -179,29 +178,14 @@ export const Spells = {
 
   // Buffs/Set Bonuses
   T1_8pc: 23561, // Might 8pc - Sunder Armor threat +15% | https://www.wowhead.com/classic/spell=23561/
-  T25_4pc: 23302, // AQ40 Conqueror 4pc | https://www.wowhead.com/classic/spell=23302/
 
   // Talents (detected via auras)
   Defiance: 12303, // Legacy Defiance spell ID alias | https://www.wowhead.com/classic/spell=12303/
-  DefianceRank1: 12301, // https://www.wowhead.com/classic/spell=12301/
-  DefianceRank2: 12302, // https://www.wowhead.com/classic/spell=12302/
-  DefianceRank3: 12303, // https://www.wowhead.com/classic/spell=12303/
-  DefianceRank4: 12304, // https://www.wowhead.com/classic/spell=12304/
-  DefianceRank5: 12305, // https://www.wowhead.com/classic/spell=12305/
-
-  // Legacy aliases kept for compatibility/readability in tests
-  HeroicStrike: 25286, // https://www.wowhead.com/classic/spell=25286/
-  Cleave: 25231, // https://www.wowhead.com/classic/spell=25231/
-  Execute: 25236, // https://www.wowhead.com/classic/spell=25236/
-  Whirlwind: 25248, // https://www.wowhead.com/classic/spell=25248/
-  Thunderclap: 23931, // https://www.wowhead.com/classic/spell=23931/
-  Hamstring: 25212, // https://www.wowhead.com/classic/spell=25212/
-  BattleShout: 25289, // https://www.wowhead.com/classic/spell=25289/
-  DemoShout: 25203, // https://www.wowhead.com/classic/spell=25203/
-  MockingBlow: 20560, // https://www.wowhead.com/classic/spell=20560/
-  ShieldBash: 1672, // https://www.wowhead.com/classic/spell=1672/
-  Overpower: 11585, // https://www.wowhead.com/classic/spell=11585/
-  Bloodthirst: 23894, // https://www.wowhead.com/classic/spell=23894/
+  DefianceR1: 12301, // https://www.wowhead.com/classic/spell=12301/
+  DefianceR2: 12302, // https://www.wowhead.com/classic/spell=12302/
+  DefianceR3: 12303, // https://www.wowhead.com/classic/spell=12303/
+  DefianceR4: 12304, // https://www.wowhead.com/classic/spell=12304/
+  DefianceR5: 12305, // https://www.wowhead.com/classic/spell=12305/
 } as const
 
 // ============================================================================
@@ -213,11 +197,11 @@ export const SetIds = {
 } as const
 
 const DEFIANCE_RANKS = [
-  Spells.DefianceRank1,
-  Spells.DefianceRank2,
-  Spells.DefianceRank3,
-  Spells.DefianceRank4,
-  Spells.DefianceRank5,
+  Spells.DefianceR1,
+  Spells.DefianceR2,
+  Spells.DefianceR3,
+  Spells.DefianceR4,
+  Spells.DefianceR5,
 ] as const
 
 const PROT = 2
@@ -275,7 +259,6 @@ const BATTLE_STANCE_IMPLIED_ABILITIES: ReadonlySet<SpellId> = new Set([
   Spells.ThunderClapR4,
   Spells.ThunderClapR5,
   Spells.ThunderClapR6,
-  Spells.ThunderClapR7,
   Spells.MockingBlowR1,
   Spells.MockingBlowR2,
   Spells.MockingBlowR3,
@@ -345,27 +328,27 @@ export const warriorConfig: ClassThreatConfig = {
       value: 0.8,
     }),
 
-    [Spells.DefianceRank1]: (ctx) => ({
+    [Spells.DefianceR1]: (ctx) => ({
       source: 'talent',
       name: 'Defiance (Rank 1)',
       value: ctx.sourceAuras.has(Spells.DefensiveStance) ? 1.03 : 1,
     }),
-    [Spells.DefianceRank2]: (ctx) => ({
+    [Spells.DefianceR2]: (ctx) => ({
       source: 'talent',
       name: 'Defiance (Rank 2)',
       value: ctx.sourceAuras.has(Spells.DefensiveStance) ? 1.06 : 1,
     }),
-    [Spells.DefianceRank3]: (ctx) => ({
+    [Spells.DefianceR3]: (ctx) => ({
       source: 'talent',
       name: 'Defiance (Rank 3)',
       value: ctx.sourceAuras.has(Spells.DefensiveStance) ? 1.09 : 1,
     }),
-    [Spells.DefianceRank4]: (ctx) => ({
+    [Spells.DefianceR4]: (ctx) => ({
       source: 'talent',
       name: 'Defiance (Rank 4)',
       value: ctx.sourceAuras.has(Spells.DefensiveStance) ? 1.12 : 1,
     }),
-    [Spells.DefianceRank5]: (ctx) => ({
+    [Spells.DefianceR5]: (ctx) => ({
       source: 'talent',
       name: 'Defiance (Rank 5)',
       value: ctx.sourceAuras.has(Spells.DefensiveStance) ? 1.15 : 1,
@@ -382,11 +365,6 @@ export const warriorConfig: ClassThreatConfig = {
         Spells.SunderArmorR5,
       ]),
       value: 1.15,
-    }),
-    [Spells.T25_4pc]: () => ({
-      source: 'gear',
-      name: 'Conqueror 4pc',
-      value: 1.1,
     }),
   },
 
@@ -461,7 +439,6 @@ export const warriorConfig: ClassThreatConfig = {
     [Spells.ThunderClapR4]: modDamage(2.5),
     [Spells.ThunderClapR5]: modDamage(2.5),
     [Spells.ThunderClapR6]: modDamage(2.5),
-    [Spells.ThunderClapR7]: modDamage(2.5),
 
     // Hamstring ranks
     [Spells.HamstringR1]: modDamagePlusThreat(1.25, 20),

@@ -75,7 +75,6 @@ describe('era warrior config', () => {
 
     it('has correct set bonus spell IDs', () => {
       expect(Spells.T1_8pc).toBe(23561)
-      expect(Spells.T25_4pc).toBe(23302)
     })
   })
 
@@ -101,7 +100,7 @@ describe('era warrior config', () => {
       )
 
       expect(battleImplications).toBeDefined()
-      expect(battleImplications?.has(Spells.Overpower)).toBe(true)
+      expect(battleImplications?.has(Spells.OverpowerR4)).toBe(true)
     })
 
     it('maps intercept to implied berserker stance', () => {
@@ -147,7 +146,7 @@ describe('era warrior config', () => {
     })
 
     it('returns Defiance rank 5 modifier with Defensive Stance', () => {
-      const modifierFn = warriorConfig.auraModifiers[Spells.DefianceRank5]
+      const modifierFn = warriorConfig.auraModifiers[Spells.DefianceR5]
       expect(modifierFn).toBeDefined()
 
       const modifier = modifierFn!(
@@ -160,7 +159,7 @@ describe('era warrior config', () => {
     })
 
     it('does not return Defiance rank 5 modifier without Defensive Stance', () => {
-      const modifierFn = warriorConfig.auraModifiers[Spells.DefianceRank5]
+      const modifierFn = warriorConfig.auraModifiers[Spells.DefianceR5]
       expect(modifierFn).toBeDefined()
 
       const modifier = modifierFn!(createMockContext())
@@ -168,17 +167,6 @@ describe('era warrior config', () => {
       expect(modifier.name).toBe('Defiance (Rank 5)')
       expect(modifier.value).toBe(1)
       expect(modifier.source).toBe('talent')
-    })
-
-    it('returns T25 4pc set bonus modifier', () => {
-      const modifierFn = warriorConfig.auraModifiers[Spells.T25_4pc]
-      expect(modifierFn).toBeDefined()
-
-      const modifier = modifierFn!(createMockContext())
-
-      expect(modifier.name).toBe('Conqueror 4pc')
-      expect(modifier.value).toBe(1.1)
-      expect(modifier.source).toBe('gear')
     })
 
     it('returns T1 8pc set bonus modifier scoped to Sunder Armor', () => {
@@ -261,21 +249,21 @@ describe('era warrior config', () => {
     it('infers Defiance aura from ranked talent payload', () => {
       const result = warriorConfig.talentImplications!(
         createTalentContext({
-          talentRanks: new Map([[Spells.Defiance, 5]]),
+          talentRanks: new Map([[Spells.DefianceR3, 5]]),
         }),
       )
 
-      expect(result).toEqual([Spells.DefianceRank5])
+      expect(result).toEqual([Spells.DefianceR5])
     })
 
     it('infers Defiance aura from direct rank spell IDs', () => {
       const result = warriorConfig.talentImplications!(
         createTalentContext({
-          talentRanks: new Map([[Spells.DefianceRank3, 1]]),
+          talentRanks: new Map([[Spells.DefianceR3, 1]]),
         }),
       )
 
-      expect(result).toEqual([Spells.DefianceRank3])
+      expect(result).toEqual([Spells.DefianceR3])
     })
 
     it('infers Defiance rank 5 from protection tree split at threshold', () => {
@@ -285,7 +273,7 @@ describe('era warrior config', () => {
         }),
       )
 
-      expect(result).toEqual([Spells.DefianceRank5])
+      expect(result).toEqual([Spells.DefianceR5])
     })
 
     it('does not infer Defiance when protection tree points are below threshold', () => {
@@ -305,18 +293,18 @@ describe('era warrior config', () => {
         }),
       )
 
-      expect(result).toEqual([Spells.DefianceRank5])
+      expect(result).toEqual([Spells.DefianceR5])
     })
 
     it('prefers explicit ranked talent payload over tree-split inference', () => {
       const result = warriorConfig.talentImplications!(
         createTalentContext({
           talentPoints: [14, 5, 31],
-          talentRanks: new Map([[Spells.DefianceRank2, 1]]),
+          talentRanks: new Map([[Spells.DefianceR2, 1]]),
         }),
       )
 
-      expect(result).toEqual([Spells.DefianceRank2])
+      expect(result).toEqual([Spells.DefianceR2])
     })
 
     it('returns no synthetic aura when Defiance is absent', () => {

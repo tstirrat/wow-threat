@@ -58,6 +58,8 @@ export const Spells = {
   TacticalMasteryRank2: 910012, // https://www.wowhead.com/tbc/spell=910012/
   TacticalMasteryRank3: 910013, // https://www.wowhead.com/tbc/spell=910013/
 
+  ThunderClapR7: 23931, // https://www.wowhead.com/tbc/spell=23931/
+
   MockingBlowR6: 25266, // https://www.wowhead.com/tbc/spell=25266/
 } as const
 
@@ -80,9 +82,9 @@ const TACTICAL_MASTERY_RANKS = [
 ] as const
 
 const DEFIANCE_TBC_RANKS = [
-  Spells.DefianceRank1,
-  Spells.DefianceRank2,
-  Spells.DefianceRank3,
+  Spells.DefianceR1,
+  Spells.DefianceR2,
+  Spells.DefianceR3,
 ] as const
 
 const ARMS = 0
@@ -146,17 +148,17 @@ export const warriorConfig: ClassThreatConfig = {
   auraModifiers: {
     ...eraWarriorConfig.auraModifiers,
 
-    [Spells.DefianceRank1]: (ctx) => ({
+    [Spells.DefianceR1]: (ctx) => ({
       source: 'talent',
       name: 'Defiance (Rank 1)',
       value: ctx.sourceAuras.has(Spells.DefensiveStance) ? 1.05 : 1,
     }),
-    [Spells.DefianceRank2]: (ctx) => ({
+    [Spells.DefianceR2]: (ctx) => ({
       source: 'talent',
       name: 'Defiance (Rank 2)',
       value: ctx.sourceAuras.has(Spells.DefensiveStance) ? 1.1 : 1,
     }),
-    [Spells.DefianceRank3]: (ctx) => ({
+    [Spells.DefianceR3]: (ctx) => ({
       source: 'talent',
       name: 'Defiance (Rank 3)',
       value: ctx.sourceAuras.has(Spells.DefensiveStance) ? 1.15 : 1,
@@ -244,6 +246,7 @@ export const warriorConfig: ClassThreatConfig = {
     [Spells.ThunderClapR4]: threat({ modifier: 1.75 }),
     [Spells.ThunderClapR5]: threat({ modifier: 1.75 }),
     [Spells.ThunderClapR6]: threat({ modifier: 1.75 }),
+    [Spells.ThunderClapR7]: threat({ modifier: 1.75 }),
 
     [Spells.SunderArmorR1]: threatOnCastRollbackOnMiss(45),
     [Spells.SunderArmorR5]: threatOnCastRollbackOnMiss(261),
@@ -265,11 +268,11 @@ export const warriorConfig: ClassThreatConfig = {
     const inheritedAuras = eraWarriorConfig.talentImplications?.(ctx) ?? []
     const withoutDefiance = inheritedAuras.filter(
       (spellId) =>
-        spellId !== Spells.DefianceRank1 &&
-        spellId !== Spells.DefianceRank2 &&
-        spellId !== Spells.DefianceRank3 &&
-        spellId !== Spells.DefianceRank4 &&
-        spellId !== Spells.DefianceRank5,
+        spellId !== Spells.DefianceR1 &&
+        spellId !== Spells.DefianceR2 &&
+        spellId !== Spells.DefianceR3 &&
+        spellId !== Spells.DefianceR4 &&
+        spellId !== Spells.DefianceR5,
     )
 
     const defianceSpellId = inferTalent(ctx, DEFIANCE_TBC_RANKS, (points) =>

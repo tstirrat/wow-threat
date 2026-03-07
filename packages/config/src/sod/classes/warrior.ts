@@ -78,7 +78,6 @@ const THUNDER_CLAP_SPELL_IDS = new Set<number>([
   Spells.ThunderClapR4,
   Spells.ThunderClapR5,
   Spells.ThunderClapR6,
-  EraSpells.Thunderclap,
 ])
 
 function inferGearAuras(gear: GearItem[]): number[] {
