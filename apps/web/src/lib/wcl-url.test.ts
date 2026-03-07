@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildCharacterUrl,
   buildFightRankingsUrl,
+  buildGuildUrl,
   parseReportInput,
   parseWarcraftLogsReportUrl,
 } from './wcl-url'
@@ -61,5 +62,36 @@ describe('wcl-url', () => {
     expect(url).toBe(
       'https://sod.warcraftlogs.com/character/us/wild-growth/grehy',
     )
+  })
+
+  it('builds guild URL with numeric guild id when available', () => {
+    const url = buildGuildUrl('fresh.warcraftlogs.com', {
+      guildId: 777,
+      guildName: 'Threat Guild',
+      serverRegion: 'US',
+      serverSlug: 'Benediction',
+    })
+
+    expect(url).toBe('https://fresh.warcraftlogs.com/guild/id/777')
+  })
+
+  it('builds guild URL from region/server/name fallback', () => {
+    const url = buildGuildUrl('sod.warcraftlogs.com', {
+      guildName: 'Threat Guild',
+      serverRegion: 'US',
+      serverSlug: 'Wild-Growth',
+    })
+
+    expect(url).toBe(
+      'https://sod.warcraftlogs.com/guild/us/wild-growth/Threat%20Guild',
+    )
+  })
+
+  it('returns null when guild identity is incomplete', () => {
+    expect(
+      buildGuildUrl('vanilla.warcraftlogs.com', {
+        guildName: 'Threat Guild',
+      }),
+    ).toBeNull()
   })
 })

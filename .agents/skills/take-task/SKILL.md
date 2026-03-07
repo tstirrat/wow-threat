@@ -1,6 +1,6 @@
 ---
 name: take-task
-description: Select and execute the next ready task from TODO.md or todo.md by applying backlog priority rules, claiming the task via shared lease files in $CODEX_HOME (fallback ~/.codex), reusing the current worktree/branch when present (or creating task-linked branch/worktree when needed), implementing and validating the change, publishing with $push-pr, marking the task complete in the same PR, and setting up periodic PR comment triage with $gh-address-comments. Use when asked to take the next task or run backlog work end to end.
+description: Select and execute the next ready task from TODO.md or todo.md by applying backlog priority rules, claiming the task via shared lease files in $CODEX_HOME (fallback ~/.codex), reusing the current worktree/branch when present (or creating task-linked branch/worktree when needed), implementing and validating the change, publishing with $push-pr, marking the task complete in the same PR, and setting up short-window PR comment triage with $gh-address-comments. Use when asked to take the next task or run backlog work end to end.
 ---
 
 # Take Task
@@ -17,7 +17,7 @@ Use `scripts/todo_task.py` for deterministic task selection, shared task leases,
 3. Implement the task and pass task-scoped validation.
 4. Archive the task as complete in `TODO.md` in the same PR.
 5. Publish with `$push-pr` and ensure PR title includes the task ID in Conventional Commit format.
-6. Start periodic PR comment checks via `$gh-address-comments`.
+6. Start short-window PR comment checks via `$gh-address-comments`.
 
 ## 1) Claim The Next Task
 
@@ -164,20 +164,20 @@ fix(engine): ENG-004 attribute Earth Shield threat to tank
 
 If `$push-pr` creates/updates a PR title without the task ID, edit it immediately to match this format.
 
-## 6) Start Periodic PR Comment Triage
+## 6) Start Short-Window PR Comment Triage
 
 After the PR exists:
 
-1. Run `$gh-address-comments` once immediately.
-2. Create a recurring automation to run every 4 hours on the task worktree with prompt intent:
+1. Create an automation that runs every 15 minutes starting from PR publication time, only for the next 2 hours (8 runs total) on the task worktree, with prompt intent:
    - check the current branch PR for unresolved comments
    - summarize actionable items
    - apply fixes only for user-approved threads
+2. After the 2-hour window completes, stop or archive the automation so it does not continue running.
 
 Suggested schedule:
 
 ```text
-FREQ=HOURLY;INTERVAL=4
+Every 15 minutes for 2 hours after PR creation (8 total checks)
 ```
 
 If automations are unavailable, rerun `$gh-address-comments` manually whenever the user asks to recheck PR feedback.
@@ -191,4 +191,4 @@ After completing this skill:
 3. Validation commands for the chosen task pass.
 4. `TODO.md` archives the task from open sections and records its ID under historical completed IDs.
 5. Branch is published through `$push-pr` with task ID in PR title.
-6. Periodic PR comment triage is configured or explicitly run.
+6. Short-window PR comment triage is configured (15-minute cadence for 2 hours) or explicitly handled manually.

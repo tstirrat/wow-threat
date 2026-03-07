@@ -100,3 +100,33 @@ export function buildCharacterUrl(
 
   return `https://${host}/character/${encodeURIComponent(normalizedRegion)}/${encodeURIComponent(normalizedServerSlug)}/${encodeURIComponent(normalizedCharacterName)}`
 }
+
+/** Build a WCL guild URL from host + guild identity. */
+export function buildGuildUrl(
+  host: WarcraftLogsHost,
+  {
+    guildId,
+    guildName,
+    serverSlug,
+    serverRegion,
+  }: {
+    guildId?: number
+    guildName?: string
+    serverSlug?: string
+    serverRegion?: string
+  },
+): string | null {
+  if (typeof guildId === 'number' && Number.isFinite(guildId)) {
+    return `https://${host}/guild/id/${guildId}`
+  }
+
+  if (!guildName || !serverSlug || !serverRegion) {
+    return null
+  }
+
+  const normalizedRegion = serverRegion.trim().toLowerCase()
+  const normalizedServerSlug = serverSlug.trim().toLowerCase()
+  const normalizedGuildName = guildName.trim()
+
+  return `https://${host}/guild/${encodeURIComponent(normalizedRegion)}/${encodeURIComponent(normalizedServerSlug)}/${encodeURIComponent(normalizedGuildName)}`
+}
