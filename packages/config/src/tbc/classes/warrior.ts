@@ -57,6 +57,8 @@ export const Spells = {
   TacticalMasteryRank1: 910011, // https://www.wowhead.com/tbc/spell=910011/
   TacticalMasteryRank2: 910012, // https://www.wowhead.com/tbc/spell=910012/
   TacticalMasteryRank3: 910013, // https://www.wowhead.com/tbc/spell=910013/
+
+  MockingBlowR6: 25266, // https://www.wowhead.com/tbc/spell=25266/
 } as const
 
 export const SetIds = {
@@ -303,4 +305,8 @@ export const warriorConfig: ClassThreatConfig = {
 
     return withoutDefiance
   },
+  fixateBuffs: new Set([
+    ...(eraWarriorConfig.fixateBuffs ?? []),
+    Spells.MockingBlowR6,
+  ]),
 }
