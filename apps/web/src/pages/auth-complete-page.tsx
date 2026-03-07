@@ -91,22 +91,29 @@ export const AuthCompletePage: FC = () => {
   }, [result])
 
   return (
-    <section className="mx-auto max-w-lg space-y-3">
-      <h2 className="text-lg font-semibold">
+    <>
+      <title>
         {result.status === 'success'
-          ? 'Sign-in complete'
-          : 'Unable to complete sign-in'}
-      </h2>
-      <p className="text-sm text-muted-foreground">
-        {result.status === 'success'
-          ? 'Authentication finished. This window should close automatically.'
-          : 'Return to the main app and retry sign-in.'}
-      </p>
-      {result.status === 'error' ? (
-        <Alert variant="destructive">
-          <AlertDescription>{result.message}</AlertDescription>
-        </Alert>
-      ) : null}
-    </section>
+          ? 'Sign-in Complete | WOW Threat'
+          : 'Sign-in Error | WOW Threat'}
+      </title>
+      <section className="mx-auto max-w-lg space-y-3">
+        <h2 className="text-lg font-semibold">
+          {result.status === 'success'
+            ? 'Sign-in complete'
+            : 'Unable to complete sign-in'}
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          {result.status === 'success'
+            ? 'Authentication finished. This window should close automatically.'
+            : 'Return to the main app and retry sign-in.'}
+        </p>
+        {result.status === 'error' ? (
+          <Alert variant="destructive">
+            <AlertDescription>{result.message}</AlertDescription>
+          </Alert>
+        ) : null}
+      </section>
+    </>
   )
 }

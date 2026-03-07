@@ -69,26 +69,38 @@ export const ReportLayout: FC = () => {
 
   if (!reportId) {
     return (
-      <ErrorState
-        message="The report route is missing a report code."
-        title="Invalid report route"
-      />
+      <>
+        <title>Report | WOW Threat</title>
+        <ErrorState
+          message="The report route is missing a report code."
+          title="Invalid report route"
+        />
+      </>
     )
   }
 
   if (isLoading) {
-    return <ReportSummaryHeaderSkeleton />
+    return (
+      <>
+        <title>{`${reportId} | WOW Threat`}</title>
+        <ReportSummaryHeaderSkeleton />
+      </>
+    )
   }
 
   if (error || !data) {
     return (
-      <ErrorState
-        message={error?.message ?? 'Report data was not returned.'}
-        title="Unable to load report"
-      />
+      <>
+        <title>{`${reportId} | WOW Threat`}</title>
+        <ErrorState
+          message={error?.message ?? 'Report data was not returned.'}
+          title="Unable to load report"
+        />
+      </>
     )
   }
 
+  const reportTitle = data.title.trim() || reportId
   const threatConfig = resolveCurrentThreatConfig(data)
   const threatConfigLabel = threatConfig
     ? `${threatConfig.displayName} v${threatConfig.version}`
@@ -101,36 +113,39 @@ export const ReportLayout: FC = () => {
   }
 
   return (
-    <div className="space-y-5">
-      <ReportSummaryHeader
-        isStarToggleDisabled={isUserSettingsLoading || isSavingUserSettings}
-        isStarred={isReportStarred(reportId)}
-        onToggleStar={() => {
-          void toggleStarredReport({
-            reportId,
-            title: data.title || reportId,
-            sourceHost: reportHost,
-            zoneName: data.zone?.name ?? null,
-            startTime: data.startTime,
-            bossKillCount: buildBossKillNavigationFights(data.fights).length,
-            guildName: data.guild?.name ?? null,
-            guildFaction: data.guild?.faction ?? null,
-          })
-        }}
-        report={data}
-        reportHost={reportHost}
-        reportId={reportId}
-        selectedFightId={selectedFightId}
-        threatConfigLabel={threatConfigLabel}
-      />
-      <FightQuickSwitcher
-        fights={data.fights}
-        pinnedPlayerIds={pinnedPlayerIds}
-        reportId={reportId}
-        selectedFightId={selectedFightId}
-      />
-      <Outlet context={outletContext} />
-    </div>
+    <>
+      <title>{`${reportTitle} | WOW Threat`}</title>
+      <div className="space-y-5">
+        <ReportSummaryHeader
+          isStarToggleDisabled={isUserSettingsLoading || isSavingUserSettings}
+          isStarred={isReportStarred(reportId)}
+          onToggleStar={() => {
+            void toggleStarredReport({
+              reportId,
+              title: data.title || reportId,
+              sourceHost: reportHost,
+              zoneName: data.zone?.name ?? null,
+              startTime: data.startTime,
+              bossKillCount: buildBossKillNavigationFights(data.fights).length,
+              guildName: data.guild?.name ?? null,
+              guildFaction: data.guild?.faction ?? null,
+            })
+          }}
+          report={data}
+          reportHost={reportHost}
+          reportId={reportId}
+          selectedFightId={selectedFightId}
+          threatConfigLabel={threatConfigLabel}
+        />
+        <FightQuickSwitcher
+          fights={data.fights}
+          pinnedPlayerIds={pinnedPlayerIds}
+          reportId={reportId}
+          selectedFightId={selectedFightId}
+        />
+        <Outlet context={outletContext} />
+      </div>
+    </>
   )
 }
 

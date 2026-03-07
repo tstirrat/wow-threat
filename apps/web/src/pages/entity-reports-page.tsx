@@ -54,15 +54,23 @@ function GuildReportsPage({ entityId }: GuildReportsPageProps): JSX.Element {
   })
 
   if (isLoadingEntityReports) {
-    return <LoadingState message="Loading guild reports..." />
+    return (
+      <>
+        <title>Guild Reports | WOW Threat</title>
+        <LoadingState message="Loading guild reports..." />
+      </>
+    )
   }
 
   if (error || !response) {
     return (
-      <ErrorState
-        title="Unable to load guild reports"
-        message={error?.message ?? 'No guild report data was returned.'}
-      />
+      <>
+        <title>Guild Reports | WOW Threat</title>
+        <ErrorState
+          title="Unable to load guild reports"
+          message={error?.message ?? 'No guild report data was returned.'}
+        />
+      </>
     )
   }
 
@@ -93,43 +101,46 @@ function GuildReportsPage({ entityId }: GuildReportsPageProps): JSX.Element {
       : 'Unknown realm'
 
   return (
-    <SectionCard
-      title={`<${response.entity.name}>`}
-      subtitle={`Realm: ${serverLabel}`}
-      headerRight={
-        <div className="flex items-center gap-2">
-          <Button
-            disabled={isRefreshingEntityReports}
-            size="sm"
-            type="button"
-            variant="outline"
-            onClick={() => {
-              void refresh()
-            }}
-          >
-            {isRefreshingEntityReports ? 'Refreshing...' : 'Refresh'}
-          </Button>
-          <ReportStarButton
-            ariaLabel={`${isGuildStarred ? 'Unstar' : 'Star'} guild ${response.entity.name}`}
-            isDisabled={isLoading || isSaving}
-            isStarred={isGuildStarred}
-            onToggle={() => {
-              void toggleStarredEntity({
-                entityType: 'guild',
-                entityId: String(response.entity.id),
-                name: response.entity.name,
-                sourceHost,
-                faction: response.entity.faction,
-                serverSlug: response.entity.serverSlug,
-                serverRegion: response.entity.serverRegion,
-              })
-            }}
-          />
-        </div>
-      }
-    >
-      <StarredGuildReportsList reports={guildReports} />
-    </SectionCard>
+    <>
+      <title>{`<${response.entity.name}> Reports | WOW Threat`}</title>
+      <SectionCard
+        title={`<${response.entity.name}>`}
+        subtitle={`Realm: ${serverLabel}`}
+        headerRight={
+          <div className="flex items-center gap-2">
+            <Button
+              disabled={isRefreshingEntityReports}
+              size="sm"
+              type="button"
+              variant="outline"
+              onClick={() => {
+                void refresh()
+              }}
+            >
+              {isRefreshingEntityReports ? 'Refreshing...' : 'Refresh'}
+            </Button>
+            <ReportStarButton
+              ariaLabel={`${isGuildStarred ? 'Unstar' : 'Star'} guild ${response.entity.name}`}
+              isDisabled={isLoading || isSaving}
+              isStarred={isGuildStarred}
+              onToggle={() => {
+                void toggleStarredEntity({
+                  entityType: 'guild',
+                  entityId: String(response.entity.id),
+                  name: response.entity.name,
+                  sourceHost,
+                  faction: response.entity.faction,
+                  serverSlug: response.entity.serverSlug,
+                  serverRegion: response.entity.serverRegion,
+                })
+              }}
+            />
+          </div>
+        }
+      >
+        <StarredGuildReportsList reports={guildReports} />
+      </SectionCard>
+    </>
   )
 }
 
@@ -138,18 +149,24 @@ export function EntityReportsPage(): JSX.Element {
   const params = useParams<{ entityType: string; entityId: string }>()
   if (params.entityType !== 'guild') {
     return (
-      <ErrorState
-        title="Unsupported entity type"
-        message={`Entity type "${params.entityType ?? 'unknown'}" is not supported yet.`}
-      />
+      <>
+        <title>Entity Reports | WOW Threat</title>
+        <ErrorState
+          title="Unsupported entity type"
+          message={`Entity type "${params.entityType ?? 'unknown'}" is not supported yet.`}
+        />
+      </>
     )
   }
   if (!params.entityId) {
     return (
-      <ErrorState
-        title="Invalid entity route"
-        message="Missing entity identifier."
-      />
+      <>
+        <title>Entity Reports | WOW Threat</title>
+        <ErrorState
+          title="Invalid entity route"
+          message="Missing entity identifier."
+        />
+      </>
     )
   }
 
