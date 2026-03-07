@@ -386,6 +386,9 @@ test.describe('fight page', () => {
       fightPage.shortcuts.shortcutListItem('Open player search'),
     ).toBeVisible()
     await expect(
+      fightPage.shortcuts.shortcutListItem('Open target search'),
+    ).toBeVisible()
+    await expect(
       fightPage.shortcuts.shortcutKey('Cycle boss damage markers', 'B'),
     ).toBeVisible()
     await expect(
@@ -403,8 +406,44 @@ test.describe('fight page', () => {
     await expect(
       fightPage.shortcuts.shortcutKey('Open player search', '/'),
     ).toBeVisible()
+    await expect(
+      fightPage.shortcuts.shortcutKey('Open target search', 'T'),
+    ).toBeVisible()
     await fightPage.shortcuts.closeWithEscape()
     await expect(fightPage.shortcuts.dialog()).toHaveCount(0)
+  })
+
+  test('supports fuzzy target selector keyboard shortcut and immediate navigation', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(svgFightUrl)
+
+    const targetSearch = page.getByRole('dialog', {
+      name: 'Target search',
+    })
+
+    await expect(targetSearch).toHaveCount(0)
+    await page.keyboard.press('t')
+    await expect(targetSearch).toBeVisible()
+
+    const targetSearchInput = targetSearch.getByRole('textbox', {
+      name: 'Search targets',
+    })
+    await targetSearchInput.fill('hateful')
+    await page.keyboard.press('Enter')
+    await expect(targetSearch).toHaveCount(0)
+
+    await expect(fightPage.chart.targetControl()).toContainText(
+      'Hateful Strike Target (102)',
+    )
+    await expectSearchParam(page, 'targetId', '102')
+
+    await page.keyboard.press('t')
+    await expect(targetSearch).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(targetSearch).toHaveCount(0)
   })
 
   test('focusing a player shows total threat values', async ({ page }) => {

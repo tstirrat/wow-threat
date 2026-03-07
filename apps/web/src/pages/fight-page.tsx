@@ -2,11 +2,19 @@
  * Fight-level page with target filter and player-focused chart interactions.
  */
 import { ExternalLink } from 'lucide-react'
-import { type FC, useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  type FC,
+  type KeyboardEventHandler,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import { useHotkeys, useHotkeysContext } from 'react-hotkeys-hook'
 import { useLocation, useParams } from 'react-router-dom'
 
 import { ErrorState } from '../components/error-state'
+import { FightTargetSearch } from '../components/fight-target-search'
 import { PlayerSummaryTable } from '../components/player-summary-table'
 import { SectionCard } from '../components/section-card'
 import { TargetSelector } from '../components/target-selector'
@@ -17,6 +25,7 @@ import { useFightData } from '../hooks/use-fight-data'
 import { useFightEvents } from '../hooks/use-fight-events'
 import { useUserSettings } from '../hooks/use-user-settings'
 import { formatClockDuration } from '../lib/format'
+import { filterTargetSearchOptions } from '../lib/target-search'
 import { resolveCurrentThreatConfig } from '../lib/threat-config'
 import { buildCharacterUrl, buildFightRankingsUrl } from '../lib/wcl-url'
 import { useReportRouteContext } from '../routes/report-layout-context'
@@ -43,6 +52,28 @@ const FightPageLoadingSkeleton: FC = () => {
       </SectionCard>
     </section>
   )
+}
+
+const interactiveTagNames = new Set(['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'])
+
+function isInteractiveElement(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false
+  }
+
+  if (target.isContentEditable) {
+    return true
+  }
+
+  const closestInteractive = target.closest(
+    '[role="button"],[role="checkbox"],[role="combobox"],[role="menuitem"],[role="radio"],[role="switch"],[role="textbox"],button,input,select,textarea,[contenteditable="true"]',
+  )
+
+  if (closestInteractive instanceof HTMLElement) {
+    return true
+  }
+
+  return interactiveTagNames.has(target.tagName)
 }
 
 const FightChartLoadingSkeleton: FC<{
@@ -174,12 +205,121 @@ export const FightPage: FC = () => {
   const [registeredResetZoom, setRegisteredResetZoom] = useState<
     (() => void) | null
   >(null)
+  const [isTargetSearchOpen, setIsTargetSearchOpen] = useState(false)
+  const [targetSearchQuery, setTargetSearchQuery] = useState('')
+  const [highlightedTargetKey, setHighlightedTargetKey] = useState<
+    string | null
+  >(null)
 
   const handleRegisterResetZoom = useCallback(
     (resetZoom: (() => void) | null): void => {
       setRegisteredResetZoom(() => resetZoom)
     },
     [],
+  )
+
+  const filteredTargetOptions = useMemo(
+    () => filterTargetSearchOptions(targetOptions, targetSearchQuery),
+    [targetOptions, targetSearchQuery],
+  )
+
+  const closeTargetSearch = useCallback((): void => {
+    setIsTargetSearchOpen(false)
+    setTargetSearchQuery('')
+    setHighlightedTargetKey(null)
+  }, [])
+
+  const selectTargetByKey = useCallback(
+    (targetKey: string): void => {
+      const selectedOption = targetOptions.find(
+        (target) => target.key === targetKey,
+      )
+      if (!selectedOption) {
+        return
+      }
+
+      handleTargetChange({
+        id: selectedOption.id,
+        instance: selectedOption.instance,
+      })
+      closeTargetSearch()
+    },
+    [closeTargetSearch, handleTargetChange, targetOptions],
+  )
+
+  const handleTargetSearchInputKeyDown = useCallback<
+    KeyboardEventHandler<HTMLInputElement>
+  >(
+    (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        closeTargetSearch()
+        return
+      }
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault()
+        if (filteredTargetOptions.length === 0) {
+          return
+        }
+
+        const currentIndex = filteredTargetOptions.findIndex(
+          (target) => target.key === highlightedTargetKey,
+        )
+        const nextIndex =
+          currentIndex < 0
+            ? 0
+            : (currentIndex + 1) % filteredTargetOptions.length
+        const nextTarget = filteredTargetOptions[nextIndex]
+        if (!nextTarget) {
+          return
+        }
+
+        setHighlightedTargetKey(nextTarget.key)
+        return
+      }
+
+      if (event.key === 'ArrowUp') {
+        event.preventDefault()
+        if (filteredTargetOptions.length === 0) {
+          return
+        }
+
+        const currentIndex = filteredTargetOptions.findIndex(
+          (target) => target.key === highlightedTargetKey,
+        )
+        const nextIndex =
+          currentIndex < 0
+            ? filteredTargetOptions.length - 1
+            : (currentIndex - 1 + filteredTargetOptions.length) %
+              filteredTargetOptions.length
+        const nextTarget = filteredTargetOptions[nextIndex]
+        if (!nextTarget) {
+          return
+        }
+
+        setHighlightedTargetKey(nextTarget.key)
+        return
+      }
+
+      if (event.key === 'Enter') {
+        event.preventDefault()
+        const selectedOption =
+          filteredTargetOptions.find(
+            (target) => target.key === highlightedTargetKey,
+          ) ?? filteredTargetOptions[0]
+
+        if (selectedOption) {
+          selectTargetByKey(selectedOption.key)
+        }
+      }
+    },
+    [
+      closeTargetSearch,
+      filteredTargetOptions,
+      highlightedTargetKey,
+      selectTargetByKey,
+    ],
   )
 
   useEffect(() => {
@@ -245,6 +385,45 @@ export const FightPage: FC = () => {
       scopes: ['fight-page'],
     },
     [handleShowEnergizeEventsChange, userSettings.showEnergizeEvents],
+  )
+
+  useHotkeys(
+    't',
+    (event) => {
+      if (isInteractiveElement(event.target)) {
+        return
+      }
+
+      event.preventDefault()
+      const firstOption =
+        filterTargetSearchOptions(targetOptions, '')[0] ?? null
+      setIsTargetSearchOpen(true)
+      setTargetSearchQuery('')
+      setHighlightedTargetKey(firstOption?.key ?? null)
+    },
+    {
+      description: 'Open target search',
+      metadata: {
+        order: 70,
+        showInFightOverlay: true,
+      },
+      scopes: ['fight-page'],
+      useKey: true,
+    },
+    [filteredTargetOptions],
+  )
+
+  useHotkeys(
+    'escape',
+    (event) => {
+      event.preventDefault()
+      closeTargetSearch()
+    },
+    {
+      enabled: isTargetSearchOpen,
+      scopes: ['fight-page'],
+    },
+    [closeTargetSearch, isTargetSearchOpen],
   )
 
   if (!reportId || Number.isNaN(fightId)) {
@@ -413,6 +592,23 @@ export const FightPage: FC = () => {
           <ThreatChart {...chartProps} />
         )}
       </SectionCard>
+
+      <FightTargetSearch
+        isOpen={isTargetSearchOpen}
+        query={targetSearchQuery}
+        options={filteredTargetOptions}
+        highlightedTargetKey={highlightedTargetKey}
+        onClose={closeTargetSearch}
+        onQueryChange={(query) => {
+          setTargetSearchQuery(query)
+          const firstOption =
+            filterTargetSearchOptions(targetOptions, query)[0] ?? null
+          setHighlightedTargetKey(firstOption?.key ?? null)
+        }}
+        onInputKeyDown={handleTargetSearchInputKeyDown}
+        onHighlightTarget={setHighlightedTargetKey}
+        onSelectTarget={selectTargetByKey}
+      />
 
       {!isUserSettingsLoading && eventsData ? (
         <SectionCard
