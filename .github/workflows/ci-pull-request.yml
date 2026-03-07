@@ -99,32 +99,17 @@ jobs:
           disableComment: true
           entryPoint: apps/web
           projectId: wow-threat
-      - name: Resolve FE Preview URL
-        id: resolve_frontend_preview
+      - name: Validate FE Preview output
         env:
           FRONTEND_DETAILS_URL: ${{ steps.deploy_frontend_preview.outputs.details_url }}
-          FRONTEND_URLS: ${{ steps.deploy_frontend_preview.outputs.urls }}
         run: |
-          set -euo pipefail
-
-          frontend_preview_url="$FRONTEND_DETAILS_URL"
-          if [ -z "$frontend_preview_url" ]; then
-            frontend_preview_url="$(
-              printf '%s' "$FRONTEND_URLS" | cut -d ',' -f 1 | xargs
-            )"
-          fi
-
-          if [ -z "$frontend_preview_url" ]; then
-            echo 'Failed to extract a frontend preview URL from firebase output.' >&2
-            exit 1
-          fi
-
-          echo "url=$frontend_preview_url" >> "$GITHUB_OUTPUT"
+          test -n "$FRONTEND_DETAILS_URL"
       - name: Add preview URLs to workflow summary
         run: |
           echo "### Preview Environments" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Frontend: ${{ steps.resolve_frontend_preview.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Frontend: ${{ steps.deploy_frontend_preview.outputs.details_url }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Frontend Expires (UTC): ${{ steps.deploy_frontend_preview.outputs.expire_time_formatted }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Backend: ${{ steps.deploy_backend_preview.outputs.deployment-url }}" >> "$GITHUB_STEP_SUMMARY"
       - name: Find existing preview URL comment
         id: find_preview_comment
@@ -143,5 +128,6 @@ jobs:
             <!-- wow-threat-preview-urls -->
             ## Preview Environments
 
-            - Frontend: ${{ steps.resolve_frontend_preview.outputs.url }}
+            - Frontend: ${{ steps.deploy_frontend_preview.outputs.details_url }}
+            - Frontend Expires (UTC): ${{ steps.deploy_frontend_preview.outputs.expire_time_formatted }}
             - Backend: ${{ steps.deploy_backend_preview.outputs.deployment-url }}
