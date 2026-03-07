@@ -1,6 +1,7 @@
 /**
  * Entity report listing page (guild implementation with generic route shape).
  */
+import { ExternalLink } from 'lucide-react'
 import { useLocation, useParams, useSearchParams } from 'react-router-dom'
 
 import { ErrorState } from '../components/error-state'
@@ -12,6 +13,7 @@ import { Button } from '../components/ui/button'
 import { useEntityReports } from '../hooks/use-entity-reports'
 import { useUserSettings } from '../hooks/use-user-settings'
 import { defaultHost } from '../lib/constants'
+import { buildGuildUrl } from '../lib/wcl-url'
 import type { StarredGuildReportEntry, WarcraftLogsHost } from '../types/app'
 
 interface LocationState {
@@ -20,6 +22,35 @@ interface LocationState {
 
 interface GuildReportsPageProps {
   entityId: string
+}
+
+type GuildFaction = 'alliance' | 'horde' | null
+
+function normalizeGuildFaction(value: string | null | undefined): GuildFaction {
+  if (!value) {
+    return null
+  }
+
+  const normalized = value.trim().toLowerCase()
+  if (normalized === 'alliance') {
+    return 'alliance'
+  }
+  if (normalized === 'horde') {
+    return 'horde'
+  }
+
+  return null
+}
+
+function resolveGuildTextClass(faction: GuildFaction): string {
+  if (faction === 'alliance') {
+    return 'text-sky-600 dark:text-sky-400'
+  }
+  if (faction === 'horde') {
+    return 'text-red-600 dark:text-red-400'
+  }
+
+  return 'text-foreground'
 }
 
 function GuildReportsPage({ entityId }: GuildReportsPageProps): JSX.Element {
@@ -81,6 +112,12 @@ function GuildReportsPage({ entityId }: GuildReportsPageProps): JSX.Element {
   )
   const sourceHost =
     locationState?.host ?? existingStarredGuild?.sourceHost ?? defaultHost
+  const guildWclUrl = buildGuildUrl(sourceHost, {
+    guildId,
+    guildName: guildName ?? response.entity.name,
+    serverSlug: serverSlug ?? response.entity.serverSlug ?? undefined,
+    serverRegion: serverRegion ?? response.entity.serverRegion ?? undefined,
+  })
   const guildReports: StarredGuildReportEntry[] = response.reports.map(
     (report) => ({
       reportId: report.code,
@@ -95,6 +132,9 @@ function GuildReportsPage({ entityId }: GuildReportsPageProps): JSX.Element {
     }),
   )
   const isGuildStarred = isEntityStarred('guild', String(response.entity.id))
+  const guildTextClass = resolveGuildTextClass(
+    normalizeGuildFaction(response.entity.faction),
+  )
   const serverLabel =
     response.entity.serverRegion && response.entity.serverSlug
       ? `${response.entity.serverRegion}-${response.entity.serverSlug}`
@@ -104,21 +144,22 @@ function GuildReportsPage({ entityId }: GuildReportsPageProps): JSX.Element {
     <>
       <title>{`<${response.entity.name}> Reports | WOW Threat`}</title>
       <SectionCard
-        title={`<${response.entity.name}>`}
-        subtitle={`Realm: ${serverLabel}`}
-        headerRight={
-          <div className="flex items-center gap-2">
-            <Button
-              disabled={isRefreshingEntityReports}
-              size="sm"
-              type="button"
-              variant="outline"
-              onClick={() => {
-                void refresh()
-              }}
-            >
-              {isRefreshingEntityReports ? 'Refreshing...' : 'Refresh'}
-            </Button>
+        title={
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={guildTextClass}>{`<${response.entity.name}>`}</span>
+            {guildWclUrl ? (
+              <a
+                aria-label="View on Warcraft Logs"
+                className="inline-flex items-center gap-1 text-xs font-medium leading-none hover:opacity-80"
+                href={guildWclUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+                title="View on Warcraft Logs"
+              >
+                <span>WCL</span>
+                <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+              </a>
+            ) : null}
             <ReportStarButton
               ariaLabel={`${isGuildStarred ? 'Unstar' : 'Star'} guild ${response.entity.name}`}
               isDisabled={isLoading || isSaving}
@@ -135,6 +176,22 @@ function GuildReportsPage({ entityId }: GuildReportsPageProps): JSX.Element {
                 })
               }}
             />
+          </div>
+        }
+        subtitle={`Realm: ${serverLabel}`}
+        headerRight={
+          <div className="flex items-center gap-2">
+            <Button
+              disabled={isRefreshingEntityReports}
+              size="sm"
+              type="button"
+              variant="outline"
+              onClick={() => {
+                void refresh()
+              }}
+            >
+              {isRefreshingEntityReports ? 'Refreshing...' : 'Refresh'}
+            </Button>
           </div>
         }
       >
