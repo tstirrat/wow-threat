@@ -91,4 +91,39 @@ test.describe('report page', () => {
       page.getByRole('region', { name: 'Player navigation' }),
     ).toHaveCount(0)
   })
+
+  test('opens fuzzy fight selector with f and navigates on selection', async ({
+    page,
+  }) => {
+    await page.goto(`/report/${e2eReportId}`)
+
+    await page.keyboard.press('f')
+    await expect(
+      page.getByRole('dialog', { name: 'Fight search' }),
+    ).toBeVisible()
+
+    const searchInput = page.getByRole('textbox', { name: 'Search fights' })
+    await searchInput.fill('trash')
+    await searchInput.press('Enter')
+
+    await expectPathname(page, `/report/${e2eReportId}/fight/40`)
+    await expect(
+      page.getByRole('dialog', { name: 'Fight search' }),
+    ).toHaveCount(0)
+  })
+
+  test('does not open fuzzy fight selector when typing in an input control', async ({
+    page,
+  }) => {
+    await page.goto(`/report/${e2eReportId}`)
+
+    await page.getByRole('button', { name: 'Open report input' }).click()
+    const reportInput = page.getByRole('combobox', { name: 'Open report' })
+    await reportInput.click()
+    await page.keyboard.press('f')
+
+    await expect(
+      page.getByRole('dialog', { name: 'Fight search' }),
+    ).toHaveCount(0)
+  })
 })

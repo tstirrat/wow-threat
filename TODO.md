@@ -41,7 +41,6 @@
 | WEB-015 | `@wow-threat/web`    | READY       | P2       | S    | Isolate key toggles between isolated and previous players |
 | WEB-016 | `@wow-threat/web`    | READY       | P2       | S    | Zoom key toggles between no zoom and previous zoom        |
 | WEB-017 | `@wow-threat/web`    | READY       | P2       | M    | Fuzzy target selector                                     |
-| WEB-018 | `@wow-threat/web`    | READY       | P2       | M    | Fuzzy fight selector                                      |
 | WEB-019 | `@wow-threat/web`    | READY       | P0       | M    | Fight event pagination currently blocks the UI thread     |
 | WEB-021 | `@wow-threat/web`    | READY       | P2       | S    | Keyboard shortcut for filter to tanks only                |
 | WEB-027 | `@wow-threat/web`    | READY       | P3       | XS   | Make toggled players in legend more prominent             |
@@ -208,39 +207,6 @@ validation:
   - pnpm --filter @wow-threat/web test
 branch_name: codex/web-017-fuzzy-target-selector
 worktree_path: ../wow-threat-web-017
-publish: auto_push_pr
-pr_url: null
-commit_sha: null
-```
-
-### WEB-018 - Fuzzy fight selector
-
-```yaml
-id: WEB-018
-title: Fuzzy fight selector
-package: @wow-threat/web
-status: READY
-priority: P2
-size: M
-depends_on: []
-files_hint:
-  - apps/web/src/pages/report-page.tsx
-  - apps/web/src/lib/fight-navigation.ts
-  - apps/web/src/pages/report-page.spec.ts
-acceptance_criteria:
-  - Pressing f opens a fuzzy fight selector on report and fight pages where quick-switch navigation is available, when not focused in input/control context.
-  - Fuzzy selector coexists with the existing quick-switch UI.
-  - Candidate set includes all fights (boss kills, boss wipes, and trash fights).
-  - Fight results display kill/wipe status, with wipes visually de-emphasized.
-  - Ranking priority is exact match, then prefix match, then fuzzy match by fight/boss name.
-  - Selecting a fight navigates immediately and closes the picker.
-  - Selection behavior matches quick-switch links: preserve pinned-player behavior and reset other transient query params.
-validation:
-  - pnpm --filter @wow-threat/web lint
-  - pnpm --filter @wow-threat/web typecheck
-  - pnpm --filter @wow-threat/web test
-branch_name: codex/web-018-fuzzy-fight-selector
-worktree_path: ../wow-threat-web-018
 publish: auto_push_pr
 pr_url: null
 commit_sha: null

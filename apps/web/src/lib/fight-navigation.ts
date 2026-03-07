@@ -19,6 +19,12 @@ export interface FightNavigationGroups {
   trashFights: ReportFightSummary[]
 }
 
+export interface FightNavigationPathOptions {
+  reportId: string
+  fightId: number
+  pinnedPlayerIds?: number[]
+}
+
 const unresolvedFightOrder = Number.MAX_SAFE_INTEGER
 
 export const isBossFightForNavigation = (
@@ -233,4 +239,25 @@ export function buildFightNavigationGroups(
     bossEncounters,
     trashFights,
   }
+}
+
+/** Build a fight-route URL that preserves pinned-player navigation behavior. */
+export function buildFightNavigationPath({
+  reportId,
+  fightId,
+  pinnedPlayerIds = [],
+}: FightNavigationPathOptions): string {
+  const pinnedPlayers = [...new Set(pinnedPlayerIds)].sort(
+    (left, right) => left - right,
+  )
+  const searchParams = new URLSearchParams()
+
+  if (pinnedPlayers.length > 0) {
+    const pinnedPlayerParam = pinnedPlayers.join(',')
+    searchParams.set('pinnedPlayers', pinnedPlayerParam)
+    searchParams.set('players', pinnedPlayerParam)
+  }
+
+  const search = searchParams.toString()
+  return `/report/${reportId}/fight/${fightId}${search.length > 0 ? `?${search}` : ''}`
 }

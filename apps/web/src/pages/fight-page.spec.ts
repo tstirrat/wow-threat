@@ -386,6 +386,9 @@ test.describe('fight page', () => {
       fightPage.shortcuts.shortcutListItem('Open player search'),
     ).toBeVisible()
     await expect(
+      fightPage.shortcuts.shortcutListItem('Open fight search'),
+    ).toBeVisible()
+    await expect(
       fightPage.shortcuts.shortcutKey('Cycle boss damage markers', 'B'),
     ).toBeVisible()
     await expect(
@@ -402,6 +405,9 @@ test.describe('fight page', () => {
     ).toBeVisible()
     await expect(
       fightPage.shortcuts.shortcutKey('Open player search', '/'),
+    ).toBeVisible()
+    await expect(
+      fightPage.shortcuts.shortcutKey('Open fight search', 'F'),
     ).toBeVisible()
     await fightPage.shortcuts.closeWithEscape()
     await expect(fightPage.shortcuts.dialog()).toHaveCount(0)

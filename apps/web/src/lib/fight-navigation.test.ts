@@ -5,6 +5,7 @@ import type { ReportFightSummary } from '../types/api'
 import {
   buildBossKillNavigationFights,
   buildFightNavigationGroups,
+  buildFightNavigationPath,
 } from './fight-navigation'
 
 const createFight = (
@@ -227,5 +228,26 @@ describe('buildBossKillNavigationFights', () => {
     const bossKills = buildBossKillNavigationFights(fights)
 
     expect(bossKills.map((fight) => fight.id)).toEqual([81])
+  })
+})
+
+describe('buildFightNavigationPath', () => {
+  it('builds a bare fight path when no pinned players are provided', () => {
+    expect(
+      buildFightNavigationPath({
+        reportId: 'abc123',
+        fightId: 26,
+      }),
+    ).toBe('/report/abc123/fight/26')
+  })
+
+  it('preserves pinned players and mirrors them into players search param', () => {
+    expect(
+      buildFightNavigationPath({
+        reportId: 'abc123',
+        fightId: 30,
+        pinnedPlayerIds: [3, 1, 3],
+      }),
+    ).toBe('/report/abc123/fight/30?pinnedPlayers=1%2C3&players=1%2C3')
   })
 })
