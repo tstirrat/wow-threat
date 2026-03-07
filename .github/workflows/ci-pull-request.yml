@@ -31,13 +31,9 @@ jobs:
               - 'turbo.json'
               - '.nvmrc'
 
-  build_test_and_preview:
+  build_and_test:
     needs: detect_changes
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
-    env:
-      PREVIEW_CHANNEL_ID: pr-${{ github.event.pull_request.number }}
-      PREVIEW_ALLOWED_ORIGINS: 'https://wow-threat.web.app,https://wow-threat.firebaseapp.com,https://wow-threat--*.web.app,https://wow-threat--*.firebaseapp.com,http://localhost:5173,http://localhost:5174'
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -64,6 +60,24 @@ jobs:
           name: playwright-report
           path: apps/web/playwright-report/
           retention-days: 7
+
+  deploy_preview:
+    needs: build_and_test
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    env:
+      PREVIEW_CHANNEL_ID: pr-${{ github.event.pull_request.number }}
+      PREVIEW_ALLOWED_ORIGINS: 'https://wow-threat.web.app,https://wow-threat.firebaseapp.com,https://wow-threat--*.web.app,https://wow-threat--*.firebaseapp.com,http://localhost:5173,http://localhost:5174'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@v4
+        with:
+          cache: pnpm
+          node-version-file: .nvmrc
+      - run: pnpm install --frozen-lockfile
       - name: Deploy BE Preview
         id: deploy_backend_preview
         uses: cloudflare/wrangler-action@v3
