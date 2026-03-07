@@ -339,6 +339,25 @@ test.describe('fight page', () => {
     await expect(fightPage.summary.focusedActorText('Bladefury')).toBeVisible()
     await page.keyboard.press('i')
     await expectSearchParam(page, 'players', '2')
+    await page.keyboard.press('i')
+    await expectSearchParam(page, 'players', null)
+
+    await fightPage.chart.toggleLegend('Bladefury')
+    await expectSearchParam(page, 'players', '1,3')
+    await page.keyboard.press('i')
+    await expectSearchParam(page, 'players', '2')
+    await page.keyboard.press('i')
+    await expectSearchParam(page, 'players', '1,3')
+
+    await page.keyboard.press('c')
+    await expectSearchParam(page, 'players', null)
+
+    await fightPage.chart.toggleLegend('Arrowyn')
+    await expectSearchParam(page, 'players', '1,2')
+    await page.keyboard.press('i')
+    await expectSearchParam(page, 'players', '2')
+    await page.keyboard.press('i')
+    await expectSearchParam(page, 'players', '1,2')
 
     const playerSearch = page.getByRole('dialog', {
       name: 'Player search',
@@ -380,10 +399,10 @@ test.describe('fight page', () => {
       fightPage.shortcuts.shortcutListItem('Clear isolate'),
     ).toBeVisible()
     await expect(
-      fightPage.shortcuts.shortcutListItem('Toggle last zoom'),
+      fightPage.shortcuts.shortcutListItem('Toggle isolate on focus'),
     ).toBeVisible()
     await expect(
-      fightPage.shortcuts.shortcutListItem('Isolate focused player'),
+      fightPage.shortcuts.shortcutListItem('Toggle last zoom'),
     ).toBeVisible()
     await expect(
       fightPage.shortcuts.shortcutListItem('Open player search'),
@@ -401,10 +420,10 @@ test.describe('fight page', () => {
       fightPage.shortcuts.shortcutKey('Clear isolate', 'C'),
     ).toBeVisible()
     await expect(
-      fightPage.shortcuts.shortcutKey('Toggle last zoom', 'Z'),
+      fightPage.shortcuts.shortcutKey('Toggle isolate on focus', 'I'),
     ).toBeVisible()
     await expect(
-      fightPage.shortcuts.shortcutKey('Isolate focused player', 'I'),
+      fightPage.shortcuts.shortcutKey('Toggle last zoom', 'Z'),
     ).toBeVisible()
     await expect(
       fightPage.shortcuts.shortcutKey('Open player search', '/'),

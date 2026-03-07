@@ -153,6 +153,89 @@ describe('useFightPageInteractions', () => {
     expect(queryState.setFocusAndPlayers).toHaveBeenCalledWith(2, [])
   })
 
+  it('toggles focused-player isolation back to previous filtered players', () => {
+    const queryState = createQueryState({
+      state: createQueryStateState({
+        players: [1, 2],
+      }),
+    })
+
+    const { result } = renderHook(() =>
+      useFightPageInteractions({
+        queryState,
+        updateUserSettings: vi.fn().mockResolvedValue(undefined),
+        validPlayerIds: new Set([1, 2, 3]),
+      }),
+    )
+
+    act(() => {
+      result.current.handleToggleFocusedPlayerIsolation(2)
+    })
+    expect(queryState.setFocusAndPlayers).toHaveBeenCalledWith(2, [2])
+
+    queryState.state = createQueryStateState({
+      players: [2],
+    })
+
+    act(() => {
+      result.current.handleToggleFocusedPlayerIsolation(2)
+    })
+    expect(queryState.setFocusAndPlayers).toHaveBeenLastCalledWith(2, [1, 2])
+  })
+
+  it('restores no-filter state when toggling from an unfiltered view', () => {
+    const queryState = createQueryState({
+      state: createQueryStateState({
+        players: [],
+      }),
+    })
+
+    const { result } = renderHook(() =>
+      useFightPageInteractions({
+        queryState,
+        updateUserSettings: vi.fn().mockResolvedValue(undefined),
+        validPlayerIds: new Set([1, 2, 3]),
+      }),
+    )
+
+    act(() => {
+      result.current.handleToggleFocusedPlayerIsolation(2)
+    })
+    expect(queryState.setFocusAndPlayers).toHaveBeenCalledWith(2, [2])
+
+    queryState.state = createQueryStateState({
+      players: [2],
+    })
+
+    act(() => {
+      result.current.handleToggleFocusedPlayerIsolation(2)
+    })
+    expect(queryState.setFocusAndPlayers).toHaveBeenLastCalledWith(2, [])
+  })
+
+  it('assumes no-filter as previous state when focused player is already isolated', () => {
+    const queryState = createQueryState({
+      state: createQueryStateState({
+        players: [2],
+        focusId: 2,
+      }),
+    })
+
+    const { result } = renderHook(() =>
+      useFightPageInteractions({
+        queryState,
+        updateUserSettings: vi.fn().mockResolvedValue(undefined),
+        validPlayerIds: new Set([1, 2, 3]),
+      }),
+    )
+
+    act(() => {
+      result.current.handleToggleFocusedPlayerIsolation(2)
+    })
+
+    expect(queryState.setFocusAndPlayers).toHaveBeenCalledWith(2, [])
+  })
+
   it('forwards chart and settings interactions to query state and settings updates', () => {
     const queryState = createQueryState()
     const updateUserSettings = vi.fn().mockResolvedValue(undefined)

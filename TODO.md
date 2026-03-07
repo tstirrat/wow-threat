@@ -38,7 +38,6 @@
 | ID      | Package           | Status | Priority | Size | Title                                                     |
 | ------- | ----------------- | ------ | -------- | ---- | --------------------------------------------------------- |
 | WEB-012 | `@wow-threat/web` | READY  | P2       | M    | Add Starred, Guild lists at top                           |
-| WEB-015 | `@wow-threat/web` | READY  | P2       | S    | Isolate key toggles between isolated and previous players |
 | WEB-017 | `@wow-threat/web` | READY  | P2       | M    | Fuzzy target selector                                     |
 | WEB-018 | `@wow-threat/web` | READY  | P2       | M    | Fuzzy fight selector                                      |
 | WEB-021 | `@wow-threat/web` | READY  | P2       | S    | Keyboard shortcut for filter to tanks only                |
@@ -82,6 +81,7 @@
 - ENG-004
 - WEB-016
 - WEB-019
+- WEB-015
 
 ## Task Cards (Open)
 
@@ -114,38 +114,6 @@ validation:
   - pnpm --filter @wow-threat/web test
 branch_name: codex/web-012-starred-guild-lists
 worktree_path: ../wow-threat-web-012
-publish: auto_push_pr
-pr_url: null
-commit_sha: null
-```
-
-### WEB-015 - Isolate key toggles isolation with previous selection
-
-```yaml
-id: WEB-015
-title: Isolate key toggles between isolated and previous selected players
-package: @wow-threat/web
-status: READY
-priority: P2
-size: S
-depends_on: []
-files_hint:
-  - apps/web/src/components/threat-chart.tsx
-  - apps/web/src/components/threat-chart-legend.tsx
-  - apps/web/src/hooks/use-threat-chart-state.ts
-  - apps/web/src/pages/fight-page.spec.ts
-acceptance_criteria:
-  - Pressing i toggles between isolated state and the previous multi-player selection.
-  - When no prior selection exists, i isolates the currently focused player.
-  - Toggling is reflected in chart lines and legend state.
-  - Add or update tests for keyboard toggle behavior.
-validation:
-  - pnpm --filter @wow-threat/web lint
-  - pnpm --filter @wow-threat/web typecheck
-  - pnpm --filter @wow-threat/web test
-  - pnpm --filter @wow-threat/web exec playwright test src/pages/fight-page.spec.ts
-branch_name: codex/web-015-isolate-key-toggle
-worktree_path: ../wow-threat-web-015
 publish: auto_push_pr
 pr_url: null
 commit_sha: null

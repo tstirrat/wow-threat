@@ -38,6 +38,7 @@ export type ThreatChartProps = {
   onWindowChange: (startMs: number | null, endMs: number | null) => void
   onFocusAndAddPlayer: (playerId: number) => void
   onFocusAndIsolatePlayer: (playerId: number) => void
+  onToggleFocusedPlayerIsolation: (playerId: number) => void
   onTogglePinnedPlayer: (playerId: number) => void
   onSeriesClick: (actorId: number) => void
   onVisiblePlayerIdsChange?: (playerIds: number[]) => void
@@ -64,6 +65,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   onWindowChange,
   onFocusAndAddPlayer,
   onFocusAndIsolatePlayer,
+  onToggleFocusedPlayerIsolation,
   onTogglePinnedPlayer,
   onSeriesClick,
   onVisiblePlayerIdsChange,
@@ -141,6 +143,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     focusedActorId,
     onFocusAndAddPlayer,
     onFocusAndIsolatePlayer,
+    onToggleFocusedPlayerIsolation,
     series,
   })
   const canClearIsolate = visibleIsolatedActorId !== null || hasHiddenActors
@@ -243,7 +246,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
       isolateFocusedPlayer()
     },
     {
-      description: 'Isolate focused player',
+      description: 'Toggle isolate on focus',
       metadata: {
         order: 50,
         showInFightOverlay: true,

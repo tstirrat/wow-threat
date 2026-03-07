@@ -1,7 +1,7 @@
 /**
  * Interaction handlers for fight-page chart controls and query state updates.
  */
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 
 import type { UseFightQueryStateResult } from '../../hooks/use-fight-query-state'
 import type { UseUserSettingsResult } from '../../hooks/use-user-settings'
@@ -24,6 +24,7 @@ export function normalizeIdList(ids: number[]): number[] {
 export interface UseFightPageInteractionsResult {
   handleFocusAndAddPlayer: (playerId: number) => void
   handleFocusAndIsolatePlayer: (playerId: number) => void
+  handleToggleFocusedPlayerIsolation: (playerId: number) => void
   handleBossDamageModeChange: (bossDamageMode: BossDamageMode) => void
   handleClearSelections: () => void
   handleInferThreatReductionChange: (inferThreatReduction: boolean) => void
@@ -56,6 +57,14 @@ export function useFightPageInteractions({
   updateUserSettings: UseUserSettingsResult['updateSettings']
   validPlayerIds: Set<number>
 }): UseFightPageInteractionsResult {
+  const previousPlayerSelectionRef = useRef<number[] | null>(null)
+  const isolatedPlayerIdRef = useRef<number | null>(null)
+
+  const clearIsolateToggleState = useCallback((): void => {
+    previousPlayerSelectionRef.current = null
+    isolatedPlayerIdRef.current = null
+  }, [])
+
   const handleTargetChange = useCallback(
     (target: { id: number; instance: number }): void => {
       queryState.setTarget(target)
@@ -65,16 +74,48 @@ export function useFightPageInteractions({
 
   const handleSeriesClick = useCallback(
     (playerId: number): void => {
+      clearIsolateToggleState()
       queryState.setFocusId(playerId)
     },
-    [queryState],
+    [clearIsolateToggleState, queryState],
   )
 
   const handleFocusAndIsolatePlayer = useCallback(
     (playerId: number): void => {
+      clearIsolateToggleState()
       queryState.setFocusAndPlayers(playerId, [playerId])
     },
-    [queryState],
+    [clearIsolateToggleState, queryState],
+  )
+
+  const handleToggleFocusedPlayerIsolation = useCallback(
+    (playerId: number): void => {
+      if (!validPlayerIds.has(playerId)) {
+        return
+      }
+
+      const normalizedPlayers = normalizeIdList(
+        queryState.state.players.filter((id) => validPlayerIds.has(id)),
+      )
+      const isFocusedPlayerIsolated =
+        normalizedPlayers.length === 1 && normalizedPlayers[0] === playerId
+
+      if (isFocusedPlayerIsolated) {
+        const previousPlayerSelection =
+          isolatedPlayerIdRef.current === playerId &&
+          previousPlayerSelectionRef.current !== null
+            ? previousPlayerSelectionRef.current
+            : []
+        clearIsolateToggleState()
+        queryState.setFocusAndPlayers(playerId, previousPlayerSelection)
+        return
+      }
+
+      previousPlayerSelectionRef.current = normalizedPlayers
+      isolatedPlayerIdRef.current = playerId
+      queryState.setFocusAndPlayers(playerId, [playerId])
+    },
+    [clearIsolateToggleState, queryState, validPlayerIds],
   )
 
   const handleFocusAndAddPlayer = useCallback(
@@ -95,14 +136,16 @@ export function useFightPageInteractions({
         ? []
         : nextPlayers
 
+      clearIsolateToggleState()
       queryState.setFocusAndPlayers(playerId, normalizedNextPlayers)
     },
-    [queryState, validPlayerIds],
+    [clearIsolateToggleState, queryState, validPlayerIds],
   )
 
   const handleClearSelections = useCallback((): void => {
+    clearIsolateToggleState()
     queryState.setPlayers([])
-  }, [queryState])
+  }, [clearIsolateToggleState, queryState])
 
   const handleVisiblePlayerIdsChange = useCallback(
     (visiblePlayerIds: number[]): void => {
@@ -120,9 +163,10 @@ export function useFightPageInteractions({
         return
       }
 
+      clearIsolateToggleState()
       queryState.setPlayers(nextPlayers)
     },
-    [queryState, validPlayerIds],
+    [clearIsolateToggleState, queryState, validPlayerIds],
   )
 
   const handleTogglePinnedPlayer = useCallback(
@@ -200,6 +244,7 @@ export function useFightPageInteractions({
     handleClearSelections,
     handleFocusAndAddPlayer,
     handleFocusAndIsolatePlayer,
+    handleToggleFocusedPlayerIsolation,
     handleBossDamageModeChange,
     handleInferThreatReductionChange,
     handleSeriesClick,
