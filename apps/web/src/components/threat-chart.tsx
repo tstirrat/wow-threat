@@ -9,18 +9,12 @@ import { useHotkeys } from 'react-hotkeys-hook'
 
 import { useThreatChartLegendState } from '../hooks/use-threat-chart-legend-state'
 import { useThreatChartPlayerSearch } from '../hooks/use-threat-chart-player-search'
-import {
-  type ThreatChartSelectedWindow,
-  useThreatChartSelectedWindow,
-} from '../hooks/use-threat-chart-selected-window'
+import { useThreatChartSelectedWindow } from '../hooks/use-threat-chart-selected-window'
 import { useThreatChartSeriesClickHandler } from '../hooks/use-threat-chart-series-click-handler'
 import { useThreatChartSeriesData } from '../hooks/use-threat-chart-series-data'
 import { useThreatChartThemeColors } from '../hooks/use-threat-chart-theme-colors'
 import { useThreatChartVisiblePlayers } from '../hooks/use-threat-chart-visible-players'
-import {
-  type ThreatChartYAxisWindow,
-  useThreatChartZoom,
-} from '../hooks/use-threat-chart-zoom'
+import { useThreatChartZoom } from '../hooks/use-threat-chart-zoom'
 import { formatTimelineTime } from '../lib/format'
 import { resolveSeriesWindowBounds } from '../lib/threat-aggregation'
 import { resolvePointSize } from '../lib/threat-chart-point-size'
@@ -56,11 +50,6 @@ export type ThreatChartProps = {
   targetDeathTimeMs?: number | null
   onChartReadyChange?: (isReady: boolean) => void
   onRegisterResetZoom?: (resetZoom: (() => void) | null) => void
-}
-
-type ThreatChartZoomWindow = {
-  x: ThreatChartSelectedWindow
-  y: ThreatChartYAxisWindow | null
 }
 
 export const ThreatChart: FC<ThreatChartProps> = ({
@@ -105,12 +94,10 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     windowStartMs,
     windowEndMs,
   })
-  const previousZoomWindowRef = useRef<ThreatChartZoomWindow | null>(null)
-  const previousZoomContextKeyRef = useRef<string | null>(null)
   const {
     consumeSuppressedSeriesClick,
     resetZoom,
-    setYAxisWindow,
+    toggleLastZoom,
     yAxisWindow,
   } = useThreatChartZoom({
     bounds,
@@ -119,6 +106,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     isChartReady,
     onWindowChange,
     renderer,
+    selectedWindow,
+    zoomToggleContextKey,
   })
 
   const { actorIdByLabel, chartSeries, threatStateVisualMaps } =
@@ -185,61 +174,6 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     }
   }, [onRegisterResetZoom, resetZoom])
 
-  const isFullFightWindow =
-    selectedWindow === null ||
-    (selectedWindow.start <= bounds.min && selectedWindow.end >= bounds.max)
-  const isFullChartZoom = isFullFightWindow && yAxisWindow === null
-
-  useEffect(() => {
-    const currentContextKey = zoomToggleContextKey ?? null
-    if (previousZoomContextKeyRef.current === currentContextKey) {
-      return
-    }
-
-    previousZoomContextKeyRef.current = currentContextKey
-    previousZoomWindowRef.current = null
-  }, [zoomToggleContextKey])
-
-  useEffect(() => {
-    if (!selectedWindow || isFullChartZoom) {
-      return
-    }
-
-    previousZoomWindowRef.current = {
-      x: selectedWindow,
-      y: yAxisWindow,
-    }
-  }, [isFullChartZoom, selectedWindow, yAxisWindow])
-
-  const handleToggleZoomWindow = useCallback((): void => {
-    if (isFullChartZoom) {
-      const previousZoomWindow = previousZoomWindowRef.current
-      if (!previousZoomWindow) {
-        return
-      }
-
-      onWindowChange(previousZoomWindow.x.start, previousZoomWindow.x.end)
-      setYAxisWindow(previousZoomWindow.y)
-      return
-    }
-
-    if (selectedWindow) {
-      previousZoomWindowRef.current = {
-        x: selectedWindow,
-        y: yAxisWindow,
-      }
-    }
-
-    setYAxisWindow(null)
-    onWindowChange(null, null)
-  }, [
-    isFullChartZoom,
-    onWindowChange,
-    selectedWindow,
-    setYAxisWindow,
-    yAxisWindow,
-  ])
-
   useHotkeys(
     '/',
     (event) => {
@@ -289,7 +223,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     'z',
     (event) => {
       event.preventDefault()
-      handleToggleZoomWindow()
+      toggleLastZoom()
     },
     {
       description: 'Toggle last zoom',
@@ -299,7 +233,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
       },
       scopes: ['fight-page'],
     },
-    [handleToggleZoomWindow],
+    [toggleLastZoom],
   )
 
   useHotkeys(
