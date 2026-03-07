@@ -1,7 +1,7 @@
 /**
  * Minimal fetch client for API requests.
  */
-import { type Auth, signInAnonymously } from 'firebase/auth'
+import { type Auth, onAuthStateChanged, signInAnonymously } from 'firebase/auth'
 
 import { getFirebaseAuth } from '../lib/firebase'
 
@@ -15,8 +15,46 @@ export class ApiClientError extends Error {
 }
 
 let inFlightAnonymousSignIn: Promise<string | null> | null = null
+const authStateReadyByInstance = new WeakMap<Auth, Promise<void>>()
+
+function waitForInitialAuthState(auth: Auth): Promise<void> {
+  if (auth.currentUser) {
+    return Promise.resolve()
+  }
+
+  const existingPromise = authStateReadyByInstance.get(auth)
+  if (existingPromise) {
+    return existingPromise
+  }
+
+  const authStateReadyPromise = new Promise<void>((resolve) => {
+    let hasResolved = false
+    let unsubscribe: (() => void) | null = null
+    const resolveOnce = (): void => {
+      if (hasResolved) {
+        return
+      }
+
+      hasResolved = true
+      unsubscribe?.()
+      resolve()
+    }
+
+    unsubscribe = onAuthStateChanged(auth, resolveOnce, resolveOnce)
+  }).finally(() => {
+    authStateReadyByInstance.delete(auth)
+  })
+
+  authStateReadyByInstance.set(auth, authStateReadyPromise)
+  return authStateReadyPromise
+}
 
 async function getFirebaseIdToken(auth: Auth): Promise<string | null> {
+  if (auth.currentUser) {
+    return auth.currentUser.getIdToken()
+  }
+
+  await waitForInitialAuthState(auth)
   if (auth.currentUser) {
     return auth.currentUser.getIdToken()
   }
