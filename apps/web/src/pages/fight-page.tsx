@@ -17,6 +17,7 @@ import { useFightData } from '../hooks/use-fight-data'
 import { useFightEvents } from '../hooks/use-fight-events'
 import { useUserSettings } from '../hooks/use-user-settings'
 import { formatClockDuration } from '../lib/format'
+import { parseBooleanQueryParam } from '../lib/query-params'
 import { resolveCurrentThreatConfig } from '../lib/threat-config'
 import { buildCharacterUrl, buildFightRankingsUrl } from '../lib/wcl-url'
 import { useReportRouteContext } from '../routes/report-layout-context'
@@ -101,7 +102,8 @@ export const FightPage: FC = () => {
       ? 'svg'
       : 'canvas'
   const forceFreshEvents =
-    new URLSearchParams(location.search).get('fresh') === '1'
+    parseBooleanQueryParam(new URLSearchParams(location.search).get('fresh')) ??
+    false
   const {
     settings: userSettings,
     isLoading: isUserSettingsLoading,

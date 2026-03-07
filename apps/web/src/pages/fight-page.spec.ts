@@ -211,6 +211,30 @@ test.describe('fight page', () => {
     await expectSearchString(page, '')
   })
 
+  test('quick switch links keep fresh query param when enabled', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(
+      `${svgFightUrl}&fresh=true&players=1&focusId=1&targetId=102&startMs=1000&endMs=2000`,
+    )
+
+    await expect(fightPage.quickSwitch.fightLink('Grobbulus')).toHaveAttribute(
+      'href',
+      `/report/${e2eReportId}/fight/30?fresh=1`,
+    )
+    await fightPage.quickSwitch.clickFight('Grobbulus')
+
+    await expectPathname(page, `/report/${e2eReportId}/fight/30`)
+    await expectSearchParam(page, 'fresh', '1')
+    await expectSearchParam(page, 'players', null)
+    await expectSearchParam(page, 'focusId', null)
+    await expectSearchParam(page, 'targetId', null)
+    await expectSearchParam(page, 'startMs', null)
+    await expectSearchParam(page, 'endMs', null)
+  })
+
   test('pins players and keeps them on quick switch fight links', async ({
     page,
   }) => {

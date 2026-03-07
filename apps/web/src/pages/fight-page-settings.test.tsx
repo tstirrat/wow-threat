@@ -213,4 +213,92 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       true,
     )
   })
+
+  it('passes forceFresh when fresh=true is present in fight URL query params', () => {
+    useFightDataMock.mockReturnValue({
+      data: null,
+      error: null,
+      isLoading: true,
+    })
+    useUserSettingsMock.mockReturnValue({
+      error: null,
+      isLoading: false,
+      isSaving: false,
+      settings: {
+        inferThreatReduction: true,
+        showBossMelee: true,
+        showAllBossDamageEvents: false,
+        showFixateBands: true,
+        showEnergizeEvents: false,
+        showPets: false,
+      },
+      updateSettings: vi.fn(),
+    })
+
+    render(
+      <MemoryRouter
+        future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
+        initialEntries={['/report/WaxMPvZrAHT9gJhc/fight/9?fresh=true']}
+      >
+        <Routes>
+          <Route
+            path="/report/:reportId/fight/:fightId"
+            element={<FightPage />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(useFightEventsMock).toHaveBeenCalledWith(
+      'WaxMPvZrAHT9gJhc',
+      9,
+      true,
+      true,
+      true,
+    )
+  })
+
+  it('does not pass forceFresh when fresh=false is present in fight URL query params', () => {
+    useFightDataMock.mockReturnValue({
+      data: null,
+      error: null,
+      isLoading: true,
+    })
+    useUserSettingsMock.mockReturnValue({
+      error: null,
+      isLoading: false,
+      isSaving: false,
+      settings: {
+        inferThreatReduction: true,
+        showBossMelee: true,
+        showAllBossDamageEvents: false,
+        showFixateBands: true,
+        showEnergizeEvents: false,
+        showPets: false,
+      },
+      updateSettings: vi.fn(),
+    })
+
+    render(
+      <MemoryRouter
+        future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
+        initialEntries={['/report/WaxMPvZrAHT9gJhc/fight/9?fresh=false']}
+      >
+        <Routes>
+          <Route
+            path="/report/:reportId/fight/:fightId"
+            element={<FightPage />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(useFightEventsMock).toHaveBeenCalledWith(
+      'WaxMPvZrAHT9gJhc',
+      9,
+      true,
+      true,
+      false,
+    )
+  })
 })
