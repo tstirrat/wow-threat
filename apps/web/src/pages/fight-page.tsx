@@ -96,12 +96,11 @@ export const FightPage: FC = () => {
   const location = useLocation()
   const { reportData, reportHost, reportId } = useReportRouteContext()
   const fightId = Number.parseInt(params.fightId ?? '', 10)
+  const searchParams = new URLSearchParams(location.search)
   const chartRenderer =
-    new URLSearchParams(location.search).get('renderer') === 'svg'
-      ? 'svg'
-      : 'canvas'
-  const forceFreshEvents =
-    new URLSearchParams(location.search).get('fresh') === '1'
+    searchParams.get('renderer') === 'svg' ? 'svg' : 'canvas'
+  const forceFreshEvents = searchParams.get('fresh') === '1'
+  const forceLegacyWorkerMode = searchParams.get('eventsMode') === 'legacy'
   const {
     settings: userSettings,
     isLoading: isUserSettingsLoading,
@@ -121,6 +120,7 @@ export const FightPage: FC = () => {
     userSettings.inferThreatReduction,
     eventsQueryEnabled,
     forceFreshEvents,
+    forceLegacyWorkerMode,
   )
   const eventsData = eventsQuery.data ?? null
 

@@ -511,6 +511,7 @@ export async function getFightEventsClientSide(params: {
   reportData: ReportResponse
   fightData: FightsResponse
   inferThreatReduction: boolean
+  forceLegacyWorkerMode?: boolean
   rawEventChunkSize?: number
   rawEventsData?: RawFightEventsData
   signal?: AbortSignal
@@ -522,6 +523,7 @@ export async function getFightEventsClientSide(params: {
     reportData,
     fightData,
     inferThreatReduction,
+    forceLegacyWorkerMode = false,
     rawEventChunkSize,
     rawEventsData,
     signal,
@@ -596,10 +598,12 @@ export async function getFightEventsClientSide(params: {
       fightId,
       requestId: workerRequestId,
     })
-    const persistedRawChunks = await saveThreatWorkerRawEventChunks({
-      jobKey: indexedDbJobKey,
-      rawEventChunks: rawEventChunks.map((chunk) => [...chunk]),
-    })
+    const persistedRawChunks = forceLegacyWorkerMode
+      ? null
+      : await saveThreatWorkerRawEventChunks({
+          jobKey: indexedDbJobKey,
+          rawEventChunks: rawEventChunks.map((chunk) => [...chunk]),
+        })
     throwIfAborted(signal)
 
     if (persistedRawChunks) {
@@ -620,9 +624,12 @@ export async function getFightEventsClientSide(params: {
       }
     } else {
       console.info(
-        '[Events] IndexedDB worker path unavailable, using direct worker transfer',
+        forceLegacyWorkerMode
+          ? '[Events] Legacy worker mode forced, skipping IndexedDB worker path'
+          : '[Events] IndexedDB worker path unavailable, using direct worker transfer',
         {
           fightId,
+          forceLegacyWorkerMode,
           rawEventChunkCount: rawEventChunks.length,
           reportId,
         },

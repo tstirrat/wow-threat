@@ -40,7 +40,7 @@ describe('reports api helpers', () => {
     )
   })
 
-  it('includes config version and inferThreatReduction in fight events query keys', () => {
+  it('includes mode flags in fight events query keys', () => {
     expect(fightEventsQueryKey('ABC123xyz', 12, true)).toEqual([
       'fight-events',
       'ABC123xyz',
@@ -48,6 +48,17 @@ describe('reports api helpers', () => {
       configCacheVersion,
       true,
       false,
+      false,
+    ])
+
+    expect(fightEventsQueryKey('ABC123xyz', 12, true, false, true)).toEqual([
+      'fight-events',
+      'ABC123xyz',
+      12,
+      configCacheVersion,
+      true,
+      false,
+      true,
     ])
   })
 

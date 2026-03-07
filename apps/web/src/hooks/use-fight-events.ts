@@ -51,6 +51,7 @@ async function fetchFightEvents(params: {
   fightId: number
   inferThreatReduction: boolean
   forceFresh: boolean
+  forceLegacyWorkerMode: boolean
   queryClient: QueryClient
   signal?: AbortSignal
   onProgressMessage?: (message: string) => void
@@ -60,6 +61,7 @@ async function fetchFightEvents(params: {
     fightId,
     inferThreatReduction,
     forceFresh,
+    forceLegacyWorkerMode,
     queryClient,
     signal,
     onProgressMessage,
@@ -121,6 +123,7 @@ async function fetchFightEvents(params: {
     reportData,
     fightData,
     inferThreatReduction,
+    forceLegacyWorkerMode,
     rawEventsData,
     signal,
     onProgress: (progress) => {
@@ -150,6 +153,7 @@ export function useFightEvents(
   inferThreatReduction: boolean,
   enabled = true,
   forceFresh = false,
+  forceLegacyWorkerMode = false,
 ): {
   data: AugmentedEventsResponse | undefined
   isLoading: boolean
@@ -168,6 +172,7 @@ export function useFightEvents(
       fightId,
       inferThreatReduction,
       forceFresh,
+      forceLegacyWorkerMode,
     )
     return () => {
       activeRequestIdRef.current += 1
@@ -175,7 +180,14 @@ export function useFightEvents(
         queryKey,
       })
     }
-  }, [queryClient, reportId, fightId, inferThreatReduction, forceFresh])
+  }, [
+    queryClient,
+    reportId,
+    fightId,
+    inferThreatReduction,
+    forceFresh,
+    forceLegacyWorkerMode,
+  ])
 
   const query = useQuery({
     queryKey: fightEventsQueryKey(
@@ -183,6 +195,7 @@ export function useFightEvents(
       fightId,
       inferThreatReduction,
       forceFresh,
+      forceLegacyWorkerMode,
     ),
     queryFn: ({ signal }) => {
       const requestId = activeRequestIdRef.current + 1
@@ -194,6 +207,7 @@ export function useFightEvents(
         fightId,
         inferThreatReduction,
         forceFresh,
+        forceLegacyWorkerMode,
         queryClient,
         signal,
         onProgressMessage: (message) => {
@@ -236,6 +250,7 @@ export function useSuspenseFightEvents(
   fightId: number,
   inferThreatReduction: boolean,
   forceFresh = false,
+  forceLegacyWorkerMode = false,
 ): {
   data: AugmentedEventsResponse
 } {
@@ -246,6 +261,7 @@ export function useSuspenseFightEvents(
       fightId,
       inferThreatReduction,
       forceFresh,
+      forceLegacyWorkerMode,
     ),
     queryFn: ({ signal }) =>
       fetchFightEvents({
@@ -253,6 +269,7 @@ export function useSuspenseFightEvents(
         fightId,
         inferThreatReduction,
         forceFresh,
+        forceLegacyWorkerMode,
         queryClient,
         signal,
       }),

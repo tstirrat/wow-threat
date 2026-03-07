@@ -140,11 +140,13 @@ describe('useFightEvents', () => {
       12,
       false,
       false,
+      false,
     )
     expect(fightEventsQueryKey).toHaveBeenCalledWith(
       'ABC123xyz',
       12,
       true,
+      false,
       false,
     )
   })
@@ -156,6 +158,19 @@ describe('useFightEvents', () => {
       'ABC123xyz',
       12,
       true,
+      true,
+      false,
+    )
+  })
+
+  it('passes forceLegacyWorkerMode through query key generation', () => {
+    renderHook(() => useFightEvents('ABC123xyz', 12, true, true, false, true))
+
+    expect(fightEventsQueryKey).toHaveBeenCalledWith(
+      'ABC123xyz',
+      12,
+      true,
+      false,
       true,
     )
   })
@@ -231,10 +246,29 @@ describe('useFightEvents', () => {
     expect(getFightRawEventsClientSide).toHaveBeenCalledTimes(1)
     expect(getFightEventsClientSide).toHaveBeenCalledWith(
       expect.objectContaining({
+        forceLegacyWorkerMode: false,
         inferThreatReduction: false,
         rawEventsData: expect.objectContaining({
           pageCount: 1,
         }),
+      }),
+    )
+  })
+
+  it('passes forceLegacyWorkerMode to client processing', async () => {
+    renderHook(() => useFightEvents('ABC123xyz', 12, false, true, false, true))
+
+    const queryCall = vi.mocked(useQuery).mock.calls[0]?.[0]
+    expect(queryCall).toBeDefined()
+
+    await queryCall?.queryFn({
+      signal: new AbortController().signal,
+    })
+
+    expect(getFightEventsClientSide).toHaveBeenCalledWith(
+      expect.objectContaining({
+        forceLegacyWorkerMode: true,
+        inferThreatReduction: false,
       }),
     )
   })
