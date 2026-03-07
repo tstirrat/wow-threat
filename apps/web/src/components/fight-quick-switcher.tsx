@@ -8,6 +8,7 @@ import { buildBossKillNavigationFights } from '../lib/fight-navigation'
 import type { ReportFightSummary } from '../types/api'
 
 export type FightQuickSwitcherProps = {
+  eventsMode?: string | null
   reportId: string
   fights: ReportFightSummary[]
   selectedFightId: number | null
@@ -16,6 +17,7 @@ export type FightQuickSwitcherProps = {
 
 /** Render boss-kill quick links in report order. */
 export const FightQuickSwitcher: FC<FightQuickSwitcherProps> = ({
+  eventsMode = null,
   reportId,
   fights,
   selectedFightId,
@@ -37,6 +39,9 @@ export const FightQuickSwitcher: FC<FightQuickSwitcherProps> = ({
               const pinnedPlayerParam = pinnedPlayers.join(',')
               searchParams.set('pinnedPlayers', pinnedPlayerParam)
               searchParams.set('players', pinnedPlayerParam)
+            }
+            if (eventsMode) {
+              searchParams.set('eventsMode', eventsMode)
             }
             const search = searchParams.toString()
 

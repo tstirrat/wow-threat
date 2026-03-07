@@ -31,9 +31,9 @@ export const ReportLayout: FC = () => {
 
   const location = useLocation()
   const locationState = location.state as LocationState | null
-  const pinnedPlayerIds = parsePlayersParam(
-    new URLSearchParams(location.search).get('pinnedPlayers'),
-  )
+  const searchParams = new URLSearchParams(location.search)
+  const pinnedPlayerIds = parsePlayersParam(searchParams.get('pinnedPlayers'))
+  const eventsMode = searchParams.get('eventsMode')
 
   const { addRecentReport, resolveReportHost } = useReportIndex()
   const {
@@ -138,6 +138,7 @@ export const ReportLayout: FC = () => {
           threatConfigLabel={threatConfigLabel}
         />
         <FightQuickSwitcher
+          eventsMode={eventsMode}
           fights={data.fights}
           pinnedPlayerIds={pinnedPlayerIds}
           reportId={reportId}
