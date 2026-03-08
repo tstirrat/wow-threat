@@ -32,7 +32,7 @@
     "@vitest/coverage-istanbul": "^3.2.4",
     "@vitest/coverage-v8": "3.2.4",
     "@wow-threat/typescript-config": "workspace:*",
-    "eslint": "^10.0.2",
+    "eslint": "^10.0.3",
     "globals": "^17.4.0",
     "jiti": "^2.6.1",
     "typescript": "^5.7.0",
