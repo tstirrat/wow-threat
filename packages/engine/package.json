@@ -20,7 +20,7 @@
     "@eslint/js": "^10.0.1",
     "@wow-threat/shared": "workspace:*",
     "@wow-threat/typescript-config": "workspace:*",
-    "eslint": "^10.0.2",
+    "eslint": "^10.0.3",
     "globals": "^17.4.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.1",
