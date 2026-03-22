@@ -5,7 +5,7 @@ import {
   createMockActorContext,
 } from '@wow-threat/shared'
 import type { ActorContext, ThreatContext } from '@wow-threat/shared/src/types'
-import type { DamageEvent } from '@wow-threat/wcl-types'
+import { type DamageEvent, HitTypeCode } from '@wow-threat/wcl-types'
 import { describe, expect, it } from 'vitest'
 
 import { hatefulStrike, magneticPull, naxxAbilities } from './naxx'
@@ -39,15 +39,19 @@ describe('Hateful Strike', () => {
   function createMockContext(
     actors: ActorContext,
     targetId: number = 1,
+    eventOverrides: Partial<DamageEvent> = {},
   ): ThreatContext {
+    const event = createDamageEvent({
+      sourceID: PATCHWERK_ID,
+      sourceIsFriendly: false,
+      targetID: targetId,
+      targetIsFriendly: true,
+      ...eventOverrides,
+    }) as DamageEvent
+
     return {
-      event: createDamageEvent({
-        sourceID: PATCHWERK_ID,
-        sourceIsFriendly: false,
-        targetID: targetId,
-        targetIsFriendly: true,
-      }) as DamageEvent,
-      amount: 5000,
+      event,
+      amount: event.amount,
       sourceAuras: new Set(),
       targetAuras: new Set(),
       sourceActor: { id: PATCHWERK_ID, name: 'Patchwerk', class: null },
@@ -339,6 +343,47 @@ describe('Hateful Strike', () => {
     })
     expect(result.note).toBe('hatefulStrike(target+nearbyMelee)')
     expect(result.splitAmongEnemies).toBe(false)
+  })
+
+  it.each([
+    { label: 'miss', hitType: HitTypeCode.Miss },
+    { label: 'dodge', hitType: HitTypeCode.Dodge },
+    { label: 'parry', hitType: HitTypeCode.Parry },
+  ])('should apply flat threat on zero-damage $label events', ({ hitType }) => {
+    const topActors = [
+      { actorId: 1, threat: 1000 },
+      { actorId: 2, threat: 900 },
+      { actorId: 3, threat: 800 },
+      { actorId: 4, threat: 700 },
+    ]
+
+    const distances = new Map([
+      ['1-16028', 1000],
+      ['2-16028', 1200],
+      ['3-16028', 1300],
+      ['4-16028', 1400],
+    ])
+
+    const actors = createNaxxActorContext(topActors, distances)
+    const ctx = createMockContext(actors, 1, {
+      amount: 0,
+      hitType,
+    })
+
+    const result = checkExists(formula(ctx))
+
+    expect(result.value).toBe(500)
+    expect(result.effects?.[0]?.type).toBe('customThreat')
+
+    if (result.effects?.[0]?.type === 'customThreat') {
+      expect(result.effects[0].changes).toHaveLength(4)
+      expect(
+        result.effects[0].changes.map((change) => change.sourceId),
+      ).toEqual([1, 2, 3, 4])
+      expect(
+        result.effects[0].changes.every((change) => change.amount === 500),
+      ).toBe(true)
+    }
   })
 })
 
