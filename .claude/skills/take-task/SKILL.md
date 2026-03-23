@@ -2,6 +2,8 @@
 name: take-task
 description: Select and execute the next ready task from TODO.md by applying backlog priority rules, claiming the task, implementing and validating the change, publishing with /push-pr, and marking the task complete in the same PR. Use when asked to take the next task or run backlog work end to end.
 user-invocable: true
+model: claude-sonnet-4-6
+effort: low
 ---
 
 # Take Task
@@ -10,9 +12,9 @@ Run an end-to-end task lifecycle: backlog selection → claim → implement → 
 
 ## Scripts
 
-| Script | Purpose |
-|--------|---------|
-| `scripts/todo_task.py` | Task selection, claiming, and status updates in `TODO.md` |
+| Script                      | Purpose                                                   |
+| --------------------------- | --------------------------------------------------------- |
+| `scripts/todo_task.py`      | Task selection, claiming, and status updates in `TODO.md` |
 | `scripts/setup_worktree.sh` | Resolve and set up the branch/worktree for a claimed task |
 
 See `references/claim-system.md` for claim storage layout and task selection policy.

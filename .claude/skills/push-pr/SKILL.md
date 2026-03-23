@@ -2,6 +2,8 @@
 name: push-pr
 description: Commit and publish local git work as a GitHub pull request with branch safety checks, conventional commit messages, and PR metadata synchronization. Use when the user asks to push changes, create/update a PR, ensure work is on a feature branch, or refresh PR title/body and screenshots after branch drift.
 user-invocable: true
+model: claude-sonnet-4-6
+effort: medium
 ---
 
 # Push PR
