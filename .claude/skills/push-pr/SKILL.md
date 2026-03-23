@@ -1,6 +1,7 @@
 ---
 name: push-pr
 description: Commit and publish local git work as a GitHub pull request with branch safety checks, conventional commit messages, and PR metadata synchronization. Use when the user asks to push changes, create/update a PR, ensure work is on a feature branch, or refresh PR title/body and screenshots after branch drift.
+user-invocable: true
 ---
 
 # Push PR
@@ -44,7 +45,7 @@ If already on a feature branch, keep it.
 If on `main`, detached `HEAD`, or an unnamed branch, create a new feature branch from the latest `origin/main` (worktree-safe):
 
 ```bash
-git checkout -b codex/<short-task-slug> origin/main
+git checkout -b claude/<short-task-slug> origin/main
 ```
 
 ## 3) Check Mainline Divergence and Back-Merge

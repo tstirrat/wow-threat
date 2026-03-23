@@ -235,7 +235,7 @@ def task_branch_name(task: TaskCard) -> str:
   if task.branch_name:
     return task.branch_name
   title_slug = slugify(task.title)
-  return f'codex/{task.id.lower()}-{title_slug}' if title_slug else f'codex/{task.id.lower()}'
+  return f'claude/{task.id.lower()}-{title_slug}' if title_slug else f'claude/{task.id.lower()}'
 
 
 def task_worktree_path(task: TaskCard) -> str:
@@ -273,11 +273,11 @@ def resolve_git_common_dir(repo_root: Path) -> Path:
   return common_dir
 
 
-def resolve_codex_home() -> Path:
-  codex_home = os.environ.get('CODEX_HOME', '').strip()
-  if codex_home:
-    return Path(codex_home).expanduser().resolve()
-  return (Path.home() / '.codex').resolve()
+def resolve_claude_home() -> Path:
+  claude_home = os.environ.get('CLAUDE_HOME', '').strip()
+  if claude_home:
+    return Path(claude_home).expanduser().resolve()
+  return (Path.home() / '.claude').resolve()
 
 
 def resolve_claims_dir(repo_root: Path, claims_dir_arg: str) -> Path:
@@ -286,11 +286,11 @@ def resolve_claims_dir(repo_root: Path, claims_dir_arg: str) -> Path:
     claims_dir.mkdir(parents=True, exist_ok=True)
     return claims_dir
 
-  codex_home = resolve_codex_home()
+  claude_home = resolve_claude_home()
   common_dir = resolve_git_common_dir(repo_root)
   repo_name = slugify(common_dir.parent.name or 'repo')
   repo_key = hashlib.sha1(str(common_dir).encode('utf-8')).hexdigest()[:12]
-  claims_dir = codex_home / 'task-claims' / f'{repo_name}-{repo_key}'
+  claims_dir = claude_home / 'task-claims' / f'{repo_name}-{repo_key}'
   claims_dir.mkdir(parents=True, exist_ok=True)
   return claims_dir
 

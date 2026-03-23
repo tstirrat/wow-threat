@@ -1,6 +1,7 @@
 ---
 name: take-task
-description: Select and execute the next ready task from TODO.md or todo.md by applying backlog priority rules, claiming the task via shared lease files in $CODEX_HOME (fallback ~/.codex), reusing the current worktree/branch when present (or creating task-linked branch/worktree when needed), implementing and validating the change, publishing with $push-pr, marking the task complete in the same PR, and setting up short-window PR comment triage with $gh-address-comments. Use when asked to take the next task or run backlog work end to end.
+description: Select and execute the next ready task from TODO.md by applying backlog priority rules, claiming the task, implementing and validating the change, publishing with /push-pr, and marking the task complete in the same PR. Use when asked to take the next task or run backlog work end to end.
+user-invocable: true
 ---
 
 # Take Task
@@ -16,15 +17,14 @@ Use `scripts/todo_task.py` for deterministic task selection, shared task leases,
 2. Reuse the current worktree/branch when available; otherwise create or switch to task-linked branch/worktree context.
 3. Implement the task and pass task-scoped validation.
 4. Archive the task as complete in `TODO.md` in the same PR.
-5. Publish with `$push-pr` and ensure PR title includes the task ID in Conventional Commit format.
-6. Start short-window PR comment checks via `$gh-address-comments`.
+5. Publish with `/push-pr` and ensure PR title includes the task ID in Conventional Commit format.
 
 ## 1) Claim The Next Task
 
 From repo root, preview then claim:
 
 ```bash
-python3 .agents/skills/take-task/scripts/todo_task.py next
+python3 .claude/skills/take-task/scripts/todo_task.py next
 ```
 
 The script enforces the backlog policy in `TODO.md` and skips tasks already leased by other agents:
@@ -36,7 +36,7 @@ The script enforces the backlog policy in `TODO.md` and skips tasks already leas
 
 Claim coordination storage:
 
-- default root: `$CODEX_HOME/task-claims` (fallback: `~/.codex/task-claims`)
+- default root: `$CLAUDE_HOME/task-claims` (fallback: `~/.claude/task-claims`)
 - one file per task: `<TASK-ID>.claim`
 - file content: absolute worktree path for the claiming agent
 - stale leases are auto-reaped when the stored worktree path no longer exists (or has no `.git`) and lease age exceeds 6 hours (`--stale-seconds` override)
@@ -44,7 +44,7 @@ Claim coordination storage:
 Then claim exactly once and capture output fields for later steps:
 
 ```bash
-claim_output="$(python3 .agents/skills/take-task/scripts/todo_task.py claim)"
+claim_output="$(python3 .claude/skills/take-task/scripts/todo_task.py claim)"
 printf '%s\n' "$claim_output"
 
 task_id="$(printf '%s\n' "$claim_output" | awk -F= '/^id=/{print $2}')"
@@ -57,13 +57,13 @@ claim_file="$(printf '%s\n' "$claim_output" | awk -F= '/^claim_file=/{print $2}'
 Optional manual stale-lease cleanup:
 
 ```bash
-python3 .agents/skills/take-task/scripts/todo_task.py reap
+python3 .claude/skills/take-task/scripts/todo_task.py reap
 ```
 
 Aggressive cleanup (no grace period):
 
 ```bash
-python3 .agents/skills/take-task/scripts/todo_task.py --stale-seconds 0 reap
+python3 .claude/skills/take-task/scripts/todo_task.py --stale-seconds 0 reap
 ```
 
 ## 2) Reuse Current Worktree/Branch Or Create One
@@ -80,7 +80,7 @@ Use a task-linked branch fallback (`task-id` + short description) only when crea
 ```bash
 task_id_slug="$(printf '%s' "$task_id" | tr '[:upper:]' '[:lower:]')"
 title_slug="$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g; s/-+/-/g' | cut -d- -f1-6)"
-default_branch="codex/${task_id_slug}${title_slug:+-$title_slug}"
+default_branch="claude/${task_id_slug}${title_slug:+-$title_slug}"
 ```
 
 Create/switch:
@@ -124,7 +124,7 @@ Run all coding, validation, and file updates inside `"$worktree_path"`.
 
 ## 3) Implement And Validate
 
-1. Follow `AGENTS.md` and package-level guides.
+1. Follow `CLAUDE.md` and package-level guides.
 2. Use the card `files_hint` as entrypoints.
 3. Satisfy all `acceptance_criteria`.
 4. Run every command listed under the card `validation` key.
@@ -135,7 +135,7 @@ Run all coding, validation, and file updates inside `"$worktree_path"`.
 Before publishing, mark the task complete in `TODO.md`:
 
 ```bash
-python3 .agents/skills/take-task/scripts/todo_task.py complete --id "$task_id" --status DONE
+python3 .claude/skills/take-task/scripts/todo_task.py complete --id "$task_id" --status DONE
 ```
 
 When status is `DONE`, this command:
@@ -148,7 +148,7 @@ Lease files are intentionally retained until the worktree is removed; this preve
 
 ## 5) Publish With Push-PR
 
-Use `$push-pr` from the task worktree.
+Use `/push-pr` from the task worktree.
 
 PR title format must remain Conventional Commits and include the task ID:
 
@@ -162,25 +162,7 @@ Example:
 fix(engine): ENG-004 attribute Earth Shield threat to tank
 ```
 
-If `$push-pr` creates/updates a PR title without the task ID, edit it immediately to match this format.
-
-## 6) Start Short-Window PR Comment Triage
-
-After the PR exists:
-
-1. Create an automation that runs every 15 minutes starting from PR publication time, only for the next 2 hours (8 runs total) on the task worktree, with prompt intent:
-   - check the current branch PR for unresolved comments
-   - summarize actionable items
-   - apply fixes only for user-approved threads
-2. After the 2-hour window completes, stop or archive the automation so it does not continue running.
-
-Suggested schedule:
-
-```text
-Every 15 minutes for 2 hours after PR creation (8 total checks)
-```
-
-If automations are unavailable, rerun `$gh-address-comments` manually whenever the user asks to recheck PR feedback.
+If `/push-pr` creates/updates a PR title without the task ID, edit it immediately to match this format.
 
 ## Output Expectations
 
@@ -190,5 +172,4 @@ After completing this skill:
 2. Existing worktree/branch context is reused when present; new task-linked branch/worktree is only created when needed.
 3. Validation commands for the chosen task pass.
 4. `TODO.md` archives the task from open sections and records its ID under historical completed IDs.
-5. Branch is published through `$push-pr` with task ID in PR title.
-6. Short-window PR comment triage is configured (15-minute cadence for 2 hours) or explicitly handled manually.
+5. Branch is published through `/push-pr` with task ID in PR title.

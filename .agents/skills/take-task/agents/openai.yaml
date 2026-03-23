@@ -1,4 +1,0 @@
-interface:
-  display_name: "Take Task"
-  short_description: "Claim next ready TODO task and deliver it as a PR"
-  default_prompt: "Use $take-task to pick the next READY task from TODO.md, reuse the current worktree/branch when already in one (or create a task-linked branch/worktree when needed), publish with $push-pr, and periodically triage PR comments with $gh-address-comments."

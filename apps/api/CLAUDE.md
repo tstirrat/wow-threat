@@ -1,4 +1,4 @@
-# AGENTS.md
+# CLAUDE.md
 
 ## API Architecture
 
@@ -32,7 +32,7 @@
    - `pnpm --filter @wow-threat/api lint`
    - `pnpm --filter @wow-threat/api typecheck`
    - `pnpm --filter @wow-threat/api test`
-4. When the user asks to publish/finalize API changes, invoke `$push-pr` for branch/commit/push/PR operations instead of running ad-hoc git/gh publish commands.
+4. Format with `pnpm fmt` before finalizing.
 
 ## Response Compression
 

@@ -12,14 +12,14 @@
   - create a new worktree from `origin/main` using `worktree_path`
   - create or switch to `branch_name` inside that worktree
 - Implementation policy:
-  - follow routing and quality rules in `AGENTS.md` and package-level guides
+  - follow routing and quality rules in `CLAUDE.md` and package-level guides
   - use `files_hint` as entrypoints, not hard constraints
   - satisfy every item in `acceptance_criteria`
 - Validation policy:
   - run every command in `validation` from repo root
   - do not publish if any validation command fails
 - Publish policy:
-  - run `$push-pr` after successful validation
+  - run `/push-pr` after successful validation
   - update `pr_url` and `commit_sha`
   - set `status: IN_REVIEW` after PR creation
   - set `status: DONE` only after merge

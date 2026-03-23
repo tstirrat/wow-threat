@@ -1,4 +1,4 @@
-# AGENTS.md
+# CLAUDE.md
 
 ## Project Overview
 
@@ -13,13 +13,12 @@ Use this sequence to route work quickly:
 
 1. Identify the primary package from the task (`apps/api`, `apps/web`, `packages/config`, `packages/engine`, `packages/shared`, `packages/wcl-types`)
 2. Open the package-level guide when it exists:
-   - `apps/api/AGENTS.md`
-   - `apps/web/AGENTS.md`
-   - `packages/config/AGENTS.md`
+   - `apps/api/CLAUDE.md`
+   - `apps/web/CLAUDE.md`
+   - `packages/config/CLAUDE.md`
 3. Jump to package landmarks in [Task Routing](#task-routing-open-these-files-first)
 4. Run scoped commands first (`pnpm --filter <pkg> ...`) and avoid top-level turbo commands unless needed
 5. Validate with lint + typecheck + tests for touched areas, then run formatting
-6. When publishing/finalizing changes for review, invoke `$push-pr` for branch/commit/push/PR workflow
 
 Quick worktree sanity check before edits/runs:
 
@@ -105,46 +104,6 @@ pnpm --filter @wow-threat/api deploy          # Deploy API to production
 pnpm --filter @wow-threat/api deploy:staging  # Deploy API to staging
 ```
 
-### Sandbox / Turborepo Note
-
-- In this Codex environment, top-level pnpm commands that invoke Turborepo must be run with elevated privileges.
-- This includes commands like `pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm fmt`, `pnpm build`, and `pnpm dev`.
-- When running these top-level commands from Codex, request escalation first instead of running them in the default sandbox.
-
-## Worktree & Preview Workflow
-
-When working in a git worktree, verify context before running app previews:
-
-```bash
-git rev-parse --show-toplevel                 # Repo root for current worktree
-git branch --show-current                     # Current branch (may be detached HEAD)
-git worktree list                             # All worktrees and their paths
-```
-
-For web preview testing from the current worktree:
-
-```bash
-pnpm --filter @wow-threat/web dev             # Starts Vite on default port 5173
-```
-
-- Read the Vite startup output and share the `Local` URL (for example `http://localhost:5173/`).
-- If 5173 is already in use, Vite auto-selects another port (for example 5174); always share the actual printed URL.
-- Keep the dev server running while the user validates changes; stop it with `Ctrl+C` when done.
-
-### Main Merge Policy (Worktrees)
-
-When merging into `main` from a worktree:
-
-- Always fetch first and sync with the latest remote state (`origin/main`) before merging.
-- Use fast-forward only merges into `main` (`--ff-only`); do not create merge commits.
-- If fast-forward is not possible, rebase the feature branch onto `origin/main` and then retry the fast-forward merge.
-
-```bash
-git fetch origin --prune
-git rebase origin/main                      # run on feature branch if needed
-git -C /path/to/main-worktree merge --ff-only <feature-branch>
-```
-
 ## Quality Expectations
 
 - Every change must be linted, type checked, and tested before it is considered complete; use the workspace commands (`pnpm lint`, `pnpm typecheck`, `pnpm test`, etc.) that cover the touched areas.
@@ -152,12 +111,9 @@ git -C /path/to/main-worktree merge --ff-only <feature-branch>
 - Run `pnpm fmt` using the project’s Prettier formatter before considering a change complete.
 - Finalization workflow: after all planned code changes and standard lint/typecheck/unit or integration tests are complete, run Playwright E2E for frontend app changes before considering the task complete.
 - Frontend E2E requirement: if the change touches `apps/web/src/**`, run at least one relevant Playwright spec (`pnpm --filter @wow-threat/web exec playwright test <spec>`) as final validation; if multiple user flows are affected, run the full web E2E suite (`pnpm --filter @wow-threat/web e2e`).
-- Publish workflow: after validation is complete and the user wants changes published, use `$push-pr` instead of manually handling git branch creation, commits, push, or PR create/edit steps.
-
 ## Commit conventions
 
 - Prefer [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#summary) format by default (for example `feat`, `fix`, `chore`).
-- `$push-pr` is the default mechanism for creating/updating commits and PR metadata during finalization.
 
 ## Config Versioning Rule
 
@@ -229,9 +185,9 @@ pnpm --filter @wow-threat/web lint        # Lint web only
 
 ## Package-Specific Conventions
 
-- API conventions: `apps/api/AGENTS.md`
-- Web conventions: `apps/web/AGENTS.md`
-- Config authoring conventions: `packages/config/AGENTS.md`
+- API conventions: `apps/api/CLAUDE.md`
+- Web conventions: `apps/web/CLAUDE.md`
+- Config authoring conventions: `packages/config/CLAUDE.md`
 
 ## Code Style
 
