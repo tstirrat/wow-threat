@@ -144,11 +144,6 @@ describe('GET /health', () => {
 
   describe('all dependencies down', () => {
     beforeEach(() => {
-      const bindings = createMockBindings()
-      // Force KV to fail
-      vi.spyOn(bindings.WCL_CACHE, 'put').mockRejectedValue(
-        new Error('KV unavailable'),
-      )
       vi.stubGlobal(
         'fetch',
         vi.fn(async (input: RequestInfo | URL): Promise<Response> => {
@@ -208,6 +203,29 @@ describe('GET /health', () => {
 
       expect(body.status).toBe('degraded')
       expect(body.dependencies.wcl.status).toBe('error')
+    })
+  })
+
+  describe('cors', () => {
+    beforeEach(() => {
+      stubFetch(makeFirestoreOkResponse(), makeWclOkResponse())
+    })
+
+    it('allows localhost web origin for local development', async () => {
+      const res = await app.request(
+        'http://localhost/health',
+        {
+          headers: {
+            Origin: 'http://localhost:5174',
+          },
+        },
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(200)
+      expect(res.headers.get('Access-Control-Allow-Origin')).toBe(
+        'http://localhost:5174',
+      )
     })
   })
 })

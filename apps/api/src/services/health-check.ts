@@ -4,8 +4,11 @@
  * Runs parallel probes against KV, Firestore, and WCL API with individual
  * timeouts. Each checker returns a DependencyStatus and never throws.
  */
-import type { Bindings } from '../types/bindings'
-import type { DependencyStatus, HealthCheckResult } from '../types/bindings'
+import type {
+  Bindings,
+  DependencyStatus,
+  HealthCheckResult,
+} from '../types/bindings'
 import { FirestoreClient } from './firestore-client'
 
 const WCL_TOKEN_URL = 'https://www.warcraftlogs.com/oauth/token'
@@ -15,12 +18,11 @@ const FIRESTORE_TIMEOUT_MS = 3_000
 const WCL_TIMEOUT_MS = 3_000
 
 function timeoutRace<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms),
-    ),
-  ])
+  let timer: ReturnType<typeof setTimeout>
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms)
+  })
+  return Promise.race([promise.finally(() => clearTimeout(timer)), timeout])
 }
 
 function elapsed(start: number): number {
@@ -35,7 +37,10 @@ export async function checkKV(env: Bindings): Promise<DependencyStatus> {
       (async () => {
         await env.WCL_CACHE.put(KV_HEALTH_KEY, 'ok', { expirationTtl: 60 })
         const value = await env.WCL_CACHE.get(KV_HEALTH_KEY)
-        if (value !== 'ok') {
+        // null is acceptable: KV is eventually consistent across edge locations,
+        // so a get() immediately after put() may return null at a different PoP.
+        // The put succeeding without throwing is sufficient proof of write access.
+        if (value !== null && value !== 'ok') {
           throw new Error('KV read-back mismatch')
         }
       })(),

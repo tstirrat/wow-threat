@@ -38,7 +38,7 @@ export interface Variables {
 }
 
 export interface DependencyStatus {
-  status: 'ok' | 'degraded' | 'error'
+  status: 'ok' | 'error'
   latencyMs: number
   message?: string
 }
@@ -53,6 +53,6 @@ export interface HealthCheckResult {
 }
 
 export interface HealthCheckResponse extends HealthCheckResult {
-  environment: string
+  environment: Bindings['ENVIRONMENT']
   requestId: string
 }
