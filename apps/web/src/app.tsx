@@ -2,6 +2,7 @@
  * Root application component with providers.
  */
 import { AuthProvider } from '@/auth/auth-provider'
+import { ErrorBoundary } from '@/components/error-boundary'
 import { ThemeProvider } from '@/components/theme-provider'
 import { ReportIndexProvider } from '@/hooks/use-report-index'
 import { UserSettingsProvider } from '@/hooks/use-user-settings'
@@ -23,7 +24,9 @@ export const App: FC = () => {
           <ReportIndexProvider>
             <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
               <HotkeysProvider>
-                <RouterProvider router={router} />
+                <ErrorBoundary>
+                  <RouterProvider router={router} />
+                </ErrorBoundary>
               </HotkeysProvider>
             </ThemeProvider>
           </ReportIndexProvider>
