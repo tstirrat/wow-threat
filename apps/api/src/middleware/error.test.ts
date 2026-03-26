@@ -3,7 +3,7 @@
  */
 import * as Sentry from '@sentry/cloudflare'
 import { Hono } from 'hono'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createMockBindings } from '../../test/setup'
 import type { Bindings, Variables } from '../types/bindings'
@@ -162,10 +162,6 @@ describe('errorHandler Sentry integration', () => {
   beforeEach(() => {
     app = new Hono<{ Bindings: Bindings; Variables: Variables }>()
     app.onError(errorHandler)
-    vi.clearAllMocks()
-  })
-
-  afterEach(() => {
     vi.clearAllMocks()
   })
 

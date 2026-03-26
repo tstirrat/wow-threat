@@ -1,7 +1,7 @@
 /**
  * Tests for Sentry initialization module.
  */
-import * as Sentry from '@sentry/react'
+import { browserTracingIntegration, init } from '@sentry/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { initSentry } from './sentry'
@@ -20,32 +20,34 @@ describe('initSentry', () => {
     vi.unstubAllEnvs()
   })
 
-  it('calls Sentry.init when VITE_SENTRY_DSN is set', () => {
+  it('calls init when VITE_SENTRY_DSN is set', () => {
     vi.stubEnv('VITE_SENTRY_DSN', 'https://public@o0.ingest.sentry.io/0')
 
     initSentry()
 
-    expect(Sentry.init).toHaveBeenCalledOnce()
-    expect(Sentry.init).toHaveBeenCalledWith(
+    expect(init).toHaveBeenCalledOnce()
+    expect(init).toHaveBeenCalledWith(
       expect.objectContaining({
         dsn: 'https://public@o0.ingest.sentry.io/0',
+        tracePropagationTargets: [window.location.origin],
       }),
     )
+    expect(browserTracingIntegration).toHaveBeenCalledOnce()
   })
 
-  it('does not call Sentry.init when VITE_SENTRY_DSN is empty', () => {
+  it('does not call init when VITE_SENTRY_DSN is empty', () => {
     vi.stubEnv('VITE_SENTRY_DSN', '')
 
     initSentry()
 
-    expect(Sentry.init).not.toHaveBeenCalled()
+    expect(init).not.toHaveBeenCalled()
   })
 
-  it('does not call Sentry.init when VITE_SENTRY_DSN is undefined', () => {
+  it('does not call init when VITE_SENTRY_DSN is undefined', () => {
     vi.stubEnv('VITE_SENTRY_DSN', undefined)
 
     initSentry()
 
-    expect(Sentry.init).not.toHaveBeenCalled()
+    expect(init).not.toHaveBeenCalled()
   })
 })
