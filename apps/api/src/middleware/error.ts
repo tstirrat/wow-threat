@@ -3,6 +3,7 @@
  *
  * Provides structured error responses and logging.
  */
+import * as Sentry from '@sentry/cloudflare'
 import type { ErrorHandler } from 'hono'
 
 import type { Bindings, Variables } from '../types/bindings'
@@ -174,6 +175,10 @@ export const errorHandler: ErrorHandler<{
   console.error(`[${requestId}] Error:`, err)
 
   if (err instanceof AppError) {
+    if (err.statusCode >= 500) {
+      Sentry.captureException(err)
+    }
+
     const response: ApiError = {
       error: {
         code: err.code,
@@ -193,7 +198,8 @@ export const errorHandler: ErrorHandler<{
     return c.json(response, err.statusCode as 400 | 401 | 404 | 429 | 500 | 502)
   }
 
-  // Unknown error
+  // Unknown error — always 500
+  Sentry.captureException(err)
   const response: ApiError = {
     error: {
       code: ErrorCodes.INTERNAL_ERROR,

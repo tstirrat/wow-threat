@@ -16,6 +16,7 @@
     "kv:reset:local": "rm -rf .wrangler/state"
   },
   "dependencies": {
+    "@sentry/cloudflare": "^10.46.0",
     "@wow-threat/config": "workspace:*",
     "@wow-threat/engine": "workspace:*",
     "@wow-threat/shared": "workspace:*",

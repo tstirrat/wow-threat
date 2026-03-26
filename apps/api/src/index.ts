@@ -3,6 +3,7 @@
  *
  * Entry point for the Cloudflare Workers application.
  */
+import { withSentry } from '@sentry/cloudflare'
 import { generateRequestId } from '@wow-threat/shared'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
@@ -103,4 +104,13 @@ app.notFound((c) =>
   ),
 )
 
-export default app
+export { app }
+
+export default withSentry<Bindings>(
+  (env) => ({
+    dsn: env.SENTRY_DSN,
+    tracesSampleRate: env.ENVIRONMENT === 'production' ? 0.1 : 1.0,
+    environment: env.ENVIRONMENT,
+  }),
+  app,
+)

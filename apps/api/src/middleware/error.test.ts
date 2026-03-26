@@ -1,12 +1,18 @@
 /**
  * Tests for Error Handling
  */
-import { describe, expect, it } from 'vitest'
+import * as Sentry from '@sentry/cloudflare'
+import { Hono } from 'hono'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { createMockBindings } from '../../test/setup'
+import type { Bindings, Variables } from '../types/bindings'
 import {
   AppError,
   ErrorCodes,
+  errorHandler,
   fightNotFound,
+  firestoreError,
   invalidFightId,
   invalidReportCode,
   reportNotFound,
@@ -14,6 +20,10 @@ import {
   wclApiError,
   wclRateLimited,
 } from './error'
+
+vi.mock('@sentry/cloudflare', () => ({
+  captureException: vi.fn(),
+}))
 
 describe('AppError', () => {
   it('creates error with all properties', () => {
@@ -143,5 +153,66 @@ describe('ErrorCodes', () => {
     expect(ErrorCodes.WCL_RATE_LIMITED).toBe('WCL_RATE_LIMITED')
     expect(ErrorCodes.UNAUTHORIZED).toBe('UNAUTHORIZED')
     expect(ErrorCodes.INTERNAL_ERROR).toBe('INTERNAL_ERROR')
+  })
+})
+
+describe('errorHandler Sentry integration', () => {
+  let app: Hono<{ Bindings: Bindings; Variables: Variables }>
+
+  beforeEach(() => {
+    app = new Hono<{ Bindings: Bindings; Variables: Variables }>()
+    app.onError(errorHandler)
+    vi.clearAllMocks()
+  })
+
+  it('calls captureException for 5xx AppErrors', async () => {
+    app.get('/test', () => {
+      throw firestoreError('DB connection failed')
+    })
+
+    await app.request('http://localhost/test', {}, createMockBindings())
+
+    expect(Sentry.captureException).toHaveBeenCalledOnce()
+  })
+
+  it('does not call captureException for 4xx AppErrors', async () => {
+    app.get('/test', () => {
+      throw invalidReportCode('bad!code')
+    })
+
+    await app.request('http://localhost/test', {}, createMockBindings())
+
+    expect(Sentry.captureException).not.toHaveBeenCalled()
+  })
+
+  it('does not call captureException for 404 AppErrors', async () => {
+    app.get('/test', () => {
+      throw reportNotFound('ABC123')
+    })
+
+    await app.request('http://localhost/test', {}, createMockBindings())
+
+    expect(Sentry.captureException).not.toHaveBeenCalled()
+  })
+
+  it('calls captureException for unknown errors', async () => {
+    app.get('/test', () => {
+      throw new Error('Unexpected failure')
+    })
+
+    await app.request('http://localhost/test', {}, createMockBindings())
+
+    expect(Sentry.captureException).toHaveBeenCalledOnce()
+  })
+
+  it('calls captureException with the original error', async () => {
+    const err = firestoreError('DB error')
+    app.get('/test', () => {
+      throw err
+    })
+
+    await app.request('http://localhost/test', {}, createMockBindings())
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(err)
   })
 })

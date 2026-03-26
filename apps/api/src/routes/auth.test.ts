@@ -4,7 +4,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createMockBindings } from '../../test/setup'
-import app from '../index'
+import { app } from '../index'
 import { AuthStore } from '../services/auth-store'
 import { FirestoreClient } from '../services/firestore-client'
 

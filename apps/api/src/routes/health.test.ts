@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { restoreFetch } from '../../test/helpers/mock-fetch'
 import { createMockBindings } from '../../test/setup'
-import app from '../index'
+import { app } from '../index'
 import type { HealthCheckResponse } from '../types/bindings'
 
 const firestoreHealthUrl =

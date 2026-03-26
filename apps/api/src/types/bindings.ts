@@ -24,6 +24,9 @@ export interface Bindings {
   BRIDGE_CODE_SIGNING_SECRET: string
   ALLOWED_ORIGINS: string
 
+  // Observability
+  SENTRY_DSN?: string
+
   // KV Namespaces
   WCL_CACHE: KVNamespace
   AUGMENTED_CACHE: KVNamespace
