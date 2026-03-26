@@ -48,8 +48,11 @@ function renderFightQuickSwitcher(options?: {
   forceFresh?: boolean
   pinnedPlayerIds?: number[]
 }): void {
-  const { eventsMode = null, forceFresh = false, pinnedPlayerIds = [] } =
-    options ?? {}
+  const {
+    eventsMode = null,
+    forceFresh = false,
+    pinnedPlayerIds = [],
+  } = options ?? {}
 
   render(
     <MemoryRouter>

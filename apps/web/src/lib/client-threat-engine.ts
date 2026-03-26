@@ -763,7 +763,9 @@ export async function getFightEventsClientSide(params: {
           rawEvents,
         })
         if (directWorkerResponse.outputMode !== 'inline') {
-          throw new Error('direct worker mode returned non-inline output payload')
+          throw new Error(
+            'direct worker mode returned non-inline output payload',
+          )
         }
 
         processed = directWorkerResponse.payload
@@ -801,7 +803,9 @@ export async function getFightEventsClientSide(params: {
         jobKey: indexedDbJobContext.jobKey,
         rawEventChunkCount: indexedDbJobContext.rawEventChunkCount,
       })
-      pipelineTimings.cleanupMs = Math.round(performance.now() - cleanupStartedAt)
+      pipelineTimings.cleanupMs = Math.round(
+        performance.now() - cleanupStartedAt,
+      )
     }
   }
 
@@ -827,7 +831,9 @@ export async function getFightEventsClientSide(params: {
     rawEventCount: rawEvents.length,
     reportId,
     totalElapsedMs: Math.round(performance.now() - totalStartedAt),
-    workerAttemptElapsedMs: Math.round(performance.now() - workerAttemptStartedAt),
+    workerAttemptElapsedMs: Math.round(
+      performance.now() - workerAttemptStartedAt,
+    ),
     workerAttemptStats,
   })
   onProgress?.({

@@ -96,8 +96,9 @@ describe('EntityReportsPage', () => {
     const warcraftLogsLink = screen.getByRole('link', {
       name: 'View on Warcraft Logs',
     })
-    expect(screen.getByRole('button', { name: 'Star guild Threat Guild' }))
-      .toBeVisible()
+    expect(
+      screen.getByRole('button', { name: 'Star guild Threat Guild' }),
+    ).toBeVisible()
     expect(screen.getByRole('button', { name: 'Refresh' })).toBeVisible()
     expect(warcraftLogsLink).toHaveTextContent('WCL')
     expect(warcraftLogsLink).toHaveAttribute(

@@ -87,6 +87,59 @@ describe('threat-engine-worker-cache', () => {
     }
   })
 
+  it('retries the database connection after a previous connection failure', async () => {
+    const originalIndexedDb = globalThis.indexedDB
+    const openRequests: Array<{
+      onerror: IDBOpenDBRequest['onerror']
+      onsuccess: IDBOpenDBRequest['onsuccess']
+      onupgradeneeded: IDBOpenDBRequest['onupgradeneeded']
+      result: IDBDatabase | null
+    }> = []
+    const openMock = vi.fn(() => {
+      const req = {
+        onerror: null as IDBOpenDBRequest['onerror'],
+        onsuccess: null as IDBOpenDBRequest['onsuccess'],
+        onupgradeneeded: null as IDBOpenDBRequest['onupgradeneeded'],
+        result: null as unknown as IDBDatabase,
+      }
+      openRequests.push(req)
+      return req as IDBOpenDBRequest
+    })
+    Object.defineProperty(globalThis, 'indexedDB', {
+      configurable: true,
+      value: { open: openMock } as IDBFactory,
+    })
+
+    try {
+      // First call — simulate connection failure
+      const firstPromise = saveThreatWorkerRawEventChunks({
+        jobKey: 'job-retry',
+        rawEventChunks: [[]],
+      })
+      openRequests[0]?.onerror?.(new Event('error'))
+      const firstResult = await firstPromise
+      expect(firstResult).toBeNull()
+      expect(openMock).toHaveBeenCalledTimes(1)
+
+      // Second call — databasePromise should have been reset so open is called again
+      const secondPromise = saveThreatWorkerRawEventChunks({
+        jobKey: 'job-retry',
+        rawEventChunks: [[]],
+      })
+      // open() should have been called a second time
+      expect(openMock).toHaveBeenCalledTimes(2)
+      // Clean up: fail the second connection too so no pending promise leaks
+      openRequests[1]?.onerror?.(new Event('error'))
+      const secondResult = await secondPromise
+      expect(secondResult).toBeNull()
+    } finally {
+      Object.defineProperty(globalThis, 'indexedDB', {
+        configurable: true,
+        value: originalIndexedDb,
+      })
+    }
+  })
+
   it('waits for transaction completion before confirming processed result writes', async () => {
     const originalIndexedDb = globalThis.indexedDB
     const putRequest = {
