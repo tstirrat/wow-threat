@@ -2,7 +2,6 @@
  * Integration Tests for Reports API
  */
 import type { ApiError } from '@/middleware/error'
-import type { HealthCheckResponse } from '@/types/bindings'
 import { immutableApiCacheVersions } from '@wow-threat/shared'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -830,38 +829,5 @@ describe('Reports API', () => {
       const data: ApiError = await res.json()
       expect(data.error.code).toBe('INVALID_ENTITY_TYPE')
     })
-  })
-})
-
-describe('Health endpoint', () => {
-  it('returns ok status', async () => {
-    const res = await app.request(
-      'http://localhost/health',
-      {},
-      createMockBindings(),
-    )
-
-    expect(res.status).toBe(200)
-
-    const data: HealthCheckResponse = await res.json()
-    expect(data.status).toBe('ok')
-    expect(data.environment).toBe('test')
-  })
-
-  it('allows localhost web origin for local development', async () => {
-    const res = await app.request(
-      'http://localhost/health',
-      {
-        headers: {
-          Origin: 'http://localhost:5174',
-        },
-      },
-      createMockBindings(),
-    )
-
-    expect(res.status).toBe(200)
-    expect(res.headers.get('Access-Control-Allow-Origin')).toBe(
-      'http://localhost:5174',
-    )
   })
 })

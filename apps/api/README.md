@@ -43,15 +43,34 @@ Common codes:
 
 ### `GET /health`
 
-Health check.
+Health check with per-dependency status. Public — no authentication required.
+
+Runs parallel probes against KV, Firestore, and WCL API with individual timeouts.
+
+**Response (200 — ok or degraded):**
 
 ```json
 {
   "status": "ok",
+  "dependencies": {
+    "kv":        { "status": "ok", "latencyMs": 12 },
+    "firestore": { "status": "ok", "latencyMs": 45 },
+    "wcl":       { "status": "ok", "latencyMs": 210 }
+  },
   "environment": "development",
   "requestId": "req_..."
 }
 ```
+
+**Aggregate `status` values:**
+
+| Value      | Meaning                             | HTTP |
+| ---------- | ----------------------------------- | ---- |
+| `ok`       | All dependencies healthy            | 200  |
+| `degraded` | One or more dependencies failing    | 200  |
+| `error`    | All dependencies failing            | 503  |
+
+Each `dependencies.*` entry carries `status` (`ok` or `error`), `latencyMs`, and an optional `message` on error.
 
 ### `GET /v1/reports/:code`
 

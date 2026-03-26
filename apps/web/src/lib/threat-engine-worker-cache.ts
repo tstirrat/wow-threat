@@ -275,14 +275,16 @@ function upsertProcessedResultRecords(
     recordType: 'meta',
     storedAtMs,
   }
-  const chunkRecords = augmentedEventChunks.map((augmentedEvents, chunkIndex) => ({
-    augmentedEvents,
-    chunkIndex,
-    jobKey,
-    key: createProcessedResultChunkRecordKey(jobKey, chunkIndex),
-    recordType: 'chunk' as const,
-    storedAtMs,
-  }))
+  const chunkRecords = augmentedEventChunks.map(
+    (augmentedEvents, chunkIndex) => ({
+      augmentedEvents,
+      chunkIndex,
+      jobKey,
+      key: createProcessedResultChunkRecordKey(jobKey, chunkIndex),
+      recordType: 'chunk' as const,
+      storedAtMs,
+    }),
+  )
 
   return new Promise((resolve) => {
     const transaction = database.transaction(
@@ -316,17 +318,22 @@ function upsertProcessedResultRecords(
       chunkRequest.onsuccess = () => {}
       chunkRequest.onerror = () => {
         didRequestFail = true
-        console.warn('[Events] Failed to persist threat worker processed chunk', {
-          chunkIndex: chunkRecord.chunkIndex,
-          jobKey,
-        })
+        console.warn(
+          '[Events] Failed to persist threat worker processed chunk',
+          {
+            chunkIndex: chunkRecord.chunkIndex,
+            jobKey,
+          },
+        )
       }
     })
     transaction.oncomplete = () => {
       settle(!didRequestFail)
     }
     transaction.onerror = () => {
-      console.warn('[Events] Failed while committing threat worker processed result')
+      console.warn(
+        '[Events] Failed while committing threat worker processed result',
+      )
       settle(false)
     }
     transaction.onabort = () => {
@@ -348,14 +355,17 @@ function readProcessedResultMetaRecord(
       'readonly',
     )
     const store = transaction.objectStore(processedResultStoreName)
-    const request: IDBRequest<ThreatWorkerProcessedResultMetaRecord | undefined> =
-      store.get(createProcessedResultMetaRecordKey(jobKey))
+    const request: IDBRequest<
+      ThreatWorkerProcessedResultMetaRecord | undefined
+    > = store.get(createProcessedResultMetaRecordKey(jobKey))
 
     request.onsuccess = () => {
       resolve(request.result ?? null)
     }
     request.onerror = () => {
-      console.warn('[Events] Failed to read threat worker processed result meta')
+      console.warn(
+        '[Events] Failed to read threat worker processed result meta',
+      )
       resolve(null)
     }
     transaction.onabort = () => {
@@ -377,7 +387,10 @@ function readProcessedResultChunkRecords(
   const { chunkCount, jobKey } = params
 
   return new Promise((resolve) => {
-    const transaction = database.transaction(processedResultStoreName, 'readonly')
+    const transaction = database.transaction(
+      processedResultStoreName,
+      'readonly',
+    )
     const store = transaction.objectStore(processedResultStoreName)
     const recordsByChunkIndex: Array<ThreatWorkerProcessedResultChunkRecord | null> =
       createChunkIndexes(chunkCount).map(() => null)
@@ -426,7 +439,9 @@ function readProcessedResultChunkRecords(
       settle(recordsByChunkIndex as ThreatWorkerProcessedResultChunkRecord[])
     }
     transaction.onerror = () => {
-      console.warn('[Events] Failed while reading threat worker processed chunks')
+      console.warn(
+        '[Events] Failed while reading threat worker processed chunks',
+      )
       settle(null)
     }
     transaction.onabort = () => {
@@ -456,7 +471,9 @@ function readLegacyProcessedResultRecord(
       resolve(request.result ?? null)
     }
     request.onerror = () => {
-      console.warn('[Events] Failed to read legacy threat worker processed result')
+      console.warn(
+        '[Events] Failed to read legacy threat worker processed result',
+      )
       resolve(null)
     }
     transaction.onabort = () => {
@@ -512,7 +529,10 @@ async function deleteThreatWorkerJobRecords(
   },
 ): Promise<boolean> {
   const { jobKey, rawEventChunkCount } = params
-  const processedMetaRecord = await readProcessedResultMetaRecord(database, jobKey)
+  const processedMetaRecord = await readProcessedResultMetaRecord(
+    database,
+    jobKey,
+  )
   const processedChunkCount = processedMetaRecord?.chunkCount ?? 0
 
   return new Promise((resolve) => {
@@ -676,7 +696,10 @@ export async function loadThreatWorkerProcessedResult(
     return null
   }
 
-  const processedMetaRecord = await readProcessedResultMetaRecord(database, jobKey)
+  const processedMetaRecord = await readProcessedResultMetaRecord(
+    database,
+    jobKey,
+  )
   if (processedMetaRecord) {
     const readChunksStartedAt = performance.now()
     const chunkRecords = await readProcessedResultChunkRecords(database, {

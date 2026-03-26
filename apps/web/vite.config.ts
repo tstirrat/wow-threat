@@ -29,8 +29,24 @@ const getVendorChunkName = (id: string): string | undefined => {
   return 'vendor'
 }
 
+/**
+ * Returns the esbuild options for the given build mode.
+ * Exported for testing.
+ */
+export function getEsbuildOptions(
+  mode: string,
+): { pure: string[] } | undefined {
+  if (mode !== 'production') return undefined
+  // Mark purely informational console calls as side-effect-free so esbuild
+  // can tree-shake them. console.warn and console.error are intentionally
+  // excluded: warn is used for operational failure signals (IndexedDB errors,
+  // worker fallbacks) and error is reserved for critical runtime failures —
+  // both should survive in production builds.
+  return { pure: ['console.log', 'console.info', 'console.debug'] }
+}
+
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react({
       babel: {
@@ -44,6 +60,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  esbuild: getEsbuildOptions(mode),
   build: {
     rollupOptions: {
       output: {
@@ -51,4 +68,4 @@ export default defineConfig({
       },
     },
   },
-})
+}))

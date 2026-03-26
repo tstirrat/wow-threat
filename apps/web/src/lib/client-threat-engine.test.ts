@@ -43,9 +43,10 @@ type WorkerErrorListener = (event: ErrorEvent) => void
 type WorkerMessageErrorListener = (event: MessageEvent) => void
 
 const mockFns = vi.hoisted(() => ({
-  clearThreatWorkerJobRecords: vi.fn<
-    (params: { jobKey: string; rawEventChunkCount: number }) => Promise<void>
-  >(),
+  clearThreatWorkerJobRecords:
+    vi.fn<
+      (params: { jobKey: string; rawEventChunkCount: number }) => Promise<void>
+    >(),
   loadThreatWorkerProcessedResult: vi.fn<
     (jobKey: string) => Promise<{
       augmentedEvents: ReturnType<typeof createDamageEvent>[]
@@ -53,23 +54,25 @@ const mockFns = vi.hoisted(() => ({
       processDurationMs: number
     } | null>
   >(),
-  runWorkerRequest: vi.fn<
-    (
-      request: ThreatEngineWorkerRequest,
-    ) => Promise<MockWorkerDispatchResult> | MockWorkerDispatchResult
-  >(),
-  saveThreatWorkerRawEventChunks: vi.fn<
-    (params: {
-      jobKey: string
-      rawEventChunks: WCLEvent[][]
-    }) => Promise<ThreatWorkerRawChunkWriteResult | null>
-  >(),
+  runWorkerRequest:
+    vi.fn<
+      (
+        request: ThreatEngineWorkerRequest,
+      ) => Promise<MockWorkerDispatchResult> | MockWorkerDispatchResult
+    >(),
+  saveThreatWorkerRawEventChunks:
+    vi.fn<
+      (params: {
+        jobKey: string
+        rawEventChunks: WCLEvent[][]
+      }) => Promise<ThreatWorkerRawChunkWriteResult | null>
+    >(),
 }))
 
 vi.mock('./threat-engine-worker-cache', async () => {
-  const actual = await vi.importActual<typeof import('./threat-engine-worker-cache')>(
-    './threat-engine-worker-cache',
-  )
+  const actual = await vi.importActual<
+    typeof import('./threat-engine-worker-cache')
+  >('./threat-engine-worker-cache')
 
   return {
     ...actual,
@@ -86,7 +89,10 @@ class WorkerMock {
 
   addEventListener(type: 'message', listener: WorkerMessageListener): void
   addEventListener(type: 'error', listener: WorkerErrorListener): void
-  addEventListener(type: 'messageerror', listener: WorkerMessageErrorListener): void
+  addEventListener(
+    type: 'messageerror',
+    listener: WorkerMessageErrorListener,
+  ): void
   addEventListener(
     type: 'message' | 'error' | 'messageerror',
     listener:
@@ -312,7 +318,8 @@ describe('client-threat-engine worker retries', () => {
           response: {
             requestId: request.requestId,
             status: 'error',
-            error: 'unable to load indexeddb worker chunks for ABC123xyz:26:req',
+            error:
+              'unable to load indexeddb worker chunks for ABC123xyz:26:req',
             errorName: 'Error',
           },
         }

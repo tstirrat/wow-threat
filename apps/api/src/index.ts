@@ -14,6 +14,7 @@ import { timing } from 'hono/timing'
 import { authMiddleware } from './middleware/auth'
 import { errorHandler } from './middleware/error'
 import { authRoutes } from './routes/auth'
+import { healthRoutes } from './routes/health'
 import { reportRoutes } from './routes/reports'
 import { isOriginAllowed, parseAllowedOrigins } from './services/origins'
 import { validateRuntimeConfig } from './services/runtime-config'
@@ -76,13 +77,7 @@ app.use('*', logger())
 app.onError(errorHandler)
 
 // Health check (no auth)
-app.get('/health', (c) =>
-  c.json({
-    status: 'ok',
-    environment: c.env.ENVIRONMENT,
-    requestId: c.get('requestId'),
-  }),
-)
+app.route('/health', healthRoutes)
 
 // Authentication routes (no /v1 auth middleware)
 app.route('/auth', authRoutes)

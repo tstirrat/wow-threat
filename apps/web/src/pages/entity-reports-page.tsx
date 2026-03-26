@@ -146,7 +146,9 @@ function GuildReportsPage({ entityId }: GuildReportsPageProps): JSX.Element {
       <SectionCard
         title={
           <div className="flex flex-wrap items-center gap-2">
-            <span className={guildTextClass}>{`<${response.entity.name}>`}</span>
+            <span
+              className={guildTextClass}
+            >{`<${response.entity.name}>`}</span>
             {guildWclUrl ? (
               <a
                 aria-label="View on Warcraft Logs"
