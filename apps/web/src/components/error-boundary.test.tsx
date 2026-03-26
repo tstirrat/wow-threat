@@ -3,7 +3,7 @@
  */
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ErrorBoundary } from './error-boundary'
 
@@ -16,6 +16,10 @@ const SafeChild = () => <p>safe content</p>
 describe('ErrorBoundary', () => {
   beforeEach(() => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('renders children when no error occurs', () => {
@@ -83,6 +87,7 @@ describe('ErrorBoundary', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
 
     expect(screen.getByText('recovered content')).toBeInTheDocument()
+    expect(screen.queryByText('Something went wrong')).not.toBeInTheDocument()
   })
 
   it('renders custom fallback when provided', () => {
@@ -107,8 +112,21 @@ describe('ErrorBoundary', () => {
     ).toBeInTheDocument()
   })
 
+  it('renders fallback with empty error message', () => {
+    render(
+      <ErrorBoundary>
+        <ThrowingChild message="" />
+      </ErrorBoundary>,
+    )
+
+    expect(screen.getByText('Something went wrong')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Try again' }),
+    ).toBeInTheDocument()
+  })
+
   it('logs error to console via componentDidCatch', () => {
-    const consoleSpy = vi.spyOn(console, 'error')
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     render(
       <ErrorBoundary>

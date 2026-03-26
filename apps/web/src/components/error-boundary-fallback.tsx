@@ -11,7 +11,10 @@ export const ErrorBoundaryFallback: FC<ErrorBoundaryFallbackProps> = ({
   error,
   resetError,
 }) => (
-  <div className="flex min-h-[50vh] items-center justify-center px-4">
+  <div
+    role="alert"
+    className="flex min-h-[50vh] items-center justify-center px-4"
+  >
     <div className="flex max-w-md flex-col items-center gap-4 text-center">
       <h2 className="text-lg font-semibold text-foreground">
         Something went wrong
