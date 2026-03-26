@@ -20,10 +20,10 @@ Claim coordination prevents multiple agents from picking up the same task.
 
 ```bash
 # Reap leases older than 6 hours whose worktrees are gone
-python3 .claude/skills/take-task/scripts/todo_task.py reap
+python3 .agents/skills/take-task/scripts/todo_task.py reap
 
 # Aggressive: reap all orphaned leases regardless of age
-python3 .claude/skills/take-task/scripts/todo_task.py --stale-seconds 0 reap
+python3 .agents/skills/take-task/scripts/todo_task.py --stale-seconds 0 reap
 ```
 
 ## Task Selection Policy

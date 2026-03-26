@@ -51,7 +51,7 @@ git checkout -b claude/<short-task-slug> origin/main
 Run the bundled divergence check script to measure drift and back-merge when needed:
 
 ```bash
-bash .claude/skills/push-pr/scripts/check-divergence.sh
+bash .agents/skills/push-pr/scripts/check-divergence.sh
 ```
 
 The script exits non-zero on merge conflict — resolve conflicts before continuing.

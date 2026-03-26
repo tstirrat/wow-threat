@@ -26,13 +26,13 @@ See `references/claim-system.md` for claim storage layout and task selection pol
 Preview, then claim:
 
 ```bash
-python3 .claude/skills/take-task/scripts/todo_task.py next
+python3 .agents/skills/take-task/scripts/todo_task.py next
 ```
 
 Claim and capture output fields:
 
 ```bash
-claim_output="$(python3 .claude/skills/take-task/scripts/todo_task.py claim)"
+claim_output="$(python3 .agents/skills/take-task/scripts/todo_task.py claim)"
 printf '%s\n' "$claim_output"
 
 task_id="$(printf '%s\n' "$claim_output" | awk -F= '/^id=/{print $2}')"
@@ -50,7 +50,7 @@ available and only creates a new one when needed:
 ```bash
 wt_output="$(TASK_ID="$task_id" TASK_TITLE="$title" BRANCH_NAME="$branch_name" \
   WORKTREE_PATH="$worktree_path" \
-  bash .claude/skills/take-task/scripts/setup_worktree.sh)"
+  bash .agents/skills/take-task/scripts/setup_worktree.sh)"
 
 branch_name="$(printf '%s\n' "$wt_output" | awk -F= '/^branch_name=/{print $2}')"
 worktree_path="$(printf '%s\n' "$wt_output" | awk -F= '/^worktree_path=/{print $2}')"
@@ -71,7 +71,7 @@ Run all coding, validation, and file updates inside `"$worktree_path"`.
 Before publishing, mark the task complete in `TODO.md`:
 
 ```bash
-python3 .claude/skills/take-task/scripts/todo_task.py complete --id "$task_id" --status DONE
+python3 .agents/skills/take-task/scripts/todo_task.py complete --id "$task_id" --status DONE
 ```
 
 When status is `DONE` this removes the task from `Task Index (Open)` and `Task Cards (Open)`,
