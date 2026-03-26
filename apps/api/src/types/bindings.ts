@@ -37,8 +37,22 @@ export interface Variables {
   wclUserId?: string
 }
 
-export interface HealthCheckResponse {
-  status: string
-  environment: string
+export interface DependencyStatus {
+  status: 'ok' | 'error'
+  latencyMs: number
+  message?: string
+}
+
+export interface HealthCheckResult {
+  status: 'ok' | 'degraded' | 'error'
+  dependencies: {
+    kv: DependencyStatus
+    firestore: DependencyStatus
+    wcl: DependencyStatus
+  }
+}
+
+export interface HealthCheckResponse extends HealthCheckResult {
+  environment: Bindings['ENVIRONMENT']
   requestId: string
 }

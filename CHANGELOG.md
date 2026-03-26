@@ -9,6 +9,7 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 
 ### Added
 
+- **api**: `GET /health` now runs parallel dependency probes (KV, Firestore, WCL) with per-check timeouts (2 s / 3 s / 3 s). Returns structured `HealthCheckResult` with per-dependency `status`, `latencyMs`, and optional `message`. Aggregate status: `ok` (all up), `degraded` (some up), `error` (all down). HTTP 200 for ok/degraded; 503 only when all dependencies fail.
 - **web**: Add explicit `Cache-Control` headers in `firebase.json` for Firebase Hosting. All SPA routes get `no-cache` via a `**` catch-all so browsers always revalidate after a deploy. Vite-hashed assets under `/assets/**` and font files get `public, max-age=31536000, immutable` for aggressive long-lived caching. Image files get `public, max-age=86400` (1 day). Firebase's last-match-wins semantics ensure the specific immutable rules override the catch-all for asset paths.
 
 ### Changed
