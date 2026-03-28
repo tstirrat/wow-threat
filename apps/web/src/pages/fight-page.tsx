@@ -2,6 +2,7 @@
  * Fight-level page with target filter and player-focused chart interactions.
  */
 import { ExternalLink } from 'lucide-react'
+import { usePostHog } from 'posthog-js/react'
 import { type FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { useHotkeys, useHotkeysContext } from 'react-hotkeys-hook'
 import { useLocation, useParams } from 'react-router-dom'
@@ -173,6 +174,7 @@ export const FightPage: FC = () => {
       : 'melee'
     : 'off'
   const { disableScope, enableScope } = useHotkeysContext()
+  const posthog = usePostHog()
   const [isChartReady, setIsChartReady] = useState(false)
   const [registeredResetZoom, setRegisteredResetZoom] = useState<
     (() => void) | null
@@ -192,6 +194,24 @@ export const FightPage: FC = () => {
       disableScope('fight-page')
     }
   }, [disableScope, enableScope])
+
+  useEffect(() => {
+    if (!fightData || !posthog) return
+    posthog.capture('fight_selected', {
+      report_id: reportId,
+      fight_id: fightId,
+      boss_name: fightData.name,
+    })
+  }, [fightData, fightId, posthog, reportId])
+
+  useEffect(() => {
+    if (!isChartReady || visibleSeries.length === 0 || !posthog) return
+    posthog.capture('threat_chart_viewed', {
+      report_id: reportId,
+      fight_id: fightId,
+      player_count: visibleSeries.length,
+    })
+  }, [isChartReady, fightId, posthog, reportId, visibleSeries.length])
 
   useHotkeys(
     'b',

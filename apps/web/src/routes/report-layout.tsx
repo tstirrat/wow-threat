@@ -1,6 +1,7 @@
 /**
  * Shared report route layout with compact header and fight quick switcher.
  */
+import { usePostHog } from 'posthog-js/react'
 import { type FC, useEffect } from 'react'
 import { Outlet, useLocation, useParams } from 'react-router-dom'
 
@@ -37,6 +38,7 @@ export const ReportLayout: FC = () => {
   const forceFresh = parseBooleanQueryParam(queryParams.get('fresh')) ?? false
   const eventsMode = queryParams.get('eventsMode')
 
+  const posthog = usePostHog()
   const { addRecentReport, resolveReportHost } = useReportIndex()
   const {
     isLoading: isUserSettingsLoading,
@@ -53,6 +55,12 @@ export const ReportLayout: FC = () => {
       return
     }
 
+    posthog?.capture('report_loaded', {
+      report_id: reportId,
+      fight_count: buildBossKillNavigationFights(data.fights).length,
+      duration_ms: data.endTime - data.startTime,
+    })
+
     addRecentReport({
       reportId,
       title: data.title,
@@ -67,7 +75,7 @@ export const ReportLayout: FC = () => {
       isAccessible: data.archiveStatus?.isAccessible ?? true,
       archiveDate: data.archiveStatus?.archiveDate ?? null,
     })
-  }, [addRecentReport, data, reportHost, reportId])
+  }, [addRecentReport, data, posthog, reportHost, reportId])
 
   if (!reportId) {
     return (
