@@ -3,7 +3,7 @@
  */
 import { ExternalLink } from 'lucide-react'
 import { usePostHog } from 'posthog-js/react'
-import { type FC, useCallback, useEffect, useMemo, useState } from 'react'
+import { type FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useHotkeys, useHotkeysContext } from 'react-hotkeys-hook'
 import { useLocation, useParams } from 'react-router-dom'
 
@@ -176,6 +176,8 @@ export const FightPage: FC = () => {
   const { disableScope, enableScope } = useHotkeysContext()
   const posthog = usePostHog()
   const [isChartReady, setIsChartReady] = useState(false)
+  const trackedFightSelectedRef = useRef<number | null>(null)
+  const trackedChartViewedRef = useRef<number | null>(null)
   const [registeredResetZoom, setRegisteredResetZoom] = useState<
     (() => void) | null
   >(null)
@@ -197,6 +199,8 @@ export const FightPage: FC = () => {
 
   useEffect(() => {
     if (!fightData || !posthog) return
+    if (trackedFightSelectedRef.current === fightId) return
+    trackedFightSelectedRef.current = fightId
     posthog.capture('fight_selected', {
       report_id: reportId,
       fight_id: fightId,
@@ -206,6 +210,8 @@ export const FightPage: FC = () => {
 
   useEffect(() => {
     if (!isChartReady || visibleSeries.length === 0 || !posthog) return
+    if (trackedChartViewedRef.current === fightId) return
+    trackedChartViewedRef.current = fightId
     posthog.capture('threat_chart_viewed', {
       report_id: reportId,
       fight_id: fightId,

@@ -2,7 +2,7 @@
  * Shared report route layout with compact header and fight quick switcher.
  */
 import { usePostHog } from 'posthog-js/react'
-import { type FC, useEffect } from 'react'
+import { type FC, useEffect, useRef } from 'react'
 import { Outlet, useLocation, useParams } from 'react-router-dom'
 
 import { ErrorState } from '../components/error-state'
@@ -39,6 +39,7 @@ export const ReportLayout: FC = () => {
   const eventsMode = queryParams.get('eventsMode')
 
   const posthog = usePostHog()
+  const reportLoadedCapturedRef = useRef<string | null>(null)
   const { addRecentReport, resolveReportHost } = useReportIndex()
   const {
     isLoading: isUserSettingsLoading,
@@ -51,16 +52,8 @@ export const ReportLayout: FC = () => {
   const { data, isLoading, error } = useReportData(reportId)
 
   useEffect(() => {
-    if (!data) {
-      return
-    }
-
-    posthog?.capture('report_loaded', {
-      report_id: reportId,
-      fight_count: buildBossKillNavigationFights(data.fights).length,
-      duration_ms: data.endTime - data.startTime,
-    })
-
+    if (!data) return
+    const bossKillFights = buildBossKillNavigationFights(data.fights)
     addRecentReport({
       reportId,
       title: data.title,
@@ -68,14 +61,25 @@ export const ReportLayout: FC = () => {
       lastOpenedAt: Date.now(),
       zoneName: data.zone?.name,
       startTime: data.startTime,
-      bossKillCount: buildBossKillNavigationFights(data.fights).length,
+      bossKillCount: bossKillFights.length,
       guildName: data.guild?.name ?? null,
       guildFaction: data.guild?.faction ?? null,
       isArchived: data.archiveStatus?.isArchived ?? false,
       isAccessible: data.archiveStatus?.isAccessible ?? true,
       archiveDate: data.archiveStatus?.archiveDate ?? null,
     })
-  }, [addRecentReport, data, posthog, reportHost, reportId])
+  }, [addRecentReport, data, reportHost, reportId])
+
+  useEffect(() => {
+    if (!data || !posthog) return
+    if (reportLoadedCapturedRef.current === reportId) return
+    reportLoadedCapturedRef.current = reportId
+    posthog.capture('report_loaded', {
+      report_id: reportId,
+      fight_count: buildBossKillNavigationFights(data.fights).length,
+      duration_ms: data.endTime - data.startTime,
+    })
+  }, [data, posthog, reportId])
 
   if (!reportId) {
     return (
