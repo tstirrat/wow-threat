@@ -62,6 +62,7 @@ export default defineConfig(({ mode }) => ({
   },
   esbuild: getEsbuildOptions(mode),
   build: {
+    sourcemap: true,
     rollupOptions: {
       output: {
         manualChunks: getVendorChunkName,
