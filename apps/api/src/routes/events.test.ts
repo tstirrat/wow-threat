@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import anniversaryReport from '../../test/fixtures/wcl-responses/anniversary-report.json'
 import { mockFetch, restoreFetch } from '../../test/helpers/mock-fetch'
 import { createMockBindings } from '../../test/setup'
-import app from '../index'
+import { app } from '../index'
 import type { FightEventsResponse } from '../types/api'
 
 const mockEvents = [

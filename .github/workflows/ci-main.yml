@@ -93,6 +93,16 @@ jobs:
           VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+      - name: Upload Sentry source maps
+        if: ${{ needs.detect_changes.outputs.frontend == 'true' }}
+        run: |
+          npx @sentry/cli@latest sourcemaps upload-artifact \
+            --org wow-threat \
+            --project wow-threat-web \
+            apps/web/dist
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       - uses: FirebaseExtended/action-hosting-deploy@v0
         name: Deploy FE
         if: ${{ needs.detect_changes.outputs.frontend == 'true' }}

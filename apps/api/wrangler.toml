@@ -35,10 +35,13 @@ preview_id = "ed12aa0b5d354c84a8874d961b430d54"
 # FIREBASE_PRIVATE_KEY
 # WCL_TOKEN_ENCRYPTION_KEY
 # BRIDGE_CODE_SIGNING_SECRET
+# SENTRY_DSN
 
 [env.staging]
 name = "wow-threat-api-staging"
 vars = { ENVIRONMENT = "staging", WCL_OAUTH_REDIRECT_URI = "https://staging-wow-threat-api.hardlyworkin.workers.dev/auth/wcl/callback", FIREBASE_PROJECT_ID = "wow-threat", FIRESTORE_PROJECT_ID = "wow-threat", ALLOWED_ORIGINS = "https://staging-wow-threat.web.app,https://wow-threat.web.app,http://localhost:5173,http://localhost:5174" }
+# Secrets (set via `wrangler secret put --env staging`):
+# SENTRY_DSN
 
 [env.development]
 name = "wow-threat-api-dev"

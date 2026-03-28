@@ -9,6 +9,7 @@ import {
   clearThreatWorkerJobRecords,
   loadThreatWorkerProcessedResult,
   loadThreatWorkerRawEventChunks,
+  resetDatabasePromiseForTest,
   saveThreatWorkerProcessedResult,
   saveThreatWorkerRawEventChunks,
 } from './threat-engine-worker-cache'
@@ -17,6 +18,7 @@ describe('threat-engine-worker-cache', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
+    resetDatabasePromiseForTest()
   })
 
   it('builds a stable job key from report, fight, and request ids', () => {
@@ -79,6 +81,133 @@ describe('threat-engine-worker-cache', () => {
       expect(loadedRaw).toBeNull()
       expect(savedProcessed).toBe(false)
       expect(loadedProcessed).toBeNull()
+    } finally {
+      Object.defineProperty(globalThis, 'indexedDB', {
+        configurable: true,
+        value: originalIndexedDb,
+      })
+    }
+  })
+
+  it('retries the database connection after a previous connection failure', async () => {
+    const originalIndexedDb = globalThis.indexedDB
+    const openRequests: Array<{
+      onerror: IDBOpenDBRequest['onerror']
+      onsuccess: IDBOpenDBRequest['onsuccess']
+      onupgradeneeded: IDBOpenDBRequest['onupgradeneeded']
+      result: IDBDatabase | null
+    }> = []
+    const openMock = vi.fn(() => {
+      const req = {
+        onerror: null as IDBOpenDBRequest['onerror'],
+        onsuccess: null as IDBOpenDBRequest['onsuccess'],
+        onupgradeneeded: null as IDBOpenDBRequest['onupgradeneeded'],
+        result: null as unknown as IDBDatabase,
+      }
+      openRequests.push(req)
+      return req as IDBOpenDBRequest
+    })
+    Object.defineProperty(globalThis, 'indexedDB', {
+      configurable: true,
+      value: { open: openMock } as IDBFactory,
+    })
+
+    try {
+      // First call — simulate connection failure
+      const firstPromise = saveThreatWorkerRawEventChunks({
+        jobKey: 'job-retry',
+        rawEventChunks: [[]],
+      })
+      openRequests[0]?.onerror?.(new Event('error'))
+      const firstResult = await firstPromise
+      expect(firstResult).toBeNull()
+      expect(openMock).toHaveBeenCalledTimes(1)
+
+      // Second call — databasePromise should have been reset so open is called again
+      const secondPromise = saveThreatWorkerRawEventChunks({
+        jobKey: 'job-retry',
+        rawEventChunks: [[]],
+      })
+      // open() should have been called a second time
+      expect(openMock).toHaveBeenCalledTimes(2)
+      // Clean up: fail the second connection too so no pending promise leaks
+      openRequests[1]?.onerror?.(new Event('error'))
+      const secondResult = await secondPromise
+      expect(secondResult).toBeNull()
+    } finally {
+      Object.defineProperty(globalThis, 'indexedDB', {
+        configurable: true,
+        value: originalIndexedDb,
+      })
+    }
+  })
+
+  it('proceeds with write on retry after a previous connection failure', async () => {
+    const originalIndexedDb = globalThis.indexedDB
+    const putRequest = {
+      onerror: null as IDBRequest<IDBValidKey>['onerror'],
+      onsuccess: null as IDBRequest<IDBValidKey>['onsuccess'],
+    } as IDBRequest<IDBValidKey>
+    const rawChunkStore = {
+      put: vi.fn(() => putRequest),
+    } as IDBObjectStore
+    const transaction = {
+      onabort: null as IDBTransaction['onabort'],
+      oncomplete: null as IDBTransaction['oncomplete'],
+      onerror: null as IDBTransaction['onerror'],
+      objectStore: vi.fn(() => rawChunkStore),
+    } as IDBTransaction
+    const database = {
+      createObjectStore: vi.fn(),
+      objectStoreNames: {
+        contains: vi.fn(() => true),
+      } as DOMStringList,
+      transaction: vi.fn(() => transaction),
+    } as IDBDatabase
+    const openRequests: Array<{
+      onerror: IDBOpenDBRequest['onerror']
+      onsuccess: IDBOpenDBRequest['onsuccess']
+      onupgradeneeded: IDBOpenDBRequest['onupgradeneeded']
+      result: IDBDatabase | null
+    }> = []
+    const openMock = vi.fn(() => {
+      const req = {
+        onerror: null as IDBOpenDBRequest['onerror'],
+        onsuccess: null as IDBOpenDBRequest['onsuccess'],
+        onupgradeneeded: null as IDBOpenDBRequest['onupgradeneeded'],
+        result: database as IDBDatabase,
+      }
+      openRequests.push(req)
+      return req as IDBOpenDBRequest
+    })
+    Object.defineProperty(globalThis, 'indexedDB', {
+      configurable: true,
+      value: { open: openMock } as IDBFactory,
+    })
+
+    try {
+      // First call — simulate connection failure
+      const firstPromise = saveThreatWorkerRawEventChunks({
+        jobKey: 'job-recover',
+        rawEventChunks: [[]],
+      })
+      openRequests[0]?.onerror?.(new Event('error'))
+      const firstResult = await firstPromise
+      expect(firstResult).toBeNull()
+
+      // Second call — databasePromise was reset; open() is called again and succeeds
+      const secondPromise = saveThreatWorkerRawEventChunks({
+        jobKey: 'job-recover',
+        rawEventChunks: [[]],
+      })
+      expect(openMock).toHaveBeenCalledTimes(2)
+      openRequests[1]?.onsuccess?.(new Event('success'))
+      await Promise.resolve()
+      expect(database.transaction).toHaveBeenCalledTimes(1)
+      putRequest.onsuccess?.(new Event('success'))
+      transaction.oncomplete?.(new Event('complete'))
+      const secondResult = await secondPromise
+      expect(secondResult).not.toBeNull()
     } finally {
       Object.defineProperty(globalThis, 'indexedDB', {
         configurable: true,

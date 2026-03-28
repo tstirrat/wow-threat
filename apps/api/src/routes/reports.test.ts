@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import mockReportData from '../../test/fixtures/wcl-responses/anniversary-report.json'
 import { mockFetch, restoreFetch } from '../../test/helpers/mock-fetch'
 import { createMockBindings } from '../../test/setup'
-import app from '../index'
+import { app } from '../index'
 import { encryptSecret, importAesGcmKey } from '../services/token-utils'
 import type { RecentReportsResponse, ReportResponse } from './reports'
 

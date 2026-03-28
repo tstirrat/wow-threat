@@ -12,7 +12,7 @@ import {
   restoreFetch,
 } from '../../test/helpers/mock-fetch'
 import { createMockBindings } from '../../test/setup'
-import app from '../index'
+import { app } from '../index'
 import type { FightsResponse } from './fights'
 
 // Extract the actual report object from the fixture

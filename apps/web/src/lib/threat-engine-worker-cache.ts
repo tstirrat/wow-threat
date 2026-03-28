@@ -65,6 +65,11 @@ export interface ThreatWorkerRawChunkWriteResult {
 
 let databasePromise: Promise<IDBDatabase | null> | null = null
 
+/** @internal Reset the cached database promise. For use in tests only. */
+export function resetDatabasePromiseForTest(): void {
+  databasePromise = null
+}
+
 function isIndexedDbAvailable(): boolean {
   return (
     typeof globalThis !== 'undefined' &&
@@ -137,6 +142,10 @@ function openThreatWorkerCacheDatabase(): Promise<IDBDatabase | null> {
 
     request.onerror = () => {
       console.warn('[Events] Failed to open threat worker IndexedDB cache')
+      // Reset before resolving: any caller that awaits this promise and then
+      // immediately retries will see null and trigger a fresh open() attempt
+      // instead of reusing a cached failed-connection promise.
+      databasePromise = null
       resolve(null)
     }
   })
