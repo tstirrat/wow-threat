@@ -33,6 +33,12 @@ vi.mock('@/hooks/use-user-settings', () => ({
 vi.mock('@/api/reports', () => ({
   getReport: (...args: unknown[]) => getReportMock(...args),
 }))
+vi.mock('posthog-js/react', () => ({
+  usePostHog: () => null,
+}))
+vi.mock('@/hooks/use-page-view-tracking', () => ({
+  usePageViewTracking: () => undefined,
+}))
 
 function createMockAuthValue(
   overrides: Partial<AuthContextValue>,

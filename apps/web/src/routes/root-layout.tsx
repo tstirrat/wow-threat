@@ -24,6 +24,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { usePageViewTracking } from '@/hooks/use-page-view-tracking'
 import { useReportIndex } from '@/hooks/use-report-index'
 import { useUserSettings } from '@/hooks/use-user-settings'
 import { useWclRateLimit } from '@/hooks/use-wcl-rate-limit'
@@ -32,6 +33,7 @@ import { buildBossKillNavigationFights } from '@/lib/fight-navigation'
 import { superKey } from '@/lib/keyboard-shortcut'
 import { parseReportInput } from '@/lib/wcl-url'
 import { ChevronDown, Home, RefreshCw, Search, Star } from 'lucide-react'
+import { usePostHog } from 'posthog-js/react'
 import { type FC, useEffect, useMemo, useRef, useState } from 'react'
 import { useHotkeys, useHotkeysContext } from 'react-hotkeys-hook'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
@@ -61,6 +63,8 @@ function formatSpentPoints(pointsSpentThisHour: number): string {
 }
 
 export const RootLayout: FC = () => {
+  usePageViewTracking()
+  const posthog = usePostHog()
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
   const [isSubmittingReport, setIsSubmittingReport] = useState(false)
   const [reportErrorMessage, setReportErrorMessage] = useState<string | null>(
@@ -208,6 +212,7 @@ export const RootLayout: FC = () => {
       }
 
       setReportErrorMessage(null)
+      posthog?.capture('search_used', { search_type: 'report' })
       navigate(`/report/${parsed.reportId}`, {
         state: {
           host: parsed.host,
