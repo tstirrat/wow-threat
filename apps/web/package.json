@@ -33,7 +33,7 @@
     "echarts-for-react": "^3.0.6",
     "firebase": "^12.10.0",
     "fuse.js": "^7.1.0",
-    "lucide-react": "^0.576.0",
+    "lucide-react": "^1.7.0",
     "posthog-js": "^1.364.1",
     "radix-ui": "^1.4.3",
     "react": "^19.2.4",
