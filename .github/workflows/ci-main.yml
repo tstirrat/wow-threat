@@ -97,7 +97,7 @@ jobs:
       - name: Upload Sentry source maps
         if: ${{ needs.detect_changes.outputs.frontend == 'true' }}
         run: |
-          npx @sentry/cli@latest sourcemaps upload-artifact \
+          npx @sentry/cli@latest sourcemaps upload \
             --org wow-threat \
             --project wow-threat-web \
             apps/web/dist
