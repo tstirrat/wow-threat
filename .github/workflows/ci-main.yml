@@ -55,6 +55,7 @@ jobs:
           npx @sentry/cli@latest sourcemaps upload \
             --org wow-threat \
             --project wow-threat-web \
+            --release "$(git rev-parse HEAD)" \
             apps/web/dist
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
