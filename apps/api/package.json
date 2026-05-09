@@ -21,7 +21,7 @@
     "@wow-threat/engine": "workspace:*",
     "@wow-threat/shared": "workspace:*",
     "@wow-threat/wcl-types": "workspace:*",
-    "hono": "^4.12.14",
+    "hono": "^4.12.18",
     "jose": "^6.2.2"
   },
   "devDependencies": {
