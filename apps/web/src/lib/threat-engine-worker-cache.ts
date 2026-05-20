@@ -153,6 +153,15 @@ function openThreatWorkerCacheDatabase(): Promise<IDBDatabase | null> {
   return databasePromise
 }
 
+function makeIdbSettle<T>(resolve: (value: T) => void): (value: T) => void {
+  let settled = false
+  return (value: T): void => {
+    if (settled) return
+    settled = true
+    resolve(value)
+  }
+}
+
 function writeRawEventChunkRecords(
   database: IDBDatabase,
   records: ThreatWorkerRawEventChunkRecord[],
@@ -163,16 +172,7 @@ function writeRawEventChunkRecords(
       'readwrite',
     )
     const store = transaction.objectStore(rawEventChunkStoreName)
-    let didSettle = false
-
-    const settle = (result: boolean): void => {
-      if (didSettle) {
-        return
-      }
-
-      didSettle = true
-      resolve(result)
-    }
+    const settle = makeIdbSettle(resolve)
 
     records.forEach((record) => {
       store.put(record)
@@ -206,17 +206,8 @@ function readRawEventChunkRecords(
     const store = transaction.objectStore(rawEventChunkStoreName)
     const recordsByChunkIndex: Array<ThreatWorkerRawEventChunkRecord | null> =
       createChunkIndexes(rawEventChunkCount).map(() => null)
-    let didSettle = false
+    const settle = makeIdbSettle(resolve)
     let hasReadError = false
-
-    const settle = (value: ThreatWorkerRawEventChunkRecord[] | null): void => {
-      if (didSettle) {
-        return
-      }
-
-      didSettle = true
-      resolve(value)
-    }
 
     createChunkIndexes(rawEventChunkCount).forEach((chunkIndex) => {
       const request: IDBRequest<ThreatWorkerRawEventChunkRecord | undefined> =
@@ -302,20 +293,10 @@ function upsertProcessedResultRecords(
     )
     const store = transaction.objectStore(processedResultStoreName)
     const metaRequest: IDBRequest<IDBValidKey> = store.put(metaRecord)
-    let didSettle = false
     let didRequestFail = false
-
-    const settle = (didPersist: boolean): void => {
-      if (didSettle) {
-        return
-      }
-
-      didSettle = true
-      resolve({
-        chunkCount: chunkRecords.length,
-        didPersist,
-      })
-    }
+    const settle = makeIdbSettle((didPersist: boolean) =>
+      resolve({ chunkCount: chunkRecords.length, didPersist }),
+    )
 
     metaRequest.onsuccess = () => {}
     metaRequest.onerror = () => {
@@ -403,19 +384,8 @@ function readProcessedResultChunkRecords(
     const store = transaction.objectStore(processedResultStoreName)
     const recordsByChunkIndex: Array<ThreatWorkerProcessedResultChunkRecord | null> =
       createChunkIndexes(chunkCount).map(() => null)
-    let didSettle = false
+    const settle = makeIdbSettle(resolve)
     let hasReadError = false
-
-    const settle = (
-      value: ThreatWorkerProcessedResultChunkRecord[] | null,
-    ): void => {
-      if (didSettle) {
-        return
-      }
-
-      didSettle = true
-      resolve(value)
-    }
 
     createChunkIndexes(chunkCount).forEach((chunkIndex) => {
       const request: IDBRequest<
@@ -553,16 +523,7 @@ async function deleteThreatWorkerJobRecords(
     const processedResultStore = transaction.objectStore(
       processedResultStoreName,
     )
-    let didSettle = false
-
-    const settle = (result: boolean): void => {
-      if (didSettle) {
-        return
-      }
-
-      didSettle = true
-      resolve(result)
-    }
+    const settle = makeIdbSettle(resolve)
 
     createChunkIndexes(rawEventChunkCount).forEach((chunkIndex) => {
       rawChunkStore.delete(createRawChunkRecordKey(jobKey, chunkIndex))

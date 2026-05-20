@@ -6,7 +6,6 @@ import type {
   AugmentedEvent,
   SpellId,
   SpellThreatModifier,
-  ThreatConfig,
 } from '@wow-threat/shared'
 import { HitTypeCode } from '@wow-threat/wcl-types'
 import type { CombatantInfoAura, PlayerClass } from '@wow-threat/wcl-types'
@@ -1906,71 +1905,6 @@ export function buildFocusedPlayerAggregation({
     windowStartMs,
     windowEndMs,
   })
-}
-
-/** Build totals/class metadata for the currently focused player. */
-export function buildFocusedPlayerSummary({
-  events,
-  actors,
-  abilities,
-  fightStartTime,
-  target,
-  focusedPlayerId,
-  windowStartMs,
-  windowEndMs,
-}: {
-  events: AugmentedEventsResponse['events']
-  actors: ReportActorSummary[]
-  abilities?: ReportAbilitySummary[]
-  threatConfig?: ThreatConfig | null
-  fightStartTime: number
-  target: FightTarget
-  focusedPlayerId: number | null
-  windowStartMs: number
-  windowEndMs: number
-}): FocusedPlayerSummary | null {
-  return buildFocusedPlayerAggregationInternal({
-    events,
-    actors,
-    abilities: abilities ?? [],
-    fightStartTime,
-    target,
-    focusedPlayerId,
-    windowStartMs,
-    windowEndMs,
-  }).summary
-}
-
-/** Build per-ability threat breakdown rows for a focused player in the selected chart window. */
-export function buildFocusedPlayerThreatRows({
-  events,
-  actors,
-  abilities,
-  fightStartTime,
-  target,
-  focusedPlayerId,
-  windowStartMs,
-  windowEndMs,
-}: {
-  events: AugmentedEventsResponse['events']
-  actors: ReportActorSummary[]
-  abilities: ReportAbilitySummary[]
-  fightStartTime: number
-  target: FightTarget
-  focusedPlayerId: number | null
-  windowStartMs: number
-  windowEndMs: number
-}): FocusedPlayerThreatRow[] {
-  return buildFocusedPlayerAggregationInternal({
-    events,
-    actors,
-    abilities,
-    fightStartTime,
-    target,
-    focusedPlayerId,
-    windowStartMs,
-    windowEndMs,
-  }).rows
 }
 
 function resolveRankingOwnerId(actor: ReportActorSummary): number | null {

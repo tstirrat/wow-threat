@@ -12,6 +12,7 @@ import type {
   AugmentedEvent,
   ClassThreatConfig,
   EncounterId,
+  EncounterPreprocessor,
   EncounterThreatConfig,
   Enemy,
   SpellId,
@@ -22,7 +23,6 @@ import type {
   ThreatEffect,
   ThreatFormula,
   ThreatModifier,
-  ThreatResult,
   ThreatStateKind,
   WowClass,
 } from '@wow-threat/shared'
@@ -217,6 +217,249 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
   return defaultThreatEngine.processEvents(input)
 }
 
+interface ProcessOneEventParams {
+  eventIndex: number
+  rawEvent: WCLEvent
+  actorMap: Map<number, Actor>
+  friendlyActorIds: Set<number> | undefined
+  abilitySchoolMap: Map<number, number> | undefined
+  enemies: Enemy[]
+  validEnemies: Enemy[]
+  splitEligibleEnemies: Enemy[]
+  encounterId: EncounterId | null
+  encounterPreprocessor: EncounterPreprocessor | undefined
+  fightState: FightState
+  interceptorTracker: InterceptorTracker
+  stateSpellSets: ThreatStateSpellSets
+  processors: FightProcessor[]
+  processorBaseContext: ProcessorBaseContext
+  preparedConfig: PreparedThreatConfig
+  config: ThreatConfig
+  storeAugmentedEvent: (eventIndex: number, event: AugmentedEvent) => void
+  eventCounts: Record<string, number>
+}
+
+function processOneEvent(params: ProcessOneEventParams): void {
+  const {
+    eventIndex,
+    rawEvent,
+    actorMap,
+    friendlyActorIds,
+    abilitySchoolMap,
+    enemies,
+    validEnemies,
+    splitEligibleEnemies,
+    encounterId,
+    encounterPreprocessor,
+    fightState,
+    interceptorTracker,
+    stateSpellSets,
+    processors,
+    processorBaseContext,
+    preparedConfig,
+    config,
+    storeAugmentedEvent,
+    eventCounts,
+  } = params
+
+  const event = resolveEventFriendliness({
+    event: rawEvent,
+    actorMap,
+    friendlyActorIds,
+  })
+  const processorEffects: ThreatEffect[] = []
+  const mainPassContext: MainPassEventContext = {
+    ...processorBaseContext,
+    event,
+    eventIndex,
+    fightState,
+    effects: processorEffects,
+    addEffects: (...effects) => {
+      processorEffects.push(...effects)
+    },
+  }
+  let appliedAuraMutationEffectIndex = 0
+
+  processors.forEach((processor) => {
+    processor.beforeFightState?.(mainPassContext)
+  })
+
+  // Update fight state (auras, gear, combatant info)
+  fightState.processEvent(event, config)
+  appliedAuraMutationEffectIndex = applyAuraMutationEffects(
+    fightState,
+    processorEffects,
+    appliedAuraMutationEffectIndex,
+  )
+  processors.forEach((processor) => {
+    processor.afterFightState?.(mainPassContext)
+    appliedAuraMutationEffectIndex = applyAuraMutationEffects(
+      fightState,
+      processorEffects,
+      appliedAuraMutationEffectIndex,
+    )
+  })
+
+  // Count event types
+  eventCounts[event.type] = (eventCounts[event.type] ?? 0) + 1
+
+  if (isTrackedBossMeleeEvent(event)) {
+    const bossMeleeEffects: ThreatEffect[] = [
+      ...processorEffects,
+      { type: 'eventMarker', marker: 'bossMelee' },
+    ]
+    const zeroCalculation: ThreatCalculation = {
+      amount: event.amount,
+      baseThreat: 0,
+      modifiedThreat: 0,
+      isSplit: false,
+      modifiers: [],
+      effects: toSerializableAugmentedEffects(bossMeleeEffects),
+    }
+    storeAugmentedEvent(
+      eventIndex,
+      buildAugmentedEvent(event, zeroCalculation, []),
+    )
+    return
+  }
+
+  // Run event interceptors first
+  const interceptorResults = interceptorTracker.runInterceptors(
+    event,
+    event.timestamp,
+    fightState,
+  )
+
+  // Check if any interceptor wants to skip this event
+  const shouldSkip = interceptorResults.some((r) => r.action === 'skip')
+  if (shouldSkip) {
+    const serializableProcessorEffects =
+      toSerializableAugmentedEffects(processorEffects)
+    // Create zero-threat augmented event
+    const zeroCalculation: ThreatCalculation = {
+      amount: 0,
+      baseThreat: 0,
+      modifiedThreat: 0,
+      isSplit: false,
+      modifiers: [],
+      effects: serializableProcessorEffects,
+    }
+    storeAugmentedEvent(
+      eventIndex,
+      buildAugmentedEvent(event, zeroCalculation, []),
+    )
+    return
+  }
+
+  // Collect augmentations from interceptors
+  const augmentations = interceptorResults.filter((r) => r.action === 'augment')
+  const threatRecipientOverride = augmentations.find(
+    (a) => a.action === 'augment' && a.threatRecipientOverride,
+  )?.threatRecipientOverride
+  const interceptorEffects = augmentations.flatMap(
+    (augmentation) => augmentation.effects ?? [],
+  )
+
+  const sourceActor = resolveEventActor({
+    actorId: event.sourceID,
+    actorInstance: event.sourceInstance,
+    actorMap,
+    fightState,
+  })
+  const targetActor = resolveEventActor({
+    actorId: event.targetID,
+    actorInstance: event.targetInstance,
+    actorMap,
+    fightState,
+  })
+
+  const threatOptions: CalculateThreatOptions = {
+    sourceAuras: fightState.getAurasForActor({
+      id: event.sourceID,
+      instanceId: event.sourceInstance,
+    }),
+    targetAuras: fightState.getAurasForActor({
+      id: event.targetID,
+      instanceId: event.targetInstance,
+    }),
+    spellSchoolMask: getSpellSchoolMaskForEvent(event, abilitySchoolMap),
+    enemies,
+    sourceActor,
+    targetActor,
+    encounterId,
+    actors: fightState,
+  }
+
+  const threatContext = buildThreatContext(event, threatOptions)
+  const baseCalculation = calculateModifiedThreat(
+    event,
+    threatOptions,
+    config,
+    preparedConfig,
+  )
+
+  const encounterEffects = encounterPreprocessor?.(threatContext)?.effects ?? []
+
+  const stateEffect = buildStateEffectFromAuraEvent(event, stateSpellSets)
+  const deathMarkerEffect = buildDeathEventMarker(event)
+  const effects = [
+    ...(baseCalculation?.effects ?? []),
+    ...encounterEffects,
+    ...interceptorEffects,
+    ...processorEffects,
+    ...(stateEffect ? [stateEffect] : []),
+    ...(deathMarkerEffect ? [deathMarkerEffect] : []),
+  ]
+  const serializableEffects = toSerializableAugmentedEffects(effects)
+
+  effects
+    .filter((e) => e.type === 'installInterceptor')
+    .forEach((effect) => {
+      interceptorTracker.install(effect.interceptor, event.timestamp)
+    })
+
+  if (!baseCalculation && !serializableEffects) {
+    storeAugmentedEvent(
+      eventIndex,
+      buildAugmentedEvent(event, undefined, undefined),
+    )
+    return
+  }
+
+  const calculation: ThreatCalculation = baseCalculation
+    ? {
+        ...baseCalculation,
+        effects: serializableEffects,
+      }
+    : {
+        note: '(effects only)',
+        amount: 0,
+        baseThreat: 0,
+        modifiedThreat: 0,
+        isSplit: false,
+        modifiers: [],
+        effects: serializableEffects,
+      }
+
+  const changes = applyThreat(
+    fightState,
+    calculation,
+    event,
+    validEnemies,
+    splitEligibleEnemies,
+    threatRecipientOverride,
+  )
+
+  storeAugmentedEvent(
+    eventIndex,
+    buildAugmentedEvent(
+      event,
+      calculation,
+      changes.length > 0 ? changes : undefined,
+    ),
+  )
+}
+
 function processEventsWithProcessors(
   input: ProcessEventsInput,
 ): ProcessEventsOutput {
@@ -299,205 +542,27 @@ function processEventsWithProcessors(
   }
 
   for (const [eventIndex, rawEvent] of rawEvents.entries()) {
-    const event = resolveEventFriendliness({
-      event: rawEvent,
+    processOneEvent({
+      eventIndex,
+      rawEvent,
       actorMap,
       friendlyActorIds,
-    })
-    const processorEffects: ThreatEffect[] = []
-    const mainPassContext: MainPassEventContext = {
-      ...processorBaseContext,
-      event,
-      eventIndex,
-      fightState,
-      effects: processorEffects,
-      addEffects: (...effects) => {
-        processorEffects.push(...effects)
-      },
-    }
-    let appliedAuraMutationEffectIndex = 0
-
-    processors.forEach((processor) => {
-      processor.beforeFightState?.(mainPassContext)
-    })
-
-    // Update fight state (auras, gear, combatant info)
-    fightState.processEvent(event, config)
-    appliedAuraMutationEffectIndex = applyAuraMutationEffects(
-      fightState,
-      processorEffects,
-      appliedAuraMutationEffectIndex,
-    )
-    processors.forEach((processor) => {
-      processor.afterFightState?.(mainPassContext)
-      appliedAuraMutationEffectIndex = applyAuraMutationEffects(
-        fightState,
-        processorEffects,
-        appliedAuraMutationEffectIndex,
-      )
-    })
-
-    // Count event types
-    eventCounts[event.type] = (eventCounts[event.type] ?? 0) + 1
-
-    if (isTrackedBossMeleeEvent(event)) {
-      const bossMeleeEffects: ThreatEffect[] = [
-        ...processorEffects,
-        { type: 'eventMarker', marker: 'bossMelee' },
-      ]
-      const zeroCalculation: ThreatCalculation = {
-        amount: event.amount,
-        baseThreat: 0,
-        modifiedThreat: 0,
-        isSplit: false,
-        modifiers: [],
-        effects: toSerializableAugmentedEffects(bossMeleeEffects),
-      }
-      storeAugmentedEvent(
-        eventIndex,
-        buildAugmentedEvent(event, zeroCalculation, []),
-      )
-      continue
-    }
-
-    // Run event interceptors first
-    const interceptorResults = interceptorTracker.runInterceptors(
-      event,
-      event.timestamp,
-      fightState,
-    )
-
-    // Check if any interceptor wants to skip this event
-    const shouldSkip = interceptorResults.some((r) => r.action === 'skip')
-    if (shouldSkip) {
-      const serializableProcessorEffects =
-        toSerializableAugmentedEffects(processorEffects)
-      // Create zero-threat augmented event
-      const zeroCalculation: ThreatCalculation = {
-        amount: 0,
-        baseThreat: 0,
-        modifiedThreat: 0,
-        isSplit: false,
-        modifiers: [],
-        effects: serializableProcessorEffects,
-      }
-      storeAugmentedEvent(
-        eventIndex,
-        buildAugmentedEvent(event, zeroCalculation, []),
-      )
-      continue
-    }
-
-    // Collect augmentations from interceptors
-    const augmentations = interceptorResults.filter(
-      (r) => r.action === 'augment',
-    )
-    const threatRecipientOverride = augmentations.find(
-      (a) => a.action === 'augment' && a.threatRecipientOverride,
-    )?.threatRecipientOverride
-    const interceptorEffects = augmentations.flatMap(
-      (augmentation) => augmentation.effects ?? [],
-    )
-
-    const sourceActor = resolveEventActor({
-      actorId: event.sourceID,
-      actorInstance: event.sourceInstance,
-      actorMap,
-      fightState,
-    })
-    const targetActor = resolveEventActor({
-      actorId: event.targetID,
-      actorInstance: event.targetInstance,
-      actorMap,
-      fightState,
-    })
-
-    const threatOptions: CalculateThreatOptions = {
-      sourceAuras: fightState.getAurasForActor({
-        id: event.sourceID,
-        instanceId: event.sourceInstance,
-      }),
-      targetAuras: fightState.getAurasForActor({
-        id: event.targetID,
-        instanceId: event.targetInstance,
-      }),
-      spellSchoolMask: getSpellSchoolMaskForEvent(event, abilitySchoolMap),
+      abilitySchoolMap,
       enemies,
-      sourceActor,
-      targetActor,
-      encounterId,
-      actors: fightState,
-    }
-
-    const threatContext = buildThreatContext(event, threatOptions)
-    const baseCalculation = calculateModifiedThreat(
-      event,
-      threatOptions,
-      config,
-      preparedConfig,
-    )
-
-    const encounterEffects =
-      encounterPreprocessor?.(threatContext)?.effects ?? []
-
-    const stateEffect = buildStateEffectFromAuraEvent(event, stateSpellSets)
-    const deathMarkerEffect = buildDeathEventMarker(event)
-    const effects = [
-      ...(baseCalculation?.effects ?? []),
-      ...encounterEffects,
-      ...interceptorEffects,
-      ...processorEffects,
-      ...(stateEffect ? [stateEffect] : []),
-      ...(deathMarkerEffect ? [deathMarkerEffect] : []),
-    ]
-    const serializableEffects = toSerializableAugmentedEffects(effects)
-
-    effects
-      .filter((e) => e.type === 'installInterceptor')
-      .forEach((effect) => {
-        interceptorTracker.install(effect.interceptor, event.timestamp)
-      })
-
-    if (!baseCalculation && !serializableEffects) {
-      storeAugmentedEvent(
-        eventIndex,
-        buildAugmentedEvent(event, undefined, undefined),
-      )
-      continue
-    }
-
-    const calculation: ThreatCalculation = baseCalculation
-      ? {
-          ...baseCalculation,
-          effects: serializableEffects,
-        }
-      : {
-          note: '(effects only)',
-          amount: 0,
-          baseThreat: 0,
-          modifiedThreat: 0,
-          isSplit: false,
-          modifiers: [],
-          effects: serializableEffects,
-        }
-
-    const changes = applyThreat(
-      fightState,
-      calculation,
-      event,
       validEnemies,
       splitEligibleEnemies,
-      threatRecipientOverride,
-    )
-
-    storeAugmentedEvent(
-      eventIndex,
-      buildAugmentedEvent(
-        event,
-        calculation,
-        changes.length > 0 ? changes : undefined,
-      ),
-    )
+      encounterId,
+      encounterPreprocessor,
+      fightState,
+      interceptorTracker,
+      stateSpellSets,
+      processors,
+      processorBaseContext,
+      preparedConfig,
+      config,
+      storeAugmentedEvent,
+      eventCounts,
+    })
   }
 
   return {
@@ -1158,86 +1223,10 @@ function buildAugmentedEvent(
   calculation?: ThreatCalculation,
   changes?: ThreatChange[] | undefined,
 ): AugmentedEvent {
-  const base: AugmentedEvent = {
-    timestamp: event.timestamp,
-    type: event.type,
-    sourceID: event.sourceID,
-    targetID: event.targetID,
-    sourceInstance: event.sourceInstance,
-    targetInstance: event.targetInstance,
+  return {
+    ...(event as AugmentedEvent),
+    threat: calculation ? { calculation, changes } : undefined,
   }
-
-  if (calculation) {
-    // Add cumulative threat values from fight state
-    const threatWithCumulative: ThreatResult = {
-      calculation,
-      changes,
-    }
-    base.threat = threatWithCumulative
-  }
-
-  // Add event-specific fields
-  if ('abilityGameID' in event) {
-    base.abilityGameID = event.abilityGameID
-  }
-  if ('amount' in event) {
-    base.amount = event.amount
-  }
-  if ('absorbed' in event) {
-    base.absorbed = event.absorbed
-  }
-  if ('blocked' in event) {
-    base.blocked = event.blocked
-  }
-  if ('mitigated' in event) {
-    base.mitigated = event.mitigated
-  }
-  if ('overkill' in event) {
-    base.overkill = event.overkill
-  }
-  if ('overheal' in event) {
-    base.overheal = event.overheal
-  }
-  if ('hitType' in event) {
-    base.hitType = event.hitType
-  }
-  if ('tick' in event) {
-    base.tick = event.tick
-  }
-  if ('resourceChange' in event) {
-    base.resourceChange = event.resourceChange
-  }
-  if ('resourceChangeType' in event) {
-    base.resourceChangeType = event.resourceChangeType
-  }
-  if ('waste' in event) {
-    base.waste = event.waste
-  }
-  if ('stacks' in event) {
-    base.stacks = event.stacks
-  }
-  if ('killerID' in event) {
-    base.killerID = event.killerID
-  }
-  if ('attackerID' in event) {
-    base.attackerID = event.attackerID
-  }
-  if ('extraAbilityGameID' in event) {
-    base.extraAbilityGameID = event.extraAbilityGameID
-  }
-  if ('auras' in event) {
-    base.auras = event.auras
-  }
-  if ('talents' in event) {
-    base.talents = event.talents
-  }
-
-  if ('x' in event && 'y' in event) {
-    base.x = event.x
-    base.y = event.y
-  }
-
-  return base
 }
 
 // ============================================================================
