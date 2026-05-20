@@ -3,18 +3,24 @@
  *
  * Normalizes WCL response models into frontend-facing API contract types.
  */
+import type { ThreatConfig } from '@wow-threat/shared'
 import type {
   ReportAbility,
   ReportActor,
+  ReportArchiveStatus,
   ReportFight,
+  ReportGuild,
 } from '@wow-threat/wcl-types'
 
 import type {
   ReportAbilitySummary,
   ReportActorRole,
   ReportActorSummary,
+  ReportArchiveStatusSummary,
   ReportFightParticipant,
   ReportFightSummary,
+  ReportGuildSummary,
+  ThreatConfigSummary,
 } from './api'
 
 /** Convert a WCL actor to a stable frontend-facing actor summary. */
@@ -91,5 +97,45 @@ export function toReportFightSummary(fight: ReportFight): ReportFightSummary {
     enemyPets: fight.enemyPets.map(toReportFightParticipant),
     friendlyPlayers: fight.friendlyPlayers,
     friendlyPets: fight.friendlyPets.map(toReportFightParticipant),
+  }
+}
+
+/** Convert a WCL guild to a stable frontend-facing guild summary. */
+export function toReportGuildSummary(guild: ReportGuild): ReportGuildSummary {
+  return {
+    id:
+      typeof guild.id === 'number' && Number.isFinite(guild.id)
+        ? guild.id
+        : null,
+    name: guild.name,
+    faction:
+      typeof guild.faction === 'string' ? guild.faction : guild.faction.name,
+    serverSlug:
+      typeof guild.server?.slug === 'string' ? guild.server.slug : null,
+    serverRegion:
+      typeof guild.server?.region?.slug === 'string'
+        ? guild.server.region.slug
+        : null,
+  }
+}
+
+/** Convert a WCL archive status to a stable frontend-facing summary. */
+export function toReportArchiveStatusSummary(
+  archiveStatus: ReportArchiveStatus,
+): ReportArchiveStatusSummary {
+  return {
+    isArchived: archiveStatus.isArchived ?? false,
+    isAccessible: archiveStatus.isAccessible ?? true,
+    archiveDate: archiveStatus.archiveDate ?? null,
+  }
+}
+
+/** Convert a ThreatConfig to a stable frontend-facing summary. */
+export function toThreatConfigSummary(
+  config: ThreatConfig,
+): ThreatConfigSummary {
+  return {
+    displayName: config.displayName,
+    version: config.version,
   }
 }

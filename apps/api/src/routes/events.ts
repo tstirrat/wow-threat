@@ -20,15 +20,15 @@ import {
   reportNotFound,
   unauthorized,
 } from '../middleware/error'
-import { normalizeVisibility } from '../services/cache'
-import { WCLClient } from '../services/wcl'
-import type { FightEventsResponse } from '../types/api'
-import type { Bindings, Variables } from '../types/bindings'
+import { normalizeVisibility, resolveCacheControl } from '../services/cache'
 import {
   estimateArrayPayloadBytes,
   logEventsMemoryCheckpoint,
   monotonicNowMs,
-} from './events-logging'
+} from '../services/events-logging'
+import { WCLClient } from '../services/wcl'
+import type { FightEventsResponse } from '../types/api'
+import type { Bindings, Variables } from '../types/bindings'
 
 export const eventsRoutes = new Hono<{
   Bindings: Bindings
@@ -128,14 +128,11 @@ eventsRoutes.get('/', async (c) => {
   }
   const isVersionedRequest = configVersionParam === configCacheVersion
 
-  const cacheControl =
-    visibility === 'public'
-      ? isVersionedRequest
-        ? 'public, max-age=31536000, immutable'
-        : c.env.ENVIRONMENT === 'development'
-          ? 'no-store, no-cache, must-revalidate'
-          : 'public, max-age=0, must-revalidate'
-      : 'private, no-store'
+  const cacheControl = resolveCacheControl({
+    environment: c.env.ENVIRONMENT,
+    visibility,
+    isVersionedRequest,
+  })
 
   const fightFriendlyActorIds = new Set<number>([
     ...(fight.friendlyPlayers ?? []),
@@ -144,26 +141,22 @@ eventsRoutes.get('/', async (c) => {
   const requestStartTime = cursor ?? fight.startTime
 
   const [eventsPage, initialAurasByActor] = await Promise.all([
-    wcl.getEventsPage(
+    wcl.getEventsPage({
       code,
       fightId,
       visibility,
-      requestStartTime,
-      fight.endTime,
-      {
-        bypassCache: bypassRawCache,
-      },
-    ),
-    wcl.getFriendlyBuffAurasAtFightStart(
+      startTime: requestStartTime,
+      endTime: fight.endTime,
+      bypassCache: bypassRawCache,
+    }),
+    wcl.getFriendlyBuffAurasAtFightStart({
       code,
       fightId,
       visibility,
-      fight.startTime,
-      fightFriendlyActorIds,
-      {
-        bypassCache: bypassRawCache,
-      },
-    ),
+      fightStartTime: fight.startTime,
+      friendlyActorIds: fightFriendlyActorIds,
+      bypassCache: bypassRawCache,
+    }),
   ])
   const serializedInitialAurasByActor =
     serializeInitialAurasByActor(initialAurasByActor)

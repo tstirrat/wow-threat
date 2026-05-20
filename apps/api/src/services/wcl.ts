@@ -1543,28 +1543,34 @@ export class WCLClient {
   /**
    * Resolve active buff aura IDs on friendlies at the exact start of a fight.
    */
-  async getFriendlyBuffAurasAtFightStart(
-    code: string,
-    fightId: number,
-    visibility: unknown,
-    fightStartTime: number,
-    friendlyActorIds: Set<number>,
-    options: {
-      bypassCache?: boolean
-      queryFightIds?: number[]
-      queryFriendlyActorIds?: Set<number>
-    } = {},
-  ): Promise<Map<number, number[]>> {
+  async getFriendlyBuffAurasAtFightStart({
+    code,
+    fightId,
+    visibility,
+    fightStartTime,
+    friendlyActorIds,
+    bypassCache = false,
+    queryFightIds: queryFightIdsOption,
+    queryFriendlyActorIds: queryFriendlyActorIdsOption,
+  }: {
+    code: string
+    fightId: number
+    visibility: unknown
+    fightStartTime: number
+    friendlyActorIds: Set<number>
+    bypassCache?: boolean
+    queryFightIds?: number[]
+    queryFriendlyActorIds?: Set<number>
+  }): Promise<Map<number, number[]>> {
     if (friendlyActorIds.size === 0) {
       return new Map()
     }
 
-    const { bypassCache = false } = options
-    const queryFightIds = [...new Set(options.queryFightIds ?? [fightId])]
+    const queryFightIds = [...new Set(queryFightIdsOption ?? [fightId])]
       .map((queryFightId) => Math.trunc(queryFightId))
       .filter(Number.isFinite)
     const queryFriendlyActorIds =
-      options.queryFriendlyActorIds ?? friendlyActorIds
+      queryFriendlyActorIdsOption ?? friendlyActorIds
     if (queryFightIds.length === 0 || queryFriendlyActorIds.size === 0) {
       return new Map()
     }
@@ -1704,15 +1710,23 @@ export class WCLClient {
   /**
    * Get fight events using visibility-specific cache scope and token selection.
    */
-  async getEventsPage(
-    code: string,
-    fightId: number,
-    visibility: unknown,
-    startTime: number,
-    endTime: number,
-    options: { accessToken?: string; bypassCache?: boolean } = {},
-  ): Promise<WclEventsPage> {
-    const { accessToken: accessTokenOption, bypassCache = false } = options
+  async getEventsPage({
+    code,
+    fightId,
+    visibility,
+    startTime,
+    endTime,
+    accessToken: accessTokenOption,
+    bypassCache = false,
+  }: {
+    code: string
+    fightId: number
+    visibility: unknown
+    startTime: number
+    endTime: number
+    accessToken?: string
+    bypassCache?: boolean
+  }): Promise<WclEventsPage> {
     const normalizedVisibility = normalizeVisibility(visibility)
     const cacheKey = CacheKeys.eventsPage(
       code,
@@ -1814,17 +1828,15 @@ export class WCLClient {
         : undefined
 
     while (true) {
-      const page = await this.getEventsPage(
+      const page = await this.getEventsPage({
         code,
         fightId,
         visibility,
-        requestStartTime ?? startTime ?? 0,
-        endTime ?? Number.MAX_SAFE_INTEGER,
-        {
-          accessToken,
-          bypassCache,
-        },
-      )
+        startTime: requestStartTime ?? startTime ?? 0,
+        endTime: endTime ?? Number.MAX_SAFE_INTEGER,
+        accessToken,
+        bypassCache,
+      })
       allEvents.push(...page.data)
 
       if (!page.nextPageTimestamp) {
