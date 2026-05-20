@@ -22,7 +22,7 @@
     "@wow-threat/shared": "workspace:*",
     "@wow-threat/wcl-types": "workspace:*",
     "hono": "^4.12.18",
-    "jose": "^6.2.2"
+    "jose": "^6.2.3"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.13.5",
