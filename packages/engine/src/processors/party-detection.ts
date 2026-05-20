@@ -9,6 +9,7 @@ import {
   createProcessorDataKey,
 } from '../event-processors'
 import type { ActorId } from '../instance-refs'
+import { resolveFriendlyActorIds } from './utils'
 
 const MAX_INFERRED_PARTY_MEMBERS = 5
 export type GroupId = number
@@ -183,17 +184,6 @@ function resolveFightFriendlyActorIds(
     ...(fight?.friendlyPlayers ?? []),
     ...(fight?.friendlyPets ?? []).map((pet) => pet.id),
   ])
-}
-
-function resolveFriendlyActorIds(
-  fightFriendlyActorIds: Set<ActorId>,
-  runtimeFriendlyActorIds: Set<ActorId> | undefined,
-): Set<ActorId> {
-  if (runtimeFriendlyActorIds && runtimeFriendlyActorIds.size > 0) {
-    return runtimeFriendlyActorIds
-  }
-
-  return fightFriendlyActorIds
 }
 
 function resolveFriendlyPlayerIds(

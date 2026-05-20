@@ -1,6 +1,7 @@
 /**
  * Threat data transformation helpers for report rankings and fight chart series.
  */
+import { parseAbilitySchoolMask } from '@wow-threat/shared'
 import type {
   AugmentedEvent,
   SpellId,
@@ -507,19 +508,6 @@ function resolveStateSpellName(
   }
 
   return null
-}
-
-function parseAbilitySchoolMask(type: string | null): number {
-  if (!type) {
-    return 0
-  }
-
-  const mask = Number.parseInt(type, 10)
-  if (!Number.isFinite(mask)) {
-    return 0
-  }
-
-  return mask
 }
 
 function resolveSchoolLabelsFromMask(mask: number): string[] {
