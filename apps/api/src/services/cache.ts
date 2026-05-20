@@ -117,12 +117,19 @@ async function serializeForKV(value: unknown): Promise<string | Uint8Array> {
   return prependPrefix(gzippedBytes)
 }
 
-async function deserializeFromKV<T>(value: ArrayBuffer): Promise<T> {
+async function deserializeFromKV<T>(value: ArrayBuffer): Promise<T | null> {
   const rawBytes = new Uint8Array(value)
   const payloadBytes = hasGzipPrefix(rawBytes)
     ? await gunzipBytes(stripPrefix(rawBytes))
     : rawBytes
-  return JSON.parse(textDecoder.decode(payloadBytes)) as T
+  try {
+    return JSON.parse(textDecoder.decode(payloadBytes)) as T
+  } catch {
+    console.warn(
+      '[Cache] Failed to deserialize KV value — corrupt or stale entry',
+    )
+    return null
+  }
 }
 
 /**

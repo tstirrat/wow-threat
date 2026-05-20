@@ -74,8 +74,6 @@ const FANATICISM_RANKS = [
   Spells.FanaticismR5,
 ] as const
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const PROT = 1
 const RET = 2
 const FANATICISM_THRESHOLD = 40
 
