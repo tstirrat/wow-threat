@@ -10,8 +10,6 @@ import { getClassColor } from './class-colors'
 import {
   buildFightTargetOptions,
   buildFocusedPlayerAggregation,
-  buildFocusedPlayerSummary,
-  buildFocusedPlayerThreatRows,
   buildInitialAurasDisplay,
   buildThreatSeries,
   buildThreatSeriesWithTargetDeathTime,
@@ -1371,11 +1369,10 @@ describe('threat-aggregation', () => {
     ]
 
     expect(
-      buildFocusedPlayerSummary({
+      buildFocusedPlayerAggregation({
         events: events as never,
         actors,
         abilities: [],
-        threatConfig: null,
         fightStartTime: 1000,
         target: {
           id: 10,
@@ -1384,7 +1381,7 @@ describe('threat-aggregation', () => {
         focusedPlayerId: 1,
         windowStartMs: 0,
         windowEndMs: 1500,
-      }),
+      }).summary,
     ).toEqual({
       actorId: 1,
       label: 'Warrior',
@@ -1475,11 +1472,10 @@ describe('threat-aggregation', () => {
     ]
 
     expect(
-      buildFocusedPlayerSummary({
+      buildFocusedPlayerAggregation({
         events: events as never,
         actors,
         abilities: [],
-        threatConfig: null,
         fightStartTime: 1000,
         target: {
           id: 10,
@@ -1488,7 +1484,7 @@ describe('threat-aggregation', () => {
         focusedPlayerId: 5,
         windowStartMs: 0,
         windowEndMs: 1000,
-      }),
+      }).summary,
     ).toEqual({
       actorId: 5,
       label: 'Pet (Warrior)',
@@ -1591,7 +1587,7 @@ describe('threat-aggregation', () => {
       },
     ]
 
-    const summary = buildFocusedPlayerSummary({
+    const summary = buildFocusedPlayerAggregation({
       events: events as never,
       actors,
       abilities: [
@@ -1614,7 +1610,6 @@ describe('threat-aggregation', () => {
           type: '2',
         },
       ],
-      threatConfig: null,
       fightStartTime: 1000,
       target: {
         id: 10,
@@ -1623,7 +1618,7 @@ describe('threat-aggregation', () => {
       focusedPlayerId: 1,
       windowStartMs: 0,
       windowEndMs: 1000,
-    })
+    }).summary
 
     expect(
       summary?.modifiers.map((modifier) => ({
@@ -1701,7 +1696,7 @@ describe('threat-aggregation', () => {
       },
     ]
 
-    const summary = buildFocusedPlayerSummary({
+    const summary = buildFocusedPlayerAggregation({
       events: events as never,
       actors,
       abilities: [
@@ -1718,7 +1713,6 @@ describe('threat-aggregation', () => {
           type: '1',
         },
       ],
-      threatConfig: null,
       fightStartTime: 1000,
       target: {
         id: 10,
@@ -1727,7 +1721,7 @@ describe('threat-aggregation', () => {
       focusedPlayerId: 1,
       windowStartMs: 0,
       windowEndMs: 1000,
-    })
+    }).summary
 
     expect(summary?.modifiers).toEqual([
       {
@@ -1788,20 +1782,10 @@ describe('threat-aggregation', () => {
       },
     ]
 
-    const summary = buildFocusedPlayerSummary({
+    const summary = buildFocusedPlayerAggregation({
       events: events as never,
       actors,
       abilities: [],
-      threatConfig: {
-        auraModifiers: {
-          11095: () => ({
-            source: 'talent',
-            name: 'Burning Soul (Rank 2)',
-            value: 0.7,
-          }),
-        },
-        classes: {},
-      } as never,
       fightStartTime: 1000,
       target: {
         id: 10,
@@ -1810,7 +1794,7 @@ describe('threat-aggregation', () => {
       focusedPlayerId: 1,
       windowStartMs: 0,
       windowEndMs: 1000,
-    })
+    }).summary
 
     expect(summary?.modifiers).toEqual([
       {
@@ -1945,7 +1929,7 @@ describe('threat-aggregation', () => {
       },
     ]
 
-    const rows = buildFocusedPlayerThreatRows({
+    const rows = buildFocusedPlayerAggregation({
       events: events as never,
       actors,
       abilities,
@@ -1957,7 +1941,7 @@ describe('threat-aggregation', () => {
       focusedPlayerId: 1,
       windowStartMs: 0,
       windowEndMs: 1000,
-    })
+    }).rows
 
     expect(rows).toEqual([
       {
@@ -2040,11 +2024,9 @@ describe('threat-aggregation', () => {
     }
 
     const aggregation = buildFocusedPlayerAggregation(args)
-    const summary = buildFocusedPlayerSummary(args)
-    const rows = buildFocusedPlayerThreatRows(args)
 
-    expect(aggregation.summary).toEqual(summary)
-    expect(aggregation.rows).toEqual(rows)
+    expect(aggregation.summary).toBeDefined()
+    expect(aggregation.rows).toBeDefined()
   })
 
   it('builds focused player threat rows with modifier totals and breakdown', () => {
@@ -2110,7 +2092,7 @@ describe('threat-aggregation', () => {
       },
     ]
 
-    const rows = buildFocusedPlayerThreatRows({
+    const rows = buildFocusedPlayerAggregation({
       events: events as never,
       actors,
       abilities,
@@ -2122,7 +2104,7 @@ describe('threat-aggregation', () => {
       focusedPlayerId: 1,
       windowStartMs: 0,
       windowEndMs: 1000,
-    })
+    }).rows
 
     expect(rows[0]?.modifierTotal).toBeCloseTo(1.495)
     expect(rows[0]?.modifierBreakdown).toEqual([
@@ -2189,7 +2171,7 @@ describe('threat-aggregation', () => {
       },
     ]
 
-    const rows = buildFocusedPlayerThreatRows({
+    const rows = buildFocusedPlayerAggregation({
       events: events as never,
       actors,
       abilities,
@@ -2201,7 +2183,7 @@ describe('threat-aggregation', () => {
       focusedPlayerId: 1,
       windowStartMs: 0,
       windowEndMs: 1000,
-    })
+    }).rows
 
     expect(rows[0]?.spellSchool).toBe('holy')
   })
@@ -2256,7 +2238,7 @@ describe('threat-aggregation', () => {
       },
     ]
 
-    const rows = buildFocusedPlayerThreatRows({
+    const rows = buildFocusedPlayerAggregation({
       events: events as never,
       actors,
       abilities,
@@ -2268,7 +2250,7 @@ describe('threat-aggregation', () => {
       focusedPlayerId: 1,
       windowStartMs: 0,
       windowEndMs: 1000,
-    })
+    }).rows
 
     expect(rows[0]?.spellSchool).toBe('frost/shadow')
   })
@@ -2391,7 +2373,7 @@ describe('threat-aggregation', () => {
       },
     ]
 
-    const rows = buildFocusedPlayerThreatRows({
+    const rows = buildFocusedPlayerAggregation({
       events: events as never,
       actors,
       abilities,
@@ -2403,7 +2385,7 @@ describe('threat-aggregation', () => {
       focusedPlayerId: 1,
       windowStartMs: 0,
       windowEndMs: 1000,
-    })
+    }).rows
 
     expect(rows).toEqual([
       {
@@ -2617,7 +2599,7 @@ describe('threat-aggregation', () => {
       },
     ]
 
-    const rows = buildFocusedPlayerThreatRows({
+    const rows = buildFocusedPlayerAggregation({
       events: events as never,
       actors,
       abilities,
@@ -2629,7 +2611,7 @@ describe('threat-aggregation', () => {
       focusedPlayerId: 1,
       windowStartMs: 0,
       windowEndMs: 1000,
-    })
+    }).rows
 
     expect(rows).toEqual([
       {
@@ -2763,7 +2745,7 @@ describe('threat-aggregation', () => {
       },
     ]
 
-    const rows = buildFocusedPlayerThreatRows({
+    const rows = buildFocusedPlayerAggregation({
       events: events as never,
       actors,
       abilities,
@@ -2775,7 +2757,7 @@ describe('threat-aggregation', () => {
       focusedPlayerId: 5,
       windowStartMs: 0,
       windowEndMs: 1000,
-    })
+    }).rows
 
     expect(rows).toEqual([
       {
@@ -2891,7 +2873,7 @@ describe('threat-aggregation', () => {
       },
     ]
 
-    const rows = buildFocusedPlayerThreatRows({
+    const rows = buildFocusedPlayerAggregation({
       events: events as never,
       actors,
       abilities,
@@ -2903,7 +2885,7 @@ describe('threat-aggregation', () => {
       focusedPlayerId: 1,
       windowStartMs: 0,
       windowEndMs: 1000,
-    })
+    }).rows
 
     expect(rows).toEqual([
       {
