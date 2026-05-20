@@ -13,7 +13,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@wow-threat/typescript-config": "workspace:*",
-    "eslint": "^10.2.0",
+    "eslint": "^10.4.0",
     "globals": "^17.4.0",
     "typescript": "^6.0.2",
     "typescript-eslint": "^8.57.2"
