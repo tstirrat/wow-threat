@@ -36,6 +36,8 @@ export const ErrorCodes = {
   INVALID_EVENTS_CURSOR: 'INVALID_EVENTS_CURSOR',
   INVALID_GAME_VERSION: 'INVALID_GAME_VERSION',
   INVALID_CONFIG_VERSION: 'INVALID_CONFIG_VERSION',
+  INVALID_ENTITY_TYPE: 'INVALID_ENTITY_TYPE',
+  INVALID_ENTITY_LOOKUP: 'INVALID_ENTITY_LOOKUP',
   REPORT_NOT_FOUND: 'REPORT_NOT_FOUND',
   FIGHT_NOT_FOUND: 'FIGHT_NOT_FOUND',
   WCL_API_ERROR: 'WCL_API_ERROR',
@@ -140,6 +142,18 @@ export function unauthorized(message = 'Unauthorized'): AppError {
 
 export function firestoreError(message: string): AppError {
   return new AppError(ErrorCodes.FIRESTORE_ERROR, message, 500)
+}
+
+export function invalidEntityType(entityType: string): AppError {
+  return new AppError(
+    ErrorCodes.INVALID_ENTITY_TYPE,
+    `Unsupported entity type: ${entityType}`,
+    400,
+  )
+}
+
+export function invalidEntityLookup(message: string): AppError {
+  return new AppError(ErrorCodes.INVALID_ENTITY_LOOKUP, message, 400)
 }
 
 // Errors that are expected operational noise — suppress from Sentry alerts.

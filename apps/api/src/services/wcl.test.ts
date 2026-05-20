@@ -865,20 +865,20 @@ describe('WCLClient.getEventsPage', () => {
     vi.stubGlobal('fetch', mockFetch)
 
     const client = new WCLClient(createMockBindings(), 'wcl:12345')
-    const first = await client.getEventsPage(
-      'PAGECACHE1',
-      8,
-      'public',
-      1000,
-      9000,
-    )
-    const second = await client.getEventsPage(
-      'PAGECACHE1',
-      8,
-      'public',
-      1000,
-      9000,
-    )
+    const first = await client.getEventsPage({
+      code: 'PAGECACHE1',
+      fightId: 8,
+      visibility: 'public',
+      startTime: 1000,
+      endTime: 9000,
+    })
+    const second = await client.getEventsPage({
+      code: 'PAGECACHE1',
+      fightId: 8,
+      visibility: 'public',
+      startTime: 1000,
+      endTime: 9000,
+    })
 
     expect(first.data).toHaveLength(1)
     expect(second.data).toHaveLength(1)
@@ -926,10 +926,20 @@ describe('WCLClient.getEventsPage', () => {
     vi.stubGlobal('fetch', mockFetch)
 
     const client = new WCLClient(createMockBindings(), 'wcl:12345')
-    await client.getEventsPage('PAGEBYPASS1', 8, 'public', 1000, 9000, {
+    await client.getEventsPage({
+      code: 'PAGEBYPASS1',
+      fightId: 8,
+      visibility: 'public',
+      startTime: 1000,
+      endTime: 9000,
       bypassCache: true,
     })
-    await client.getEventsPage('PAGEBYPASS1', 8, 'public', 1000, 9000, {
+    await client.getEventsPage({
+      code: 'PAGEBYPASS1',
+      fightId: 8,
+      visibility: 'public',
+      startTime: 1000,
+      endTime: 9000,
       bypassCache: true,
     })
 
@@ -1013,17 +1023,15 @@ describe('WCLClient.getFriendlyBuffAurasAtFightStart', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     const client = new WCLClient(createMockBindings(), 'wcl:12345')
-    const result = await client.getFriendlyBuffAurasAtFightStart(
-      'BUFFMAP1',
-      3,
-      'public',
-      1000,
-      new Set([1, 2]),
-      {
-        queryFightIds: [3, 4],
-        queryFriendlyActorIds: new Set([1, 2]),
-      },
-    )
+    const result = await client.getFriendlyBuffAurasAtFightStart({
+      code: 'BUFFMAP1',
+      fightId: 3,
+      visibility: 'public',
+      fightStartTime: 1000,
+      friendlyActorIds: new Set([1, 2]),
+      queryFightIds: [3, 4],
+      queryFriendlyActorIds: new Set([1, 2]),
+    })
 
     expect(result.get(1)).toEqual([1038])
     expect(result.has(2)).toBe(false)
@@ -1110,27 +1118,25 @@ describe('WCLClient.getFriendlyBuffAurasAtFightStart', () => {
 
     const client = new WCLClient(createMockBindings(), 'wcl:12345')
     const friendlyIds = new Set([1])
-    const queryOptions = {
+
+    const first = await client.getFriendlyBuffAurasAtFightStart({
+      code: 'BUFFCACHE1',
+      fightId: 3,
+      visibility: 'public',
+      fightStartTime: 1000,
+      friendlyActorIds: friendlyIds,
       queryFightIds: [3, 4],
       queryFriendlyActorIds: new Set([1]),
-    }
-
-    const first = await client.getFriendlyBuffAurasAtFightStart(
-      'BUFFCACHE1',
-      3,
-      'public',
-      1000,
-      friendlyIds,
-      queryOptions,
-    )
-    const second = await client.getFriendlyBuffAurasAtFightStart(
-      'BUFFCACHE1',
-      4,
-      'public',
-      2500,
-      friendlyIds,
-      queryOptions,
-    )
+    })
+    const second = await client.getFriendlyBuffAurasAtFightStart({
+      code: 'BUFFCACHE1',
+      fightId: 4,
+      visibility: 'public',
+      fightStartTime: 2500,
+      friendlyActorIds: friendlyIds,
+      queryFightIds: [3, 4],
+      queryFriendlyActorIds: new Set([1]),
+    })
 
     expect(first.get(1)).toEqual([1038])
     expect(second.get(1)).toEqual([25895])

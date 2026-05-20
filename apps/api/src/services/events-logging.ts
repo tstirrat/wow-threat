@@ -1,5 +1,5 @@
 /**
- * Events Route Logging Utilities
+ * Events Logging Utilities
  *
  * Shared runtime timing, payload-size estimation, and optional memory checkpoint logging.
  */

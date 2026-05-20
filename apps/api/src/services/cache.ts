@@ -41,6 +41,28 @@ export function normalizeVisibility(visibility: unknown): CacheVisibility {
   return visibility === 'public' ? 'public' : 'private'
 }
 
+/** Compute the Cache-Control header value for a route response. */
+export function resolveCacheControl({
+  environment,
+  visibility,
+  isVersionedRequest,
+}: {
+  environment: string
+  visibility: CacheVisibility
+  isVersionedRequest: boolean
+}): string {
+  if (visibility !== 'public') {
+    return 'private, no-store'
+  }
+  if (isVersionedRequest) {
+    return 'public, max-age=31536000, immutable'
+  }
+  if (environment === 'development') {
+    return 'no-store, no-cache, must-revalidate'
+  }
+  return 'public, max-age=0, must-revalidate'
+}
+
 function resolveVisibilityScope(visibility: unknown, uid?: string): string {
   if (normalizeVisibility(visibility) === 'public') {
     return 'shared'

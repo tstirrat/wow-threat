@@ -15,18 +15,22 @@ import type {
 import { Hono } from 'hono'
 
 import {
-  AppError,
+  invalidEntityLookup,
+  invalidEntityType,
   invalidReportCode,
   reportNotFound,
   unauthorized,
 } from '../middleware/error'
-import { normalizeVisibility } from '../services/cache'
+import { normalizeVisibility, resolveCacheControl } from '../services/cache'
 import { WCLClient } from '../services/wcl'
 import type { ReportResponse } from '../types/api'
 import {
   toReportAbilitySummary,
   toReportActorSummary,
+  toReportArchiveStatusSummary,
   toReportFightSummary,
+  toReportGuildSummary,
+  toThreatConfigSummary,
 } from '../types/api-transformers'
 import type { Bindings, Variables } from '../types/bindings'
 import { fightsRoutes } from './fights'
@@ -58,11 +62,7 @@ reportRoutes.get('/entities/:entityType/reports', async (c) => {
 
   const entityType = c.req.param('entityType')
   if (entityType !== 'guild') {
-    throw new AppError(
-      'INVALID_ENTITY_TYPE',
-      `Unsupported entity type: ${entityType}`,
-      400,
-    )
+    throw invalidEntityType(entityType)
   }
 
   const requestedLimit = c.req.query('limit')
@@ -81,10 +81,8 @@ reportRoutes.get('/entities/:entityType/reports', async (c) => {
     Boolean(guildName) && Boolean(serverSlug) && Boolean(serverRegion)
 
   if (guildId === undefined && !hasGuildLookupByName) {
-    throw new AppError(
-      'INVALID_ENTITY_LOOKUP',
+    throw invalidEntityLookup(
       'Guild lookup requires guildId or guildName/serverSlug/serverRegion',
-      400,
     )
   }
 
@@ -186,14 +184,11 @@ reportRoutes.get('/:code', async (c) => {
   })
   const masterData = report.masterData
 
-  const cacheControl =
-    c.env.ENVIRONMENT === 'development'
-      ? 'no-store, no-cache, must-revalidate'
-      : visibility === 'public'
-        ? isVersionedRequest
-          ? 'public, max-age=31536000, immutable'
-          : 'public, max-age=0, must-revalidate'
-        : 'private, no-store'
+  const cacheControl = resolveCacheControl({
+    environment: c.env.ENVIRONMENT,
+    visibility,
+    isVersionedRequest,
+  })
 
   return c.json<ReportResponse>(
     {
@@ -201,44 +196,14 @@ reportRoutes.get('/:code', async (c) => {
       title: report.title,
       visibility,
       owner: report.owner.name,
-      guild: report.guild
-        ? {
-            id:
-              typeof report.guild.id === 'number' &&
-              Number.isFinite(report.guild.id)
-                ? report.guild.id
-                : null,
-            name: report.guild.name,
-            faction:
-              typeof report.guild.faction === 'string'
-                ? report.guild.faction
-                : report.guild.faction.name,
-            serverSlug:
-              typeof report.guild.server?.slug === 'string'
-                ? report.guild.server.slug
-                : null,
-            serverRegion:
-              typeof report.guild.server?.region?.slug === 'string'
-                ? report.guild.server.region.slug
-                : null,
-          }
-        : null,
+      guild: report.guild ? toReportGuildSummary(report.guild) : null,
       archiveStatus: report.archiveStatus
-        ? {
-            isArchived: report.archiveStatus.isArchived ?? false,
-            isAccessible: report.archiveStatus.isAccessible ?? true,
-            archiveDate: report.archiveStatus.archiveDate ?? null,
-          }
+        ? toReportArchiveStatusSummary(report.archiveStatus)
         : null,
       startTime: report.startTime,
       endTime: report.endTime,
       gameVersion: masterData.gameVersion,
-      threatConfig: threatConfig
-        ? {
-            displayName: threatConfig.displayName,
-            version: threatConfig.version,
-          }
-        : null,
+      threatConfig: threatConfig ? toThreatConfigSummary(threatConfig) : null,
       zone: report.zone,
       fights: report.fights.map((fight: WCLReportFight) =>
         toReportFightSummary(fight),
