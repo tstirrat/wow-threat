@@ -73,7 +73,7 @@ export interface ActorContext {
   // instanceId defaults to 0 when omitted.
   getPosition: (actor: ActorRef) => { x: number; y: number } | null
   /** Get a read-only runtime actor snapshot (metadata + tracked state). */
-  getActor?: (actor: ActorRef) => RuntimeActorView | null
+  getActor: (actor: ActorRef) => RuntimeActorView | null
   /** Calculate distance between two actors (null if positions unavailable) */
   getDistance: (actor1: ActorRef, actor2: ActorRef) => number | null
   /** Get actors within range of a position */

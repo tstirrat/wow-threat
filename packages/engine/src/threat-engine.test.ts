@@ -621,7 +621,7 @@ describe('threat-engine', () => {
         const secondAfterProcessor: FightProcessor = {
           id: 'test/after-read-state',
           afterFightState(ctx) {
-            const sourceActor = ctx.fightState.getActor?.({
+            const sourceActor = ctx.fightState.getActor({
               id: ctx.event.sourceID,
               instanceId: ctx.event.sourceInstance,
             })
@@ -5301,7 +5301,7 @@ describe('threat-engine', () => {
           // Verify we can access fight state
           expect(ctx.actors).toBeDefined()
           // These methods should exist and be callable
-          const runtimeActor = ctx.actors.getActor?.({ id: 1 })
+          const runtimeActor = ctx.actors.getActor({ id: 1 })
           expect(runtimeActor?.name).toBe('Warrior')
           ctx.actors.getThreat(1, { id: 99 })
           ctx.actors.getPosition({ id: 1 })

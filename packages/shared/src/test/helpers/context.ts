@@ -18,7 +18,7 @@ export interface MockEnemyRef {
 
 export interface MockActorContext {
   getPosition: (actor: MockActorRef) => { x: number; y: number } | null
-  getActor?: (actor: MockActorRef) => RuntimeActorView | null
+  getActor: (actor: MockActorRef) => RuntimeActorView | null
   getDistance: (actor1: MockActorRef, actor2: MockActorRef) => number | null
   getActorsInRange: (actor: MockActorRef, maxDistance: number) => number[]
   getThreat: (actorId: number, enemy: MockEnemyRef) => number
