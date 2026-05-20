@@ -53,6 +53,20 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
   }
 }
 
+/** Parse a WCL ability school mask string to a numeric bitmask (0 if absent or non-numeric). */
+export function parseAbilitySchoolMask(type: string | null): number {
+  if (!type) {
+    return 0
+  }
+
+  const mask = Number.parseInt(type, 10)
+  if (!Number.isFinite(mask)) {
+    return 0
+  }
+
+  return mask
+}
+
 export function exists<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined
 }

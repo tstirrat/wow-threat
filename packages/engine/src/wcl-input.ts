@@ -4,6 +4,7 @@
  * Utilities for converting report/fight payloads into Threat Engine input
  * structures.
  */
+import { parseAbilitySchoolMask } from '@wow-threat/shared'
 import type { Actor, Enemy, WowClass } from '@wow-threat/shared'
 import type {
   ReportAbility,
@@ -61,19 +62,6 @@ function createActorEntry(
       petOwner: actor?.type === 'Pet' ? (actor.petOwner ?? null) : undefined,
     },
   ]
-}
-
-function parseAbilitySchoolMask(type: string | null): number {
-  if (!type) {
-    return 0
-  }
-
-  const mask = Number.parseInt(type, 10)
-  if (!Number.isFinite(mask)) {
-    return 0
-  }
-
-  return mask
 }
 
 function buildAbilitySchoolMap(
