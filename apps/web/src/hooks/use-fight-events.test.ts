@@ -14,6 +14,10 @@ import {
   getFightEventsClientSide,
   getFightRawEventsClientSide,
 } from '../lib/client-threat-engine'
+import {
+  loadFightEventsResultCache,
+  saveFightEventsResultCache,
+} from '../lib/fight-events-result-cache'
 import { useFightEvents, useSuspenseFightEvents } from './use-fight-events'
 
 vi.mock('@tanstack/react-query', () => ({
@@ -39,6 +43,11 @@ vi.mock('../lib/client-threat-engine', () => ({
   getFightRawEventsClientSide: vi.fn(),
 }))
 
+vi.mock('../lib/fight-events-result-cache', () => ({
+  loadFightEventsResultCache: vi.fn(),
+  saveFightEventsResultCache: vi.fn(),
+}))
+
 describe('useFightEvents', () => {
   const queryClientMock = {
     cancelQueries: vi.fn(),
@@ -46,6 +55,10 @@ describe('useFightEvents', () => {
   }
 
   beforeEach(() => {
+    vi.mocked(loadFightEventsResultCache).mockReset()
+    vi.mocked(loadFightEventsResultCache).mockResolvedValue(null)
+    vi.mocked(saveFightEventsResultCache).mockReset()
+    vi.mocked(saveFightEventsResultCache).mockResolvedValue(undefined)
     vi.mocked(useQuery).mockReset()
     vi.mocked(useQuery).mockReturnValue({
       data: undefined,
@@ -271,5 +284,100 @@ describe('useFightEvents', () => {
         inferThreatReduction: false,
       }),
     )
+  })
+
+  it('returns cached result without fetching when IDB cache hits', async () => {
+    const cachedResponse = {
+      configVersion: 'test',
+      events: [{ timestamp: 1 }],
+      fightId: 12,
+      fightName: 'Patchwerk',
+      gameVersion: 2,
+      initialAurasByActor: {},
+      reportCode: 'ABC123xyz',
+    }
+    vi.mocked(loadFightEventsResultCache).mockResolvedValue(
+      cachedResponse as never,
+    )
+
+    renderHook(() => useFightEvents('ABC123xyz', 12, false, true))
+
+    const queryCall = vi.mocked(useQuery).mock.calls[0]?.[0]
+    expect(queryCall).toBeDefined()
+
+    const result = await queryCall?.queryFn({
+      signal: new AbortController().signal,
+    })
+
+    expect(result).toEqual(cachedResponse)
+    expect(getFightEventsClientSide).not.toHaveBeenCalled()
+    expect(getFightRawEventsClientSide).not.toHaveBeenCalled()
+  })
+
+  it('skips IDB cache lookup when forceFresh is enabled', async () => {
+    renderHook(() => useFightEvents('ABC123xyz', 12, false, true, true))
+
+    const queryCall = vi.mocked(useQuery).mock.calls[0]?.[0]
+    expect(queryCall).toBeDefined()
+
+    await queryCall?.queryFn({
+      signal: new AbortController().signal,
+    })
+
+    expect(loadFightEventsResultCache).not.toHaveBeenCalled()
+  })
+
+  it('saves result to IDB cache after successful fetch', async () => {
+    renderHook(() => useFightEvents('ABC123xyz', 12, false, true))
+
+    const queryCall = vi.mocked(useQuery).mock.calls[0]?.[0]
+    expect(queryCall).toBeDefined()
+
+    await queryCall?.queryFn({
+      signal: new AbortController().signal,
+    })
+
+    expect(saveFightEventsResultCache).toHaveBeenCalledWith(
+      expect.objectContaining({
+        key: expect.objectContaining({
+          reportCode: 'ABC123xyz',
+          fightId: 12,
+          inferThreatReduction: false,
+        }),
+        response: expect.objectContaining({
+          events: [],
+          fightId: 12,
+        }),
+      }),
+    )
+  })
+
+  it('skips saving to IDB cache when forceFresh is enabled', async () => {
+    renderHook(() => useFightEvents('ABC123xyz', 12, false, true, true))
+
+    const queryCall = vi.mocked(useQuery).mock.calls[0]?.[0]
+    expect(queryCall).toBeDefined()
+
+    await queryCall?.queryFn({
+      signal: new AbortController().signal,
+    })
+
+    expect(saveFightEventsResultCache).not.toHaveBeenCalled()
+  })
+
+  it('throws abort error when signal is already aborted', async () => {
+    renderHook(() => useFightEvents('ABC123xyz', 12, false, true))
+
+    const queryCall = vi.mocked(useQuery).mock.calls[0]?.[0]
+    expect(queryCall).toBeDefined()
+
+    const controller = new AbortController()
+    controller.abort()
+
+    await expect(
+      queryCall?.queryFn({ signal: controller.signal }),
+    ).rejects.toMatchObject({ name: 'AbortError' })
+
+    expect(getFightEventsClientSide).not.toHaveBeenCalled()
   })
 })
