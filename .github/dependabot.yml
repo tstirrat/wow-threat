@@ -7,6 +7,11 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
     ignore:
       # react-router-dom v7 causes a "Maximum update depth exceeded" infinite
       # render loop handled by React Router's ErrorBoundary. Root cause is
