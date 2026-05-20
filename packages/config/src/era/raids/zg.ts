@@ -96,7 +96,7 @@ function forcePush(): FormulaFn {
       return undefined
     }
 
-    const boss = ctx.actors.getActor?.({
+    const boss = ctx.actors.getActor({
       id: ctx.event.sourceID,
       instanceId: ctx.event.sourceInstance,
     })
