@@ -46,9 +46,9 @@ async function runRuntimeValidation(env: Bindings): Promise<void> {
 }
 
 /** Validate runtime configuration for non-test environments. */
-export async function validateRuntimeConfig(env: Bindings): Promise<void> {
+export function validateRuntimeConfig(env: Bindings): Promise<void> {
   if (env.ENVIRONMENT === 'test') {
-    return
+    return Promise.resolve()
   }
 
   if (!runtimeValidationPromise) {

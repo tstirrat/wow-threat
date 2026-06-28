@@ -74,10 +74,6 @@ const SHADOW_AFFINITY_RANKS = [
   Spells.ShadowAffinityRank3,
 ] as const
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const DISC = 0
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const HOLY = 1
 const SHADOW = 2
 
 // ============================================================================
