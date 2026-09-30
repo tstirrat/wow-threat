@@ -3,11 +3,15 @@
  */
 import { useEffect, useState } from 'react'
 
+import { resolveCssColor } from '../lib/class-colors'
+
 export interface ThreatChartThemeColors {
   border: string
   foreground: string
   muted: string
   panel: string
+  /** Resolve a CSS-variable color for canvas; identity changes on theme change. */
+  resolveColor: (color: string) => string
 }
 
 function resolveThemeColor(variableName: string, fallback: string): string {
@@ -27,6 +31,7 @@ function readChartThemeColors(): ThreatChartThemeColors {
     foreground: resolveThemeColor('--foreground', '#0f172a'),
     muted: resolveThemeColor('--muted-foreground', '#64748b'),
     panel: resolveThemeColor('--card', '#ffffff'),
+    resolveColor: (color) => resolveCssColor(color),
   }
 }
 

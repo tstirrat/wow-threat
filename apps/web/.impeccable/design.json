@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-30T09:40:39.800Z",
+  "generatedAt": "2026-09-30T22:42:49.873853+00:00",
   "title": "Design System: WOW Threat",
   "extensions": {
     "colorMeta": {
@@ -319,6 +319,66 @@
         "displayName": "Unknown Actor Slate",
         "canonical": "#94a3b8"
       },
+      "class-warrior-light": {
+        "role": "data",
+        "displayName": "Warrior Tan (light theme)",
+        "canonical": "#9B6C41"
+      },
+      "class-paladin-light": {
+        "role": "data",
+        "displayName": "Paladin Pink (light theme)",
+        "canonical": "#C44884"
+      },
+      "class-hunter-light": {
+        "role": "data",
+        "displayName": "Hunter Green (light theme)",
+        "canonical": "#608029"
+      },
+      "class-rogue-light": {
+        "role": "data",
+        "displayName": "Rogue Yellow (light theme)",
+        "canonical": "#8E7318"
+      },
+      "class-shaman-light": {
+        "role": "data",
+        "displayName": "Shaman Blue (light theme)",
+        "canonical": "#0070DD"
+      },
+      "class-mage-light": {
+        "role": "data",
+        "displayName": "Mage Sky (light theme)",
+        "canonical": "#08809C"
+      },
+      "class-warlock-light": {
+        "role": "data",
+        "displayName": "Warlock Violet (light theme)",
+        "canonical": "#7366D6"
+      },
+      "class-druid-light": {
+        "role": "data",
+        "displayName": "Druid Orange (light theme)",
+        "canonical": "#CB4F00"
+      },
+      "class-death-knight-light": {
+        "role": "data",
+        "displayName": "Death Knight Crimson (light theme)",
+        "canonical": "#C41E3A"
+      },
+      "class-monk-light": {
+        "role": "data",
+        "displayName": "Monk Jade (light theme)",
+        "canonical": "#00884F"
+      },
+      "class-demon-hunter-light": {
+        "role": "data",
+        "displayName": "Demon Hunter Purple (light theme)",
+        "canonical": "#A330C9"
+      },
+      "class-evoker-light": {
+        "role": "data",
+        "displayName": "Evoker Teal (light theme)",
+        "canonical": "#00634C"
+      },
       "mark-fixate": {
         "role": "data",
         "displayName": "Fixate Orange",
@@ -476,7 +536,7 @@
       "name": "Report URL Input",
       "kind": "input",
       "refersTo": "input",
-      "description": "Compact 28px field; the header report search is the main way in (⌘/Ctrl+O).",
+      "description": "Compact 28px field; the header report search is the main way in (\u2318/Ctrl+O).",
       "html": "<label class=\"ds-input-wrap\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><input class=\"ds-input\" placeholder=\"Paste a Warcraft Logs report URL\"></label>",
       "css": ".ds-input-wrap{display:flex;align-items:center;gap:6px;color:var(--muted-foreground);width:320px;}.ds-input{height:28px;width:100%;padding:2px 8px;border-radius:calc(var(--radius) - 2px);border:1px solid var(--input);background:color-mix(in oklch, var(--input) 25%, transparent);color:var(--foreground);font:400 12px/1.625 \"Inter Variable\",sans-serif;outline:none;transition:border-color .15s,box-shadow .15s;}.ds-input::placeholder{color:var(--muted-foreground);}.ds-input:focus-visible{border-color:var(--ring);box-shadow:0 0 0 2px color-mix(in oklch, var(--ring) 30%, transparent);}"
     },
@@ -485,7 +545,7 @@
       "kind": "card",
       "refersTo": "card-dark",
       "description": "Tonal panel, one step above the page, with a title and a muted subtitle.",
-      "html": "<section class=\"ds-card\"><header><div class=\"ds-card-title\">Recent logs</div><div class=\"ds-card-sub\">Starred reports are pinned first.</div></header><div class=\"ds-eyebrow\">Starred</div><div class=\"ds-card-body\">Naxxramas — Thu raid</div></section>",
+      "html": "<section class=\"ds-card\"><header><div class=\"ds-card-title\">Recent logs</div><div class=\"ds-card-sub\">Starred reports are pinned first.</div></header><div class=\"ds-eyebrow\">Starred</div><div class=\"ds-card-body\">Naxxramas \u2014 Thu raid</div></section>",
       "css": ".ds-card{width:300px;display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:var(--radius);background:var(--card);color:var(--card-foreground);box-shadow:0 0 0 1px color-mix(in oklch, var(--foreground) 10%, transparent);font:400 12px/1.625 \"Inter Variable\",sans-serif;}.ds-card-title{font-size:14px;font-weight:500;}.ds-card-sub{color:var(--muted-foreground);}.ds-eyebrow{font-size:12px;font-weight:600;letter-spacing:.025em;text-transform:uppercase;color:var(--muted-foreground);}"
     },
     {
@@ -493,7 +553,7 @@
       "kind": "chip",
       "refersTo": "badge",
       "description": "Pill badge and the shortcut key badges.",
-      "html": "<div class=\"ds-row\"><span class=\"ds-badge\">SoD</span><span class=\"ds-kbd\">⌘</span><span class=\"ds-plus\">+</span><span class=\"ds-kbd\">O</span></div>",
+      "html": "<div class=\"ds-row\"><span class=\"ds-badge\">SoD</span><span class=\"ds-kbd\">\u2318</span><span class=\"ds-plus\">+</span><span class=\"ds-kbd\">O</span></div>",
       "css": ".ds-row{display:flex;align-items:center;gap:6px;font-family:\"Inter Variable\",sans-serif;}.ds-badge{display:inline-flex;align-items:center;height:20px;padding:2px 8px;border-radius:9999px;background:var(--primary);color:var(--primary-foreground);font-size:10px;font-weight:500;}.ds-kbd{display:inline-flex;align-items:center;justify-content:center;height:20px;min-width:20px;padding:0 4px;border-radius:2px;background:var(--muted);color:var(--muted-foreground);font-size:10px;font-weight:500;}.ds-plus{font-size:12px;color:var(--muted-foreground);}"
     },
     {
@@ -544,7 +604,7 @@
       },
       {
         "name": "The Both-Themes Rule",
-        "body": "Every color is checked in dark and light mode. A class or mark color that disappears against one theme's background (as Priest white once did in light mode) is a bug.",
+        "body": "Every color is checked in dark and light mode. Class colors come in a per-theme pair; a class or mark color that disappears against one theme's background (as Rogue yellow and Priest white once did in light mode) is a bug.",
         "section": "colors"
       },
       {
@@ -566,6 +626,11 @@
         "name": "The One Step Rule",
         "body": "A nested surface is exactly one tonal step away from its parent. Don't skip steps and don't stack three tints.",
         "section": "elevation"
+      },
+      {
+        "name": "The Text Twin Rule",
+        "body": "Data colors are tuned for dark backgrounds. Any data color rendered as text in the DOM (tooltip amounts, spell schools, heal green, aura and marker labels, the summary table) goes through `src/lib/data-text-colors.ts` as a `light-dark()` pair. The light twin keeps the hue, darkened in OKLCH to about 4.6:1 on Paper. The canvas keeps the raw colors.",
+        "section": "colors"
       }
     ],
     "dos": [
@@ -575,6 +640,7 @@
       "**Do** keep controls at the compact scale: 28px default, 24px `sm`, 12px text, 10px labels.",
       "**Do** use tabular numbers for every number shown in a column or updated live.",
       "**Do** check every new color in both dark (the default) and light themes, including Priest's foreground-based color.",
+      "**Do** give any new data-colored text a light twin with `themedTextColor(light, dark)` (The Text Twin Rule); the spell-school test enforces AA contrast for schools.",
       "**Do** show a key badge next to any action that has a shortcut.",
       "**Do** keep the legend and meter capped at the chart's 560px height, with internal scrolling."
     ],
@@ -583,9 +649,9 @@
       "**Don't** add a new hue for chrome, statuses or decoration; that competes with the traces.",
       "**Don't** reuse a chart-mark hue for a new meaning, or change what an existing mark means.",
       "**Don't** put shadows on page-level surfaces (cards, the chart, the legend, the meter).",
-      "**Don't** add rings or borders to separate top-level surfaces in light mode; the Bench Zinc → Paper step does that. Nest a card inside a card only when the inner one needs its own edge.",
+      "**Don't** add rings or borders to separate top-level surfaces in light mode; the Bench Zinc \u2192 Paper step does that. Nest a card inside a card only when the inner one needs its own edge.",
       "**Don't** set any type larger than 18px; the chart is the hero.",
-      "**Don't** hardcode Priest or any theme-dependent color as a hex value; resolve CSS variables for canvas.",
+      "**Don't** hardcode a class color or any theme-dependent color as a hex value. Use the `--class-*` variables, and resolve them through the chart theme hook for canvas.",
       ""
     ]
   }

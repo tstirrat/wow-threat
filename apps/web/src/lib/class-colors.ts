@@ -5,20 +5,21 @@ import type { PlayerClass } from '@wow-threat/wcl-types'
 
 import type { ReportActorSummary } from '../types/api'
 
+/** Theme-aware class colors; values are CSS variables defined per theme in index.css. */
 export const classColors: Record<PlayerClass, string> = {
-  Warrior: '#C79C6E',
-  Paladin: '#F58CBA',
-  Hunter: '#ABD473',
-  Rogue: '#FFF569',
+  Warrior: 'var(--class-warrior)',
+  Paladin: 'var(--class-paladin)',
+  Hunter: 'var(--class-hunter)',
+  Rogue: 'var(--class-rogue)',
   Priest: 'var(--foreground)',
-  'Death Knight': '#C41F3B',
-  Shaman: '#0070DE',
-  Mage: '#69CCF0',
-  Warlock: '#9482C9',
-  Monk: '#00FF98',
-  Druid: '#FF7D0A',
-  'Demon Hunter': '#A330C9',
-  Evoker: '#33937F',
+  'Death Knight': 'var(--class-death-knight)',
+  Shaman: 'var(--class-shaman)',
+  Mage: 'var(--class-mage)',
+  Warlock: 'var(--class-warlock)',
+  Monk: 'var(--class-monk)',
+  Druid: 'var(--class-druid)',
+  'Demon Hunter': 'var(--class-demon-hunter)',
+  Evoker: 'var(--class-evoker)',
 }
 
 const fallbackColor = '#94a3b8'

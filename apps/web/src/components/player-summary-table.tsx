@@ -4,6 +4,10 @@
 import { ExternalLink } from 'lucide-react'
 import type { CSSProperties, FC } from 'react'
 
+import {
+  healTextColor,
+  threatStateTextColorByKind,
+} from '../lib/data-text-colors'
 import { formatNumber } from '../lib/format'
 import {
   resolveSpellSchoolColor,
@@ -44,8 +48,7 @@ export type PlayerSummaryTableProps = {
 }
 
 const modifierValueTolerance = 0.0005
-const healAmountColor = '#22c55e'
-const fixateRowColor = '#ffa500'
+const fixateRowColor = threatStateTextColorByKind.fixate
 
 function buildWowheadSpellUrl(wowheadDomain: string, spellId: number): string {
   return `https://www.wowhead.com/${wowheadDomain}/spell=${spellId}`
@@ -141,7 +144,7 @@ function resolveThreatRowColor(row: FocusedPlayerThreatRow): string | null {
   }
 
   if (row.isHeal) {
-    return healAmountColor
+    return healTextColor
   }
 
   if (isResourceRow(row)) {

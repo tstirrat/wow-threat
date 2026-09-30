@@ -4,14 +4,13 @@
 import { Plus } from 'lucide-react'
 import type { FC } from 'react'
 
+import {
+  bossMeleeTextColor,
+  tranquilAirTotemTextColor,
+} from '../lib/data-text-colors'
 import { formatTimelineTime } from '../lib/format'
 import { resolveSpellSchoolColorFromLabels } from '../lib/spell-school-colors'
-import {
-  bossMeleeMarkerColor,
-  deathMarkerColor,
-  tranquilAirTotemDesummonMarkerColor,
-  tranquilAirTotemMarkerColor,
-} from '../lib/threat-chart-tooltip-colors'
+import { deathMarkerColor } from '../lib/threat-chart-tooltip-colors'
 import type { TooltipPointPayload } from '../lib/threat-chart-types'
 import type { ReportActorRole } from '../types/api'
 
@@ -231,7 +230,7 @@ export const ThreatChartTooltipContent: FC<ThreatChartTooltipContentProps> = ({
       {data.markerKind === 'bossMelee' ? (
         <div>
           Marker:{' '}
-          <strong style={{ color: bossMeleeMarkerColor }}>Boss damage</strong>
+          <strong style={{ color: bossMeleeTextColor }}>Boss damage</strong>
         </div>
       ) : data.markerKind === 'death' ? (
         <div>
@@ -240,14 +239,14 @@ export const ThreatChartTooltipContent: FC<ThreatChartTooltipContentProps> = ({
       ) : data.markerKind === 'tranquilAirTotem' ? (
         <div>
           Marker:{' '}
-          <strong style={{ color: tranquilAirTotemMarkerColor }}>
+          <strong style={{ color: tranquilAirTotemTextColor }}>
             Tranquil Air Totem
           </strong>
         </div>
       ) : data.markerKind === 'tranquilAirTotemDesummon' ? (
         <div>
           Marker:{' '}
-          <strong style={{ color: tranquilAirTotemDesummonMarkerColor }}>
+          <strong style={{ color: tranquilAirTotemTextColor }}>
             Tranquil Air Totem (desummoned)
           </strong>
         </div>

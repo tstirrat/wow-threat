@@ -138,15 +138,15 @@ describe('threat-chart-visuals', () => {
     }
 
     expect(resolveThreatStateStatus(withStateSegments, 15)).toEqual({
-      color: '#ffa500',
+      kind: 'fixate',
       label: 'fixate (Mocking Blow)',
     })
     expect(resolveThreatStateStatus(withStateSegments, 25)).toEqual({
-      color: '#0f0',
+      kind: 'invulnerable',
       label: 'invulnerability',
     })
     expect(resolveThreatStateStatus(withStateSegments, 50)).toEqual({
-      color: null,
+      kind: null,
       label: 'Normal',
     })
   })

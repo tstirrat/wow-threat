@@ -5,6 +5,10 @@ import { HitTypeCode, ResourceTypeCode } from '@wow-threat/wcl-types'
 import { renderToString } from 'react-dom/server'
 
 import type { ThreatChartThemeColors } from '../hooks/use-threat-chart-theme-colors'
+import {
+  healTextColor,
+  threatStateTextColorByKind,
+} from '../lib/data-text-colors'
 import { resolveSpellSchoolColor } from '../lib/spell-school-colors'
 import type { TooltipPointPayload } from '../lib/threat-chart-types'
 import { resolveThreatStateStatus } from '../lib/threat-chart-visuals'
@@ -137,12 +141,12 @@ export function createThreatChartTooltipFormatter({
               ? ' (tick)'
               : ''
             : ` (${rawEventType})`
-    const abilityTitleColor = isHealEvent ? '#22c55e' : null
+    const abilityTitleColor = isHealEvent ? healTextColor : null
     const actorId = Number(payload.actorId ?? 0)
     const sourceSeries = series.find((item) => item.actorId === actorId) ?? null
     const auraStatus = sourceSeries
       ? resolveThreatStateStatus(sourceSeries, timeMs)
-      : { color: null, label: 'normal' }
+      : { kind: null, label: 'normal' }
     const splitCount = resolveSplitCount(modifiedThreat, threatDelta)
     const visibleModifiers = (payload.modifiers ?? []).filter(
       (modifier) =>
@@ -167,7 +171,7 @@ export function createThreatChartTooltipFormatter({
         : ''
     const amountColor =
       rawEventType === 'heal'
-        ? '#22c55e'
+        ? healTextColor
         : rawEventType === 'damage'
           ? resolveSpellSchoolColor(spellSchool)
           : null
@@ -201,8 +205,10 @@ export function createThreatChartTooltipFormatter({
       amountColor,
       amountLabel,
       amountSchool,
-      auraLabel: auraStatus.color && auraStatus.label ? auraStatus.label : null,
-      auraStatusColor: auraStatus.color ?? themeColors.muted,
+      auraLabel: auraStatus.kind && auraStatus.label ? auraStatus.label : null,
+      auraStatusColor: auraStatus.kind
+        ? threatStateTextColorByKind[auraStatus.kind]
+        : themeColors.muted,
       markerKind,
       modifiersTotal: totalMultiplierWithSpell,
       modifiedThreat,

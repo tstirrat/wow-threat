@@ -33,6 +33,18 @@ colors:
   class-demon-hunter: '#A330C9'
   class-evoker: '#33937F'
   class-unknown: '#94a3b8'
+  class-warrior-light: '#9B6C41'
+  class-paladin-light: '#C44884'
+  class-hunter-light: '#608029'
+  class-rogue-light: '#8E7318'
+  class-shaman-light: '#0070DD'
+  class-mage-light: '#08809C'
+  class-warlock-light: '#7366D6'
+  class-druid-light: '#CB4F00'
+  class-death-knight-light: '#C41E3A'
+  class-monk-light: '#00884F'
+  class-demon-hunter-light: '#A330C9'
+  class-evoker-light: '#00634C'
   mark-fixate: '#ffa500'
   mark-invulnerable: '#00ff00'
   mark-aggro-loss: '#ffff00'
@@ -201,7 +213,12 @@ Near-colorless zinc surfaces, one Arcane Cyan accent, and bright traces for the 
 
 ### Data: Class Palette
 
-Players are identified by the standard WoW class colors (`class-*`). These are fixed by the game, not a design choice, and they are used exactly as given for chart lines, legend swatches, meter bars and player names. **Priest has no fixed value.** It renders in the current foreground color (near-white in dark mode, near-black in light mode), resolved at runtime for the canvas chart. `class-unknown` is the fallback for unclassified actors and pets.
+Players are identified by WoW class colors, in two theme sets that share the same meaning:
+
+- **Dark theme** (`class-*`): the official in-game colors, used exactly as the game ships them.
+- **Light theme** (`class-*-light`): each official color darkened to about 4.5:1 against Paper, following the Warcraft Wiki light-skin set. The hue family stays recognizable (Rogue becomes mustard, Monk jade, Hunter olive, Mage teal). Shaman, Death Knight and Demon Hunter already pass on white and keep the same value.
+
+Both sets are CSS variables (`--class-<name>`) defined per theme in `src/index.css`. Chart lines, legend swatches, meter bars and player names all use the same variable, so a name always matches its line. The canvas chart resolves the variables through the theme hook and re-resolves them whenever the theme changes. **Priest has no fixed value.** It renders in the current foreground color (near-white in dark mode, near-black in light mode). `class-unknown` is the fallback for unclassified actors and pets.
 
 ### Data: Chart Marks
 
@@ -221,7 +238,9 @@ Each mark has a fixed meaning. The exact values may be tuned for contrast in bot
 
 **The Meanings Are Fixed Rule.** Orange means fixate, green means invulnerable, yellow means aggro loss, red means death, and gold means the playhead or focus. Values can change for contrast. Meanings never change, and a new mark type never reuses one of these hues.
 
-**The Both-Themes Rule.** Every color is checked in dark and light mode. A class or mark color that disappears against one theme's background (as Priest white once did in light mode) is a bug.
+**The Both-Themes Rule.** Every color is checked in dark and light mode. Class colors come in a per-theme pair; a class or mark color that disappears against one theme's background (as Rogue yellow and Priest white once did in light mode) is a bug.
+
+**The Text Twin Rule.** Data colors are tuned for dark backgrounds. Any data color rendered as text in the DOM (tooltip amounts, spell schools, heal green, aura and marker labels, the summary table) goes through `src/lib/data-text-colors.ts` as a `light-dark()` pair. The light twin keeps the hue, darkened in OKLCH to about 4.6:1 on Paper. The canvas keeps the raw colors.
 
 ## Typography
 
@@ -353,6 +372,7 @@ A scrolling list of players, each with a 2px class-colored line swatch, their na
 - **Do** keep controls at the compact scale: 28px default, 24px `sm`, 12px text, 10px labels.
 - **Do** use tabular numbers for every number shown in a column or updated live.
 - **Do** check every new color in both dark (the default) and light themes, including Priest's foreground-based color.
+- **Do** give any new data-colored text a light twin with `themedTextColor(light, dark)` (The Text Twin Rule); the spell-school test enforces AA contrast for schools.
 - **Do** show a key badge next to any action that has a shortcut.
 - **Do** keep the legend and meter capped at the chart's 560px height, with internal scrolling.
 
@@ -364,4 +384,4 @@ A scrolling list of players, each with a 2px class-colored line swatch, their na
 - **Don't** put shadows on page-level surfaces (cards, the chart, the legend, the meter).
 - **Don't** add rings or borders to separate top-level surfaces in light mode; the Bench Zinc → Paper step does that. Nest a card inside a card only when the inner one needs its own edge.
 - **Don't** set any type larger than 18px; the chart is the hero.
-- **Don't** hardcode Priest or any theme-dependent color as a hex value; resolve CSS variables for canvas.
+- **Don't** hardcode a class color or any theme-dependent color as a hex value. Use the `--class-*` variables, and resolve them through the chart theme hook for canvas.

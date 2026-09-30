@@ -47,6 +47,7 @@ describe('threat-chart-tooltip', () => {
         foreground: '#0f172a',
         muted: '#64748b',
         panel: '#ffffff',
+        resolveColor: (color: string) => color,
       },
     })
 
@@ -92,10 +93,10 @@ describe('threat-chart-tooltip', () => {
     expect(threatIndex).toBeGreaterThan(multipliersIndex)
     expect(tooltip).toContain('Defensive &lt;Stance&gt;')
     expect(tooltip).toContain(
-      'Aura: <strong style="color:#ffa500">fixate (Mocking Blow)</strong>',
+      'Aura: <strong style="color:light-dark(#A36806, #ffa500)">fixate (Mocking Blow)</strong>',
     )
     expect(tooltip).toContain(
-      'Marker: <strong style="color:#3b82f6">Tranquil Air Totem</strong>',
+      'Marker: <strong style="color:light-dark(#2A71E3, #3b82f6)">Tranquil Air Totem</strong>',
     )
     expect(tooltip).toContain('ID: 7386')
   })
@@ -108,6 +109,7 @@ describe('threat-chart-tooltip', () => {
         foreground: '#0f172a',
         muted: '#64748b',
         panel: '#ffffff',
+        resolveColor: (color: string) => color,
       },
     })
 
@@ -134,7 +136,7 @@ describe('threat-chart-tooltip', () => {
     expect(tooltip).toContain('↓ Melee (incoming)')
     expect(tooltip).toContain('Amt: 700.00')
     expect(tooltip).toContain(
-      'Marker: <strong style="color:#ef4444">Boss damage</strong>',
+      'Marker: <strong style="color:light-dark(#DD3035, #ef4444)">Boss damage</strong>',
     )
     expect(tooltip).not.toContain('Threat:')
     expect(tooltip).not.toContain('Multipliers:')
@@ -149,6 +151,7 @@ describe('threat-chart-tooltip', () => {
         foreground: '#0f172a',
         muted: '#64748b',
         panel: '#ffffff',
+        resolveColor: (color: string) => color,
       },
     })
 
@@ -194,6 +197,7 @@ describe('threat-chart-tooltip', () => {
         foreground: '#0f172a',
         muted: '#64748b',
         panel: '#ffffff',
+        resolveColor: (color: string) => color,
       },
     })
 
@@ -218,7 +222,7 @@ describe('threat-chart-tooltip', () => {
     })
 
     expect(tooltip).toContain(
-      'Marker: <strong style="color:#3b82f6">Tranquil Air Totem</strong>',
+      'Marker: <strong style="color:light-dark(#2A71E3, #3b82f6)">Tranquil Air Totem</strong>',
     )
   })
 
@@ -230,6 +234,7 @@ describe('threat-chart-tooltip', () => {
         foreground: '#0f172a',
         muted: '#64748b',
         panel: '#ffffff',
+        resolveColor: (color: string) => color,
       },
     })
 
@@ -267,6 +272,7 @@ describe('threat-chart-tooltip', () => {
         foreground: '#0f172a',
         muted: '#64748b',
         panel: '#ffffff',
+        resolveColor: (color: string) => color,
       },
     })
 
@@ -300,6 +306,7 @@ describe('threat-chart-tooltip', () => {
         foreground: '#0f172a',
         muted: '#64748b',
         panel: '#ffffff',
+        resolveColor: (color: string) => color,
       },
     })
 
@@ -333,6 +340,7 @@ describe('threat-chart-tooltip', () => {
         foreground: '#0f172a',
         muted: '#64748b',
         panel: '#ffffff',
+        resolveColor: (color: string) => color,
       },
     })
 
@@ -429,6 +437,7 @@ describe('threat-chart-tooltip', () => {
         foreground: '#0f172a',
         muted: '#64748b',
         panel: '#ffffff',
+        resolveColor: (color: string) => color,
       },
     })
 
@@ -482,6 +491,7 @@ describe('threat-chart-tooltip', () => {
         foreground: '#0f172a',
         muted: '#64748b',
         panel: '#ffffff',
+        resolveColor: (color: string) => color,
       },
     })
 
@@ -527,6 +537,7 @@ describe('threat-chart-tooltip', () => {
         foreground: '#0f172a',
         muted: '#64748b',
         panel: '#ffffff',
+        resolveColor: (color: string) => color,
       },
     })
 

@@ -3,7 +3,11 @@
  */
 import type { EChartsOption } from 'echarts'
 
-import type { ThreatSeries, ThreatStateWindow } from '../types/app'
+import type {
+  ThreatSeries,
+  ThreatStateVisualKind,
+  ThreatStateWindow,
+} from '../types/app'
 
 export const stateColorByKind = {
   fixate: '#ffa500',
@@ -143,17 +147,17 @@ export function buildAuraMarkArea(
   }
 }
 
-/** Resolve point-in-time status label and color from state visual segments. */
+/** Resolve point-in-time status label and kind from state visual segments. */
 export function resolveThreatStateStatus(
   item: Pick<ThreatSeries, 'stateVisualSegments'>,
   timeMs: number,
-): { color: string | null; label: string } {
+): { kind: ThreatStateVisualKind | null; label: string } {
   const activeSegment = item.stateVisualSegments.find(
     (segment) => segment.startMs <= timeMs && timeMs < segment.endMs,
   )
   if (!activeSegment) {
     return {
-      color: null,
+      kind: null,
       label: 'Normal',
     }
   }
@@ -165,7 +169,7 @@ export function resolveThreatStateStatus(
       : baseLabel
 
   return {
-    color: stateColorByKind[activeSegment.kind],
+    kind: activeSegment.kind,
     label,
   }
 }

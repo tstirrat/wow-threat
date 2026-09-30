@@ -6,6 +6,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  color-scheme: light;
   --background: oklch(0.97 0.002 286);
   --foreground: oklch(0.141 0.005 285.823);
   --card: oklch(1 0 0);
@@ -38,9 +39,23 @@
   --sidebar-accent-foreground: oklch(0.98 0.02 201);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.705 0.015 286.067);
+  /* Class colors darkened to ~4.5:1 on white (Warcraft Wiki light-skin set) */
+  --class-warrior: #9b6c41;
+  --class-paladin: #c44884;
+  --class-hunter: #608029;
+  --class-rogue: #8e7318;
+  --class-death-knight: #c41e3a;
+  --class-shaman: #0070dd;
+  --class-mage: #08809c;
+  --class-warlock: #7366d6;
+  --class-monk: #00884f;
+  --class-druid: #cb4f00;
+  --class-demon-hunter: #a330c9;
+  --class-evoker: #00634c;
 }
 
 .dark {
+  color-scheme: dark;
   --background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.21 0.006 285.885);
@@ -72,6 +87,19 @@
   --sidebar-accent-foreground: oklch(0.3 0.05 230);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
+  /* Official in-game class colors */
+  --class-warrior: #c79c6e;
+  --class-paladin: #f58cba;
+  --class-hunter: #abd473;
+  --class-rogue: #fff569;
+  --class-death-knight: #c41f3b;
+  --class-shaman: #0070de;
+  --class-mage: #69ccf0;
+  --class-warlock: #9482c9;
+  --class-monk: #00ff98;
+  --class-druid: #ff7d0a;
+  --class-demon-hunter: #a330c9;
+  --class-evoker: #33937f;
 }
 
 @theme inline {

@@ -43,6 +43,7 @@ function openModifierTooltip(buttonLabel: string): HTMLElement {
   return screen.getByRole('tooltip')
 }
 
+// jsdom resolves light-dark() text colors to their light-theme value.
 describe('PlayerSummaryTable', () => {
   it('renders warcraft logs link next to focused actor name when provided', () => {
     render(
@@ -164,10 +165,10 @@ describe('PlayerSummaryTable', () => {
     )
 
     const healRow = screen.getByRole('row', { name: /Wild Growth/ })
-    expect(healRow).toHaveStyle({ color: '#22c55e' })
+    expect(healRow).toHaveStyle({ color: '#05873B' })
 
     const fixateRow = screen.getByRole('row', { name: /Taunt/ })
-    expect(fixateRow).toHaveStyle({ color: '#ffa500' })
+    expect(fixateRow).toHaveStyle({ color: '#A36806' })
 
     const fixateCells = within(fixateRow).getAllByRole('cell')
     expect(fixateCells[4]).toBeEmptyDOMElement()
@@ -280,14 +281,16 @@ describe('PlayerSummaryTable', () => {
     const tooltip = openModifierTooltip('x1.37')
     expect(within(tooltip).getByText('Modifier breakdown')).toBeInTheDocument()
     expect(within(tooltip).getByText('Ability school:')).toBeInTheDocument()
-    expect(within(tooltip).getByText('holy')).toHaveStyle({ color: '#FFE680' })
+    expect(within(tooltip).getByText('holy')).toHaveStyle({
+      color: '#897300',
+    })
     expect(within(tooltip).getByText('Multipliers')).toHaveClass('text-right')
     const tooltipText = tooltip.textContent ?? ''
     expect(tooltipText.indexOf('Total')).toBeGreaterThan(
       tooltipText.indexOf('Defensive Stance'),
     )
     expect(screen.getByRole('row', { name: /Shield Slam/ })).toHaveStyle({
-      color: '#FFE680',
+      color: '#897300',
     })
   })
 
@@ -372,9 +375,9 @@ describe('PlayerSummaryTable', () => {
     )
 
     const healRow = screen.getByRole('row', { name: /Flash Heal/ })
-    expect(healRow).toHaveStyle({ color: '#22c55e' })
+    expect(healRow).toHaveStyle({ color: '#05873B' })
     expect(screen.getByRole('button', { name: 'x1.20' })).not.toHaveStyle({
-      color: '#FF8000',
+      color: '#B95B00',
     })
   })
 
@@ -411,9 +414,9 @@ describe('PlayerSummaryTable', () => {
     )
 
     const healRow = screen.getByRole('row', { name: /Death Strike/ })
-    expect(healRow).toHaveStyle({ color: '#22c55e' })
+    expect(healRow).toHaveStyle({ color: '#05873B' })
     expect(screen.getByRole('button', { name: 'x1.20' })).not.toHaveStyle({
-      color: '#FFFF00',
+      color: '#797902',
     })
     expect(screen.getByRole('button', { name: 'x1.20' })).not.toHaveClass(
       'text-foreground',
@@ -499,13 +502,13 @@ describe('PlayerSummaryTable', () => {
     expect(holySummaryModifier).not.toBeNull()
 
     expect(genericSummaryModifier).not.toHaveStyle({
-      color: '#FFFF00',
+      color: '#797902',
     })
     expect(physicalSummaryModifier).not.toHaveStyle({
-      color: '#FFFF00',
+      color: '#797902',
     })
     expect(holySummaryModifier).toHaveStyle({
-      color: '#FFE680',
+      color: '#897300',
     })
 
     const tooltip = openModifierTooltip('x1.37')
@@ -524,13 +527,13 @@ describe('PlayerSummaryTable', () => {
     expect(holyBreakdownModifier).not.toBeNull()
 
     expect(genericBreakdownModifier).not.toHaveStyle({
-      color: '#FFFF00',
+      color: '#797902',
     })
     expect(physicalBreakdownModifier).not.toHaveStyle({
-      color: '#FFFF00',
+      color: '#797902',
     })
     expect(holyBreakdownModifier).toHaveStyle({
-      color: '#FFE680',
+      color: '#897300',
     })
   })
 
@@ -561,7 +564,7 @@ describe('PlayerSummaryTable', () => {
     )
 
     expect(screen.getByRole('row', { name: /Howling Blast/ })).toHaveStyle({
-      color: '#80C6FF',
+      color: '#347AAF',
     })
   })
 
@@ -605,12 +608,12 @@ describe('PlayerSummaryTable', () => {
     )
 
     expect(screen.getByRole('row', { name: /Heroic Strike/ })).not.toHaveStyle({
-      color: '#FFFF00',
+      color: '#797902',
     })
     expect(
       screen.getByRole('row', { name: /Bloodrage \(resourcechange\)/ }),
     ).not.toHaveStyle({
-      color: '#FF8000',
+      color: '#B95B00',
     })
   })
 

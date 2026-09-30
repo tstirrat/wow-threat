@@ -17,7 +17,6 @@ import { useThreatChartSeriesData } from '../hooks/use-threat-chart-series-data'
 import { useThreatChartThemeColors } from '../hooks/use-threat-chart-theme-colors'
 import { useThreatChartVisiblePlayers } from '../hooks/use-threat-chart-visible-players'
 import { useThreatChartZoom } from '../hooks/use-threat-chart-zoom'
-import { resolveCssColor } from '../lib/class-colors'
 import { formatTimelineTime } from '../lib/format'
 import { resolveSeriesWindowBounds } from '../lib/threat-aggregation'
 import { resolvePointSize } from '../lib/threat-chart-point-size'
@@ -140,10 +139,17 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     onPlayheadChange: onPlayheadChange ?? (() => {}),
   })
 
+  // Canvas can't read CSS variables, so resolve theme-aware class colors here;
+  // themeColors changes identity on theme change, which re-resolves them.
+  const canvasVisibleSeries = visibleSeries.map((item) => ({
+    ...item,
+    color: themeColors.resolveColor(item.color),
+  }))
+
   const { actorIdByLabel, chartSeries, threatStateVisualMaps } =
     useThreatChartSeriesData({
       series,
-      visibleSeries,
+      visibleSeries: canvasVisibleSeries,
       showEnergizeEvents,
       bossDamageMode,
     })
@@ -382,7 +388,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
       return {
         name: item.name,
         type: 'line',
-        color: resolveCssColor(item.color),
+        color: item.color,
         step: 'end',
         smooth: false,
         symbol: 'circle',
@@ -394,16 +400,16 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         triggerLineEvent: true,
         animation: false,
         itemStyle: {
-          color: resolveCssColor(item.color),
-          borderColor: resolveCssColor(item.color),
+          color: item.color,
+          borderColor: item.color,
         },
         emphasis: {
           disabled: isReplayMode,
           focus: 'series',
           scale: true,
           itemStyle: {
-            color: resolveCssColor(item.color),
-            borderColor: resolveCssColor(item.color),
+            color: item.color,
+            borderColor: item.color,
           },
           lineStyle: {
             width: 3,

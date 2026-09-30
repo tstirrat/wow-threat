@@ -35,17 +35,17 @@ export function ThemeProvider({
 
     root.classList.remove('light', 'dark')
 
-    if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-        .matches
-        ? 'dark'
-        : 'light'
+    const resolvedTheme =
+      theme === 'system'
+        ? window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light'
+        : theme
 
-      root.classList.add(systemTheme)
-      return
-    }
-
-    root.classList.add(theme)
+    root.classList.add(resolvedTheme)
+    root.style.colorScheme = resolvedTheme
+    // Canvas consumers (threat chart) re-read CSS variables on this event.
+    window.dispatchEvent(new CustomEvent('themechange'))
   }, [theme])
 
   const value = {
