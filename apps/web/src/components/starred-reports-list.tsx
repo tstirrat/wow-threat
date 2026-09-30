@@ -30,7 +30,7 @@ export const StarredReportsList: FC<StarredReportsListProps> = ({
 }) => {
   if (reports.length === 0) {
     return (
-      <Card className="bg-panel" size="sm">
+      <Card size="sm">
         <CardContent className="space-y-1">
           <p className="font-medium text-muted-foreground">
             No starred reports
@@ -67,7 +67,7 @@ export const StarredReportsList: FC<StarredReportsListProps> = ({
 
         return (
           <li key={report.reportId}>
-            <Card className="bg-panel" size="sm">
+            <Card size="sm">
               <CardContent className="space-y-1">
                 <div className="flex items-start justify-between gap-3">
                   <Link

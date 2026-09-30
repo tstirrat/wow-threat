@@ -114,8 +114,8 @@ export const LandingPage: FC = () => {
       <div className="space-y-5">
         {!isReportHintDismissed ? (
           <section aria-label="Report input guidance">
-            <div className="relative overflow-hidden rounded-lg border border-border/80 bg-gradient-to-r from-panel via-panel to-primary/5 p-4 sm:p-5">
-              <div className="pointer-events-none absolute left-10 top-0 h-4 w-4 -translate-y-1/2 rotate-45 border-l border-t border-border/80 bg-panel" />
+            <div className="relative overflow-hidden rounded-lg border border-border/80 bg-gradient-to-r from-card via-card to-primary/5 p-4 sm:p-5">
+              <div className="pointer-events-none absolute left-10 top-0 h-4 w-4 -translate-y-1/2 rotate-45 border-l border-t border-border/80 bg-card" />
               <Button
                 aria-label="Dismiss report input guidance"
                 className="absolute right-2 top-2"

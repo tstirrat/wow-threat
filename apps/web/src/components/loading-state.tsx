@@ -11,9 +11,9 @@ export type LoadingStateProps = {
 
 export const LoadingState: FC<LoadingStateProps> = ({ message }) => {
   return (
-    <Card aria-live="polite" className="bg-panel shadow-sm" role="status">
+    <Card aria-live="polite" className="shadow-sm" role="status">
       <CardContent>
-        <p className="text-sm text-muted">{message}</p>
+        <p className="text-sm text-muted-foreground">{message}</p>
       </CardContent>
     </Card>
   )

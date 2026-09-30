@@ -231,13 +231,13 @@ export const RootLayout: FC = () => {
   }
 
   return (
-    <div className="min-h-screen text-text">
+    <div className="min-h-screen text-foreground">
       <FightPageKeyboardShortcutsOverlay
         hotkeys={hotkeys}
         isOpen={isKeyboardOverlayOpen}
         onClose={closeKeyboardOverlay}
       />
-      <header className="border-b border-border bg-panel">
+      <header className="border-b border-border bg-card">
         <div className="mx-auto grid w-full max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3">
           <h1 className="text-lg font-semibold">
             <Link

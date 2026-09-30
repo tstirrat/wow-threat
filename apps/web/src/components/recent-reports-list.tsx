@@ -91,7 +91,7 @@ export const RecentReportsList: FC<RecentReportsListProps> = ({
 
         return (
           <li key={report.reportId}>
-            <Card className="bg-panel" size="sm">
+            <Card size="sm">
               <CardContent className="space-y-1">
                 <div className="flex items-start justify-between gap-3">
                   {isDisabled ? (

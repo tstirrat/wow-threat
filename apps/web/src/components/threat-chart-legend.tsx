@@ -48,7 +48,7 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
   return (
     <Card
       aria-label="Threat legend"
-      className="min-h-0 max-h-[560px] bg-panel"
+      className="min-h-0 max-h-[560px]"
       size="sm"
     >
       <CardHeader className="border-b border-border">
@@ -119,7 +119,9 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
                         aria-label={`Toggle ${label}`}
                         aria-pressed={isVisible}
                         className={`h-auto min-w-0 flex-1 cursor-pointer justify-start gap-2 py-1 text-left text-xs ${
-                          isVisible ? 'text-foreground' : 'text-muted'
+                          isVisible
+                            ? 'text-foreground'
+                            : 'text-muted-foreground'
                         }`}
                         title="Click to toggle visibility. Double-click to isolate."
                         type="button"

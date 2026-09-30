@@ -23,7 +23,7 @@ export const StarredGuildReportsList: FC<StarredGuildReportsListProps> = ({
 }) => {
   if (reports.length === 0) {
     return (
-      <Card className="bg-panel" size="sm">
+      <Card size="sm">
         <CardContent className="space-y-1">
           <p className="font-medium text-muted-foreground">
             No guild reports yet
@@ -51,7 +51,7 @@ export const StarredGuildReportsList: FC<StarredGuildReportsListProps> = ({
 
         return (
           <li key={report.reportId}>
-            <Card className="bg-panel" size="sm">
+            <Card size="sm">
               <CardContent className="space-y-1">
                 <Link
                   className={cn(

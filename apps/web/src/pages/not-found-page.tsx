@@ -17,7 +17,7 @@ export const NotFoundPage: FC = () => {
   return (
     <>
       <title>Page Not Found | WOW Threat</title>
-      <Card className="bg-panel shadow-sm">
+      <Card className="shadow-sm">
         <CardHeader>
           <CardTitle className="text-lg">Page not found</CardTitle>
           <CardDescription>The requested route does not exist.</CardDescription>

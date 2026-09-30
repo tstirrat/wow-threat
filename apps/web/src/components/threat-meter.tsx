@@ -86,7 +86,7 @@ export const ThreatMeter: FC<ThreatMeterProps> = ({
 
   return (
     <Card
-      className="min-h-0 max-h-[560px] bg-panel"
+      className="min-h-0 max-h-[560px]"
       data-size="sm"
       data-testid="threat-meter"
     >

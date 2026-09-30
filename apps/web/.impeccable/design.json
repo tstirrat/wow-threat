@@ -1,0 +1,592 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-30T09:40:39.800Z",
+  "title": "Design System: WOW Threat",
+  "extensions": {
+    "colorMeta": {
+      "arcane-cyan": {
+        "role": "primary",
+        "displayName": "Arcane Cyan",
+        "canonical": "oklch(0.61 0.11 222)",
+        "tonalRamp": [
+          "oklch(0.15 0.11 222)",
+          "oklch(0.27 0.11 222)",
+          "oklch(0.39 0.11 222)",
+          "oklch(0.51 0.11 222)",
+          "oklch(0.63 0.11 222)",
+          "oklch(0.75 0.11 222)",
+          "oklch(0.86 0.11 222)",
+          "oklch(0.95 0.11 222)"
+        ]
+      },
+      "arcane-cyan-dark": {
+        "role": "primary",
+        "displayName": "Arcane Cyan (dark theme)",
+        "canonical": "oklch(0.71 0.13 215)",
+        "tonalRamp": [
+          "oklch(0.15 0.13 215)",
+          "oklch(0.27 0.13 215)",
+          "oklch(0.39 0.13 215)",
+          "oklch(0.51 0.13 215)",
+          "oklch(0.63 0.13 215)",
+          "oklch(0.75 0.13 215)",
+          "oklch(0.86 0.13 215)",
+          "oklch(0.95 0.13 215)"
+        ]
+      },
+      "arcane-cyan-ink": {
+        "role": "primary",
+        "displayName": "Arcane Cyan Ink",
+        "canonical": "oklch(0.98 0.02 201)",
+        "tonalRamp": [
+          "oklch(0.15 0.02 201)",
+          "oklch(0.27 0.02 201)",
+          "oklch(0.39 0.02 201)",
+          "oklch(0.51 0.02 201)",
+          "oklch(0.63 0.02 201)",
+          "oklch(0.75 0.02 201)",
+          "oklch(0.86 0.02 201)",
+          "oklch(0.95 0.02 201)"
+        ]
+      },
+      "arcane-cyan-ink-dark": {
+        "role": "primary",
+        "displayName": "Arcane Cyan Ink (dark theme)",
+        "canonical": "oklch(0.3 0.05 230)",
+        "tonalRamp": [
+          "oklch(0.15 0.05 230)",
+          "oklch(0.27 0.05 230)",
+          "oklch(0.39 0.05 230)",
+          "oklch(0.51 0.05 230)",
+          "oklch(0.63 0.05 230)",
+          "oklch(0.75 0.05 230)",
+          "oklch(0.86 0.05 230)",
+          "oklch(0.95 0.05 230)"
+        ]
+      },
+      "scope-black": {
+        "role": "neutral",
+        "displayName": "Scope Black",
+        "canonical": "oklch(0.141 0.005 285.823)",
+        "tonalRamp": [
+          "oklch(0.15 0.005 285.8)",
+          "oklch(0.27 0.005 285.8)",
+          "oklch(0.39 0.005 285.8)",
+          "oklch(0.51 0.005 285.8)",
+          "oklch(0.63 0.005 285.8)",
+          "oklch(0.75 0.005 285.8)",
+          "oklch(0.86 0.005 285.8)",
+          "oklch(0.95 0.005 285.8)"
+        ]
+      },
+      "phosphor-panel": {
+        "role": "neutral",
+        "displayName": "Phosphor Panel",
+        "canonical": "oklch(0.21 0.006 285.885)",
+        "tonalRamp": [
+          "oklch(0.15 0.006 285.9)",
+          "oklch(0.27 0.006 285.9)",
+          "oklch(0.39 0.006 285.9)",
+          "oklch(0.51 0.006 285.9)",
+          "oklch(0.63 0.006 285.9)",
+          "oklch(0.75 0.006 285.9)",
+          "oklch(0.86 0.006 285.9)",
+          "oklch(0.95 0.006 285.9)"
+        ]
+      },
+      "graphite-well": {
+        "role": "neutral",
+        "displayName": "Graphite Well",
+        "canonical": "oklch(0.274 0.006 286.033)",
+        "tonalRamp": [
+          "oklch(0.15 0.006 286)",
+          "oklch(0.27 0.006 286)",
+          "oklch(0.39 0.006 286)",
+          "oklch(0.51 0.006 286)",
+          "oklch(0.63 0.006 286)",
+          "oklch(0.75 0.006 286)",
+          "oklch(0.86 0.006 286)",
+          "oklch(0.95 0.006 286)"
+        ]
+      },
+      "trace-white": {
+        "role": "neutral",
+        "displayName": "Trace White",
+        "canonical": "oklch(0.985 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.27 0 0)",
+          "oklch(0.39 0 0)",
+          "oklch(0.51 0 0)",
+          "oklch(0.63 0 0)",
+          "oklch(0.75 0 0)",
+          "oklch(0.86 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "oklch(1 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.27 0 0)",
+          "oklch(0.39 0 0)",
+          "oklch(0.51 0 0)",
+          "oklch(0.63 0 0)",
+          "oklch(0.75 0 0)",
+          "oklch(0.86 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "bench-zinc": {
+        "role": "neutral",
+        "displayName": "Bench Zinc",
+        "canonical": "oklch(0.97 0.002 286)",
+        "tonalRamp": [
+          "oklch(0.15 0.002 286)",
+          "oklch(0.27 0.002 286)",
+          "oklch(0.39 0.002 286)",
+          "oklch(0.51 0.002 286)",
+          "oklch(0.63 0.002 286)",
+          "oklch(0.75 0.002 286)",
+          "oklch(0.86 0.002 286)",
+          "oklch(0.95 0.002 286)"
+        ]
+      },
+      "zinc-mist": {
+        "role": "neutral",
+        "displayName": "Zinc Mist",
+        "canonical": "oklch(0.967 0.001 286.375)",
+        "tonalRamp": [
+          "oklch(0.15 0.001 286.4)",
+          "oklch(0.27 0.001 286.4)",
+          "oklch(0.39 0.001 286.4)",
+          "oklch(0.51 0.001 286.4)",
+          "oklch(0.63 0.001 286.4)",
+          "oklch(0.75 0.001 286.4)",
+          "oklch(0.86 0.001 286.4)",
+          "oklch(0.95 0.001 286.4)"
+        ]
+      },
+      "graticule": {
+        "role": "neutral",
+        "displayName": "Graticule",
+        "canonical": "oklch(0.92 0.004 286.32)",
+        "tonalRamp": [
+          "oklch(0.15 0.004 286.3)",
+          "oklch(0.27 0.004 286.3)",
+          "oklch(0.39 0.004 286.3)",
+          "oklch(0.51 0.004 286.3)",
+          "oklch(0.63 0.004 286.3)",
+          "oklch(0.75 0.004 286.3)",
+          "oklch(0.86 0.004 286.3)",
+          "oklch(0.95 0.004 286.3)"
+        ]
+      },
+      "graticule-dark": {
+        "role": "neutral",
+        "displayName": "Graticule (dark theme)",
+        "canonical": "oklch(1 0 0 / 10%)"
+      },
+      "field-stroke-dark": {
+        "role": "neutral",
+        "displayName": "Field Stroke (dark theme)",
+        "canonical": "oklch(1 0 0 / 15%)"
+      },
+      "slate-label": {
+        "role": "neutral",
+        "displayName": "Slate Label",
+        "canonical": "oklch(0.53 0.016 286)",
+        "tonalRamp": [
+          "oklch(0.15 0.016 285.9)",
+          "oklch(0.27 0.016 285.9)",
+          "oklch(0.39 0.016 285.9)",
+          "oklch(0.51 0.016 285.9)",
+          "oklch(0.63 0.016 285.9)",
+          "oklch(0.75 0.016 285.9)",
+          "oklch(0.86 0.016 285.9)",
+          "oklch(0.95 0.016 285.9)"
+        ]
+      },
+      "ash-label": {
+        "role": "neutral",
+        "displayName": "Ash Label",
+        "canonical": "oklch(0.705 0.015 286.067)",
+        "tonalRamp": [
+          "oklch(0.15 0.015 286.1)",
+          "oklch(0.27 0.015 286.1)",
+          "oklch(0.39 0.015 286.1)",
+          "oklch(0.51 0.015 286.1)",
+          "oklch(0.63 0.015 286.1)",
+          "oklch(0.75 0.015 286.1)",
+          "oklch(0.86 0.015 286.1)",
+          "oklch(0.95 0.015 286.1)"
+        ]
+      },
+      "fault-red": {
+        "role": "error",
+        "displayName": "Fault Red",
+        "canonical": "oklch(0.577 0.245 27.325)",
+        "tonalRamp": [
+          "oklch(0.15 0.2 27.3)",
+          "oklch(0.27 0.2 27.3)",
+          "oklch(0.39 0.2 27.3)",
+          "oklch(0.51 0.2 27.3)",
+          "oklch(0.63 0.2 27.3)",
+          "oklch(0.75 0.2 27.3)",
+          "oklch(0.86 0.2 27.3)",
+          "oklch(0.95 0.2 27.3)"
+        ]
+      },
+      "fault-red-dark": {
+        "role": "error",
+        "displayName": "Fault Red (dark theme)",
+        "canonical": "oklch(0.704 0.191 22.216)",
+        "tonalRamp": [
+          "oklch(0.15 0.19 22.2)",
+          "oklch(0.27 0.19 22.2)",
+          "oklch(0.39 0.19 22.2)",
+          "oklch(0.51 0.19 22.2)",
+          "oklch(0.63 0.19 22.2)",
+          "oklch(0.75 0.19 22.2)",
+          "oklch(0.86 0.19 22.2)",
+          "oklch(0.95 0.19 22.2)"
+        ]
+      },
+      "class-warrior": {
+        "role": "data",
+        "displayName": "Warrior Tan",
+        "canonical": "#C79C6E"
+      },
+      "class-paladin": {
+        "role": "data",
+        "displayName": "Paladin Pink",
+        "canonical": "#F58CBA"
+      },
+      "class-hunter": {
+        "role": "data",
+        "displayName": "Hunter Green",
+        "canonical": "#ABD473"
+      },
+      "class-rogue": {
+        "role": "data",
+        "displayName": "Rogue Yellow",
+        "canonical": "#FFF569"
+      },
+      "class-shaman": {
+        "role": "data",
+        "displayName": "Shaman Blue",
+        "canonical": "#0070DE"
+      },
+      "class-mage": {
+        "role": "data",
+        "displayName": "Mage Sky",
+        "canonical": "#69CCF0"
+      },
+      "class-warlock": {
+        "role": "data",
+        "displayName": "Warlock Violet",
+        "canonical": "#9482C9"
+      },
+      "class-druid": {
+        "role": "data",
+        "displayName": "Druid Orange",
+        "canonical": "#FF7D0A"
+      },
+      "class-death-knight": {
+        "role": "data",
+        "displayName": "Death Knight Crimson",
+        "canonical": "#C41F3B"
+      },
+      "class-monk": {
+        "role": "data",
+        "displayName": "Monk Jade",
+        "canonical": "#00FF98"
+      },
+      "class-demon-hunter": {
+        "role": "data",
+        "displayName": "Demon Hunter Purple",
+        "canonical": "#A330C9"
+      },
+      "class-evoker": {
+        "role": "data",
+        "displayName": "Evoker Teal",
+        "canonical": "#33937F"
+      },
+      "class-unknown": {
+        "role": "data",
+        "displayName": "Unknown Actor Slate",
+        "canonical": "#94a3b8"
+      },
+      "mark-fixate": {
+        "role": "data",
+        "displayName": "Fixate Orange",
+        "canonical": "#ffa500"
+      },
+      "mark-invulnerable": {
+        "role": "data",
+        "displayName": "Invulnerable Green",
+        "canonical": "#00ff00"
+      },
+      "mark-aggro-loss": {
+        "role": "data",
+        "displayName": "Aggro Loss Yellow",
+        "canonical": "#ffff00"
+      },
+      "mark-death": {
+        "role": "data",
+        "displayName": "Death Red",
+        "canonical": "#dc2626"
+      },
+      "mark-boss-melee": {
+        "role": "data",
+        "displayName": "Boss Melee Red",
+        "canonical": "#ef4444"
+      },
+      "mark-totem": {
+        "role": "data",
+        "displayName": "Totem Blue",
+        "canonical": "#3b82f6"
+      },
+      "mark-playhead": {
+        "role": "data",
+        "displayName": "Playhead Gold",
+        "canonical": "#facc15"
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "App title and page-level states; the largest type in the product."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card, section and overlay titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default running size for content, controls and menus."
+      },
+      "body-strong": {
+        "displayName": "Body Strong",
+        "purpose": "Button labels and legend player names."
+      },
+      "eyebrow": {
+        "displayName": "Eyebrow",
+        "purpose": "Uppercase group labels inside cards."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Threat meter rows, badges, key badges; tabular numbers."
+      }
+    },
+    "shadows": [
+      {
+        "name": "floating",
+        "value": "0 4px 6px -1px rgb(0 0 0 / .1), 0 2px 4px -2px rgb(0 0 0 / .1)",
+        "purpose": "Dropdown menus, popovers and the command palette only."
+      },
+      {
+        "name": "lifted",
+        "value": "0 10px 15px -3px rgb(0 0 0 / .1), 0 4px 6px -4px rgb(0 0 0 / .1)",
+        "purpose": "Full overlays and dialogs."
+      },
+      {
+        "name": "card-ring",
+        "value": "0 0 0 1px color-mix(in oklch, var(--foreground) 10%, transparent)",
+        "purpose": "Card edge in dark mode, and nested cards in either theme; top-level light cards rely on the tonal step instead."
+      },
+      {
+        "name": "focus-inset",
+        "value": "inset 0 0 0 1px #facc15",
+        "purpose": "Focused threat meter row (state, not depth)."
+      }
+    ],
+    "motion": [
+      {
+        "name": "control-transition",
+        "value": "all 150ms cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Default Tailwind transition on buttons, inputs and header controls."
+      },
+      {
+        "name": "overlay-enter-exit",
+        "value": "tw-animate-css fade + zoom-95",
+        "purpose": "Popover, dropdown and tooltip open and close."
+      },
+      {
+        "name": "hint-bounce",
+        "value": "motion-safe:animate-bounce",
+        "purpose": "Landing arrow pointing at the report input; respects reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "container",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single Arcane Cyan action on a surface.",
+      "html": "<button class=\"ds-btn-primary\">Load report</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:4px;height:28px;padding:0 8px;border-radius:calc(var(--radius) - 2px);border:1px solid transparent;font:500 12px/1.625 \"Inter Variable\",sans-serif;cursor:pointer;transition:all .15s;outline:none;background:var(--primary);color:var(--primary-foreground);}.ds-btn-primary:hover{background:color-mix(in oklch, var(--primary) 80%, transparent);}.ds-btn-primary:focus-visible{border-color:var(--ring);box-shadow:0 0 0 2px color-mix(in oklch, var(--ring) 30%, transparent);}.ds-btn-primary:disabled{opacity:.5;pointer-events:none;}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Default header control: sign in, account and recent-reports menus.",
+      "html": "<button class=\"ds-btn-outline\">Sign in with WCL</button>",
+      "css": ".ds-btn-outline{display:inline-flex;align-items:center;justify-content:center;gap:4px;height:28px;padding:0 8px;border-radius:calc(var(--radius) - 2px);border:1px solid transparent;font:500 12px/1.625 \"Inter Variable\",sans-serif;cursor:pointer;transition:all .15s;outline:none;background:transparent;border-color:var(--border);color:var(--foreground);}.ds-btn-outline:hover{background:color-mix(in oklch, var(--input) 50%, transparent);}.ds-btn-outline:focus-visible{border-color:var(--ring);box-shadow:0 0 0 2px color-mix(in oklch, var(--ring) 30%, transparent);}"
+    },
+    {
+      "name": "Ghost Icon Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Borderless icon action: dismiss, refresh, legend toggles.",
+      "html": "<button class=\"ds-btn-ghost\" aria-label=\"Refresh\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8\"/><path d=\"M21 3v5h-5\"/><path d=\"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16\"/><path d=\"M8 16H3v5\"/></svg></button>",
+      "css": ".ds-btn-ghost{display:inline-flex;align-items:center;justify-content:center;gap:4px;height:28px;padding:0 8px;border-radius:calc(var(--radius) - 2px);border:1px solid transparent;font:500 12px/1.625 \"Inter Variable\",sans-serif;cursor:pointer;transition:all .15s;outline:none;width:24px;height:24px;padding:0;background:transparent;color:var(--foreground);}.ds-btn-ghost:hover{background:var(--muted);}.ds-btn-ghost:focus-visible{border-color:var(--ring);box-shadow:0 0 0 2px color-mix(in oklch, var(--ring) 30%, transparent);}"
+    },
+    {
+      "name": "Destructive Button",
+      "kind": "button",
+      "refersTo": "button-destructive",
+      "description": "Tinted Fault Red, never a solid block.",
+      "html": "<button class=\"ds-btn-destructive\">Sign out</button>",
+      "css": ".ds-btn-destructive{display:inline-flex;align-items:center;justify-content:center;gap:4px;height:28px;padding:0 8px;border-radius:calc(var(--radius) - 2px);border:1px solid transparent;font:500 12px/1.625 \"Inter Variable\",sans-serif;cursor:pointer;transition:all .15s;outline:none;background:color-mix(in oklch, var(--destructive) 10%, transparent);color:var(--destructive);}.ds-btn-destructive:hover{background:color-mix(in oklch, var(--destructive) 20%, transparent);}.ds-btn-destructive:focus-visible{border-color:var(--ring);box-shadow:0 0 0 2px color-mix(in oklch, var(--ring) 30%, transparent);}"
+    },
+    {
+      "name": "Report URL Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Compact 28px field; the header report search is the main way in (⌘/Ctrl+O).",
+      "html": "<label class=\"ds-input-wrap\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><input class=\"ds-input\" placeholder=\"Paste a Warcraft Logs report URL\"></label>",
+      "css": ".ds-input-wrap{display:flex;align-items:center;gap:6px;color:var(--muted-foreground);width:320px;}.ds-input{height:28px;width:100%;padding:2px 8px;border-radius:calc(var(--radius) - 2px);border:1px solid var(--input);background:color-mix(in oklch, var(--input) 25%, transparent);color:var(--foreground);font:400 12px/1.625 \"Inter Variable\",sans-serif;outline:none;transition:border-color .15s,box-shadow .15s;}.ds-input::placeholder{color:var(--muted-foreground);}.ds-input:focus-visible{border-color:var(--ring);box-shadow:0 0 0 2px color-mix(in oklch, var(--ring) 30%, transparent);}"
+    },
+    {
+      "name": "Section Card",
+      "kind": "card",
+      "refersTo": "card-dark",
+      "description": "Tonal panel, one step above the page, with a title and a muted subtitle.",
+      "html": "<section class=\"ds-card\"><header><div class=\"ds-card-title\">Recent logs</div><div class=\"ds-card-sub\">Starred reports are pinned first.</div></header><div class=\"ds-eyebrow\">Starred</div><div class=\"ds-card-body\">Naxxramas — Thu raid</div></section>",
+      "css": ".ds-card{width:300px;display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:var(--radius);background:var(--card);color:var(--card-foreground);box-shadow:0 0 0 1px color-mix(in oklch, var(--foreground) 10%, transparent);font:400 12px/1.625 \"Inter Variable\",sans-serif;}.ds-card-title{font-size:14px;font-weight:500;}.ds-card-sub{color:var(--muted-foreground);}.ds-eyebrow{font-size:12px;font-weight:600;letter-spacing:.025em;text-transform:uppercase;color:var(--muted-foreground);}"
+    },
+    {
+      "name": "Badge + Key badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Pill badge and the shortcut key badges.",
+      "html": "<div class=\"ds-row\"><span class=\"ds-badge\">SoD</span><span class=\"ds-kbd\">⌘</span><span class=\"ds-plus\">+</span><span class=\"ds-kbd\">O</span></div>",
+      "css": ".ds-row{display:flex;align-items:center;gap:6px;font-family:\"Inter Variable\",sans-serif;}.ds-badge{display:inline-flex;align-items:center;height:20px;padding:2px 8px;border-radius:9999px;background:var(--primary);color:var(--primary-foreground);font-size:10px;font-weight:500;}.ds-kbd{display:inline-flex;align-items:center;justify-content:center;height:20px;min-width:20px;padding:0 4px;border-radius:2px;background:var(--muted);color:var(--muted-foreground);font-size:10px;font-weight:500;}.ds-plus{font-size:12px;color:var(--muted-foreground);}"
+    },
+    {
+      "name": "Threat Meter",
+      "kind": "custom",
+      "refersTo": "threat-meter-row",
+      "description": "Ranked 20px rows: a class-color bar behind the name, a tabular value on the right, and a gold inset ring on the focused row.",
+      "html": "<ul class=\"ds-meter\"><li class=\"ds-meter-row is-focused\"><span class=\"ds-bar\" style=\"width:100%;background:#C79C6E\"></span><span class=\"ds-name\">Tankbro</span><span class=\"ds-val\">412,880</span></li><li class=\"ds-meter-row\"><span class=\"ds-bar\" style=\"width:78%;background:#69CCF0\"></span><span class=\"ds-name\">Frostie</span><span class=\"ds-val\">322,104</span></li><li class=\"ds-meter-row\"><span class=\"ds-bar\" style=\"width:64%;background:#FFF569\"></span><span class=\"ds-name\">Stabsworth</span><span class=\"ds-val\">264,511</span></li><li class=\"ds-meter-row is-filtered\"><span class=\"ds-bar\" style=\"width:31%;background:#FF7D0A\"></span><span class=\"ds-name\">Treehug</span><span class=\"ds-val\">128,040</span></li></ul>",
+      "css": ".ds-meter{list-style:none;margin:0;padding:8px;width:260px;display:flex;flex-direction:column;gap:2px;background:var(--card);border-radius:var(--radius);font-family:\"Inter Variable\",sans-serif;}.ds-meter-row{position:relative;display:flex;align-items:center;height:20px;border-radius:calc(var(--radius) - 4px);}.ds-meter-row.is-focused{box-shadow:inset 0 0 0 1px #facc15;}.ds-meter-row.is-filtered{opacity:.4;}.ds-bar{position:absolute;inset:0 auto 0 0;border-radius:calc(var(--radius) - 4px);opacity:.35;}.ds-name{position:relative;z-index:1;padding-left:4px;font-size:10px;font-weight:500;line-height:1;color:var(--foreground);}.ds-val{position:relative;z-index:1;margin-left:auto;padding-right:4px;font-size:10px;line-height:1;color:var(--muted-foreground);font-variant-numeric:tabular-nums;}"
+    },
+    {
+      "name": "Legend Row",
+      "kind": "custom",
+      "refersTo": "legend-row",
+      "description": "Player toggle with a 2px class-color line swatch that echoes the chart trace.",
+      "html": "<ul class=\"ds-legend\"><li><button class=\"ds-legend-row\"><span class=\"ds-swatch\" style=\"border-color:#C79C6E\"></span>Tankbro</button></li><li><button class=\"ds-legend-row\"><span class=\"ds-swatch\" style=\"border-color:var(--foreground)\"></span>Holyhealz</button></li><li><button class=\"ds-legend-row is-hidden\"><span class=\"ds-swatch\" style=\"border-color:#9482C9\"></span>Dotsalot</button></li></ul>",
+      "css": ".ds-legend{list-style:none;margin:0;padding:4px 0;width:220px;background:var(--card);border-radius:var(--radius);}.ds-legend-row{display:flex;align-items:center;gap:8px;width:100%;padding:4px 8px;border:0;background:transparent;color:var(--foreground);font:500 12px/1.625 \"Inter Variable\",sans-serif;text-align:left;cursor:pointer;border-radius:calc(var(--radius) - 2px);}.ds-legend-row:hover{background:var(--muted);}.ds-legend-row.is-hidden{opacity:.4;}.ds-swatch{width:20px;border-top:2px solid;}"
+    },
+    {
+      "name": "App Header",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "Sticky header: title, report search, theme toggle and account control.",
+      "html": "<header class=\"ds-nav\"><strong>WOW Threat</strong><input class=\"ds-nav-search\" placeholder=\"Report URL or code\"><span class=\"ds-nav-spacer\"></span><button class=\"ds-nav-btn\">Sign in with WCL</button></header>",
+      "css": ".ds-nav{display:flex;align-items:center;gap:12px;width:640px;padding:8px 16px;background:var(--background);border-bottom:1px solid var(--border);color:var(--foreground);font-family:\"Inter Variable\",sans-serif;}.ds-nav strong{font-size:18px;font-weight:600;}.ds-nav-search{height:28px;width:220px;padding:2px 8px;border-radius:calc(var(--radius) - 2px);border:1px solid var(--input);background:transparent;color:var(--foreground);font-size:12px;}.ds-nav-spacer{flex:1;}.ds-nav-btn{height:24px;padding:0 8px;border-radius:calc(var(--radius) - 2px);border:1px solid var(--border);background:transparent;color:var(--foreground);font:500 12px \"Inter Variable\",sans-serif;cursor:pointer;}.ds-nav-btn:hover{background:var(--muted);}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Combat Log Oscilloscope",
+    "overview": "WOW Threat is a measuring instrument, not a dashboard. The screen behaves like a scope: a dark, neutral field; a grid of faint lines; and bright traces running across it. Those traces are player threat lines drawn in WoW class colors, plus event markers for death, fixate, aggro loss and the playhead. All the chrome around them (header, selectors, legend, meter, controls) is zinc-grey and small, so the signal always comes first. The screen is judged by one thing: whether a tank, officer or theorycrafter can read \"who had threat, when, and why\" at a glance, then zoom in and trust the number.\n\nThe layout is dense on purpose. Controls are 28px tall, running text is 12px, and the meter and legend drop to 10px tabular labels so a 40-player raid fits beside a 560px chart without scrolling the page. Dark is the default theme because the product is often open next to WCL during a raid night and screen-shared over voice. Light mode must stay just as readable, especially for class colors.\n\nArcane Cyan is the single interface accent. It marks action and focus: the primary button, links, the focus ring and the landing-page hint. It never stands in for data. Data color belongs only to the class palette and the chart-mark set.",
+    "keyCharacteristics": [
+      "Neutral zinc chrome with one cool accent; all saturated color is data.",
+      "Compact controls sized for a mouse and keyboard (28px buttons and inputs, 20px key badges).",
+      "Surfaces are separated by tonal layers, not shadows.",
+      "Inter Variable throughout, with tabular numbers wherever values line up in columns.",
+      "Dark theme is the default, and every color decision is checked in both themes."
+    ],
+    "rules": [
+      {
+        "name": "The Trace Owns Color Rule",
+        "body": "Saturated color belongs to data: class colors and chart marks. Chrome stays zinc, and Arcane Cyan is the only exception. If a new UI element needs to catch the eye, give it weight or position, not a new hue.",
+        "section": "colors"
+      },
+      {
+        "name": "The Meanings Are Fixed Rule",
+        "body": "Orange means fixate, green means invulnerable, yellow means aggro loss, red means death, and gold means the playhead or focus. Values can change for contrast. Meanings never change, and a new mark type never reuses one of these hues.",
+        "section": "colors"
+      },
+      {
+        "name": "The Both-Themes Rule",
+        "body": "Every color is checked in dark and light mode. A class or mark color that disappears against one theme's background (as Priest white once did in light mode) is a bug.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Numbers Rule",
+        "body": "Any number that sits in a column or updates live (threat totals, percentages, timestamps, rate-limit counters) uses tabular numbers so the digits don't shift sideways.",
+        "section": "typography"
+      },
+      {
+        "name": "The No-Hero Rule",
+        "body": "Nothing is bigger than 18px. The chart is the hero, and type never competes with it.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Page Rule",
+        "body": "Anything that belongs to the page (cards, the chart, the legend, the meter) has no shadow. Only elements that float above the page get one.",
+        "section": "elevation"
+      },
+      {
+        "name": "The One Step Rule",
+        "body": "A nested surface is exactly one tonal step away from its parent. Don't skip steps and don't stack three tints.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** keep all chrome in zinc neutrals and save saturated color for class traces and chart marks (The Trace Owns Color Rule).",
+      "**Do** use Arcane Cyan for exactly one kind of meaning: primary action and focus.",
+      "**Do** separate surfaces with one tonal step. Use `bg-card` for panels.",
+      "**Do** keep controls at the compact scale: 28px default, 24px `sm`, 12px text, 10px labels.",
+      "**Do** use tabular numbers for every number shown in a column or updated live.",
+      "**Do** check every new color in both dark (the default) and light themes, including Priest's foreground-based color.",
+      "**Do** show a key badge next to any action that has a shortcut.",
+      "**Do** keep the legend and meter capped at the chart's 560px height, with internal scrolling."
+    ],
+    "donts": [
+      "**Don't** use color utilities that aren't defined in `src/index.css` `@theme` (the old `bg-panel` and `text-text` aliases are gone), and don't use `text-muted` for text: it resolves to the muted *fill* color. Use `bg-card`, `text-foreground` and `text-muted-foreground`.",
+      "**Don't** add a new hue for chrome, statuses or decoration; that competes with the traces.",
+      "**Don't** reuse a chart-mark hue for a new meaning, or change what an existing mark means.",
+      "**Don't** put shadows on page-level surfaces (cards, the chart, the legend, the meter).",
+      "**Don't** add rings or borders to separate top-level surfaces in light mode; the Bench Zinc → Paper step does that. Nest a card inside a card only when the inner one needs its own edge.",
+      "**Don't** set any type larger than 18px; the chart is the hero.",
+      "**Don't** hardcode Priest or any theme-dependent color as a hex value; resolve CSS variables for canvas.",
+      ""
+    ]
+  }
+}

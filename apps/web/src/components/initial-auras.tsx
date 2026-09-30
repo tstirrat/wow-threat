@@ -42,7 +42,7 @@ export const InitialAuras: FC<InitialAurasProps> = ({ auras, wowhead }) => {
             >
               <span>{aura.name}</span>
               {aura.stacks > 1 && (
-                <span className="text-muted">×{aura.stacks}</span>
+                <span className="text-muted-foreground">×{aura.stacks}</span>
               )}
             </a>
           </Badge>

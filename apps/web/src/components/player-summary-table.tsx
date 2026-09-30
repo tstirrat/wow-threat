@@ -203,7 +203,7 @@ export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
 
   return (
     <div className="grid gap-4 md:grid-cols-[280px_minmax(0,1fr)]">
-      <Card className="bg-panel" size="sm">
+      <Card size="sm">
         <CardContent className="space-y-2">
           <div className="text-xs uppercase tracking-wide text-foreground">
             Focused actor
@@ -261,7 +261,7 @@ export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
         </CardContent>
       </Card>
 
-      <Card className="bg-panel" size="sm">
+      <Card size="sm">
         <CardContent>
           {rows.length === 0 ? (
             <p className="text-sm text-muted-foreground">

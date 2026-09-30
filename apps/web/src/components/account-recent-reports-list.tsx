@@ -29,7 +29,7 @@ export const AccountRecentReportsList: FC<AccountRecentReportsListProps> = ({
 }) => {
   if (reports.length === 0) {
     return (
-      <Card className="bg-panel" size="sm">
+      <Card size="sm">
         <CardContent className="space-y-1">
           <p className="font-medium text-muted-foreground">
             No recent Warcraft Logs history yet
@@ -58,7 +58,7 @@ export const AccountRecentReportsList: FC<AccountRecentReportsListProps> = ({
 
         return (
           <li key={report.code}>
-            <Card className="bg-panel" size="sm">
+            <Card size="sm">
               <CardContent className="space-y-1">
                 <div className="flex items-start justify-between gap-3">
                   <Link
