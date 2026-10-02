@@ -9,11 +9,11 @@ overrides:
   "brace-expansion@>=2.0.0 <2.0.3": ">=2.0.3"
   "brace-expansion@>=4.0.0 <5.0.5": ">=5.0.5"
 
-onlyBuiltDependencies:
-  - "@firebase/util"
-  - core-js
-  - esbuild
-  - msw
-  - protobufjs
-  - sharp
-  - workerd
+allowBuilds:
+  "@firebase/util": true
+  core-js: true
+  esbuild: true
+  msw: true
+  protobufjs: true
+  sharp: true
+  workerd: true
