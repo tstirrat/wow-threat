@@ -8,3 +8,12 @@ overrides:
   "flatted@<3.4.2": ">=3.4.2"
   "brace-expansion@>=2.0.0 <2.0.3": ">=2.0.3"
   "brace-expansion@>=4.0.0 <5.0.5": ">=5.0.5"
+
+onlyBuiltDependencies:
+  - "@firebase/util"
+  - core-js
+  - esbuild
+  - msw
+  - protobufjs
+  - sharp
+  - workerd
