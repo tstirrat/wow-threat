@@ -11,6 +11,7 @@
     "lint": "eslint src/"
   },
   "devDependencies": {
+    "@eslint/core": "^1.2.1",
     "@eslint/js": "^10.0.1",
     "@wow-threat/typescript-config": "workspace:*",
     "eslint": "^10.4.0",
