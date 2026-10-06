@@ -29,10 +29,14 @@ vi.mock('../hooks/use-user-settings', () => ({
 vi.mock('../routes/report-layout-context', () => ({
   useReportRouteContext: () => useReportRouteContextMock(),
 }))
-vi.mock('../lib/threat-config', () => ({
-  resolveCurrentThreatConfig: (...args: unknown[]) =>
-    resolveCurrentThreatConfigMock(...args),
-}))
+vi.mock('../lib/threat-config', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../lib/threat-config')>()
+  return {
+    ...actual,
+    resolveCurrentThreatConfig: (...args: unknown[]) =>
+      resolveCurrentThreatConfigMock(...args),
+  }
+})
 
 describe('FightPage inferThreatReduction startup behavior', () => {
   beforeEach(() => {
@@ -128,6 +132,7 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       false,
       false,
       false,
+      null,
     )
     expect(
       useFightEventsMock.mock.calls.some((call) => call[2] === false),
@@ -166,6 +171,7 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       true,
       false,
       false,
+      null,
     )
     expect(
       useFightEventsMock.mock.calls.some((call) => call[2] === false),
@@ -216,6 +222,7 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       true,
       true,
       true,
+      null,
     )
   })
 
@@ -261,6 +268,7 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       true,
       false,
       true,
+      null,
     )
   })
 
@@ -308,6 +316,7 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       true,
       true,
       true,
+      null,
     )
   })
 
@@ -355,6 +364,7 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       true,
       false,
       true,
+      null,
     )
   })
 })
