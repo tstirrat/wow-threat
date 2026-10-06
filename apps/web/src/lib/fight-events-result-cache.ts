@@ -13,6 +13,7 @@ export interface FightEventsResultCacheKey {
   fightId: number
   configVersion: string
   inferThreatReduction: boolean
+  configScope?: string | null
 }
 
 interface FightEventsResultCacheRecord extends FightEventsResultCacheKey {
@@ -126,6 +127,7 @@ export function buildFightEventsResultCacheKey(
     String(params.fightId),
     params.configVersion,
     inferThreatReductionToken,
+    ...(params.configScope ? [params.configScope] : []),
   ].join(':')
 }
 

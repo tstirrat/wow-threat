@@ -1,6 +1,7 @@
 /**
  * Compact fight quick-switch navigation shared by report and fight routes.
  */
+import type { ThreatConfigId } from '@wow-threat/config'
 import type { FC } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -8,6 +9,7 @@ import { buildBossKillNavigationFights } from '../lib/fight-navigation'
 import type { ReportFightSummary } from '../types/api'
 
 export type FightQuickSwitcherProps = {
+  configId?: ThreatConfigId | null
   eventsMode?: string | null
   reportId: string
   fights: ReportFightSummary[]
@@ -18,6 +20,7 @@ export type FightQuickSwitcherProps = {
 
 /** Render boss-kill quick links in report order. */
 export const FightQuickSwitcher: FC<FightQuickSwitcherProps> = ({
+  configId = null,
   eventsMode = null,
   reportId,
   fights,
@@ -47,6 +50,9 @@ export const FightQuickSwitcher: FC<FightQuickSwitcherProps> = ({
             }
             if (eventsMode) {
               searchParams.set('eventsMode', eventsMode)
+            }
+            if (configId) {
+              searchParams.set('config', configId)
             }
             const search = searchParams.toString()
 

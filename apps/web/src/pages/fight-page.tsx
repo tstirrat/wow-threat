@@ -24,7 +24,10 @@ import { useUserSettings } from '../hooks/use-user-settings'
 import { formatClockDuration } from '../lib/format'
 import { parseBooleanQueryParam } from '../lib/query-params'
 import { getThreatAtTime } from '../lib/threat-at-time'
-import { resolveCurrentThreatConfig } from '../lib/threat-config'
+import {
+  readForcedThreatConfigParam,
+  resolveCurrentThreatConfig,
+} from '../lib/threat-config'
 import { buildCharacterUrl, buildFightRankingsUrl } from '../lib/wcl-url'
 import { useReportRouteContext } from '../routes/report-layout-context'
 import type { BossDamageMode } from '../types/app'
@@ -111,6 +114,9 @@ export const FightPage: FC = () => {
   const forceFreshEvents =
     parseBooleanQueryParam(searchParams.get('fresh')) ?? false
   const forceLegacyWorkerMode = searchParams.get('eventsMode') === 'legacy'
+  const forcedThreatConfig = readForcedThreatConfigParam(
+    searchParams.get('config'),
+  )
   const {
     settings: userSettings,
     isLoading: isUserSettingsLoading,
@@ -118,8 +124,8 @@ export const FightPage: FC = () => {
   } = useUserSettings()
 
   const threatConfig = useMemo(
-    () => resolveCurrentThreatConfig(reportData),
-    [reportData],
+    () => resolveCurrentThreatConfig(reportData, forcedThreatConfig.configId),
+    [forcedThreatConfig.configId, reportData],
   )
   const fightQuery = useFightData(reportId, fightId)
   const fightData = fightQuery.data ?? null
@@ -131,6 +137,7 @@ export const FightPage: FC = () => {
     eventsQueryEnabled,
     forceFreshEvents,
     forceLegacyWorkerMode,
+    forcedThreatConfig.configId,
   )
   const eventsData = eventsQuery.data ?? null
 

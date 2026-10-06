@@ -6,7 +6,10 @@
 import {
   configCacheVersion,
   getSupportedGameVersions,
+  getThreatConfigById,
+  parseThreatConfigId,
   resolveConfigOrNull,
+  threatConfigIds,
 } from '@wow-threat/config'
 import { serializeInitialAurasByActor } from '@wow-threat/shared'
 import { Hono } from 'hono'
@@ -17,6 +20,7 @@ import {
   invalidEventsCursor,
   invalidFightId,
   invalidGameVersion,
+  invalidThreatConfig,
   reportNotFound,
   unauthorized,
 } from '../middleware/error'
@@ -68,6 +72,7 @@ eventsRoutes.get('/', async (c) => {
   const code = c.req.param('code')!
   const idParam = c.req.param('id')!
   const configVersionParam = c.req.query('cv')
+  const configIdParam = c.req.query('config')
   const cursorParam = c.req.query('cursor')
   const refreshParam = c.req.query('refresh')
   const debugMemoryParam = c.req.query('debugMemory')
@@ -103,9 +108,18 @@ eventsRoutes.get('/', async (c) => {
   }
 
   const gameVersion = report.masterData.gameVersion
-  const config = resolveConfigOrNull({
-    report,
-  })
+  const trimmedConfigId = configIdParam?.trim() ?? ''
+  const forcedConfigId = trimmedConfigId
+    ? parseThreatConfigId(trimmedConfigId)
+    : null
+  if (trimmedConfigId && !forcedConfigId) {
+    throw invalidThreatConfig(trimmedConfigId, threatConfigIds)
+  }
+  const config = forcedConfigId
+    ? getThreatConfigById(forcedConfigId)
+    : resolveConfigOrNull({
+        report,
+      })
   if (!config) {
     const classicSeasonIds = Array.from(
       new Set(

@@ -54,6 +54,28 @@ test.describe('fight page', () => {
     await setupThreatApiMocks(page)
   })
 
+  test('forces a threat config from the url', async ({ page }) => {
+    const fightPage = new FightPageObject(page)
+    const eraFightUrl = `/report/${e2eReportId}/fight/26?config=era`
+
+    await fightPage.goto(eraFightUrl)
+    await expect(fightPage.header.threatConfigText()).toHaveText(
+      'Threat config: Vanilla (Era) v17',
+    )
+    await maybeCaptureScreenshot(page)
+    await expect(fightPage.quickSwitch.fightLink('Grobbulus')).toHaveAttribute(
+      'href',
+      `/report/${e2eReportId}/fight/30?config=era`,
+    )
+
+    await fightPage.quickSwitch.clickFight('Grobbulus')
+    await expectPathname(page, `/report/${e2eReportId}/fight/30`)
+    await expectSearchParam(page, 'config', 'era')
+    await expect(fightPage.header.threatConfigText()).toHaveText(
+      'Threat config: Vanilla (Era) v17',
+    )
+  })
+
   test('defaults to the main boss and shows expected players in the legend', async ({
     page,
   }) => {

@@ -1,7 +1,7 @@
 /**
  * API functions for report, fight, and event data.
  */
-import { configCacheVersion } from '@wow-threat/config'
+import { type ThreatConfigId, configCacheVersion } from '@wow-threat/config'
 import { immutableApiCacheVersions } from '@wow-threat/shared'
 
 import { defaultApiBaseUrl } from '../lib/constants'
@@ -45,12 +45,16 @@ export function getFightEventsPage(
   fightId: number,
   cursor?: number,
   signal?: AbortSignal,
+  configId?: ThreatConfigId | null,
 ): Promise<FightEventsResponse> {
   const searchParams = new URLSearchParams({
     cv: configCacheVersion,
   })
   if (typeof cursor === 'number' && Number.isFinite(cursor)) {
     searchParams.set('cursor', String(Math.trunc(cursor)))
+  }
+  if (configId) {
+    searchParams.set('config', configId)
   }
 
   return requestJson<FightEventsResponse>(
@@ -153,11 +157,13 @@ export const fightQueryKey = (
 export const fightRawEventsQueryKey = (
   reportId: string,
   fightId: number,
-): readonly ['fight-raw-events', string, number, string] => [
+  configScope: string | null = null,
+): readonly ['fight-raw-events', string, number, string, string | null] => [
   'fight-raw-events',
   reportId,
   fightId,
   configCacheVersion,
+  configScope,
 ]
 
 export const fightEventsQueryKey = (
@@ -166,6 +172,7 @@ export const fightEventsQueryKey = (
   inferThreatReduction: boolean,
   forceFresh = false,
   forceLegacyWorkerMode = false,
+  configScope: string | null = null,
 ): readonly [
   'fight-events',
   string,
@@ -174,6 +181,7 @@ export const fightEventsQueryKey = (
   boolean,
   boolean,
   boolean,
+  string | null,
 ] => [
   'fight-events',
   reportId,
@@ -182,4 +190,5 @@ export const fightEventsQueryKey = (
   inferThreatReduction,
   forceFresh,
   forceLegacyWorkerMode,
+  configScope,
 ]

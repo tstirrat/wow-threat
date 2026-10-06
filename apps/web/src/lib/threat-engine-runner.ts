@@ -2,7 +2,11 @@
  * Shared core threat-engine execution pipeline used by both the main-thread
  * fallback path and the dedicated Web Worker.
  */
-import { resolveConfigOrNull } from '@wow-threat/config'
+import {
+  type ThreatConfigId,
+  getThreatConfigById,
+  resolveConfigOrNull,
+} from '@wow-threat/config'
 import { type ThreatEngine, buildThreatEngineInput } from '@wow-threat/engine'
 import {
   deserializeInitialAurasByActor,
@@ -14,6 +18,7 @@ import type { ThreatEngineWorkerProcessedPayload } from '../workers/threat-engin
 
 /** Run the threat engine for a single fight and return the serialized processed payload. */
 export function runThreatEngineForFight(params: {
+  configId?: ThreatConfigId | null
   engine: ThreatEngine
   fightId: number
   inferThreatReduction: boolean
@@ -24,6 +29,7 @@ export function runThreatEngineForFight(params: {
   tankActorIds: number[]
 }): ThreatEngineWorkerProcessedPayload {
   const {
+    configId = null,
     engine,
     fightId,
     inferThreatReduction,
@@ -41,7 +47,9 @@ export function runThreatEngineForFight(params: {
     throw new Error(`fight ${fightId} not found in report payload`)
   }
 
-  const config = resolveConfigOrNull({ report })
+  const config = configId
+    ? getThreatConfigById(configId)
+    : resolveConfigOrNull({ report })
   if (!config) {
     throw new Error(
       `no threat config for gameVersion ${report.masterData.gameVersion}`,

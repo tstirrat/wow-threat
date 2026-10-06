@@ -40,6 +40,17 @@ describe('reports api helpers', () => {
     )
   })
 
+  it('sends a forced config id on raw event requests', async () => {
+    await getFightEventsPage('ABC123xyz', 12, undefined, undefined, 'era')
+
+    expect(requestJson).toHaveBeenCalledWith(
+      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events?cv=${configCacheVersion}&config=era`,
+      {
+        signal: undefined,
+      },
+    )
+  })
+
   it('includes mode flags in fight events query keys', () => {
     expect(fightEventsQueryKey('ABC123xyz', 12, true)).toEqual([
       'fight-events',
@@ -49,6 +60,7 @@ describe('reports api helpers', () => {
       true,
       false,
       false,
+      null,
     ])
 
     expect(fightEventsQueryKey('ABC123xyz', 12, true, false, true)).toEqual([
@@ -59,6 +71,19 @@ describe('reports api helpers', () => {
       true,
       false,
       true,
+      null,
+    ])
+    expect(
+      fightEventsQueryKey('ABC123xyz', 12, true, false, true, 'era@1'),
+    ).toEqual([
+      'fight-events',
+      'ABC123xyz',
+      12,
+      configCacheVersion,
+      true,
+      false,
+      true,
+      'era@1',
     ])
   })
 
@@ -68,6 +93,7 @@ describe('reports api helpers', () => {
       'ABC123xyz',
       12,
       configCacheVersion,
+      null,
     ])
   })
 

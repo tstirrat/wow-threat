@@ -36,6 +36,7 @@ export const ErrorCodes = {
   INVALID_EVENTS_CURSOR: 'INVALID_EVENTS_CURSOR',
   INVALID_GAME_VERSION: 'INVALID_GAME_VERSION',
   INVALID_CONFIG_VERSION: 'INVALID_CONFIG_VERSION',
+  INVALID_THREAT_CONFIG: 'INVALID_THREAT_CONFIG',
   INVALID_ENTITY_TYPE: 'INVALID_ENTITY_TYPE',
   INVALID_ENTITY_LOOKUP: 'INVALID_ENTITY_LOOKUP',
   REPORT_NOT_FOUND: 'REPORT_NOT_FOUND',
@@ -85,6 +86,21 @@ export function invalidGameVersion(
       gameVersion,
       supportedVersions,
       ...details,
+    },
+  )
+}
+
+export function invalidThreatConfig(
+  requestedConfig: string,
+  supportedConfigs: readonly string[],
+): AppError {
+  return new AppError(
+    ErrorCodes.INVALID_THREAT_CONFIG,
+    `Unknown threat config "${requestedConfig}". Supported configs: ${supportedConfigs.join(', ')}`,
+    400,
+    {
+      requestedConfig,
+      supportedConfigs,
     },
   )
 }

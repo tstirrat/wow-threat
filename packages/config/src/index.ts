@@ -14,6 +14,12 @@ export function getSupportedGameVersions(): number[] {
 }
 
 export { resolveConfig, resolveConfigOrNull } from './config-resolver'
+export {
+  getThreatConfigById,
+  parseThreatConfigId,
+  threatConfigIds,
+} from './threat-config-catalog'
+export type { ThreatConfigId } from './threat-config-catalog'
 export { configCacheVersion, configVersionVector } from './version'
 
 // Re-export types

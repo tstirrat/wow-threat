@@ -44,6 +44,16 @@ describe('fight-events-result-cache', () => {
         inferThreatReduction: true,
       }),
     ).toBe('ABC123xyz:12:974:1')
+
+    expect(
+      buildFightEventsResultCacheKey({
+        reportCode: 'ABC123xyz',
+        fightId: 12,
+        configVersion: '974',
+        inferThreatReduction: false,
+        configScope: 'era@1',
+      }),
+    ).toBe('ABC123xyz:12:974:0:era@1')
   })
 
   it('stores and returns results from in-memory fallback when indexeddb is unavailable', async () => {

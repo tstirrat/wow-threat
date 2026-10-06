@@ -1,6 +1,7 @@
 /**
  * Client-side fight event processing using raw paginated events.
  */
+import type { ThreatConfigId } from '@wow-threat/config'
 import { ThreatEngine } from '@wow-threat/engine'
 import type {
   Report,
@@ -323,6 +324,7 @@ async function runThreatEngineWorker(
 }
 
 function processThreatEventsOnMainThread(params: {
+  configId?: ThreatConfigId | null
   fightId: number
   inferThreatReduction: boolean
   initialAurasByActor?: Record<string, number[]>
@@ -344,6 +346,7 @@ async function fetchAllRawEvents(
   onProgress:
     | ((progress: ClientThreatEngineProgressUpdate) => void)
     | undefined,
+  configId: ThreatConfigId | null,
 ): Promise<{
   events: WCLEvent[]
   metadata: FightEventsResponse
@@ -357,7 +360,13 @@ async function fetchAllRawEvents(
 
   while (true) {
     throwIfAborted(signal)
-    const page = await getFightEventsPage(reportId, fightId, cursor, signal)
+    const page = await getFightEventsPage(
+      reportId,
+      fightId,
+      cursor,
+      signal,
+      configId,
+    )
     throwIfAborted(signal)
     pageCount += 1
     if (!metadata) {
@@ -406,19 +415,21 @@ export interface RawFightEventsData {
 
 /** Fetch all paginated raw events for a fight. */
 export async function getFightRawEventsClientSide(params: {
+  configId?: ThreatConfigId | null
   reportId: string
   fightId: number
   signal?: AbortSignal
   onProgress?: (progress: ClientThreatEngineProgressUpdate) => void
 }): Promise<RawFightEventsData> {
-  const { reportId, fightId, signal, onProgress } = params
-  return fetchAllRawEvents(reportId, fightId, signal, onProgress)
+  const { configId = null, reportId, fightId, signal, onProgress } = params
+  return fetchAllRawEvents(reportId, fightId, signal, onProgress, configId)
 }
 
 /**
  * Fetch raw event pages and process threat calculations client-side.
  */
 export async function getFightEventsClientSide(params: {
+  configId?: ThreatConfigId | null
   reportId: string
   fightId: number
   reportData: ReportResponse
@@ -431,6 +442,7 @@ export async function getFightEventsClientSide(params: {
   onProgress?: (progress: ClientThreatEngineProgressUpdate) => void
 }): Promise<AugmentedEventsResponse> {
   const {
+    configId = null,
     reportId,
     fightId,
     reportData,
@@ -477,7 +489,7 @@ export async function getFightEventsClientSide(params: {
     pageCount,
   } = rawEventsData
     ? rawEventsData
-    : await fetchAllRawEvents(reportId, fightId, signal, onProgress)
+    : await fetchAllRawEvents(reportId, fightId, signal, onProgress, configId)
   throwIfAborted(signal)
   const tankActorIds = extractTankActorIds(fightData)
   const rawChunkBuildStartedAt = performance.now()
@@ -487,6 +499,7 @@ export async function getFightEventsClientSide(params: {
   )
   const rawChunkBuildMs = Math.round(performance.now() - rawChunkBuildStartedAt)
   const workerPayloadBase = {
+    configId,
     fightId,
     inferThreatReduction,
     initialAurasByActor: metadata.initialAurasByActor,
@@ -756,5 +769,6 @@ export async function getFightEventsClientSide(params: {
     configVersion: metadata.configVersion,
     events: processed.augmentedEvents,
     initialAurasByActor: processed.initialAurasByActor,
+    forcedConfigId: configId,
   }
 }

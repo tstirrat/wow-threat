@@ -7,6 +7,7 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query'
 import { renderHook } from '@testing-library/react'
+import { eraConfig } from '@wow-threat/config'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { fightEventsQueryKey, fightRawEventsQueryKey } from '../api/reports'
@@ -154,6 +155,7 @@ describe('useFightEvents', () => {
       false,
       false,
       false,
+      null,
     )
     expect(fightEventsQueryKey).toHaveBeenCalledWith(
       'ABC123xyz',
@@ -161,6 +163,7 @@ describe('useFightEvents', () => {
       true,
       false,
       false,
+      null,
     )
   })
 
@@ -173,6 +176,7 @@ describe('useFightEvents', () => {
       true,
       true,
       false,
+      null,
     )
   })
 
@@ -185,6 +189,22 @@ describe('useFightEvents', () => {
       true,
       false,
       true,
+      null,
+    )
+  })
+
+  it('passes a forced config scope through query key generation', () => {
+    renderHook(() =>
+      useFightEvents('ABC123xyz', 12, true, true, false, false, 'era'),
+    )
+
+    expect(fightEventsQueryKey).toHaveBeenCalledWith(
+      'ABC123xyz',
+      12,
+      true,
+      false,
+      false,
+      `era@${String(eraConfig.version)}`,
     )
   })
 
@@ -215,8 +235,18 @@ describe('useFightEvents', () => {
     })
 
     expect(fightRawEventsQueryKey).toHaveBeenCalledTimes(2)
-    expect(fightRawEventsQueryKey).toHaveBeenNthCalledWith(1, 'ABC123xyz', 12)
-    expect(fightRawEventsQueryKey).toHaveBeenNthCalledWith(2, 'ABC123xyz', 12)
+    expect(fightRawEventsQueryKey).toHaveBeenNthCalledWith(
+      1,
+      'ABC123xyz',
+      12,
+      null,
+    )
+    expect(fightRawEventsQueryKey).toHaveBeenNthCalledWith(
+      2,
+      'ABC123xyz',
+      12,
+      null,
+    )
 
     expect(queryClientMock.ensureQueryData).toHaveBeenCalledWith(
       expect.objectContaining({

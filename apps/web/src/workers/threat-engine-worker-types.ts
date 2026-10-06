@@ -1,11 +1,13 @@
 /**
  * Message contracts for threat engine worker processing.
  */
+import type { ThreatConfigId } from '@wow-threat/config'
 import type { Report, WCLEvent } from '@wow-threat/wcl-types'
 
 import type { ThreatWorkerProcessedEventsPayload } from '../lib/threat-engine-worker-cache'
 
 interface ThreatEngineWorkerBasePayload {
+  configId?: ThreatConfigId | null
   fightId: number
   inferThreatReduction: boolean
   initialAurasByActor?: Record<string, number[]>

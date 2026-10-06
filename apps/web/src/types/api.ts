@@ -38,4 +38,5 @@ export interface AugmentedEventsResponse {
   configVersion: string
   events: AugmentedEvent[]
   initialAurasByActor?: Record<string, number[]>
+  forcedConfigId?: string | null
 }

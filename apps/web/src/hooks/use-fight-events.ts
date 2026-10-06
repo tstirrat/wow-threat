@@ -7,7 +7,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from '@tanstack/react-query'
-import { configCacheVersion } from '@wow-threat/config'
+import { type ThreatConfigId, configCacheVersion } from '@wow-threat/config'
 import { useEffect, useRef, useState } from 'react'
 
 import {
@@ -26,6 +26,7 @@ import {
   loadFightEventsResultCache,
   saveFightEventsResultCache,
 } from '../lib/fight-events-result-cache'
+import { threatConfigCacheScope } from '../lib/threat-config'
 import type { AugmentedEventsResponse } from '../types/api'
 
 const defaultFightEventsLoadingMessage = 'Loading fight events'
@@ -47,6 +48,7 @@ function throwIfAborted(signal: AbortSignal | undefined): void {
 }
 
 async function fetchFightEvents(params: {
+  configId: ThreatConfigId | null
   reportId: string
   fightId: number
   inferThreatReduction: boolean
@@ -57,6 +59,7 @@ async function fetchFightEvents(params: {
   onProgressMessage?: (message: string) => void
 }): Promise<AugmentedEventsResponse> {
   const {
+    configId,
     reportId,
     fightId,
     inferThreatReduction,
@@ -66,6 +69,7 @@ async function fetchFightEvents(params: {
     signal,
     onProgressMessage,
   } = params
+  const configScope = threatConfigCacheScope(configId)
   throwIfAborted(signal)
 
   if (!forceFresh) {
@@ -74,6 +78,7 @@ async function fetchFightEvents(params: {
       fightId,
       configVersion: configCacheVersion,
       inferThreatReduction,
+      configScope,
     })
     if (cached) {
       onProgressMessage?.(
@@ -96,6 +101,7 @@ async function fetchFightEvents(params: {
   throwIfAborted(signal)
   const rawEventsData = forceFresh
     ? await getFightRawEventsClientSide({
+        configId,
         reportId,
         fightId,
         signal,
@@ -104,9 +110,10 @@ async function fetchFightEvents(params: {
         },
       })
     : await queryClient.ensureQueryData({
-        queryKey: fightRawEventsQueryKey(reportId, fightId),
+        queryKey: fightRawEventsQueryKey(reportId, fightId, configScope),
         queryFn: ({ signal: rawEventsSignal }) =>
           getFightRawEventsClientSide({
+            configId,
             reportId,
             fightId,
             signal: rawEventsSignal,
@@ -118,6 +125,7 @@ async function fetchFightEvents(params: {
   throwIfAborted(signal)
 
   const response = await getFightEventsClientSide({
+    configId,
     reportId,
     fightId,
     reportData,
@@ -138,6 +146,7 @@ async function fetchFightEvents(params: {
         fightId,
         configVersion: response.configVersion,
         inferThreatReduction,
+        configScope,
       },
       response,
     })
@@ -154,6 +163,7 @@ export function useFightEvents(
   enabled = true,
   forceFresh = false,
   forceLegacyWorkerMode = false,
+  configId: ThreatConfigId | null = null,
 ): {
   data: AugmentedEventsResponse | undefined
   isLoading: boolean
@@ -165,6 +175,7 @@ export function useFightEvents(
     defaultFightEventsLoadingMessage,
   )
   const activeRequestIdRef = useRef(0)
+  const configScope = threatConfigCacheScope(configId)
 
   useEffect(() => {
     const queryKey = fightEventsQueryKey(
@@ -173,6 +184,7 @@ export function useFightEvents(
       inferThreatReduction,
       forceFresh,
       forceLegacyWorkerMode,
+      configScope,
     )
     return () => {
       activeRequestIdRef.current += 1
@@ -181,6 +193,7 @@ export function useFightEvents(
       })
     }
   }, [
+    configScope,
     queryClient,
     reportId,
     fightId,
@@ -196,6 +209,7 @@ export function useFightEvents(
       inferThreatReduction,
       forceFresh,
       forceLegacyWorkerMode,
+      configScope,
     ),
     queryFn: ({ signal }) => {
       const requestId = activeRequestIdRef.current + 1
@@ -203,6 +217,7 @@ export function useFightEvents(
       setLoadingMessage(defaultFightEventsLoadingMessage)
 
       return fetchFightEvents({
+        configId,
         reportId,
         fightId,
         inferThreatReduction,
@@ -226,7 +241,8 @@ export function useFightEvents(
 
       if (
         previousData?.reportCode === reportId &&
-        previousData.fightId === fightId
+        previousData.fightId === fightId &&
+        (previousData.forcedConfigId ?? null) === configId
       ) {
         return previousData
       }
@@ -251,10 +267,12 @@ export function useSuspenseFightEvents(
   inferThreatReduction: boolean,
   forceFresh = false,
   forceLegacyWorkerMode = false,
+  configId: ThreatConfigId | null = null,
 ): {
   data: AugmentedEventsResponse
 } {
   const queryClient = useQueryClient()
+  const configScope = threatConfigCacheScope(configId)
   const query = useSuspenseQuery({
     queryKey: fightEventsQueryKey(
       reportId,
@@ -262,9 +280,11 @@ export function useSuspenseFightEvents(
       inferThreatReduction,
       forceFresh,
       forceLegacyWorkerMode,
+      configScope,
     ),
     queryFn: ({ signal }) =>
       fetchFightEvents({
+        configId,
         reportId,
         fightId,
         inferThreatReduction,

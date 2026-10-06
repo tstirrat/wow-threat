@@ -261,5 +261,41 @@ describe('Events API', () => {
         gameVersion: 999,
       })
     })
+
+    it('loads events for an unsupported game version when config is forced', async () => {
+      mockFetch({
+        report: {
+          ...reportData,
+          masterData: {
+            ...reportData.masterData,
+            gameVersion: 999,
+          },
+        },
+        events: mockEvents,
+      })
+
+      const res = await app.request(
+        'http://localhost/v1/reports/unsupported-game-version-999/fights/1/events?config=era',
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(200)
+      const data: FightEventsResponse = await res.json()
+      expect(data.gameVersion).toBe(999)
+      expect(data.events).toHaveLength(mockEvents.length)
+    })
+
+    it('returns 400 for an unknown forced config id', async () => {
+      const res = await app.request(
+        'http://localhost/v1/reports/ABC123xyz/fights/1/events?config=retail',
+        {},
+        createMockBindings(),
+      )
+
+      expect(res.status).toBe(400)
+      const data: ApiError = await res.json()
+      expect(data.error.code).toBe('INVALID_THREAT_CONFIG')
+    })
   })
 })

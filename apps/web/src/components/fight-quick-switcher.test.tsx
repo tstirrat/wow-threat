@@ -44,11 +44,13 @@ const fights: ReportFightSummary[] = [
 ]
 
 function renderFightQuickSwitcher(options?: {
+  configId?: 'era' | null
   eventsMode?: string | null
   forceFresh?: boolean
   pinnedPlayerIds?: number[]
 }): void {
   const {
+    configId = null,
     eventsMode = null,
     forceFresh = false,
     pinnedPlayerIds = [],
@@ -57,6 +59,7 @@ function renderFightQuickSwitcher(options?: {
   render(
     <MemoryRouter>
       <FightQuickSwitcher
+        configId={configId}
         eventsMode={eventsMode}
         fights={fights}
         forceFresh={forceFresh}
@@ -112,6 +115,18 @@ describe('FightQuickSwitcher', () => {
     expect(screen.getByRole('link', { name: 'Grobbulus' })).toHaveAttribute(
       'href',
       '/report/ABC123/fight/30?pinnedPlayers=1%2C2&players=1%2C2&eventsMode=legacy',
+    )
+  })
+
+  it('keeps a forced config id on fight quick-switch links', () => {
+    renderFightQuickSwitcher({
+      configId: 'era',
+      forceFresh: true,
+    })
+
+    expect(screen.getByRole('link', { name: 'Grobbulus' })).toHaveAttribute(
+      'href',
+      '/report/ABC123/fight/30?fresh=1&config=era',
     )
   })
 

@@ -87,6 +87,7 @@ function processThreatEvents(params: {
 } {
   const { payload, rawEvents, startedAt } = params
   const processedPayload = runThreatEngineForFight({
+    configId: payload.configId,
     engine: threatEngine,
     fightId: payload.fightId,
     inferThreatReduction: payload.inferThreatReduction,

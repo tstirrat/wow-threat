@@ -1,11 +1,15 @@
 /**
  * Unit tests for client-side threat config resolution helpers.
  */
-import { sodConfig } from '@wow-threat/config'
+import { eraConfig, sodConfig } from '@wow-threat/config'
 import { describe, expect, it } from 'vitest'
 
 import type { ReportResponse } from '../types/api'
-import { resolveCurrentThreatConfig } from './threat-config'
+import {
+  readForcedThreatConfigParam,
+  resolveCurrentThreatConfig,
+  threatConfigCacheScope,
+} from './threat-config'
 
 function createReportResponse(
   overrides: Partial<ReportResponse> = {},
@@ -79,5 +83,55 @@ describe('threat-config helpers', () => {
     const resolved = resolveCurrentThreatConfig(report)
 
     expect(resolved).toBeNull()
+  })
+
+  it('uses a forced config id instead of report metadata', () => {
+    const report = createReportResponse({
+      gameVersion: 1,
+      threatConfig: null,
+      zone: {
+        id: 1001,
+        name: 'Naxxramas',
+      },
+      fights: [],
+    })
+
+    const resolved = resolveCurrentThreatConfig(report, 'era')
+
+    expect(resolved).toBe(eraConfig)
+    expect(resolved?.displayName).toBe('Vanilla (Era)')
+  })
+})
+
+describe('forced threat config query param', () => {
+  it('treats a missing param as automatic detection', () => {
+    expect(readForcedThreatConfigParam(null)).toEqual({
+      configId: null,
+      isInvalid: false,
+      rawValue: null,
+    })
+    expect(threatConfigCacheScope(null)).toBeNull()
+  })
+
+  it('accepts era and the tbc alias', () => {
+    expect(readForcedThreatConfigParam('era')).toMatchObject({
+      configId: 'era',
+      isInvalid: false,
+    })
+    expect(readForcedThreatConfigParam('tbc')).toMatchObject({
+      configId: 'anniversary',
+      isInvalid: false,
+    })
+    expect(threatConfigCacheScope('era')).toBe(
+      `era@${String(eraConfig.version)}`,
+    )
+  })
+
+  it('marks unknown config ids as invalid', () => {
+    expect(readForcedThreatConfigParam('retail')).toEqual({
+      configId: null,
+      isInvalid: true,
+      rawValue: 'retail',
+    })
   })
 })

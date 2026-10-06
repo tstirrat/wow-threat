@@ -1,6 +1,7 @@
 /**
  * Shared report route layout with compact header and fight quick switcher.
  */
+import { threatConfigIds } from '@wow-threat/config'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, useEffect, useRef } from 'react'
 import { Outlet, useLocation, useParams } from 'react-router-dom'
@@ -17,7 +18,10 @@ import { useUserSettings } from '../hooks/use-user-settings'
 import { buildBossKillNavigationFights } from '../lib/fight-navigation'
 import { parseBooleanQueryParam } from '../lib/query-params'
 import { parsePlayersParam } from '../lib/search-params'
-import { resolveCurrentThreatConfig } from '../lib/threat-config'
+import {
+  readForcedThreatConfigParam,
+  resolveCurrentThreatConfig,
+} from '../lib/threat-config'
 import type { WarcraftLogsHost } from '../types/app'
 import type { ReportRouteContext } from './report-layout-context'
 
@@ -37,6 +41,9 @@ export const ReportLayout: FC = () => {
   const pinnedPlayerIds = parsePlayersParam(queryParams.get('pinnedPlayers'))
   const forceFresh = parseBooleanQueryParam(queryParams.get('fresh')) ?? false
   const eventsMode = queryParams.get('eventsMode')
+  const forcedThreatConfig = readForcedThreatConfigParam(
+    queryParams.get('config'),
+  )
 
   const posthog = usePostHog()
   const reportLoadedCapturedRef = useRef<string | null>(null)
@@ -81,6 +88,18 @@ export const ReportLayout: FC = () => {
     })
   }, [data, posthog, reportId])
 
+  if (forcedThreatConfig.isInvalid) {
+    return (
+      <>
+        <title>{`${reportId || 'Report'} | WOW Threat`}</title>
+        <ErrorState
+          message={`Unknown threat config "${forcedThreatConfig.rawValue}". Use one of: ${threatConfigIds.join(', ')}.`}
+          title="Unknown threat config"
+        />
+      </>
+    )
+  }
+
   if (!reportId) {
     return (
       <>
@@ -115,7 +134,10 @@ export const ReportLayout: FC = () => {
   }
 
   const reportTitle = data.title.trim() || reportId
-  const threatConfig = resolveCurrentThreatConfig(data)
+  const threatConfig = resolveCurrentThreatConfig(
+    data,
+    forcedThreatConfig.configId,
+  )
   const threatConfigLabel = threatConfig
     ? `${threatConfig.displayName} v${threatConfig.version}`
     : 'No supported config'
@@ -152,6 +174,7 @@ export const ReportLayout: FC = () => {
           threatConfigLabel={threatConfigLabel}
         />
         <FightQuickSwitcher
+          configId={forcedThreatConfig.configId}
           eventsMode={eventsMode}
           fights={data.fights}
           forceFresh={forceFresh}
