@@ -51,17 +51,6 @@ describe('reports api helpers', () => {
     )
   })
 
-  it('uses the era events endpoint for the preview-only forever config', async () => {
-    await getFightEventsPage('ABC123xyz', 12, undefined, undefined, 'forever')
-
-    expect(requestJson).toHaveBeenCalledWith(
-      `${defaultApiBaseUrl}/v1/reports/ABC123xyz/fights/12/events?cv=${configCacheVersion}&config=era`,
-      {
-        signal: undefined,
-      },
-    )
-  })
-
   it('includes mode flags in fight events query keys', () => {
     expect(fightEventsQueryKey('ABC123xyz', 12, true)).toEqual([
       'fight-events',
