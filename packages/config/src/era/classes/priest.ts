@@ -8,6 +8,7 @@ import type {
   TalentImplicationContext,
 } from '@wow-threat/shared'
 import { SpellSchool } from '@wow-threat/shared'
+import type { GearItem } from '@wow-threat/wcl-types'
 
 import { noThreat, threat } from '../../shared/formulas'
 import { inferTalent } from '../../shared/talents'
@@ -54,12 +55,35 @@ export const Spells = {
   ShadowAffinityRank1: 15318, // https://www.wowhead.com/classic/spell=15318/
   ShadowAffinityRank2: 15319, // https://www.wowhead.com/classic/spell=15319/
   ShadowAffinityRank3: 15320, // https://www.wowhead.com/classic/spell=15320/
+
+  // Vestments of Faith 6-piece
+  VestmentsReducedThreat: 28808, // https://www.wowhead.com/classic/spell=28808/
+} as const
+
+export const SetIds = {
+  VestmentsOfFaith: 525,
 } as const
 
 const Mods = {
   SilentResolve: 0.04, // 4% per rank (up to 20%)
-  ShadowAffinity: 0.25 / 3, // 8.33% per rank (up to 25%)
 }
+
+export const VestmentsHealSpellIds = new Set([
+  // Lesser Heal
+  2050, 2052, 2053,
+  // Heal
+  2054, 2055, 6063, 6064,
+  // Greater Heal
+  2060, 10963, 10964, 10965,
+  // Flash Heal
+  2061, 9472, 9473, 9474, 10915, 10916, 10917,
+  // Renew
+  139, 6074, 6075, 6076, 6077, 6078, 10927, 10928, 10929,
+  // Prayer of Healing
+  596, 996, 10960, 10961,
+  // Desperate Prayer
+  13908, 19236, 19238, 19240, 19241, 19242,
+])
 
 const SILENT_RESOLVE_RANKS = [
   Spells.SilentResolveRank1,
@@ -75,6 +99,14 @@ const SHADOW_AFFINITY_RANKS = [
 ] as const
 
 const SHADOW = 2
+
+function inferGearAuras(gear: GearItem[]): number[] {
+  const vestmentsPieces = gear.filter(
+    (item) => item.setID === SetIds.VestmentsOfFaith,
+  ).length
+
+  return vestmentsPieces >= 6 ? [Spells.VestmentsReducedThreat] : []
+}
 
 // ============================================================================
 // Configuration
@@ -113,20 +145,27 @@ export const priestConfig: ClassThreatConfig = {
     [Spells.ShadowAffinityRank1]: () => ({
       source: 'talent',
       name: 'Shadow Affinity (Rank 1)',
-      value: 1 - Mods.ShadowAffinity,
+      value: 0.92,
       schoolMask: SpellSchool.Shadow,
     }),
     [Spells.ShadowAffinityRank2]: () => ({
       source: 'talent',
       name: 'Shadow Affinity (Rank 2)',
-      value: 1 - Mods.ShadowAffinity * 2,
+      value: 0.84,
       schoolMask: SpellSchool.Shadow,
     }),
     [Spells.ShadowAffinityRank3]: () => ({
       source: 'talent',
       name: 'Shadow Affinity (Rank 3)',
-      value: 1 - Mods.ShadowAffinity * 3,
+      value: 0.75,
       schoolMask: SpellSchool.Shadow,
+    }),
+
+    [Spells.VestmentsReducedThreat]: () => ({
+      source: 'gear',
+      name: 'Vestments of Faith (6-piece)',
+      value: 0.9,
+      spellIds: VestmentsHealSpellIds,
     }),
   },
 
@@ -159,6 +198,8 @@ export const priestConfig: ClassThreatConfig = {
     // Weakened Soul - zero threat
     [Spells.WeakenedSoul]: noThreat(),
   },
+
+  gearImplications: inferGearAuras,
 
   talentImplications: (ctx: TalentImplicationContext) => {
     const syntheticAuras: number[] = []
