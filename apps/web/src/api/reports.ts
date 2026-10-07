@@ -54,7 +54,9 @@ export function getFightEventsPage(
     searchParams.set('cursor', String(Math.trunc(cursor)))
   }
   if (configId) {
-    searchParams.set('config', configId)
+    // Temporary local testing bridge: the PR #247 preview backend predates the
+    // Forever config, but its raw event payload is config-independent.
+    searchParams.set('config', configId === 'forever' ? 'era' : configId)
   }
 
   return requestJson<FightEventsResponse>(
