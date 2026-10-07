@@ -2035,6 +2035,83 @@ describe('threat-engine', () => {
       expect(result?.eventCounts.combatantinfo).toBeUndefined()
     })
 
+    it('forces aura overrides on or off for the full fight', () => {
+      const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
+      const damageEvent = createDamageEvent({
+        sourceID: warriorActor.id,
+        targetID: bossEnemy.id,
+        amount: 100,
+      })
+
+      const forcedOn = processEvents({
+        rawEvents: [{ ...damageEvent }],
+        auraOverridesByActor: new Map([
+          [warriorActor.id, { add: [SPELLS.MOCK_AURA_THREAT_UP], remove: [] }],
+        ]),
+        actorMap,
+        enemies,
+        config: mockConfig,
+      })
+      const forcedOff = processEvents({
+        rawEvents: [
+          createApplyBuffEvent({
+            abilityGameID: SPELLS.MOCK_AURA_THREAT_UP,
+            sourceID: warriorActor.id,
+            targetID: warriorActor.id,
+          }),
+          { ...damageEvent },
+        ],
+        initialAurasByActor: new Map([
+          [warriorActor.id, [SPELLS.MOCK_AURA_THREAT_UP]],
+        ]),
+        auraOverridesByActor: new Map([
+          [warriorActor.id, { add: [], remove: [SPELLS.MOCK_AURA_THREAT_UP] }],
+        ]),
+        actorMap,
+        enemies,
+        config: mockConfig,
+      })
+
+      expect(
+        forcedOn.augmentedEvents[0]?.threat?.calculation.modifiers,
+      ).toContainEqual(
+        expect.objectContaining({ name: 'Test Threat Up', value: 1.5 }),
+      )
+      expect(
+        forcedOff.augmentedEvents[1]?.threat?.calculation.modifiers,
+      ).not.toContainEqual(expect.objectContaining({ name: 'Test Threat Up' }))
+      expect(forcedOff.initialAurasByActor.get(warriorActor.id)).toEqual([])
+    })
+
+    it('overrides reported talent ranks for threat calculations', () => {
+      const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
+      const result = processEvents({
+        rawEvents: [
+          createDamageEvent({
+            abilityGameID: SPELLS.MOCK_ABILITY_1,
+            sourceID: warriorActor.id,
+            targetID: bossEnemy.id,
+            amount: 100,
+          }),
+        ],
+        talentRankOverridesByActor: new Map([
+          [warriorActor.id, new Map([[SPELLS.MOCK_RANKED_TALENT_ENTRY, 3]])],
+        ]),
+        actorMap,
+        enemies,
+        config: mockConfig,
+      })
+
+      expect(
+        result.augmentedEvents[0]?.threat?.calculation.modifiers,
+      ).toContainEqual(
+        expect.objectContaining({
+          name: 'Mock Ranked Talent (Rank 3)',
+          value: 1.15,
+        }),
+      )
+    })
+
     it('seeds auras from combatantinfo and applies them to subsequent damage events', () => {
       const actorMap = new Map<number, Actor>([[warriorActor.id, warriorActor]])
 
