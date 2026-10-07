@@ -1,7 +1,14 @@
 /**
  * Scrollable legend for threat chart actor visibility and isolation controls.
  */
-import { Eye, Pin, Plus, RotateCcw, Shield } from 'lucide-react'
+import {
+  Eye,
+  Pin,
+  Plus,
+  RotateCcw,
+  Shield,
+  SlidersHorizontal,
+} from 'lucide-react'
 import { type FC, useId } from 'react'
 
 import type { ThreatSeries } from '../types/app'
@@ -22,6 +29,7 @@ export interface ThreatChartLegendProps {
   isActorVisible: (actorId: number) => boolean
   onActorClick: (actorId: number) => void
   onActorFocus: (actorId: number) => void
+  onOpenPlayerOverrides: (playerId: number) => void
   pinnedPlayerIds: number[]
   onTogglePinnedPlayer: (playerId: number) => void
   showClearSelections: boolean
@@ -35,6 +43,7 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
   isActorVisible,
   onActorClick,
   onActorFocus,
+  onOpenPlayerOverrides,
   pinnedPlayerIds,
   onTogglePinnedPlayer,
   showClearSelections,
@@ -93,7 +102,7 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
         </CardAction>
       </CardHeader>
       <CardContent className="min-h-0 flex flex-1 flex-col p-0">
-        <TooltipProvider delayDuration={0}>
+        <TooltipProvider delayDuration={0} disableHoverableContent>
           <ScrollArea className="min-h-0 flex-1">
             <ul className="py-1">
               {series.map((item) => {
@@ -184,33 +193,63 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
                             <Eye />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent side="top">{`Focus ${label}`}</TooltipContent>
+                        <TooltipContent
+                          className="pointer-events-none"
+                          side="top"
+                        >{`Focus ${label}`}</TooltipContent>
                       </Tooltip>
                       {isPinnable ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              aria-label={`Toggle pin ${label}`}
-                              aria-pressed={isPinned}
-                              className={`h-6 w-6 cursor-pointer transition-opacity ${
-                                isPinned
-                                  ? 'text-amber-500 opacity-100'
-                                  : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'
-                              }`}
-                              size="icon-xs"
-                              type="button"
-                              variant="ghost"
-                              onClick={() => {
-                                onTogglePinnedPlayer(item.actorId)
-                              }}
+                        <>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                aria-label={`Threat overrides for ${label}`}
+                                className="h-6 w-6 cursor-pointer opacity-40 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                                size="icon-xs"
+                                type="button"
+                                variant="ghost"
+                                onClick={() => {
+                                  onOpenPlayerOverrides(item.actorId)
+                                }}
+                              >
+                                <SlidersHorizontal />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent
+                              className="pointer-events-none"
+                              side="top"
                             >
-                              <Pin />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top">
-                            {isPinned ? `Unpin ${label}` : `Pin ${label}`}
-                          </TooltipContent>
-                        </Tooltip>
+                              {`Threat overrides for ${label}`}
+                            </TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                aria-label={`Toggle pin ${label}`}
+                                aria-pressed={isPinned}
+                                className={`h-6 w-6 cursor-pointer transition-opacity ${
+                                  isPinned
+                                    ? 'text-amber-500 opacity-100'
+                                    : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'
+                                }`}
+                                size="icon-xs"
+                                type="button"
+                                variant="ghost"
+                                onClick={() => {
+                                  onTogglePinnedPlayer(item.actorId)
+                                }}
+                              >
+                                <Pin />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent
+                              className="pointer-events-none"
+                              side="top"
+                            >
+                              {isPinned ? `Unpin ${label}` : `Pin ${label}`}
+                            </TooltipContent>
+                          </Tooltip>
+                        </>
                       ) : null}
                     </div>
                   </li>

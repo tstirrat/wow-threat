@@ -87,6 +87,13 @@ export class ThreatChartObject {
     })
   }
 
+  legendThreatOverrides(name: string): Locator {
+    return this.legendRoot().getByRole('button', {
+      name: `Threat overrides for ${name}`,
+      exact: true,
+    })
+  }
+
   legendListItem(name: string): Locator {
     return this.legendToggle(name).locator('xpath=ancestor::li[1]')
   }
@@ -142,6 +149,11 @@ export class ThreatChartObject {
 
   async toggleLegendPin(name: string): Promise<void> {
     await this.legendPin(name).click()
+  }
+
+  async openLegendThreatOverrides(name: string): Promise<void> {
+    await this.legendListItem(name).hover()
+    await this.legendThreatOverrides(name).click()
   }
 
   async legendToggleLabels(): Promise<string[]> {

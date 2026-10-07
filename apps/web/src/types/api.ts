@@ -39,4 +39,5 @@ export interface AugmentedEventsResponse {
   events: AugmentedEvent[]
   initialAurasByActor?: Record<string, number[]>
   forcedConfigId?: string | null
+  threatOverridesScope?: string | null
 }

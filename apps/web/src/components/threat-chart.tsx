@@ -45,6 +45,7 @@ export type ThreatChartProps = {
   onFocusAndIsolatePlayer: (playerId: number) => void
   onToggleFocusedPlayerIsolation: (playerId: number) => void
   onTogglePinnedPlayer: (playerId: number) => void
+  onOpenPlayerOverrides: (playerId: number) => void
   onSeriesClick: (actorId: number) => void
   onVisiblePlayerIdsChange?: (playerIds: number[]) => void
   onClearSelections?: () => void
@@ -78,6 +79,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   onFocusAndIsolatePlayer,
   onToggleFocusedPlayerIsolation,
   onTogglePinnedPlayer,
+  onOpenPlayerOverrides,
   onSeriesClick,
   onVisiblePlayerIdsChange,
   onClearSelections,
@@ -515,6 +517,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
             isActorVisible={isActorVisible}
             onActorClick={handleLegendItemClick}
             onActorFocus={onSeriesClick}
+            onOpenPlayerOverrides={onOpenPlayerOverrides}
             pinnedPlayerIds={pinnedPlayerIds}
             onTogglePinnedPlayer={onTogglePinnedPlayer}
             showClearSelections={canClearIsolate}

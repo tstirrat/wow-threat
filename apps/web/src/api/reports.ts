@@ -173,6 +173,7 @@ export const fightEventsQueryKey = (
   forceFresh = false,
   forceLegacyWorkerMode = false,
   configScope: string | null = null,
+  overrideScope: string | null = null,
 ): readonly [
   'fight-events',
   string,
@@ -181,6 +182,7 @@ export const fightEventsQueryKey = (
   boolean,
   boolean,
   boolean,
+  string | null,
   string | null,
 ] => [
   'fight-events',
@@ -191,4 +193,5 @@ export const fightEventsQueryKey = (
   forceFresh,
   forceLegacyWorkerMode,
   configScope,
+  overrideScope,
 ]

@@ -7,7 +7,11 @@ import {
   getThreatConfigById,
   resolveConfigOrNull,
 } from '@wow-threat/config'
-import { type ThreatEngine, buildThreatEngineInput } from '@wow-threat/engine'
+import {
+  type ActorAuraOverrides,
+  type ThreatEngine,
+  buildThreatEngineInput,
+} from '@wow-threat/engine'
 import {
   deserializeInitialAurasByActor,
   serializeInitialAurasByActor,
@@ -15,6 +19,46 @@ import {
 import type { Report, WCLEvent } from '@wow-threat/wcl-types'
 
 import type { ThreatEngineWorkerProcessedPayload } from '../workers/threat-engine-worker-types'
+import type {
+  SerializedAuraOverridesByActor,
+  SerializedTalentRankOverridesByActor,
+} from './threat-overrides'
+
+function deserializeAuraOverridesByActor(
+  serialized: SerializedAuraOverridesByActor | undefined,
+): Map<number, ActorAuraOverrides> {
+  return new Map(
+    Object.entries(serialized ?? {}).flatMap(([rawActorId, overrides]) => {
+      const actorId = Number.parseInt(rawActorId, 10)
+      return Number.isInteger(actorId) && actorId > 0
+        ? [[actorId, overrides] as const]
+        : []
+    }),
+  )
+}
+
+function deserializeTalentRankOverridesByActor(
+  serialized: SerializedTalentRankOverridesByActor | undefined,
+): Map<number, ReadonlyMap<number, number>> {
+  return new Map(
+    Object.entries(serialized ?? {}).flatMap(([rawActorId, talentRanks]) => {
+      const actorId = Number.parseInt(rawActorId, 10)
+      if (!Number.isInteger(actorId) || actorId <= 0) {
+        return []
+      }
+
+      const parsedTalentRanks = new Map(
+        Object.entries(talentRanks).flatMap(([rawTalentEntryId, rank]) => {
+          const talentEntryId = Number.parseInt(rawTalentEntryId, 10)
+          return Number.isInteger(talentEntryId) && talentEntryId > 0
+            ? [[talentEntryId, rank] as const]
+            : []
+        }),
+      )
+      return [[actorId, parsedTalentRanks] as const]
+    }),
+  )
+}
 
 /** Run the threat engine for a single fight and return the serialized processed payload. */
 export function runThreatEngineForFight(params: {
@@ -23,6 +67,8 @@ export function runThreatEngineForFight(params: {
   fightId: number
   inferThreatReduction: boolean
   initialAurasByActor: Record<string, number[]> | undefined
+  auraOverridesByActor?: SerializedAuraOverridesByActor
+  talentRankOverridesByActor?: SerializedTalentRankOverridesByActor
   rawEvents: WCLEvent[]
   report: Report
   startedAt: number
@@ -34,6 +80,8 @@ export function runThreatEngineForFight(params: {
     fightId,
     inferThreatReduction,
     initialAurasByActor: serializedInitialAurasByActor,
+    auraOverridesByActor: serializedAuraOverridesByActor,
+    talentRankOverridesByActor: serializedTalentRankOverridesByActor,
     rawEvents,
     report,
     startedAt,
@@ -59,6 +107,12 @@ export function runThreatEngineForFight(params: {
   const initialAurasByActor = deserializeInitialAurasByActor(
     serializedInitialAurasByActor,
   )
+  const auraOverridesByActor = deserializeAuraOverridesByActor(
+    serializedAuraOverridesByActor,
+  )
+  const talentRankOverridesByActor = deserializeTalentRankOverridesByActor(
+    serializedTalentRankOverridesByActor,
+  )
   const { actorMap, friendlyActorIds, enemies, abilitySchoolMap } =
     buildThreatEngineInput({
       fight,
@@ -69,6 +123,8 @@ export function runThreatEngineForFight(params: {
     engine.processEvents({
       rawEvents,
       initialAurasByActor,
+      auraOverridesByActor,
+      talentRankOverridesByActor,
       actorMap,
       friendlyActorIds,
       abilitySchoolMap,
