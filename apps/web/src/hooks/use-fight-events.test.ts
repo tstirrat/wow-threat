@@ -156,6 +156,7 @@ describe('useFightEvents', () => {
       false,
       false,
       null,
+      null,
     )
     expect(fightEventsQueryKey).toHaveBeenCalledWith(
       'ABC123xyz',
@@ -163,6 +164,7 @@ describe('useFightEvents', () => {
       true,
       false,
       false,
+      null,
       null,
     )
   })
@@ -177,6 +179,7 @@ describe('useFightEvents', () => {
       true,
       false,
       null,
+      null,
     )
   })
 
@@ -189,6 +192,7 @@ describe('useFightEvents', () => {
       true,
       false,
       true,
+      null,
       null,
     )
   })
@@ -205,6 +209,49 @@ describe('useFightEvents', () => {
       false,
       false,
       `era@${String(eraConfig.version)}`,
+      null,
+    )
+  })
+
+  it('partitions query and processed caches by threat overrides', async () => {
+    const auraOverridesByActor = {
+      '1': { add: [25780], remove: [] },
+    }
+    renderHook(() =>
+      useFightEvents(
+        'ABC123xyz',
+        12,
+        true,
+        true,
+        false,
+        false,
+        'era',
+        auraOverridesByActor,
+        undefined,
+        '1:a25780=1',
+      ),
+    )
+
+    expect(fightEventsQueryKey).toHaveBeenCalledWith(
+      'ABC123xyz',
+      12,
+      true,
+      false,
+      false,
+      `era@${String(eraConfig.version)}`,
+      '1:a25780=1',
+    )
+
+    const queryCall = vi.mocked(useQuery).mock.calls[0]?.[0]
+    await queryCall?.queryFn({ signal: new AbortController().signal })
+
+    expect(getFightEventsClientSide).toHaveBeenCalledWith(
+      expect.objectContaining({ auraOverridesByActor }),
+    )
+    expect(saveFightEventsResultCache).toHaveBeenCalledWith(
+      expect.objectContaining({
+        key: expect.objectContaining({ overrideScope: '1:a25780=1' }),
+      }),
     )
   })
 

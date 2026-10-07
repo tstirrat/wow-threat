@@ -27,6 +27,10 @@ import {
   saveFightEventsResultCache,
 } from '../lib/fight-events-result-cache'
 import { threatConfigCacheScope } from '../lib/threat-config'
+import type {
+  SerializedAuraOverridesByActor,
+  SerializedTalentRankOverridesByActor,
+} from '../lib/threat-overrides'
 import type { AugmentedEventsResponse } from '../types/api'
 
 const defaultFightEventsLoadingMessage = 'Loading fight events'
@@ -54,6 +58,9 @@ async function fetchFightEvents(params: {
   inferThreatReduction: boolean
   forceFresh: boolean
   forceLegacyWorkerMode: boolean
+  auraOverridesByActor?: SerializedAuraOverridesByActor
+  talentRankOverridesByActor?: SerializedTalentRankOverridesByActor
+  overrideScope: string | null
   queryClient: QueryClient
   signal?: AbortSignal
   onProgressMessage?: (message: string) => void
@@ -65,6 +72,9 @@ async function fetchFightEvents(params: {
     inferThreatReduction,
     forceFresh,
     forceLegacyWorkerMode,
+    auraOverridesByActor,
+    talentRankOverridesByActor,
+    overrideScope,
     queryClient,
     signal,
     onProgressMessage,
@@ -79,6 +89,7 @@ async function fetchFightEvents(params: {
       configVersion: configCacheVersion,
       inferThreatReduction,
       configScope,
+      overrideScope,
     })
     if (cached) {
       onProgressMessage?.(
@@ -124,13 +135,15 @@ async function fetchFightEvents(params: {
       })
   throwIfAborted(signal)
 
-  const response = await getFightEventsClientSide({
+  const processedResponse = await getFightEventsClientSide({
     configId,
     reportId,
     fightId,
     reportData,
     fightData,
     inferThreatReduction,
+    auraOverridesByActor,
+    talentRankOverridesByActor,
     forceLegacyWorkerMode,
     rawEventsData,
     signal,
@@ -138,6 +151,10 @@ async function fetchFightEvents(params: {
       onProgressMessage?.(progress.message)
     },
   })
+  const response: AugmentedEventsResponse = {
+    ...processedResponse,
+    threatOverridesScope: overrideScope,
+  }
 
   if (!forceFresh) {
     await saveFightEventsResultCache({
@@ -147,6 +164,7 @@ async function fetchFightEvents(params: {
         configVersion: response.configVersion,
         inferThreatReduction,
         configScope,
+        overrideScope,
       },
       response,
     })
@@ -164,9 +182,13 @@ export function useFightEvents(
   forceFresh = false,
   forceLegacyWorkerMode = false,
   configId: ThreatConfigId | null = null,
+  auraOverridesByActor?: SerializedAuraOverridesByActor,
+  talentRankOverridesByActor?: SerializedTalentRankOverridesByActor,
+  overrideScope: string | null = null,
 ): {
   data: AugmentedEventsResponse | undefined
   isLoading: boolean
+  isFetching: boolean
   error: Error | null
   loadingMessage: string
 } {
@@ -185,6 +207,7 @@ export function useFightEvents(
       forceFresh,
       forceLegacyWorkerMode,
       configScope,
+      overrideScope,
     )
     return () => {
       activeRequestIdRef.current += 1
@@ -194,6 +217,7 @@ export function useFightEvents(
     }
   }, [
     configScope,
+    overrideScope,
     queryClient,
     reportId,
     fightId,
@@ -210,6 +234,7 @@ export function useFightEvents(
       forceFresh,
       forceLegacyWorkerMode,
       configScope,
+      overrideScope,
     ),
     queryFn: ({ signal }) => {
       const requestId = activeRequestIdRef.current + 1
@@ -223,6 +248,9 @@ export function useFightEvents(
         inferThreatReduction,
         forceFresh,
         forceLegacyWorkerMode,
+        auraOverridesByActor,
+        talentRankOverridesByActor,
+        overrideScope,
         queryClient,
         signal,
         onProgressMessage: (message) => {
@@ -242,7 +270,8 @@ export function useFightEvents(
       if (
         previousData?.reportCode === reportId &&
         previousData.fightId === fightId &&
-        (previousData.forcedConfigId ?? null) === configId
+        (previousData.forcedConfigId ?? null) === configId &&
+        (previousData.threatOverridesScope ?? null) === overrideScope
       ) {
         return previousData
       }
@@ -255,6 +284,7 @@ export function useFightEvents(
   return {
     data: query.data,
     isLoading: query.isLoading,
+    isFetching: query.isFetching,
     error: query.error,
     loadingMessage,
   }
@@ -268,6 +298,9 @@ export function useSuspenseFightEvents(
   forceFresh = false,
   forceLegacyWorkerMode = false,
   configId: ThreatConfigId | null = null,
+  auraOverridesByActor?: SerializedAuraOverridesByActor,
+  talentRankOverridesByActor?: SerializedTalentRankOverridesByActor,
+  overrideScope: string | null = null,
 ): {
   data: AugmentedEventsResponse
 } {
@@ -281,6 +314,7 @@ export function useSuspenseFightEvents(
       forceFresh,
       forceLegacyWorkerMode,
       configScope,
+      overrideScope,
     ),
     queryFn: ({ signal }) =>
       fetchFightEvents({
@@ -290,6 +324,9 @@ export function useSuspenseFightEvents(
         inferThreatReduction,
         forceFresh,
         forceLegacyWorkerMode,
+        auraOverridesByActor,
+        talentRankOverridesByActor,
+        overrideScope,
         queryClient,
         signal,
       }),

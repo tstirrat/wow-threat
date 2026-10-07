@@ -26,7 +26,7 @@ const reportActors: ReportActorSummary[] = [
     name: 'Aegistank',
     role: 'Tank',
     type: 'Player',
-    subType: 'Warrior',
+    subType: 'Paladin',
   },
   {
     id: 2,

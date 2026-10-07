@@ -11,6 +11,7 @@ import { ErrorBoundary } from '../components/error-boundary'
 import { ErrorState } from '../components/error-state'
 import { PlaybackControls } from '../components/playback-controls'
 import { PlayerSummaryTable } from '../components/player-summary-table'
+import { PlayerThreatOverridesPanel } from '../components/player-threat-overrides-panel'
 import { SectionCard } from '../components/section-card'
 import { TargetSelector } from '../components/target-selector'
 import { ThreatChart, type ThreatChartProps } from '../components/threat-chart'
@@ -19,6 +20,7 @@ import { ThreatMeter } from '../components/threat-meter'
 import { Skeleton } from '../components/ui/skeleton'
 import { useFightData } from '../hooks/use-fight-data'
 import { useFightEvents } from '../hooks/use-fight-events'
+import { usePlayerThreatOverrides } from '../hooks/use-player-threat-overrides'
 import { useReplayMode } from '../hooks/use-replay-mode'
 import { useUserSettings } from '../hooks/use-user-settings'
 import { formatClockDuration } from '../lib/format'
@@ -28,6 +30,11 @@ import {
   readForcedThreatConfigParam,
   resolveCurrentThreatConfig,
 } from '../lib/threat-config'
+import {
+  buildThreatOverrideOptions,
+  serializeAuraOverridesByActor,
+  serializeTalentRankOverridesByActor,
+} from '../lib/threat-overrides'
 import { buildCharacterUrl, buildFightRankingsUrl } from '../lib/wcl-url'
 import { useReportRouteContext } from '../routes/report-layout-context'
 import type { BossDamageMode } from '../types/app'
@@ -129,6 +136,18 @@ export const FightPage: FC = () => {
   )
   const fightQuery = useFightData(reportId, fightId)
   const fightData = fightQuery.data ?? null
+  const playerThreatOverrides = usePlayerThreatOverrides({ fightId, reportId })
+  const auraOverridesByActor = useMemo(
+    () => serializeAuraOverridesByActor(playerThreatOverrides.overridesByActor),
+    [playerThreatOverrides.overridesByActor],
+  )
+  const talentRankOverridesByActor = useMemo(
+    () =>
+      serializeTalentRankOverridesByActor(
+        playerThreatOverrides.overridesByActor,
+      ),
+    [playerThreatOverrides.overridesByActor],
+  )
   const eventsQueryEnabled = !isUserSettingsLoading
   const eventsQuery = useFightEvents(
     reportId,
@@ -138,6 +157,9 @@ export const FightPage: FC = () => {
     forceFreshEvents,
     forceLegacyWorkerMode,
     forcedThreatConfig.configId,
+    auraOverridesByActor,
+    talentRankOverridesByActor,
+    playerThreatOverrides.overrideScope,
   )
   const eventsData = eventsQuery.data ?? null
 
@@ -222,6 +244,37 @@ export const FightPage: FC = () => {
       : null
 
   const [isThreatMeterExpanded, setIsThreatMeterExpanded] = useState(false)
+  const [overridePanelActorId, setOverridePanelActorId] = useState<
+    number | null
+  >(null)
+
+  const handlePlayerClick = useCallback(
+    (actorId: number): void => {
+      handleSeriesClick(actorId)
+      const actor = fightData?.actors.find(
+        (candidate) => candidate.id === actorId && candidate.type === 'Player',
+      )
+      if (actor) {
+        setOverridePanelActorId(actorId)
+      }
+    },
+    [fightData, handleSeriesClick],
+  )
+
+  const overridePanelActor =
+    overridePanelActorId === null
+      ? null
+      : (fightData?.actors.find(
+          (actor) =>
+            actor.id === overridePanelActorId && actor.type === 'Player',
+        ) ?? null)
+  const overridePanelOptions = buildThreatOverrideOptions(
+    threatConfig,
+    overridePanelActor?.subType,
+  )
+  const overridePanelActorColor =
+    allSeries.find((series) => series.actorId === overridePanelActorId)
+      ?.color ?? 'currentColor'
 
   useFightPageLoadTracking({
     fightId,
@@ -477,7 +530,8 @@ export const FightPage: FC = () => {
     onClearSelections: handleClearSelections,
     windowEndMs: queryState.state.endMs,
     windowStartMs: queryState.state.startMs,
-    onSeriesClick: handleSeriesClick,
+    onSeriesClick: handlePlayerClick,
+    onOpenPlayerOverrides: handlePlayerClick,
     onFocusAndAddPlayer: handleFocusAndAddPlayer,
     onFocusAndIsolatePlayer: handleFocusAndIsolatePlayer,
     onToggleFocusedPlayerIsolation: handleToggleFocusedPlayerIsolation,
@@ -642,6 +696,39 @@ export const FightPage: FC = () => {
           </SectionCard>
         ) : null}
       </div>
+      {overridePanelActor ? (
+        <PlayerThreatOverridesPanel
+          actor={overridePanelActor}
+          actorColor={overridePanelActorColor}
+          actorOverrides={
+            playerThreatOverrides.overridesByActor[
+              String(overridePanelActor.id)
+            ]
+          }
+          isRecalculating={eventsQuery.isFetching}
+          options={overridePanelOptions}
+          onAuraOverrideChange={(option, state) => {
+            playerThreatOverrides.setAuraOverride(
+              overridePanelActor.id,
+              option,
+              state,
+            )
+          }}
+          onClose={() => {
+            setOverridePanelActorId(null)
+          }}
+          onReset={() => {
+            playerThreatOverrides.resetActorOverrides(overridePanelActor.id)
+          }}
+          onTalentRankOverrideChange={(option, rank) => {
+            playerThreatOverrides.setTalentRankOverride(
+              overridePanelActor.id,
+              option.talentEntryId,
+              rank,
+            )
+          }}
+        />
+      ) : null}
     </>
   )
 }

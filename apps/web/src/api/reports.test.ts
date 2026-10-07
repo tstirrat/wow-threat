@@ -61,6 +61,7 @@ describe('reports api helpers', () => {
       false,
       false,
       null,
+      null,
     ])
 
     expect(fightEventsQueryKey('ABC123xyz', 12, true, false, true)).toEqual([
@@ -71,6 +72,7 @@ describe('reports api helpers', () => {
       true,
       false,
       true,
+      null,
       null,
     ])
     expect(
@@ -84,6 +86,29 @@ describe('reports api helpers', () => {
       false,
       true,
       'era@1',
+      null,
+    ])
+
+    expect(
+      fightEventsQueryKey(
+        'ABC123xyz',
+        12,
+        true,
+        false,
+        true,
+        'era@1',
+        '1:a25780=1',
+      ),
+    ).toEqual([
+      'fight-events',
+      'ABC123xyz',
+      12,
+      configCacheVersion,
+      true,
+      false,
+      true,
+      'era@1',
+      '1:a25780=1',
     ])
   })
 

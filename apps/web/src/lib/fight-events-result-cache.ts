@@ -14,6 +14,7 @@ export interface FightEventsResultCacheKey {
   configVersion: string
   inferThreatReduction: boolean
   configScope?: string | null
+  overrideScope?: string | null
 }
 
 interface FightEventsResultCacheRecord extends FightEventsResultCacheKey {
@@ -128,6 +129,7 @@ export function buildFightEventsResultCacheKey(
     params.configVersion,
     inferThreatReductionToken,
     ...(params.configScope ? [params.configScope] : []),
+    ...(params.overrideScope ? [`overrides=${params.overrideScope}`] : []),
   ].join(':')
 }
 

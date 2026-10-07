@@ -36,6 +36,10 @@ import type {
   ThreatEngineWorkerResponse,
   ThreatEngineWorkerSuccessResponse,
 } from '../workers/threat-engine-worker-types'
+import type {
+  SerializedAuraOverridesByActor,
+  SerializedTalentRankOverridesByActor,
+} from './threat-overrides'
 
 const fallbackThreatEngine = new ThreatEngine()
 const defaultRawEventChunkSize = 10_000
@@ -327,6 +331,8 @@ function processThreatEventsOnMainThread(params: {
   configId?: ThreatConfigId | null
   fightId: number
   inferThreatReduction: boolean
+  auraOverridesByActor?: SerializedAuraOverridesByActor
+  talentRankOverridesByActor?: SerializedTalentRankOverridesByActor
   initialAurasByActor?: Record<string, number[]>
   rawEvents: WCLEvent[]
   report: Report
@@ -435,6 +441,8 @@ export async function getFightEventsClientSide(params: {
   reportData: ReportResponse
   fightData: FightsResponse
   inferThreatReduction: boolean
+  auraOverridesByActor?: SerializedAuraOverridesByActor
+  talentRankOverridesByActor?: SerializedTalentRankOverridesByActor
   forceLegacyWorkerMode?: boolean
   rawEventChunkSize?: number
   rawEventsData?: RawFightEventsData
@@ -448,6 +456,8 @@ export async function getFightEventsClientSide(params: {
     reportData,
     fightData,
     inferThreatReduction,
+    auraOverridesByActor,
+    talentRankOverridesByActor,
     forceLegacyWorkerMode = false,
     rawEventChunkSize,
     rawEventsData,
@@ -503,6 +513,8 @@ export async function getFightEventsClientSide(params: {
     fightId,
     inferThreatReduction,
     initialAurasByActor: metadata.initialAurasByActor,
+    auraOverridesByActor,
+    talentRankOverridesByActor,
     report: reportForEngine,
     tankActorIds,
   }
