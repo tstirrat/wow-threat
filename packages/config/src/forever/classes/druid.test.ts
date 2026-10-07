@@ -426,46 +426,4 @@ describe('WoW Forever Druid config', () => {
     })
   })
 
-  describe('Cenarion Rage 6-piece', () => {
-    it('adds 20% Bear threat through an isolated gear modifier', () => {
-      const modifier = foreverDruidConfig.auraModifiers[
-        Spells.CenarionRage6Piece
-      ]!(
-        createMockContext({
-          sourceAuras: new Set([Spells.BearForm, Spells.CenarionRage6Piece]),
-        }),
-      )
-
-      expect(modifier.value).toBe(1.2)
-      expect(modifier.source).toBe('gear')
-    })
-
-    it('changes Cower from flat reduction to a target threat wipe', () => {
-      const result = assertDefined(
-        foreverDruidConfig.abilities[Spells.CowerR3]!(
-          createMockContext({
-            event: createCastEvent(),
-            sourceAuras: new Set([Spells.CenarionRage6Piece]),
-          }),
-        ),
-      )
-
-      expect(result.value).toBe(0)
-      expect(result.note).toBe('Cenarion Rage 6-piece Cower threat wipe')
-      expect(result.effects).toEqual([
-        {
-          type: 'customThreat',
-          changes: [
-            {
-              sourceId: druidActor.id,
-              targetId: enemy.id,
-              targetInstance: 0,
-              operator: 'set',
-              amount: 0,
-            },
-          ],
-        },
-      ])
-    })
-  })
 })

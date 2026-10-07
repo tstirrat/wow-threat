@@ -22,7 +22,6 @@ export const Spells = {
 
   // Forever server-side tuning
   DruidTuningAura: 436895, // https://www.wowhead.com/forever/spell=436895/
-  CenarionRage6Piece: 456332, // https://www.wowhead.com/forever/spell=456332/
 
   // Bear abilities
   PrimalBiteR1: 407995, // https://www.wowhead.com/forever/spell=407995/
@@ -54,8 +53,6 @@ const Mods = {
   Swipe: 3.5,
   SubtletyPerRank: 0.1,
   ImprovedTranquilityPerRank: 0.5,
-  // Modelled separately so stacking can be adjusted after the set is testable.
-  CenarionRageBearThreat: 1.2,
 } as const
 
 const TRANQUILITY_SPELL_IDS = new Set([
@@ -79,12 +76,6 @@ function buildAuraImplications(): Map<number, ReadonlySet<number>> {
   bearAbilities.add(Spells.LacerateR3)
   mergedMap.set(Spells.DireBearForm, bearAbilities)
   return mergedMap
-}
-
-const isBearFormActive = (sourceAuras: ReadonlySet<number>): boolean => {
-  return (
-    sourceAuras.has(Spells.BearForm) || sourceAuras.has(Spells.DireBearForm)
-  )
 }
 
 const subtletyModifier: TalentModifierFn = (_ctx, rank) => ({
@@ -118,48 +109,9 @@ const lacerateThreat = unresolvedBonusThreat(
   'Lacerate server-side bonus threat unresolved (initial/tick/flat components require WCL testing)',
 )
 
-function cowerThreat(reduction: number): ThreatFormula {
-  const eraStyleReduction = threatOnCastRollbackOnMiss(reduction)
-
-  return (ctx) => {
-    if (!ctx.sourceAuras.has(Spells.CenarionRage6Piece)) {
-      return eraStyleReduction(ctx)
-    }
-
-    if (ctx.event.type !== 'cast') {
-      return undefined
-    }
-
-    return {
-      value: 0,
-      splitAmongEnemies: false,
-      note: 'Cenarion Rage 6-piece Cower threat wipe',
-      effects: [
-        {
-          type: 'customThreat',
-          changes: [
-            {
-              sourceId: ctx.sourceActor.id,
-              targetId: ctx.targetActor.id,
-              targetInstance: ctx.event.targetInstance ?? 0,
-              operator: 'set',
-              amount: 0,
-            },
-          ],
-        },
-      ],
-    }
-  }
-}
-
 // Copy Era's modifiers so inherited Classic behavior remains immutable.
 const auraModifiers: ClassThreatConfig['auraModifiers'] = {
   ...eraDruidConfig.auraModifiers,
-  [Spells.CenarionRage6Piece]: (ctx) => ({
-    source: 'gear',
-    name: 'Cenarion Rage 6-piece',
-    value: isBearFormActive(ctx.sourceAuras) ? Mods.CenarionRageBearThreat : 1,
-  }),
 }
 
 // Forever Feral Instinct increases Swipe damage rather than Bear threat. WCL
@@ -187,9 +139,9 @@ export const foreverDruidConfig: ClassThreatConfig = {
     [Spells.SwipeR4]: threat({ modifier: Mods.Swipe }),
     [Spells.SwipeR5]: threat({ modifier: Mods.Swipe }),
 
-    [Spells.CowerR1]: cowerThreat(-480),
-    [Spells.CowerR2]: cowerThreat(-780),
-    [Spells.CowerR3]: cowerThreat(-1200),
+    [Spells.CowerR1]: threatOnCastRollbackOnMiss(-480),
+    [Spells.CowerR2]: threatOnCastRollbackOnMiss(-780),
+    [Spells.CowerR3]: threatOnCastRollbackOnMiss(-1200),
 
     // Primal Bite has server-side bonus threat in Forever. Blizzard
     // approximately doubled its threat on 2026-10-01. The exact coefficient
