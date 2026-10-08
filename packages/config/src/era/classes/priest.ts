@@ -18,6 +18,49 @@ import { inferTalent } from '../../shared/talents'
 // ============================================================================
 
 export const Spells = {
+  // Healing spells affected by Vestments of Faith 6-piece
+  LesserHealR1: 2050, // https://www.wowhead.com/classic/spell=2050/
+  LesserHealR2: 2052, // https://www.wowhead.com/classic/spell=2052/
+  LesserHealR3: 2053, // https://www.wowhead.com/classic/spell=2053/
+  HealR1: 2054, // https://www.wowhead.com/classic/spell=2054/
+  HealR2: 2055, // https://www.wowhead.com/classic/spell=2055/
+  HealR3: 6063, // https://www.wowhead.com/classic/spell=6063/
+  HealR4: 6064, // https://www.wowhead.com/classic/spell=6064/
+  GreaterHealR1: 2060, // https://www.wowhead.com/classic/spell=2060/
+  GreaterHealR2: 10963, // https://www.wowhead.com/classic/spell=10963/
+  GreaterHealR3: 10964, // https://www.wowhead.com/classic/spell=10964/
+  GreaterHealR4: 10965, // https://www.wowhead.com/classic/spell=10965/
+  GreaterHealR5: 25314, // https://www.wowhead.com/classic/spell=25314/
+  FlashHealR1: 2061, // https://www.wowhead.com/classic/spell=2061/
+  FlashHealR2: 9472, // https://www.wowhead.com/classic/spell=9472/
+  FlashHealR3: 9473, // https://www.wowhead.com/classic/spell=9473/
+  FlashHealR4: 9474, // https://www.wowhead.com/classic/spell=9474/
+  FlashHealR5: 10915, // https://www.wowhead.com/classic/spell=10915/
+  FlashHealR6: 10916, // https://www.wowhead.com/classic/spell=10916/
+  FlashHealR7: 10917, // https://www.wowhead.com/classic/spell=10917/
+  RenewR1: 139, // https://www.wowhead.com/classic/spell=139/
+  RenewR2: 6074, // https://www.wowhead.com/classic/spell=6074/
+  RenewR3: 6075, // https://www.wowhead.com/classic/spell=6075/
+  RenewR4: 6076, // https://www.wowhead.com/classic/spell=6076/
+  RenewR5: 6077, // https://www.wowhead.com/classic/spell=6077/
+  RenewR6: 6078, // https://www.wowhead.com/classic/spell=6078/
+  RenewR7: 10927, // https://www.wowhead.com/classic/spell=10927/
+  RenewR8: 10928, // https://www.wowhead.com/classic/spell=10928/
+  RenewR9: 10929, // https://www.wowhead.com/classic/spell=10929/
+  RenewR10: 25315, // https://www.wowhead.com/classic/spell=25315/
+  PrayerOfHealingR1: 596, // https://www.wowhead.com/classic/spell=596/
+  PrayerOfHealingR2: 996, // https://www.wowhead.com/classic/spell=996/
+  PrayerOfHealingR3: 10960, // https://www.wowhead.com/classic/spell=10960/
+  PrayerOfHealingR4: 10961, // https://www.wowhead.com/classic/spell=10961/
+  PrayerOfHealingR5: 25316, // https://www.wowhead.com/classic/spell=25316/
+  DesperatePrayerR1: 13908, // https://www.wowhead.com/classic/spell=13908/
+  DesperatePrayerR2: 19236, // https://www.wowhead.com/classic/spell=19236/
+  DesperatePrayerR3: 19238, // https://www.wowhead.com/classic/spell=19238/
+  DesperatePrayerR4: 19240, // https://www.wowhead.com/classic/spell=19240/
+  DesperatePrayerR5: 19241, // https://www.wowhead.com/classic/spell=19241/
+  DesperatePrayerR6: 19242, // https://www.wowhead.com/classic/spell=19242/
+  DesperatePrayerR7: 19243, // https://www.wowhead.com/classic/spell=19243/
+
   // Mind Blast (extra threat per rank)
   MindBlastR1: 8092, // https://www.wowhead.com/classic/spell=8092/
   MindBlastR2: 8102, // https://www.wowhead.com/classic/spell=8102/
@@ -66,23 +109,57 @@ export const SetIds = {
 
 const Mods = {
   SilentResolve: 0.04, // 4% per rank (up to 20%)
+  VestmentsOfFaith: 0.9,
 }
 
 export const VestmentsHealSpellIds = new Set([
-  // Lesser Heal
-  2050, 2052, 2053,
-  // Heal
-  2054, 2055, 6063, 6064,
-  // Greater Heal
-  2060, 10963, 10964, 10965,
-  // Flash Heal
-  2061, 9472, 9473, 9474, 10915, 10916, 10917,
-  // Renew
-  139, 6074, 6075, 6076, 6077, 6078, 10927, 10928, 10929,
-  // Prayer of Healing
-  596, 996, 10960, 10961,
-  // Desperate Prayer
-  13908, 19236, 19238, 19240, 19241, 19242,
+  Spells.LesserHealR1,
+  Spells.LesserHealR2,
+  Spells.LesserHealR3,
+  Spells.HealR1,
+  Spells.HealR2,
+  Spells.HealR3,
+  Spells.HealR4,
+  Spells.GreaterHealR1,
+  Spells.GreaterHealR2,
+  Spells.GreaterHealR3,
+  Spells.GreaterHealR4,
+  Spells.GreaterHealR5,
+  Spells.FlashHealR1,
+  Spells.FlashHealR2,
+  Spells.FlashHealR3,
+  Spells.FlashHealR4,
+  Spells.FlashHealR5,
+  Spells.FlashHealR6,
+  Spells.FlashHealR7,
+  Spells.RenewR1,
+  Spells.RenewR2,
+  Spells.RenewR3,
+  Spells.RenewR4,
+  Spells.RenewR5,
+  Spells.RenewR6,
+  Spells.RenewR7,
+  Spells.RenewR8,
+  Spells.RenewR9,
+  Spells.RenewR10,
+  Spells.PrayerOfHealingR1,
+  Spells.PrayerOfHealingR2,
+  Spells.PrayerOfHealingR3,
+  Spells.PrayerOfHealingR4,
+  Spells.PrayerOfHealingR5,
+  Spells.DesperatePrayerR1,
+  Spells.DesperatePrayerR2,
+  Spells.DesperatePrayerR3,
+  Spells.DesperatePrayerR4,
+  Spells.DesperatePrayerR5,
+  Spells.DesperatePrayerR6,
+  Spells.DesperatePrayerR7,
+  Spells.HolyNovaHealR1,
+  Spells.HolyNovaHealR2,
+  Spells.HolyNovaHealR3,
+  Spells.HolyNovaHealR4,
+  Spells.HolyNovaHealR5,
+  Spells.HolyNovaHealR6,
 ])
 
 const SILENT_RESOLVE_RANKS = [
@@ -164,7 +241,7 @@ export const priestConfig: ClassThreatConfig = {
     [Spells.VestmentsReducedThreat]: () => ({
       source: 'gear',
       name: 'Vestments of Faith (6-piece)',
-      value: 0.9,
+      value: Mods.VestmentsOfFaith,
       spellIds: VestmentsHealSpellIds,
     }),
   },
