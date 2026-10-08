@@ -92,6 +92,8 @@ function processThreatEvents(params: {
     fightId: payload.fightId,
     inferThreatReduction: payload.inferThreatReduction,
     initialAurasByActor: payload.initialAurasByActor,
+    auraOverridesByActor: payload.auraOverridesByActor,
+    talentRankOverridesByActor: payload.talentRankOverridesByActor,
     rawEvents,
     report: payload.report,
     startedAt,

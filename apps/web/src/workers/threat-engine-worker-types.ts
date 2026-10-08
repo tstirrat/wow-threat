@@ -5,12 +5,18 @@ import type { ThreatConfigId } from '@wow-threat/config'
 import type { Report, WCLEvent } from '@wow-threat/wcl-types'
 
 import type { ThreatWorkerProcessedEventsPayload } from '../lib/threat-engine-worker-cache'
+import type {
+  SerializedAuraOverridesByActor,
+  SerializedTalentRankOverridesByActor,
+} from '../lib/threat-overrides'
 
 interface ThreatEngineWorkerBasePayload {
   configId?: ThreatConfigId | null
   fightId: number
   inferThreatReduction: boolean
   initialAurasByActor?: Record<string, number[]>
+  auraOverridesByActor?: SerializedAuraOverridesByActor
+  talentRankOverridesByActor?: SerializedTalentRankOverridesByActor
   report: Report
   tankActorIds: number[]
 }

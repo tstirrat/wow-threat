@@ -76,6 +76,47 @@ test.describe('fight page', () => {
     )
   })
 
+  test('shares Paladin aura and talent overrides in the url', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(`${svgFightUrl}&config=forever&forceRf=1`)
+    await expect(fightPage.chart.legendToggle('Aegistank')).toBeVisible()
+    await fightPage.chart.openLegendThreatOverrides('Aegistank')
+
+    await expect(fightPage.overrides.root('Aegistank')).toBeVisible()
+    await expect(
+      fightPage.overrides.auraState('Aegistank', 'Righteous Fury', 'on'),
+    ).toBeChecked()
+    await expect(
+      fightPage.overrides.talentRank('Aegistank', 'Iron Creed'),
+    ).toBeVisible()
+    await expect(
+      fightPage.overrides.talentRank('Aegistank', 'Instrument of Law'),
+    ).toBeVisible()
+
+    await fightPage.overrides.setAuraState('Aegistank', 'Righteous Fury', 'off')
+    await expect(
+      fightPage.chart.legendOverrideIndicator('Aegistank'),
+    ).toHaveText('*')
+    await expectSearchParam(page, 'forceRf', null)
+    await expectSearchParam(page, 'threatOverrides', '1:a25780=0')
+
+    await fightPage.overrides.setTalentRank('Aegistank', 'Iron Creed', 'Rank 5')
+    await expectSearchParam(page, 'threatOverrides', '1:a25780=0,t137877=5')
+
+    await page.reload()
+    await expect(fightPage.chart.legendToggle('Aegistank')).toBeVisible()
+    await expect(
+      fightPage.chart.legendOverrideIndicator('Aegistank'),
+    ).toHaveText('*')
+    await fightPage.chart.openLegendThreatOverrides('Aegistank')
+    await expect(
+      fightPage.overrides.auraState('Aegistank', 'Righteous Fury', 'off'),
+    ).toBeChecked()
+  })
+
   test('defaults to the main boss and shows expected players in the legend', async ({
     page,
   }) => {

@@ -135,6 +135,10 @@ export interface ProcessEventsInput {
   rawEvents: WCLEvent[]
   /** Optional pre-seeded aura IDs keyed by friendly actor ID. */
   initialAurasByActor?: Map<number, readonly number[]>
+  /** Request-scoped aura state overrides keyed by friendly actor ID. */
+  auraOverridesByActor?: Map<number, ActorAuraOverrides>
+  /** Request-scoped talent-rank overrides keyed by friendly actor ID. */
+  talentRankOverridesByActor?: Map<number, ReadonlyMap<number, number>>
   /** Map of actor IDs to actor metadata */
   actorMap: Map<number, Actor>
   /** Friendly actor IDs in the current fight (players + pets) */
@@ -157,6 +161,11 @@ export interface ProcessEventsInput {
   config: ThreatConfig
   /** Optional request-scoped event processors. */
   processors?: FightProcessor[]
+}
+
+export interface ActorAuraOverrides {
+  add: readonly number[]
+  remove: readonly number[]
 }
 
 export interface ProcessEventsOutput {
@@ -233,6 +242,10 @@ export function processEvents(input: ProcessEventsInput): ProcessEventsOutput {
 interface ProcessOneEventParams {
   eventIndex: number
   rawEvent: WCLEvent
+  auraOverridesByActor: Map<number, ActorAuraOverrides> | undefined
+  talentRankOverridesByActor:
+    | Map<number, ReadonlyMap<number, number>>
+    | undefined
   actorMap: Map<number, Actor>
   friendlyActorIds: Set<number> | undefined
   abilitySchoolMap: Map<number, number> | undefined
@@ -256,6 +269,8 @@ function processOneEvent(params: ProcessOneEventParams): void {
   const {
     eventIndex,
     rawEvent,
+    auraOverridesByActor,
+    talentRankOverridesByActor,
     actorMap,
     friendlyActorIds,
     abilitySchoolMap,
@@ -387,18 +402,27 @@ function processOneEvent(params: ProcessOneEventParams): void {
   })
 
   const threatOptions: CalculateThreatOptions = {
-    sourceAuras: fightState.getAurasForActor({
-      id: event.sourceID,
-      instanceId: event.sourceInstance,
-    }),
-    sourceTalentRanks: fightState.getTalentRanksForActor({
-      id: event.sourceID,
-      instanceId: event.sourceInstance,
-    }),
-    targetAuras: fightState.getAurasForActor({
-      id: event.targetID,
-      instanceId: event.targetInstance,
-    }),
+    sourceAuras: applyAuraOverrides(
+      fightState.getAurasForActor({
+        id: event.sourceID,
+        instanceId: event.sourceInstance,
+      }),
+      auraOverridesByActor?.get(event.sourceID),
+    ),
+    sourceTalentRanks: applyTalentRankOverrides(
+      fightState.getTalentRanksForActor({
+        id: event.sourceID,
+        instanceId: event.sourceInstance,
+      }),
+      talentRankOverridesByActor?.get(event.sourceID),
+    ),
+    targetAuras: applyAuraOverrides(
+      fightState.getAurasForActor({
+        id: event.targetID,
+        instanceId: event.targetInstance,
+      }),
+      auraOverridesByActor?.get(event.targetID),
+    ),
     spellSchoolMask: getSpellSchoolMaskForEvent(event, abilitySchoolMap),
     enemies,
     sourceActor,
@@ -483,6 +507,8 @@ function processEventsWithProcessors(
   const {
     rawEvents,
     initialAurasByActor,
+    auraOverridesByActor,
+    talentRankOverridesByActor,
     actorMap,
     friendlyActorIds,
     abilitySchoolMap,
@@ -517,9 +543,12 @@ function processEventsWithProcessors(
     processors,
     baseContext: processorBaseContext,
   })
-  const effectiveInitialAurasByActor = mergeInitialAurasWithAdditions(
-    normalizedInitialAurasByActor,
-    processorNamespace.get(initialAuraAdditionsKey),
+  const effectiveInitialAurasByActor = applyAuraOverridesByActor(
+    mergeInitialAurasWithAdditions(
+      normalizedInitialAurasByActor,
+      processorNamespace.get(initialAuraAdditionsKey),
+    ),
+    auraOverridesByActor,
   )
 
   const fightState = new FightState(actorMap, config, enemies)
@@ -562,6 +591,8 @@ function processEventsWithProcessors(
     processOneEvent({
       eventIndex,
       rawEvent,
+      auraOverridesByActor,
+      talentRankOverridesByActor,
       actorMap,
       friendlyActorIds,
       abilitySchoolMap,
@@ -587,6 +618,53 @@ function processEventsWithProcessors(
     eventCounts,
     initialAurasByActor: effectiveInitialAurasByActor,
   }
+}
+
+function applyAuraOverrides(
+  auraIds: ReadonlySet<number>,
+  overrides: ActorAuraOverrides | undefined,
+): Set<number> {
+  if (!overrides) {
+    return new Set(auraIds)
+  }
+
+  const effectiveAuraIds = new Set(auraIds)
+  overrides.remove.forEach((auraId) => effectiveAuraIds.delete(auraId))
+  overrides.add.forEach((auraId) => effectiveAuraIds.add(auraId))
+  return effectiveAuraIds
+}
+
+function applyAuraOverridesByActor(
+  initialAurasByActor: Map<number, readonly number[]>,
+  auraOverridesByActor: Map<number, ActorAuraOverrides> | undefined,
+): Map<number, number[]> {
+  const actorIds = new Set([
+    ...initialAurasByActor.keys(),
+    ...(auraOverridesByActor?.keys() ?? []),
+  ])
+
+  return new Map(
+    [...actorIds].map((actorId) => [
+      actorId,
+      [
+        ...applyAuraOverrides(
+          new Set(initialAurasByActor.get(actorId) ?? []),
+          auraOverridesByActor?.get(actorId),
+        ),
+      ].sort((left, right) => left - right),
+    ]),
+  )
+}
+
+function applyTalentRankOverrides(
+  talentRanks: ReadonlyMap<number, number>,
+  overrides: ReadonlyMap<number, number> | undefined,
+): Map<number, number> {
+  const effectiveTalentRanks = new Map(talentRanks)
+  overrides?.forEach((rank, talentEntryId) => {
+    effectiveTalentRanks.set(talentEntryId, rank)
+  })
+  return effectiveTalentRanks
 }
 
 function resolveEventActor({

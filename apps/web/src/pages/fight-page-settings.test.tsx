@@ -133,6 +133,9 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       false,
       false,
       null,
+      undefined,
+      undefined,
+      null,
     )
     expect(
       useFightEventsMock.mock.calls.some((call) => call[2] === false),
@@ -171,6 +174,9 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       true,
       false,
       false,
+      null,
+      undefined,
+      undefined,
       null,
     )
     expect(
@@ -223,6 +229,9 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       true,
       true,
       null,
+      undefined,
+      undefined,
+      null,
     )
   })
 
@@ -268,6 +277,9 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       true,
       false,
       true,
+      null,
+      undefined,
+      undefined,
       null,
     )
   })
@@ -317,6 +329,9 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       true,
       true,
       null,
+      undefined,
+      undefined,
+      null,
     )
   })
 
@@ -364,6 +379,9 @@ describe('FightPage inferThreatReduction startup behavior', () => {
       true,
       false,
       true,
+      null,
+      undefined,
+      undefined,
       null,
     )
   })
