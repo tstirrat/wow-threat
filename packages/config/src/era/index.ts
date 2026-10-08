@@ -70,7 +70,7 @@ const globalAuraModifiers = {
 }
 
 export const eraConfig: ThreatConfig = {
-  version: 17,
+  version: 18,
   displayName: 'Vanilla (Era)',
   wowhead: {
     domain: 'classic',
