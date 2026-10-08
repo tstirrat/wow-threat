@@ -8,6 +8,7 @@
 import { eraConfig } from '../era'
 import { extendConfig } from '../shared/extend-config'
 import { validateAbilities, validateAuraModifiers } from '../shared/utils'
+import { foreverDruidConfig } from './classes/druid'
 import { foreverPaladinConfig } from './classes/paladin'
 
 /**
@@ -17,7 +18,7 @@ import { foreverPaladinConfig } from './classes/paladin'
 const resolveForeverReport = (): boolean => false
 
 export const foreverConfig = extendConfig(eraConfig, {
-  version: 1,
+  version: 2,
   displayName: 'WoW Forever',
   wowhead: {
     domain: 'forever',
@@ -25,6 +26,7 @@ export const foreverConfig = extendConfig(eraConfig, {
   resolve: resolveForeverReport,
   classes: {
     ...eraConfig.classes,
+    druid: foreverDruidConfig,
     paladin: foreverPaladinConfig,
   },
 })
