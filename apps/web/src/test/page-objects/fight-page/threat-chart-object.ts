@@ -102,6 +102,10 @@ export class ThreatChartObject {
     return this.legendToggle(name).getByLabel(`${role} role`)
   }
 
+  legendOverrideIndicator(name: string): Locator {
+    return this.legendToggle(name).getByLabel('Threat overrides active')
+  }
+
   clearIsolateButton(): Locator {
     return this.legendRoot().getByRole('button', { name: 'Clear selections' })
   }

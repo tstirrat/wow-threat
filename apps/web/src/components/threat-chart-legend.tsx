@@ -24,6 +24,8 @@ import {
   TooltipTrigger,
 } from './ui/tooltip'
 
+const NO_THREAT_OVERRIDE_ACTOR_IDS = new Set<number>()
+
 export interface ThreatChartLegendProps {
   series: ThreatSeries[]
   isActorVisible: (actorId: number) => boolean
@@ -36,6 +38,7 @@ export interface ThreatChartLegendProps {
   onClearSelections: () => void
   showPets: boolean
   onShowPetsChange: (showPets: boolean) => void
+  actorIdsWithThreatOverrides?: ReadonlySet<number>
 }
 
 export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
@@ -50,6 +53,7 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
   onClearSelections,
   showPets,
   onShowPetsChange,
+  actorIdsWithThreatOverrides = NO_THREAT_OVERRIDE_ACTOR_IDS,
 }) => {
   const showPetsId = useId()
   const pinnedPlayerIdSet = new Set(pinnedPlayerIds)
@@ -114,6 +118,8 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
                 const isPinnable = item.actorType === 'Player'
                 const isPinned =
                   isPinnable && pinnedPlayerIdSet.has(item.actorId)
+                const hasThreatOverrides =
+                  isPinnable && actorIdsWithThreatOverrides.has(item.actorId)
                 const label =
                   item.actorType === 'Pet' ? item.actorName : item.label
                 return (
@@ -174,6 +180,14 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
                                 aria-hidden="true"
                                 className="inline h-3 w-3 flex-shrink-0"
                               />
+                            </span>
+                          ) : null}
+                          {hasThreatOverrides ? (
+                            <span
+                              aria-label="Threat overrides active"
+                              className="ml-1"
+                            >
+                              *
                             </span>
                           ) : null}
                         </span>

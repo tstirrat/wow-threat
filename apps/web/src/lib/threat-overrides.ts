@@ -77,6 +77,13 @@ function isActorOverridesEmpty(overrides: ActorThreatOverrides): boolean {
   )
 }
 
+/** True when the actor has at least one explicit aura or talent override. */
+export function actorHasThreatOverrides(
+  overrides: ActorThreatOverrides | undefined,
+): boolean {
+  return overrides !== undefined && !isActorOverridesEmpty(overrides)
+}
+
 /** Parse the compact URL representation of per-player threat overrides. */
 export function parseThreatOverridesParam(
   raw: string | null,

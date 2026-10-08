@@ -97,6 +97,9 @@ test.describe('fight page', () => {
     ).toBeVisible()
 
     await fightPage.overrides.setAuraState('Aegistank', 'Righteous Fury', 'off')
+    await expect(
+      fightPage.chart.legendOverrideIndicator('Aegistank'),
+    ).toHaveText('*')
     await expectSearchParam(page, 'forceRf', null)
     await expectSearchParam(page, 'threatOverrides', '1:a25780=0')
 
@@ -105,6 +108,9 @@ test.describe('fight page', () => {
 
     await page.reload()
     await expect(fightPage.chart.legendToggle('Aegistank')).toBeVisible()
+    await expect(
+      fightPage.chart.legendOverrideIndicator('Aegistank'),
+    ).toHaveText('*')
     await fightPage.chart.openLegendThreatOverrides('Aegistank')
     await expect(
       fightPage.overrides.auraState('Aegistank', 'Righteous Fury', 'off'),

@@ -31,6 +31,7 @@ import {
   resolveCurrentThreatConfig,
 } from '../lib/threat-config'
 import {
+  actorHasThreatOverrides,
   buildThreatOverrideOptions,
   serializeAuraOverridesByActor,
   serializeTalentRankOverridesByActor,
@@ -275,6 +276,13 @@ export const FightPage: FC = () => {
   const overridePanelActorColor =
     allSeries.find((series) => series.actorId === overridePanelActorId)
       ?.color ?? 'currentColor'
+  const actorIdsWithThreatOverrides = useMemo(() => {
+    return new Set(
+      Object.entries(playerThreatOverrides.overridesByActor)
+        .filter(([, overrides]) => actorHasThreatOverrides(overrides))
+        .map(([actorId]) => Number(actorId)),
+    )
+  }, [playerThreatOverrides.overridesByActor])
 
   useFightPageLoadTracking({
     fightId,
@@ -532,6 +540,7 @@ export const FightPage: FC = () => {
     windowStartMs: queryState.state.startMs,
     onSeriesClick: handlePlayerClick,
     onOpenPlayerOverrides: handlePlayerClick,
+    actorIdsWithThreatOverrides,
     onFocusAndAddPlayer: handleFocusAndAddPlayer,
     onFocusAndIsolatePlayer: handleFocusAndIsolatePlayer,
     onToggleFocusedPlayerIsolation: handleToggleFocusedPlayerIsolation,

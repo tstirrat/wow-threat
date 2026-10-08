@@ -5,6 +5,7 @@ import { foreverConfig } from '@wow-threat/config'
 import { describe, expect, it } from 'vitest'
 
 import {
+  actorHasThreatOverrides,
   applyLegacyRighteousFuryOverride,
   buildThreatOverrideOptions,
   parseThreatOverridesParam,
@@ -122,5 +123,27 @@ describe('threat-overrides', () => {
         option,
       ),
     ).toBe('off')
+  })
+
+  it('detects actors with an explicit aura or talent override', () => {
+    expect(actorHasThreatOverrides(undefined)).toBe(false)
+    expect(
+      actorHasThreatOverrides({
+        auras: {},
+        talents: {},
+      }),
+    ).toBe(false)
+    expect(
+      actorHasThreatOverrides({
+        auras: { '25780': 'off' },
+        talents: {},
+      }),
+    ).toBe(true)
+    expect(
+      actorHasThreatOverrides({
+        auras: {},
+        talents: { '137877': 5 },
+      }),
+    ).toBe(true)
   })
 })
