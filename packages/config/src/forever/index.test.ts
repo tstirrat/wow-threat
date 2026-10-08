@@ -23,8 +23,9 @@ function createResolutionInput(
 describe('forever config scaffold', () => {
   it('uses Era as its provisional baseline', () => {
     expect(foreverConfig.displayName).toBe('WoW Forever')
-    expect(foreverConfig.version).toBe(1)
+    expect(foreverConfig.version).toBe(2)
     expect(foreverConfig.baseThreat).toBe(eraConfig.baseThreat)
+    expect(foreverConfig.classes.druid).not.toBe(eraConfig.classes.druid)
     expect(foreverConfig.classes.paladin).not.toBe(eraConfig.classes.paladin)
     expect(foreverConfig.classes.warrior).toBe(eraConfig.classes.warrior)
     expect(foreverConfig.wowhead).toEqual({ domain: 'forever' })
