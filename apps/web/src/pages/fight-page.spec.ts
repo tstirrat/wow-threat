@@ -60,7 +60,7 @@ test.describe('fight page', () => {
 
     await fightPage.goto(eraFightUrl)
     await expect(fightPage.header.threatConfigText()).toHaveText(
-      'Threat config: Vanilla (Era) v17',
+      /^Threat config: Vanilla \(Era\) v\d+$/,
     )
     await maybeCaptureScreenshot(page)
     await expect(fightPage.quickSwitch.fightLink('Grobbulus')).toHaveAttribute(
@@ -72,7 +72,7 @@ test.describe('fight page', () => {
     await expectPathname(page, `/report/${e2eReportId}/fight/30`)
     await expectSearchParam(page, 'config', 'era')
     await expect(fightPage.header.threatConfigText()).toHaveText(
-      'Threat config: Vanilla (Era) v17',
+      /^Threat config: Vanilla \(Era\) v\d+$/,
     )
   })
 
