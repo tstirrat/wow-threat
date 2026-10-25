@@ -47,6 +47,7 @@
         JSON.stringify({
           display: state.display,
           railCollapsed: state.ui.railCollapsed,
+          rosterHidden: state.ui.rosterHidden,
           breakdownOpen: state.ui.breakdownOpen,
           signedIn: state.ui.signedIn,
           starredReports: [...state.ui.starredReports],
@@ -76,17 +77,19 @@
     xRange: null,
     yRange: null,
     mode: 'abs',
-    thresholds: true,
+    thresholds: false,
     analysis: { buffs: true, emu: true, noSalv: [] },
     display: {
+      theme: 'system',
       bossMelee: true,
+      eventDots: true,
+      resourceDots: true,
       fixate: true,
-      energize: true,
-      hoverTip: true,
       ...(prefs.display ?? {}),
     },
     ui: {
       railCollapsed: prefs.railCollapsed ?? false,
+      rosterHidden: prefs.rosterHidden ?? false,
       railTab: 'outline',
       breakdownOpen: prefs.breakdownOpen ?? true,
       settingsOpen: false,
@@ -112,6 +115,56 @@
   const sim = () => WF.simulate(report(), pull(), target(), state.analysis)
   const windowRange = () => state.xRange ?? [0, sim().D]
   const player = (pid) => WF.PLAYERS_BY_ID.get(pid)
+
+  // ===========================================================================
+  // Theme
+  // ===========================================================================
+
+  const darkQuery = window.matchMedia('(prefers-color-scheme: dark)')
+
+  function isDark() {
+    if (state.display.theme === 'dark') return true
+    if (state.display.theme === 'light') return false
+    return darkQuery.matches
+  }
+
+  function applyTheme() {
+    const root = document.documentElement
+    if (state.display.theme === 'system') delete root.dataset.theme
+    else root.dataset.theme = state.display.theme
+  }
+
+  /** Class colour for the active theme. */
+  const colorOf = (pid) => {
+    const p = player(pid)
+    return isDark() ? p.colorDark : p.colorLight
+  }
+
+  /** Canvas colours, read from the CSS tokens. */
+  function chartColors() {
+    const css = getComputedStyle(document.documentElement)
+    const get = (name) => css.getPropertyValue(name).trim()
+    return {
+      text: get('--text'),
+      muted: get('--muted'),
+      bg: get('--bg'),
+      grid: get('--chart-grid'),
+      frame: get('--chart-frame'),
+      cursor: get('--chart-cursor'),
+      hover: get('--chart-hover'),
+      threshold: get('--chart-threshold'),
+      shade: get('--chart-shade'),
+      veil: get('--chart-veil'),
+      melee: get('--chart-melee'),
+    }
+  }
+
+  /** Black or white text, whichever reads better on a hex colour. */
+  function inkOn(hex) {
+    const n = parseInt(hex.slice(1), 16)
+    const lum = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255
+    return lum > 0.55 ? '#111' : '#fff'
+  }
 
   // ===========================================================================
   // URL contract
@@ -163,7 +216,7 @@
     state.xRange = rangeParam(q.get('x'))
     state.yRange = rangeParam(q.get('y'))
     state.mode = q.get('mode') === 'rel' ? 'rel' : 'abs'
-    state.thresholds = q.get('thr') !== '0'
+    state.thresholds = q.get('thr') === '1'
   }
 
   function writeUrl(push = false) {
@@ -182,7 +235,7 @@
       if (state.xRange) q.set('x', state.xRange.map(Math.round).join('_'))
       if (state.yRange) q.set('y', state.yRange.map(Math.round).join('_'))
       if (state.mode === 'rel') q.set('mode', 'rel')
-      if (!state.thresholds) q.set('thr', '0')
+      if (state.thresholds) q.set('thr', '1')
       if (!state.analysis.buffs) q.set('buffs', '0')
       if (!state.analysis.emu) q.set('emu', '0')
       if (state.analysis.noSalv.length) {
@@ -282,11 +335,13 @@
 
   function renderAll() {
     frame = 0
+    applyTheme()
     const app = $('#app')
     app.classList.toggle('is-home', state.view === 'home')
     app.classList.toggle('rail-collapsed', state.ui.railCollapsed)
     app.classList.toggle('rail-open', state.ui.railOpen)
     app.classList.toggle('roster-open', state.ui.rosterOpen)
+    app.classList.toggle('roster-hidden', state.ui.rosterHidden)
     app.classList.toggle('tab-breakdown', state.ui.mobileTab === 'breakdown')
     $('#home').hidden = state.view !== 'home'
     $('#analysis').hidden = state.view !== 'report'
@@ -294,57 +349,18 @@
       b.setAttribute('aria-selected', String(b.dataset.tab === state.ui.mobileTab)),
     )
 
-    renderHeader()
+    renderBar()
     renderRail()
     renderSettings()
     if (state.view === 'home') {
       renderHome()
       return
     }
-    renderToolbar()
     renderRoster()
     renderBreakdown()
     drawChart()
     drawRibbon()
     drawOverview()
-  }
-
-  // ===========================================================================
-  // Header
-  // ===========================================================================
-
-  function renderHeader() {
-    const crumbs = $('#crumbs')
-    if (state.view === 'home') {
-      crumbs.innerHTML = '<span class="muted">Home</span>'
-    } else {
-      const rep = report()
-      const starred = state.ui.starredReports.has(rep.code)
-      crumbs.innerHTML = `
-        <span class="report-title" title="${esc(rep.title)}">${esc(rep.title)}</span>
-        <button class="star" data-action="toggle-star" aria-pressed="${starred}">${starred ? 'Starred' : 'Star'}</button>
-        <span class="sep">/</span>
-        <select data-change="pull" aria-label="Pull">
-          ${rep.pulls
-            .map(
-              (p) =>
-                `<option value="${p.id}" ${p.id === state.pullId ? 'selected' : ''}>#${p.id} ${esc(p.name)} (${p.outcome === 'kill' ? 'Kill' : `Wipe ${p.pct}%`})</option>`,
-            )
-            .join('')}
-        </select>
-        <span class="sep">/</span>
-        <select data-change="target" aria-label="Target">
-          ${pull()
-            .targets.map(
-              (t) =>
-                `<option value="${t.id}" ${t.id === target().id ? 'selected' : ''}>${esc(t.name)}</option>`,
-            )
-            .join('')}
-        </select>`
-    }
-    $('#account').innerHTML = state.ui.signedIn
-      ? `<button data-action="sign-out" title="Signed in with Warcraft Logs. Click to sign out.">Tstirrat<span class="long"> (sign out)</span></button>`
-      : `<button data-action="sign-in">Sign in<span class="long"> with Warcraft Logs</span></button>`
   }
 
   // ===========================================================================
@@ -356,12 +372,13 @@
     const tab = inReport ? state.ui.railTab : 'library'
     const collapsed = state.ui.railCollapsed
     const head = `
-      <div class="rail-head">
-        <div class="tabs" role="tablist">
-          <button role="tab" data-action="rail-tab" data-tab="outline" aria-pressed="${tab === 'outline'}" ${inReport ? '' : 'disabled'}>${collapsed ? 'Pulls' : 'This report'}</button>
-          <button role="tab" data-action="rail-tab" data-tab="library" aria-pressed="${tab === 'library'}">${collapsed ? 'Lib' : 'Library'}</button>
-        </div>
+      <div class="rail-top">
+        <a href="#/" class="home-link" data-action="home">${collapsed ? 'WT' : 'WOW Threat'}</a>
         <button class="desktop-only" data-action="rail-collapse" aria-label="${collapsed ? 'Expand' : 'Collapse'} navigation">${collapsed ? '»' : '«'}</button>
+      </div>
+      <div class="rail-head" role="tablist">
+        <button role="tab" data-action="rail-tab" data-tab="outline" aria-pressed="${tab === 'outline'}" ${inReport ? '' : 'disabled'}>${collapsed ? 'Pulls' : 'This report'}</button>
+        <button role="tab" data-action="rail-tab" data-tab="library" aria-pressed="${tab === 'library'}">${collapsed ? 'Lib' : 'Library'}</button>
       </div>`
     const body =
       tab === 'outline' && inReport ? renderOutline() : renderLibrary()
@@ -370,8 +387,15 @@
 
   function renderOutline() {
     const rep = report()
+    const starred = state.ui.starredReports.has(rep.code)
     return `
-      <p class="muted" style="margin:2px 6px 8px">${esc(rep.guild)} · ${esc(rep.date)}</p>
+      <div class="report-head">
+        <div class="title-row">
+          <strong>${esc(rep.title)}</strong>
+          <button data-action="toggle-star" aria-pressed="${starred}" aria-label="${starred ? 'Unstar' : 'Star'} this report">${starred ? '★' : '☆'}</button>
+        </div>
+        <span class="muted">${esc(rep.guild)} · ${esc(rep.date)}</span>
+      </div>
       <ul class="pull-list">
         ${rep.pulls
           .map((p) => {
@@ -473,10 +497,36 @@
   // Toolbar
   // ===========================================================================
 
-  function renderToolbar() {
+  const ICONS = {
+    settings:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+    roster:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg>',
+  }
+
+  /** The chart bar is the app's only top bar: chart controls left, app actions right. */
+  function renderBar() {
+    const inReport = state.view === 'report'
+    const account = state.ui.signedIn
+      ? `<button data-action="sign-out" title="Signed in with Warcraft Logs. Click to sign out.">Tstirrat<span class="long"> (sign out)</span></button>`
+      : `<button data-action="sign-in" title="Sign in with Warcraft Logs">Sign in</button>`
+    const right = `<div class="bar-right">
+        <button data-action="open-report">Open<span class="long"> report</span> <kbd>⌘O</kbd></button>
+        ${account}
+        <button class="icon" data-action="toggle-settings" aria-pressed="${state.ui.settingsOpen}" aria-label="Settings" title="Settings (,)">${ICONS.settings}</button>
+        ${inReport ? `<button class="icon" data-action="toggle-roster" aria-pressed="${isMobile() ? state.ui.rosterOpen : !state.ui.rosterHidden}" aria-label="${state.ui.rosterHidden ? 'Show' : 'Hide'} roster" title="Roster">${ICONS.roster}</button>` : ''}
+      </div>`
+    const menu = '<button class="only-mobile" data-action="mobile-rail" aria-label="Open navigation">Menu</button>'
+    if (!inReport) {
+      $('#bar').innerHTML = `${menu}<span class="muted">Home</span>${right}`
+      return
+    }
     const [a, b] = windowRange()
     const zoomed = Boolean(state.xRange || state.yRange)
-    $('#toolbar').innerHTML = `
+    const p = pull()
+    $('#bar').innerHTML = `
+      ${menu}
+      <span class="bar-title" title="Pull and target">#${p.id} ${esc(p.name)} · ${p.outcome === 'kill' ? 'Kill' : `Wipe ${p.pct}%`}${p.targets.length > 1 ? ` › ${esc(target().name)}` : ''}</span>
       <div class="group">
         <label for="preset">Show</label>
         <select id="preset" data-change="preset">
@@ -490,26 +540,28 @@
       </div>
       <div class="group" role="group" aria-label="Threat scale">
         <button data-action="mode" data-mode="abs" aria-pressed="${state.mode === 'abs'}">Absolute</button>
-        <button data-action="mode" data-mode="rel" aria-pressed="${state.mode === 'rel'}">% of aggro holder</button>
+        <button data-action="mode" data-mode="rel" aria-pressed="${state.mode === 'rel'}">% of aggro</button>
       </div>
-      <label class="group"><input type="checkbox" data-change="thresholds" ${state.thresholds ? 'checked' : ''} /> Pull thresholds (110% / 130%)</label>
+      <label class="group"><input type="checkbox" data-change="thresholds" ${state.thresholds ? 'checked' : ''} /> Thresholds</label>
       <div class="group">
-        <span class="readout">Window ${fmtTime(a)}–${fmtTime(b)}</span>
+        <span class="readout">${fmtTime(a)}–${fmtTime(b)}</span>
         <button data-action="reset-zoom" ${zoomed ? '' : 'disabled'}>Reset zoom</button>
       </div>
       <div class="group">
         <button data-action="toggle-play" aria-pressed="${state.ui.playing}">${state.ui.playing ? 'Pause' : 'Play'}</button>
         <select data-change="speed" aria-label="Playback speed">
-          ${[1, 2, 4, 8].map((s) => `<option value="${s}" ${s === state.ui.speed ? 'selected' : ''}>${s}×</option>`).join('')}
+          ${[1, 2, 4, 8].map((sp) => `<option value="${sp}" ${sp === state.ui.speed ? 'selected' : ''}>${sp}×</option>`).join('')}
         </select>
         <span class="readout">Cursor ${state.cursor === null ? '—' : fmtTime(state.cursor, true)}</span>
         ${state.cursor === null ? '' : '<button data-action="clear-cursor">Clear</button>'}
       </div>
-      <button class="desktop-only" data-action="shortcuts">Shortcuts <kbd>?</kbd></button>`
+      ${right}`
   }
 
+  const isMobile = () => window.matchMedia('(max-width: 760px)').matches
+
   // ===========================================================================
-  // Roster + events at t
+  // Roster
   // ===========================================================================
 
   function rosterTime() {
@@ -554,19 +606,19 @@
         <button data-action="toggle-visible" data-pid="${p.id}" aria-pressed="${visible}" aria-label="${visible ? 'Hide' : 'Show'} ${esc(p.name)}">${visible ? 'On' : 'Off'}</button>
         <button data-action="toggle-pin" data-pid="${p.id}" aria-pressed="${pinned}" aria-label="${pinned ? 'Unpin' : 'Pin'} ${esc(p.name)}">Pin</button>
         <button class="roster-main" data-action="focus" data-pid="${p.id}" aria-label="Focus ${esc(p.name)}">
-          <span class="swatch" style="background:${p.color}"></span>
+          <span class="swatch" style="background:${colorOf(p.id)}"></span>
           <span class="roster-name">${esc(p.name)}${tags}</span>
           <span class="num">${fmtNum(v)}</span>
           <span class="num">${fmtPct(pct)}</span>
           <span class="num">${fmtNum(tps)}</span>
-          <span class="bar"><i style="width:${(v / max) * 100}%"></i></span>
+          <span class="bar-meter"><i style="width:${(v / max) * 100}%"></i></span>
         </button>
       </li>`
     }
     const absentRow = (p) => `<li class="roster-row is-absent">
         <button disabled>—</button>
         <button data-action="toggle-pin" data-pid="${p.id}" aria-pressed="true" aria-label="Unpin ${esc(p.name)}">Pin</button>
-        <span class="roster-main"><span class="swatch" style="background:${p.color}"></span><span class="roster-name">${esc(p.name)} <span class="tag">not in this pull</span></span><span></span><span></span><span></span></span>
+        <span class="roster-main"><span class="swatch" style="background:${colorOf(p.id)}"></span><span class="roster-name">${esc(p.name)} <span class="tag">not in this pull</span></span><span></span><span></span><span></span></span>
       </li>`
 
     const label =
@@ -586,8 +638,7 @@
         </div>
       </div>
       <div class="roster-cols"><span></span><span>Player</span><span class="num">Threat</span><span class="num">% aggro</span><span class="num">TPS</span></div>
-      <ul class="roster-list">${rows.map(row).join('')}${absent.map(absentRow).join('')}</ul>
-      <section class="events" aria-live="polite">${renderEventsAtT()}</section>`
+      <ul class="roster-list">${rows.map(row).join('')}${absent.map(absentRow).join('')}</ul>`
 
     // Keep the filter input focused while typing.
     if (refocus) {
@@ -595,24 +646,6 @@
       input.focus()
       input.setSelectionRange(input.value.length, input.value.length)
     }
-  }
-
-  /** Events at the latest timestamp <= cursor, for visible players. */
-  function eventsAtCursor() {
-    if (state.cursor === null) return { t: null, list: [] }
-    const s = sim()
-    const relevant = s.events.filter(
-      (e) =>
-        state.visible.has(e.pid) &&
-        e.t <= state.cursor &&
-        (state.display.energize || e.kind !== 'energize'),
-    )
-    if (relevant.length === 0) return { t: null, list: [] }
-    const t = relevant[relevant.length - 1].t
-    const list = relevant
-      .filter((e) => e.t === t)
-      .sort((x, y) => (y.pid === state.focus) - (x.pid === state.focus))
-    return { t, list }
   }
 
   function eventMath(e) {
@@ -626,33 +659,25 @@
     return `${base} × ${e.coeff.toFixed(3)} = <strong>${e.threat >= 0 ? '+' : ''}${fmtNum(e.threat)}</strong>`
   }
 
-  function renderEventsAtT() {
-    const { t, list } = eventsAtCursor()
-    if (state.cursor === null) {
-      return `<h3>Events at cursor</h3><p class="muted">Click empty chart space to place a cursor. Every event at that exact moment, with its threat math, shows here. ←/→ steps event by event.</p>`
-    }
-    if (t === null) {
-      return `<h3>Events at cursor</h3><p class="muted">No events from visible players before ${fmtTime(state.cursor, true)}.</p>`
-    }
-    return `<h3>${list.length} event${list.length === 1 ? '' : 's'} at ${fmtTime(t, true)}</h3>
-      <ul class="event-group">${list
-        .map((e) => {
-          const p = player(e.pid)
-          const mods = e.mods.length
-            ? e.mods.map((m) => `${esc(m.name)} ×${m.mult}`).join(' · ')
-            : e.coeff === null
-              ? ''
-              : 'No modifiers'
-          return `<li class="event ${e.pid === state.focus ? 'is-focus' : ''}">
-            <div class="event-top">
-              <span><span class="swatch" style="display:inline-block;background:${p.color}"></span> ${esc(p.name)} · <strong>${esc(e.spell)}</strong>${e.hitType !== 'hit' ? ` <span class="tag">${e.hitType}</span>` : ''}</span>
-              <span class="num">→ ${fmtNum(e.cum)}</span>
-            </div>
-            <div class="event-math">${eventMath(e)}</div>
-            ${mods ? `<div class="event-mods">${mods}</div>` : ''}
-          </li>`
-        })
-        .join('')}</ul>`
+  /** Tooltip rows for a set of events that share one timestamp. */
+  function tipEvents(list) {
+    return `<ul class="tip-events">${list
+      .map((e) => {
+        const mods = e.mods.length
+          ? e.mods.map((m) => `${esc(m.name)} ×${m.mult}`).join(' · ')
+          : e.coeff === null
+            ? ''
+            : 'No modifiers'
+        return `<li>
+          <div class="event-top">
+            <span><strong>${esc(e.spell)}</strong>${e.hitType !== 'hit' ? ` <span class="tag">${e.hitType}</span>` : ''}</span>
+            <span class="num">→ ${fmtNum(e.cum)}</span>
+          </div>
+          <div class="event-math">${eventMath(e)}</div>
+          ${mods ? `<div class="event-mods">${mods}</div>` : ''}
+        </li>`
+      })
+      .join('')}</ul>`
   }
 
   // ===========================================================================
@@ -672,6 +697,7 @@
       <h2>${p ? `${esc(p.name)} — spell breakdown` : 'Spell breakdown'}</h2>
       <span class="muted">Window ${fmtTime(a)}–${fmtTime(b)} (${secs.toFixed(1)}s)</span>
       ${p ? `<span class="muted">Initial auras: ${esc(initialAuras(p))}</span>` : ''}
+      <button class="push desktop-only" data-action="shortcuts">Shortcuts <kbd>?</kbd></button>
     </div>`
 
     if (!p) {
@@ -767,10 +793,15 @@
       <fieldset>
         <legend>My display</legend>
         <p class="hint">Saved in this browser. Not included in shared links.</p>
-        <label><input type="checkbox" data-change="display" data-key="bossMelee" ${d.bossMelee ? 'checked' : ''} /> Boss melee markers on the event lane</label>
+        <label>Theme
+          <select data-change="theme" aria-label="Theme">
+            ${['system', 'light', 'dark'].map((th) => `<option value="${th}" ${d.theme === th ? 'selected' : ''}>${th[0].toUpperCase()}${th.slice(1)}</option>`).join('')}
+          </select>
+        </label>
+        <label><input type="checkbox" data-change="display" data-key="eventDots" ${d.eventDots ? 'checked' : ''} /> Spell event dots on lines</label>
+        <label><input type="checkbox" data-change="display" data-key="bossMelee" ${d.bossMelee ? 'checked' : ''} /> Boss melee dots (red)</label>
+        <label><input type="checkbox" data-change="display" data-key="resourceDots" ${d.resourceDots ? 'checked' : ''} /> Resource change dots (rage gain, small)</label>
         <label><input type="checkbox" data-change="display" data-key="fixate" ${d.fixate ? 'checked' : ''} /> Shade fixate windows on the chart</label>
-        <label><input type="checkbox" data-change="display" data-key="energize" ${d.energize ? 'checked' : ''} /> Include energize (rage gain) events in the inspector</label>
-        <label><input type="checkbox" data-change="display" data-key="hoverTip" ${d.hoverTip ? 'checked' : ''} /> Hover tooltip on the chart</label>
       </fieldset>
       <fieldset>
         <legend>This analysis</legend>
@@ -905,13 +936,61 @@
   // Chart drawing
   // ===========================================================================
 
-  const pointer = { x: null, y: null, down: null, drag: null }
+  const pointer = { x: null, y: null, down: null, drag: null, hit: null }
+
+  const timeIndex = new Map()
+  const meleeIndex = new Map()
+
+  /** Event timestamps per sim (events are already time-sorted). */
+  function eventTimes(s) {
+    let arr = timeIndex.get(s.key)
+    if (!arr) {
+      arr = s.events.map((e) => e.t)
+      timeIndex.set(s.key, arr)
+    }
+    return arr
+  }
+
+  function meleeMarkers(s) {
+    let arr = meleeIndex.get(s.key)
+    if (!arr) {
+      arr = s.markers.filter((mk) => mk.type === 'bossMelee')
+      meleeIndex.set(s.key, arr)
+    }
+    return arr
+  }
+
+  /** Visible players' events with a <= t <= b. */
+  function eventsIn(s, a, b) {
+    const times = eventTimes(s)
+    const out = []
+    for (let i = WF.lastAtOrBefore(times, a - 1) + 1; i < times.length && times[i] <= b; i += 1) {
+      const e = s.events[i]
+      if (state.visible.has(e.pid)) out.push(e)
+    }
+    return out
+  }
+
+  /** Y value of an event dot: the player's threat right after that event. */
+  function dotValue(e) {
+    if (state.mode !== 'rel') return e.cum
+    const s = sim()
+    const hv = WF.valueAt(s, WF.segmentAt(s, e.t).pid, e.t)
+    return hv > 0 ? Math.min(400, (e.cum / hv) * 100) : 0
+  }
+
+  function dotRadius(g) {
+    const pxPerSec = g.plotW / ((g.x1 - g.x0) / 1000)
+    return pxPerSec < 3 ? 1.6 : pxPerSec < 12 ? 2.2 : 3
+  }
 
   function drawChart() {
     const canvas = $('#chart')
     const { ctx, w, h } = setupCanvas(canvas)
     const g = chartGeom(w, h)
     const s = sim()
+    const c = chartColors()
+    ctx.font = '11px system-ui'
 
     // Fixate shading.
     if (state.display.fixate) {
@@ -921,18 +1000,17 @@
           const xa = Math.max(PAD.l, g.xOf(mk.t))
           const xb = Math.min(PAD.l + g.plotW, g.xOf(mk.end))
           if (xb <= xa) return
-          ctx.fillStyle = 'rgba(0,0,0,0.06)'
+          ctx.fillStyle = c.shade
           ctx.fillRect(xa, PAD.t, xb - xa, g.plotH)
-          ctx.fillStyle = '#555'
-          ctx.font = '11px system-ui'
+          ctx.fillStyle = c.muted
+          ctx.textAlign = 'left'
           ctx.fillText(`Fixate: ${player(mk.pid).name}`, xa + 4, PAD.t + 12)
         })
     }
 
     // Grid + axes.
-    ctx.strokeStyle = '#e4e4e4'
-    ctx.fillStyle = '#5e5e5e'
-    ctx.font = '11px system-ui'
+    ctx.strokeStyle = c.grid
+    ctx.fillStyle = c.muted
     ctx.lineWidth = 1
     const yStep = niceStep(g.y1 - g.y0, 6)
     ctx.textAlign = 'right'
@@ -954,7 +1032,7 @@
       ctx.stroke()
       ctx.fillText(fmtTime(t, xStep < 1000), x, h - 6)
     }
-    ctx.strokeStyle = '#999'
+    ctx.strokeStyle = c.frame
     ctx.strokeRect(PAD.l + 0.5, PAD.t + 0.5, g.plotW, g.plotH)
 
     ctx.save()
@@ -964,7 +1042,7 @@
 
     // Thresholds.
     if (state.thresholds) {
-      ctx.strokeStyle = '#444'
+      ctx.strokeStyle = c.threshold
       ctx.lineWidth = 1
       const levels = [
         { f: 1.1, dash: [6, 4], label: '110% melee pull' },
@@ -988,28 +1066,26 @@
         ctx.stroke()
         ctx.setLineDash([])
         const lastV = state.mode === 'rel' ? f * 100 : g.smp.holder[g.smp.n] * f
-        ctx.fillStyle = '#444'
+        ctx.fillStyle = c.threshold
         ctx.textAlign = 'right'
         ctx.fillText(label, PAD.l + g.plotW - 4, g.yOf(lastV) - 4)
       })
-      if (state.mode === 'rel') {
-        ctx.strokeStyle = '#999'
-        ctx.beginPath()
-        ctx.moveTo(PAD.l, g.yOf(100))
-        ctx.lineTo(PAD.l + g.plotW, g.yOf(100))
-        ctx.stroke()
-      }
+    }
+    if (state.mode === 'rel') {
+      ctx.strokeStyle = c.frame
+      ctx.beginPath()
+      ctx.moveTo(PAD.l, g.yOf(100))
+      ctx.lineTo(PAD.l + g.plotW, g.yOf(100))
+      ctx.stroke()
     }
 
     // Player lines: unfocused first, focused on top.
-    const order = [...state.visible].sort(
-      (x, y) => (x === state.focus) - (y === state.focus),
-    )
+    const order = [...state.visible].sort((x, y) => (x === state.focus) - (y === state.focus))
     order.forEach((pid) => {
       const arr = g.smp.byPid.get(pid)
       if (!arr) return
       const focused = pid === state.focus
-      ctx.strokeStyle = player(pid).color
+      ctx.strokeStyle = colorOf(pid)
       ctx.globalAlpha = state.focus && !focused ? 0.4 : 1
       ctx.lineWidth = focused ? 2.75 : 1.25
       ctx.beginPath()
@@ -1023,41 +1099,77 @@
     })
     ctx.globalAlpha = 1
 
+    // Event dots: spell events in the line colour, resource changes smaller.
+    const r = dotRadius(g)
+    eventsIn(s, g.x0, g.x1).forEach((e) => {
+      const resource = e.kind === 'energize'
+      if (resource ? !state.display.resourceDots : !state.display.eventDots) return
+      const focused = e.pid === state.focus
+      ctx.globalAlpha = state.focus && !focused ? 0.4 : 1
+      ctx.fillStyle = colorOf(e.pid)
+      ctx.beginPath()
+      ctx.arc(g.xOf(e.t), g.yOf(dotValue(e)), resource ? r * 0.55 : focused ? r + 0.5 : r, 0, Math.PI * 2)
+      ctx.fill()
+    })
+    ctx.globalAlpha = 1
+
+    // Boss melee dots: red, on the line of whoever got hit.
+    if (state.display.bossMelee) {
+      ctx.fillStyle = c.melee
+      meleeMarkers(s).forEach((mk) => {
+        if (mk.t < g.x0 || mk.t > g.x1 || !state.visible.has(mk.pid)) return
+        ctx.beginPath()
+        ctx.arc(g.xOf(mk.t), g.yOf(valueForMode(mk.pid, mk.t)), r + 0.6, 0, Math.PI * 2)
+        ctx.fill()
+      })
+    }
+
     // Cursor.
     if (state.cursor !== null && state.cursor >= g.x0 && state.cursor <= g.x1) {
       const x = Math.round(g.xOf(state.cursor)) + 0.5
-      ctx.strokeStyle = '#111'
+      ctx.strokeStyle = c.cursor
       ctx.lineWidth = 1.5
       ctx.beginPath()
       ctx.moveTo(x, PAD.t)
       ctx.lineTo(x, PAD.t + g.plotH)
       ctx.stroke()
       state.visible.forEach((pid) => {
-        const v = valueForMode(pid, state.cursor)
-        ctx.fillStyle = player(pid).color
+        ctx.fillStyle = colorOf(pid)
+        ctx.strokeStyle = c.bg
+        ctx.lineWidth = 1.5
         ctx.beginPath()
-        ctx.arc(x, g.yOf(v), pid === state.focus ? 4 : 2.5, 0, Math.PI * 2)
+        ctx.arc(x, g.yOf(valueForMode(pid, state.cursor)), pid === state.focus ? 4.5 : 3, 0, Math.PI * 2)
         ctx.fill()
+        ctx.stroke()
       })
     }
 
-    // Hover crosshair.
+    // Hover crosshair + hovered point ring.
     if (pointer.x !== null && !pointer.drag && pointer.x >= PAD.l && pointer.x <= PAD.l + g.plotW) {
-      ctx.strokeStyle = '#aaa'
+      ctx.strokeStyle = c.hover
       ctx.lineWidth = 1
       ctx.setLineDash([3, 3])
       ctx.beginPath()
-      ctx.moveTo(pointer.x + 0.5, PAD.t)
-      ctx.lineTo(pointer.x + 0.5, PAD.t + g.plotH)
+      const hx = pointer.hit ? pointer.hit.x : pointer.x
+      ctx.moveTo(hx + 0.5, PAD.t)
+      ctx.lineTo(hx + 0.5, PAD.t + g.plotH)
       ctx.stroke()
       ctx.setLineDash([])
+      if (pointer.hit) {
+        ctx.strokeStyle = c.cursor
+        ctx.lineWidth = 2
+        ctx.beginPath()
+        ctx.arc(pointer.hit.x, pointer.hit.y, r + 4, 0, Math.PI * 2)
+        ctx.stroke()
+      }
     }
 
     // Drag rectangle.
     if (pointer.drag) {
       const { x0, y0, x1, y1 } = pointer.drag
-      ctx.fillStyle = 'rgba(0,0,0,0.06)'
-      ctx.strokeStyle = '#333'
+      ctx.fillStyle = c.shade
+      ctx.strokeStyle = c.cursor
+      ctx.lineWidth = 1
       ctx.setLineDash([4, 3])
       ctx.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.abs(y1 - y0))
       ctx.strokeRect(Math.min(x0, x1) + 0.5, Math.min(y0, y1) + 0.5, Math.abs(x1 - x0), Math.abs(y1 - y0))
@@ -1066,7 +1178,7 @@
     ctx.restore()
 
     if (state.mode === 'rel') {
-      ctx.fillStyle = '#5e5e5e'
+      ctx.fillStyle = c.muted
       ctx.textAlign = 'left'
       ctx.fillText('% of aggro holder', PAD.l + 4, PAD.t + g.plotH - 6)
     }
@@ -1100,14 +1212,39 @@
     return best ? best.pid : null
   }
 
+  /** Nearest event or boss-melee dot to a pixel, within 14px. */
+  function nearestPoint(x, y, g) {
+    const s = sim()
+    const tol = 14
+    const dt = ((g.x1 - g.x0) / g.plotW) * tol
+    const t = g.tOf(x)
+    let best = null
+    const consider = (pid, et, v, kind) => {
+      const px = g.xOf(et)
+      const py = g.yOf(v)
+      const d = Math.hypot(px - x, py - y) - (pid === state.focus ? 2 : 0)
+      if (d <= tol && (!best || d < best.d)) best = { pid, t: et, x: px, y: py, d, kind }
+    }
+    eventsIn(s, t - dt, t + dt).forEach((e) => {
+      if (e.kind === 'energize' && !state.display.resourceDots) return
+      consider(e.pid, e.t, dotValue(e), 'event')
+    })
+    if (state.display.bossMelee) {
+      meleeMarkers(s).forEach((mk) => {
+        if (Math.abs(mk.t - t) > dt || !state.visible.has(mk.pid)) return
+        consider(mk.pid, mk.t, valueForMode(mk.pid, mk.t), 'melee')
+      })
+    }
+    return best
+  }
+
   /** Snap a time to the nearest event of a visible player within px tolerance. */
   function snapTime(t, g) {
     const tol = ((g.x1 - g.x0) / g.plotW) * 8
     let best = null
-    sim().events.forEach((e) => {
-      if (!state.visible.has(e.pid)) return
+    eventsIn(sim(), t - tol, t + tol).forEach((e) => {
       const d = Math.abs(e.t - t)
-      if (d <= tol && (!best || d < best.d)) best = { t: e.t, d }
+      if (!best || d < best.d) best = { t: e.t, d }
     })
     return best ? best.t : Math.round(t)
   }
@@ -1148,11 +1285,13 @@
             x1: clampX(pt.x),
             y1: clampY(pt.y),
           }
+          pointer.hit = null
           tip.hidden = true
           redrawCanvases()
           return
         }
       }
+      pointer.hit = nearestPoint(pt.x, pt.y, g)
       updateHoverTip(pt, g)
       redrawCanvases()
     })
@@ -1172,7 +1311,8 @@
           }
         }
       } else if (pointer.down) {
-        const pid = lineAt(pt.x, pt.y, g)
+        const hit = nearestPoint(pt.x, pt.y, g)
+        const pid = hit && hit.d <= 8 ? hit.pid : lineAt(pt.x, pt.y, g)
         if (pid) {
           state.focus = pid
         } else if (pt.x >= PAD.l && pt.x <= PAD.l + g.plotW) {
@@ -1187,6 +1327,7 @@
 
     canvas.addEventListener('pointerleave', () => {
       pointer.x = null
+      pointer.hit = null
       tip.hidden = true
       redrawCanvases()
     })
@@ -1194,29 +1335,63 @@
     canvas.addEventListener('dblclick', () => resetZoom())
   }
 
+  const nameHtml = (pid) =>
+    `<strong style="color:${colorOf(pid)}">${esc(player(pid).name)}</strong>`
+
+  /** Tooltip anchored to the nearest dot, listing every event at that moment. */
   function updateHoverTip(pt, g) {
     const tip = $('#hover-tip')
-    if (!state.display.hoverTip || pt.x < PAD.l || pt.x > PAD.l + g.plotW) {
+    if (pt.x < PAD.l || pt.x > PAD.l + g.plotW) {
       tip.hidden = true
       return
     }
-    const t = g.tOf(pt.x)
-    const pid = lineAt(pt.x, pt.y, g)
     const s = sim()
-    const seg = WF.segmentAt(s, t)
-    let html = `<strong>${fmtTime(t, true)}</strong>`
-    if (pid) {
-      const v = WF.valueAt(s, pid, t)
-      const hv = WF.valueAt(s, seg.pid, t)
-      html += ` · ${esc(player(pid).name)} ${fmtNum(v)}${seg.pid !== pid && hv > 0 ? ` (${fmtPct((v / hv) * 100)} of ${esc(player(seg.pid).name)})` : ' (has aggro)'}<br><span class="muted">Click to focus this player</span>`
+    const hit = pointer.hit
+    let html
+    let ax = pt.x
+    let ay = pt.y
+    if (hit) {
+      const seg = WF.segmentAt(s, hit.t)
+      const v = WF.valueAt(s, hit.pid, hit.t)
+      const hv = WF.valueAt(s, seg.pid, hit.t)
+      const share =
+        seg.pid === hit.pid
+          ? `<span class="tag strong">${seg.kind === 'fixate' ? 'fixated' : 'aggro'}</span>`
+          : hv > 0
+            ? `<span class="muted">${fmtPct((v / hv) * 100)} of ${esc(player(seg.pid).name)}</span>`
+            : ''
+      const list = eventsIn(s, hit.t, hit.t).filter(
+        (e) => e.pid === hit.pid && (state.display.resourceDots || e.kind !== 'energize'),
+      )
+      html = `<div class="tip-head"><span>${nameHtml(hit.pid)} ${share}</span><span class="num">${fmtTime(hit.t, true)}</span></div>
+        ${meleeMarkers(s).some((mk) => mk.t === hit.t && mk.pid === hit.pid) ? `<div class="tip-melee">Boss melee hit ${esc(player(hit.pid).name)}</div>` : ''}
+        ${list.length ? tipEvents(list) : ''}
+        <div class="tip-hint">Click to focus ${esc(player(hit.pid).name)}</div>`
+      ax = hit.x
+      ay = hit.y
     } else {
-      html += ` · aggro: ${esc(player(seg.pid).name)}<br><span class="muted">Click to set cursor · drag to zoom · double-click to reset</span>`
+      const t = g.tOf(pt.x)
+      const pid = lineAt(pt.x, pt.y, g)
+      const seg = WF.segmentAt(s, t)
+      if (pid) {
+        const v = WF.valueAt(s, pid, t)
+        const hv = WF.valueAt(s, seg.pid, t)
+        html = `<div class="tip-head"><span>${nameHtml(pid)} ${fmtNum(v)}</span><span class="num">${fmtTime(t, true)}</span></div>
+          <div class="muted">${seg.pid === pid ? 'Has aggro' : hv > 0 ? `${fmtPct((v / hv) * 100)} of ${esc(player(seg.pid).name)}` : ''}</div>
+          <div class="tip-hint">Click to focus</div>`
+      } else {
+        html = `<div class="tip-head"><span>Aggro: ${nameHtml(seg.pid)}</span><span class="num">${fmtTime(t, true)}</span></div>
+          <div class="tip-hint">Click to set cursor · drag to zoom · double-click to reset</div>`
+      }
     }
     tip.innerHTML = html
     tip.hidden = false
-    const left = pt.x + 14 + 260 > pt.w ? pt.x - 14 - tip.offsetWidth : pt.x + 14
-    tip.style.left = `${Math.max(0, left)}px`
-    tip.style.top = `${Math.max(0, pt.y - 40)}px`
+    const tw = tip.offsetWidth
+    const th = tip.offsetHeight
+    const left = ax + 16 + tw > pt.w ? ax - 16 - tw : ax + 16
+    const top = Math.min(pt.h - th - 4, Math.max(4, ay - th / 2))
+    tip.style.left = `${Math.max(4, left)}px`
+    tip.style.top = `${top}px`
   }
 
   function resetZoom() {
@@ -1226,7 +1401,7 @@
   }
 
   // ===========================================================================
-  // Aggro ribbon + event lane
+  // Aggro ribbon
   // ===========================================================================
 
   function ribbonGeom(w) {
@@ -1245,95 +1420,62 @@
     const { ctx, w, h } = setupCanvas($('#ribbon'))
     const g = ribbonGeom(w)
     const s = sim()
+    const c = chartColors()
     ctx.font = '11px system-ui'
-    ctx.fillStyle = '#5e5e5e'
+    ctx.fillStyle = c.muted
     ctx.textAlign = 'right'
-    ctx.fillText('Aggro', PAD.l - 6, 15)
-    ctx.fillText('Events', PAD.l - 6, 38)
+    ctx.fillText('Aggro', PAD.l - 6, h / 2 + 4)
 
     ctx.save()
     ctx.beginPath()
     ctx.rect(PAD.l, 0, g.plotW, h)
     ctx.clip()
 
+    const top = 3
+    const bandH = h - 6
     s.segments.forEach((seg) => {
       const xa = g.xOf(seg.start)
       const xb = g.xOf(seg.end)
       if (xb < PAD.l || xa > PAD.l + g.plotW) return
-      const p = player(seg.pid)
-      ctx.fillStyle = p.color
-      ctx.globalAlpha = seg.kind === 'fixate' ? 0.3 : 0.55
-      ctx.fillRect(xa, 4, xb - xa, 16)
-      ctx.globalAlpha = 1
-      ctx.strokeStyle = '#fff'
-      ctx.strokeRect(xa + 0.5, 4.5, xb - xa, 15)
-      const vis = Math.min(xb, PAD.l + g.plotW) - Math.max(xa, PAD.l)
-      if (vis > 60) {
-        ctx.fillStyle = '#111'
-        ctx.textAlign = 'left'
-        ctx.fillText(
-          seg.kind === 'fixate' ? `Fixate: ${p.name}` : p.name,
-          Math.max(xa, PAD.l) + 4,
-          16,
-        )
-      }
-    })
-
-    if (state.display.bossMelee) {
-      ctx.strokeStyle = '#bbb'
-      s.markers
-        .filter((mk) => mk.type === 'bossMelee')
-        .forEach((mk) => {
-          const x = Math.round(g.xOf(mk.t)) + 0.5
-          ctx.beginPath()
-          ctx.moveTo(x, h - 6)
-          ctx.lineTo(x, h - 1)
-          ctx.stroke()
-        })
-    }
-
-    s.markers.forEach((mk) => {
-      const x = g.xOf(mk.t)
-      const y = 36
-      const p = player(mk.pid)
-      ctx.lineWidth = 1.5
-      if (mk.type === 'taunt') {
-        ctx.fillStyle = p.color
+      const color = colorOf(seg.pid)
+      ctx.fillStyle = color
+      ctx.fillRect(xa, top, xb - xa, bandH)
+      // Fixates keep the class colour, hatched so they read as forced.
+      if (seg.kind === 'fixate') {
+        ctx.save()
         ctx.beginPath()
-        ctx.moveTo(x, y - 6)
-        ctx.lineTo(x + 6, y + 5)
-        ctx.lineTo(x - 6, y + 5)
-        ctx.closePath()
-        ctx.fill()
-      } else if (mk.type === 'aggroLoss') {
-        ctx.strokeStyle = '#111'
-        ctx.beginPath()
-        ctx.moveTo(x - 6, y - 5)
-        ctx.lineTo(x + 6, y - 5)
-        ctx.lineTo(x, y + 6)
-        ctx.closePath()
-        ctx.stroke()
-      } else if (mk.type === 'death') {
-        ctx.strokeStyle = '#111'
+        ctx.rect(xa, top, xb - xa, bandH)
+        ctx.clip()
+        ctx.strokeStyle = inkOn(color)
+        ctx.globalAlpha = 0.35
         ctx.lineWidth = 2
-        ctx.beginPath()
-        ctx.moveTo(x - 5, y - 5)
-        ctx.lineTo(x + 5, y + 5)
-        ctx.moveTo(x + 5, y - 5)
-        ctx.lineTo(x - 5, y + 5)
-        ctx.stroke()
-      } else if (mk.type === 'fd') {
-        ctx.strokeStyle = p.color
-        ctx.beginPath()
-        ctx.arc(x, y, 4, 0, Math.PI * 2)
-        ctx.stroke()
+        for (let x = xa - bandH; x < xb; x += 7) {
+          ctx.beginPath()
+          ctx.moveTo(x, top + bandH)
+          ctx.lineTo(x + bandH, top)
+          ctx.stroke()
+        }
+        ctx.restore()
+      }
+      ctx.strokeStyle = c.bg
+      ctx.lineWidth = 1
+      ctx.beginPath()
+      ctx.moveTo(Math.round(xa) + 0.5, top)
+      ctx.lineTo(Math.round(xa) + 0.5, top + bandH)
+      ctx.stroke()
+      const vis = Math.min(xb, PAD.l + g.plotW) - Math.max(xa, PAD.l)
+      const label = seg.kind === 'fixate' ? `Fixate: ${player(seg.pid).name}` : player(seg.pid).name
+      if (vis > ctx.measureText(label).width + 10) {
+        ctx.fillStyle = inkOn(color)
+        ctx.textAlign = 'left'
+        ctx.fillText(label, Math.max(xa, PAD.l) + 4, top + bandH / 2 + 4)
       }
     })
-    ctx.lineWidth = 1
 
     if (state.cursor !== null) {
       const x = Math.round(g.xOf(state.cursor)) + 0.5
-      ctx.strokeStyle = '#111'
+      ctx.strokeStyle = c.cursor
+      ctx.lineWidth = 1.5
       ctx.beginPath()
       ctx.moveTo(x, 0)
       ctx.lineTo(x, h)
@@ -1342,59 +1484,33 @@
     ctx.restore()
   }
 
-  const MARKER_LABEL = {
-    taunt: (mk) => `Taunt: ${player(mk.pid).name} took aggro from ${player(mk.from).name}`,
-    aggroLoss: (mk) => `Aggro lost: ${player(mk.pid).name} → ${player(mk.to).name}`,
-    death: (mk) => `Death: ${player(mk.pid).name}`,
-    fd: (mk) => `Feign Death: ${player(mk.pid).name}`,
-    fixate: (mk) => `Fixate: ${player(mk.pid).name}`,
-  }
-
-  function ribbonHit(x, y, w) {
-    const g = ribbonGeom(w)
-    const s = sim()
-    if (y > 24) {
-      let best = null
-      s.markers.forEach((mk) => {
-        if (!MARKER_LABEL[mk.type] || mk.type === 'fixate') return
-        const d = Math.abs(g.xOf(mk.t) - x)
-        if (d <= 7 && (!best || d < best.d)) best = { mk, d }
-      })
-      if (best) return { t: best.mk.t, label: MARKER_LABEL[best.mk.type](best.mk) }
-      return null
-    }
-    const t = g.tOf(x)
-    const seg = WF.segmentAt(s, t)
-    return {
-      t: seg.start,
-      label: `${seg.kind === 'fixate' ? 'Fixated' : 'Aggro'}: ${player(seg.pid).name} ${fmtTime(seg.start)}–${fmtTime(seg.end)}`,
-    }
-  }
-
   function initRibbon() {
     const canvas = $('#ribbon')
     const tip = $('#ribbon-tip')
-    canvas.addEventListener('pointermove', (evt) => {
+    const segAt = (evt) => {
       const rect = canvas.getBoundingClientRect()
       const x = evt.clientX - rect.left
-      const y = evt.clientY - rect.top
-      const hit = x >= PAD.l ? ribbonHit(x, y, rect.width) : null
+      if (x < PAD.l || x > rect.width - PAD.r) return null
+      return { x, rect, seg: WF.segmentAt(sim(), ribbonGeom(rect.width).tOf(x)) }
+    }
+    canvas.addEventListener('pointermove', (evt) => {
+      const hit = segAt(evt)
       canvas.style.cursor = hit ? 'pointer' : 'default'
       if (!hit) {
         tip.hidden = true
         return
       }
-      tip.textContent = `${fmtTime(hit.t, true)} · ${hit.label} (click to jump)`
+      const { seg } = hit
+      tip.innerHTML = `${seg.kind === 'fixate' ? 'Fixated on' : 'Aggro:'} ${nameHtml(seg.pid)} <span class="num">${fmtTime(seg.start, true)}–${fmtTime(seg.end, true)}</span> <span class="muted">(${((seg.end - seg.start) / 1000).toFixed(1)}s) · click to jump</span>`
       tip.hidden = false
-      tip.style.left = `${Math.min(rect.width - tip.offsetWidth, Math.max(0, x + 10))}px`
-      tip.style.top = `-28px`
+      tip.style.left = `${Math.min(hit.rect.width - tip.offsetWidth - 4, Math.max(4, hit.x + 10))}px`
+      tip.style.top = `${-tip.offsetHeight - 4}px`
     })
     canvas.addEventListener('pointerleave', () => (tip.hidden = true))
     canvas.addEventListener('click', (evt) => {
-      const rect = canvas.getBoundingClientRect()
-      const hit = ribbonHit(evt.clientX - rect.left, evt.clientY - rect.top, rect.width)
+      const hit = segAt(evt)
       if (!hit) return
-      state.cursor = hit.t
+      state.cursor = hit.seg.start
       ensureCursorVisible()
       commit()
     })
@@ -1404,11 +1520,12 @@
   // Overview strip
   // ===========================================================================
 
-  const overview = { mode: null, startX: 0, startRange: null }
+  const overview = { mode: null, startT: 0, startRange: null }
 
   function drawOverview() {
     const { ctx, w, h } = setupCanvas($('#overview'))
     const s = sim()
+    const c = chartColors()
     const plotW = w - PAD.l - PAD.r
     const xOf = (t) => PAD.l + (t / s.D) * plotW
     let max = 1
@@ -1417,12 +1534,12 @@
       if (ser) ser.v.forEach((v) => (max = Math.max(max, v)))
     })
     ctx.font = '11px system-ui'
-    ctx.fillStyle = '#5e5e5e'
+    ctx.fillStyle = c.muted
     ctx.textAlign = 'right'
     ctx.fillText('Fight', PAD.l - 6, h / 2 + 4)
     const n = Math.floor(plotW / 2)
     state.visible.forEach((pid) => {
-      ctx.strokeStyle = player(pid).color
+      ctx.strokeStyle = colorOf(pid)
       ctx.globalAlpha = pid === state.focus ? 1 : 0.45
       ctx.lineWidth = pid === state.focus ? 1.5 : 1
       ctx.beginPath()
@@ -1438,11 +1555,11 @@
     ctx.globalAlpha = 1
     const [a, b] = windowRange()
     if (state.xRange) {
-      ctx.fillStyle = 'rgba(255,255,255,0.7)'
+      ctx.fillStyle = c.veil
       ctx.fillRect(PAD.l, 0, xOf(a) - PAD.l, h)
       ctx.fillRect(xOf(b), 0, PAD.l + plotW - xOf(b), h)
     }
-    ctx.strokeStyle = '#111'
+    ctx.strokeStyle = c.cursor
     ctx.lineWidth = 1.5
     ctx.strokeRect(xOf(a), 1, Math.max(2, xOf(b) - xOf(a)), h - 2)
     if (state.cursor !== null) {
@@ -1530,7 +1647,7 @@
     if (now - lastPanelRender > 120) {
       lastPanelRender = now
       renderRoster()
-      renderToolbar()
+      renderBar()
     }
     drawChart()
     drawRibbon()
@@ -1663,10 +1780,15 @@
       state.ui.rosterOpen = false
       commit()
     },
-    'mobile-roster': () => {
-      state.ui.rosterOpen = !state.ui.rosterOpen
-      state.ui.railOpen = false
+    'toggle-roster': () => {
+      if (isMobile()) {
+        state.ui.rosterOpen = !state.ui.rosterOpen
+        state.ui.railOpen = false
+      } else {
+        state.ui.rosterHidden = !state.ui.rosterHidden
+      }
       commit()
+      redrawCanvases()
     },
     'mobile-tab': (el) => {
       state.ui.mobileTab = el.dataset.tab
@@ -1711,6 +1833,10 @@
     },
     display: (el) => {
       state.display[el.dataset.key] = el.checked
+      commit()
+    },
+    theme: (el) => {
+      state.display.theme = el.value
       commit()
     },
     analysis: (el) => {
@@ -1969,6 +2095,7 @@
     readUrl()
     redrawAll()
   })
+  darkQuery.addEventListener('change', () => redrawAll())
   new ResizeObserver(() => redrawCanvases()).observe($('#chart-wrap'))
 
   initChart()

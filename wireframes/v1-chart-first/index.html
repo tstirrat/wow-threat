@@ -11,20 +11,10 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="topbar">
-      <button class="only-mobile" data-action="mobile-rail" aria-label="Open navigation">Menu</button>
-      <a href="#/" class="home-link" data-action="home">WOW Threat</a>
-      <nav class="crumbs" id="crumbs" aria-label="Report, pull and target"></nav>
-      <div class="topbar-right">
-        <button data-action="open-report">Open<span class="long"> report</span> <kbd>⌘O</kbd></button>
-        <button data-action="toggle-settings" aria-controls="settings">Settings</button>
-        <span id="account"></span>
-        <button class="only-mobile" data-action="mobile-roster" aria-label="Open roster">Roster</button>
-      </div>
-    </header>
-
     <main id="app">
       <aside class="rail" id="rail" aria-label="Navigation"></aside>
+
+      <header class="bar" id="bar"></header>
 
       <section class="center" id="center">
         <div class="mobile-tabs only-mobile" role="tablist">
@@ -35,22 +25,21 @@
         <div class="home" id="home" hidden></div>
 
         <div class="analysis" id="analysis">
-          <div class="toolbar" id="toolbar"></div>
           <div class="chart-wrap" id="chart-wrap">
             <canvas id="chart"></canvas>
             <div class="hover-tip" id="hover-tip" hidden></div>
           </div>
-          <div class="lane-wrap">
+          <div class="lane-wrap lane-aggro">
             <canvas id="ribbon"></canvas>
             <div class="hover-tip" id="ribbon-tip" hidden></div>
           </div>
-          <div class="lane-wrap">
+          <div class="lane-wrap lane-overview">
             <canvas id="overview"></canvas>
           </div>
         </div>
       </section>
 
-      <aside class="roster" id="roster" aria-label="Roster and inspector"></aside>
+      <aside class="roster" id="roster" aria-label="Roster"></aside>
 
       <section class="drawer" id="drawer" aria-label="Spell breakdown"></section>
 

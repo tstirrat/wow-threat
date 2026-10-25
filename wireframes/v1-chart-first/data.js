@@ -49,8 +49,9 @@ const WF = (() => {
   // Roster and class kits
   // ===========================================================================
 
-  // Light-theme class colours so lines stay legible on white.
-  const CLASS_COLORS = {
+  // Class colours per theme: darker variants stay legible on white, game
+  // colours on dark.
+  const CLASS_COLORS_LIGHT = {
     Warrior: '#9B6C41',
     Paladin: '#C44884',
     Hunter: '#608029',
@@ -60,6 +61,17 @@ const WF = (() => {
     Mage: '#08809C',
     Warlock: '#7366D6',
     Druid: '#CB4F00',
+  }
+  const CLASS_COLORS_DARK = {
+    Warrior: '#C79C6E',
+    Paladin: '#F58CBA',
+    Hunter: '#ABD473',
+    Rogue: '#FFF569',
+    Priest: '#E8E8E8',
+    Shaman: '#2E8BFF',
+    Mage: '#69CCF0',
+    Warlock: '#9482C9',
+    Druid: '#FF7D0A',
   }
 
   const PLAYERS = [
@@ -82,7 +94,11 @@ const WF = (() => {
     { id: 17, name: 'Brightwater', cls: 'Shaman', role: 'healer', range: 'ranged' },
     { id: 18, name: 'Holyfist', cls: 'Paladin', role: 'healer', range: 'ranged' },
     { id: 19, name: 'Thornroot', cls: 'Druid', role: 'healer', range: 'ranged' },
-  ].map((p) => ({ ...p, color: CLASS_COLORS[p.cls] }))
+  ].map((p) => ({
+    ...p,
+    colorLight: CLASS_COLORS_LIGHT[p.cls],
+    colorDark: CLASS_COLORS_DARK[p.cls],
+  }))
 
   const PLAYERS_BY_ID = new Map(PLAYERS.map((p) => [p.id, p]))
 

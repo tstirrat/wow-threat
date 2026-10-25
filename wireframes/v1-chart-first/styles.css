@@ -1,9 +1,11 @@
 /*
  * Greybox wireframe styles. Deliberately plain: system font, greys, 1px rules.
- * Colour is used only for player lines (class colours) because it carries data.
+ * Colour is used only where it carries data (class colours, boss melee).
+ * Canvas drawing reads the --chart-* tokens so both themes stay in sync.
  */
 
 :root {
+  color-scheme: light;
   --bg: #ffffff;
   --panel: #f5f5f5;
   --line: #cfcfcf;
@@ -12,10 +14,65 @@
   --muted: #5e5e5e;
   --hi: #e8e8e8;
   --focus-bg: #fff6d6;
+  --error: #a00000;
+  --shadow: rgb(0 0 0 / 14%);
+  --chart-grid: #e4e4e4;
+  --chart-frame: #999999;
+  --chart-cursor: #111111;
+  --chart-hover: #aaaaaa;
+  --chart-threshold: #444444;
+  --chart-shade: rgb(0 0 0 / 6%);
+  --chart-veil: rgb(255 255 255 / 70%);
+  --chart-melee: #d42020;
   --rail-w: 230px;
   --roster-w: 320px;
   --drawer-h: 250px;
-  --topbar-h: 44px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #17171a;
+    --panel: #1f1f23;
+    --line: #34343a;
+    --line-strong: #5a5a62;
+    --text: #e6e6e8;
+    --muted: #a0a0a8;
+    --hi: #2a2a30;
+    --focus-bg: #3a3420;
+    --error: #ff7b7b;
+    --shadow: rgb(0 0 0 / 50%);
+    --chart-grid: #2a2a30;
+    --chart-frame: #4a4a52;
+    --chart-cursor: #f2f2f2;
+    --chart-hover: #6a6a72;
+    --chart-threshold: #b0b0b8;
+    --chart-shade: rgb(255 255 255 / 6%);
+    --chart-veil: rgb(23 23 26 / 70%);
+    --chart-melee: #ff4a4a;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #17171a;
+  --panel: #1f1f23;
+  --line: #34343a;
+  --line-strong: #5a5a62;
+  --text: #e6e6e8;
+  --muted: #a0a0a8;
+  --hi: #2a2a30;
+  --focus-bg: #3a3420;
+  --error: #ff7b7b;
+  --shadow: rgb(0 0 0 / 50%);
+  --chart-grid: #2a2a30;
+  --chart-frame: #4a4a52;
+  --chart-cursor: #f2f2f2;
+  --chart-hover: #6a6a72;
+  --chart-threshold: #b0b0b8;
+  --chart-shade: rgb(255 255 255 / 6%);
+  --chart-veil: rgb(23 23 26 / 70%);
+  --chart-melee: #ff4a4a;
 }
 
 * {
@@ -32,8 +89,6 @@ body {
   font: 13px/1.4 system-ui, sans-serif;
   color: var(--text);
   background: var(--bg);
-  display: grid;
-  grid-template-rows: var(--topbar-h) 1fr;
   overflow: hidden;
 }
 
@@ -42,6 +97,13 @@ input,
 select {
   font: inherit;
   color: inherit;
+}
+
+input,
+select {
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
 }
 
 button {
@@ -75,6 +137,19 @@ button.primary {
   color: var(--bg);
 }
 
+button.icon {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 26px;
+  padding: 0;
+}
+
+button.icon svg {
+  width: 16px;
+  height: 16px;
+}
+
 kbd {
   font: 11px ui-monospace, monospace;
   border: 1px solid var(--line);
@@ -103,65 +178,17 @@ h3 {
   font-weight: 600;
 }
 
-/* ===== Top bar ============================================================ */
-
-.topbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 10px;
-  border-bottom: 1px solid var(--line);
-  min-width: 0;
-}
-
-.home-link {
-  font-weight: 700;
-  color: var(--text);
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.crumbs {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  flex: 1;
-  overflow: hidden;
-}
-
-.crumbs .sep {
-  color: var(--muted);
-}
-
-.crumbs .report-title {
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 260px;
-}
-
-.crumbs select {
-  max-width: 260px;
-}
-
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 /* ===== Main grid ========================================================== */
 
 main {
+  height: 100%;
   display: grid;
   grid-template-columns: var(--rail-w) minmax(0, 1fr) var(--roster-w);
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   grid-template-areas:
+    'rail bar bar'
     'rail center roster'
     'rail drawer drawer';
-  min-height: 0;
   position: relative;
 }
 
@@ -169,14 +196,73 @@ main.rail-collapsed {
   --rail-w: 44px;
 }
 
+main.roster-hidden {
+  grid-template-columns: var(--rail-w) minmax(0, 1fr) 0;
+  grid-template-areas:
+    'rail bar bar'
+    'rail center center'
+    'rail drawer drawer';
+}
+
+main.roster-hidden .roster {
+  display: none;
+}
+
 main.is-home {
   grid-template-columns: var(--rail-w) minmax(0, 1fr);
-  grid-template-areas: 'rail center' 'rail center';
+  grid-template-areas:
+    'rail bar'
+    'rail center'
+    'rail center';
 }
 
 main.is-home .roster,
 main.is-home .drawer {
   display: none;
+}
+
+/* ===== Chart bar (the app's only top bar) ================================= */
+
+.bar {
+  grid-area: bar;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--line);
+  min-width: 0;
+}
+
+.bar .group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bar .readout {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The expanded rail already shows the pull and target, so the title only
+   appears when the rail is collapsed or off-canvas. */
+main:not(.rail-collapsed) .bar-title {
+  display: none;
+}
+
+.bar-title {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
+}
+
+.bar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* ===== Rail =============================================================== */
@@ -190,17 +276,26 @@ main.is-home .drawer {
   min-height: 0;
 }
 
+.rail-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 8px 6px 6px 10px;
+}
+
+.home-link {
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
 .rail-head {
   display: flex;
   gap: 4px;
-  padding: 6px;
+  padding: 0 6px 6px;
   border-bottom: 1px solid var(--line);
-}
-
-.rail-head .tabs {
-  display: flex;
-  gap: 4px;
-  flex: 1;
 }
 
 .rail-body {
@@ -209,12 +304,14 @@ main.is-home .drawer {
   flex: 1;
 }
 
-.rail-collapsed .rail-head {
+.rail-collapsed .rail-top {
   flex-direction: column;
+  padding: 8px 4px;
 }
 
-.rail-collapsed .rail-head .tabs {
+.rail-collapsed .rail-head {
   flex-direction: column;
+  padding: 0 4px 6px;
 }
 
 .rail-collapsed .rail-body {
@@ -224,6 +321,21 @@ main.is-home .drawer {
 .rail-collapsed .rail-head button {
   font-size: 11px;
   padding: 3px 2px;
+}
+
+.report-head {
+  display: grid;
+  gap: 2px;
+  padding: 2px 6px 8px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.report-head .title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
 }
 
 .pull-list,
@@ -276,9 +388,6 @@ main.is-home .drawer {
 
 .lib-section h3 {
   margin: 4px 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
 }
 
 .lib-guild {
@@ -309,25 +418,6 @@ main.is-home .drawer {
   min-height: 0;
 }
 
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 14px;
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--line);
-}
-
-.toolbar .group {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.toolbar .readout {
-  font-variant-numeric: tabular-nums;
-}
-
 .chart-wrap {
   position: relative;
   flex: 1;
@@ -352,11 +442,11 @@ main.is-home .drawer {
   border-top: 1px solid var(--line);
 }
 
-.lane-wrap:has(#ribbon) {
-  height: 50px;
+.lane-aggro {
+  height: 26px;
 }
 
-.lane-wrap:has(#overview) {
+.lane-overview {
   height: 42px;
 }
 
@@ -369,11 +459,54 @@ main.is-home .drawer {
   pointer-events: none;
   background: var(--bg);
   border: 1px solid var(--line-strong);
-  padding: 4px 6px;
+  padding: 6px 8px;
   font-size: 12px;
-  white-space: nowrap;
   z-index: 5;
-  box-shadow: 0 2px 6px rgb(0 0 0 / 12%);
+  box-shadow: 0 2px 8px var(--shadow);
+  width: max-content;
+  max-width: 380px;
+}
+
+.tip-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.tip-events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.tip-events li {
+  border-top: 1px solid var(--line);
+  padding-top: 4px;
+}
+
+.tip-melee {
+  color: var(--chart-melee);
+  font-weight: 600;
+}
+
+.tip-hint {
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.event-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.event-math,
+.event-mods {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ===== Home =============================================================== */
@@ -441,8 +574,7 @@ main.is-home .drawer {
   margin: 0;
   padding: 0;
   overflow: auto;
-  flex: 1 1 55%;
-  min-height: 120px;
+  flex: 1;
 }
 
 .roster-cols,
@@ -498,6 +630,7 @@ main.is-home .drawer {
 }
 
 .swatch {
+  display: inline-block;
   width: 10px;
   height: 10px;
   border-radius: 2px;
@@ -524,7 +657,7 @@ main.is-home .drawer {
   border-color: var(--text);
 }
 
-.bar {
+.bar-meter {
   position: absolute;
   left: 20px;
   right: 4px;
@@ -533,54 +666,10 @@ main.is-home .drawer {
   background: var(--hi);
 }
 
-.bar i {
+.bar-meter i {
   display: block;
   height: 100%;
   background: var(--line-strong);
-}
-
-.events {
-  border-top: 1px solid var(--line-strong);
-  overflow: auto;
-  flex: 1 1 45%;
-  min-height: 100px;
-  padding: 6px 8px;
-}
-
-.events h3 {
-  margin-bottom: 6px;
-}
-
-.event-group {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 6px;
-}
-
-.event {
-  border: 1px solid var(--line);
-  padding: 4px 6px;
-  border-radius: 3px;
-}
-
-.event.is-focus {
-  border-color: var(--line-strong);
-  background: var(--focus-bg);
-}
-
-.event-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.event-math,
-.event-mods {
-  font-size: 12px;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
 }
 
 /* ===== Drawer ============================================================= */
@@ -605,6 +694,10 @@ main.is-home .drawer {
   padding: 4px 10px;
   border-bottom: 1px solid var(--line);
   flex-wrap: wrap;
+}
+
+.drawer-head .push {
+  margin-left: auto;
 }
 
 .drawer.is-closed .drawer-body {
@@ -677,7 +770,7 @@ tr.total-row td {
   width: min(360px, 100%);
   background: var(--bg);
   border-left: 1px solid var(--line-strong);
-  box-shadow: -4px 0 12px rgb(0 0 0 / 10%);
+  box-shadow: -4px 0 12px var(--shadow);
   z-index: 20;
   overflow: auto;
   padding: 10px 14px;
@@ -719,9 +812,15 @@ tr.total-row td {
 /* ===== Dialogs ============================================================ */
 
 dialog {
+  background: var(--bg);
+  color: var(--text);
   border: 1px solid var(--line-strong);
   padding: 14px;
   width: min(480px, calc(100vw - 32px));
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 40%);
 }
 
 dialog form {
@@ -740,7 +839,7 @@ dialog .row {
 }
 
 .error {
-  color: #a00000;
+  color: var(--error);
   margin: 0;
 }
 
@@ -795,68 +894,52 @@ dialog .row {
     display: inline-block;
   }
 
-  body {
-    grid-template-rows: auto 1fr;
-  }
-
-  .topbar {
-    flex-wrap: wrap;
-    gap: 6px;
-    padding: 6px;
-  }
-
-  .topbar .long {
-    display: none;
-  }
-
-  .topbar-right {
-    margin-left: auto;
-  }
-
-  .crumbs {
-    order: 3;
-    flex-basis: 100%;
-  }
-
-  .crumbs select {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .topbar-right kbd,
-  .crumbs .report-title,
-  .crumbs .sep,
-  .crumbs .star {
+  .desktop-only,
+  .bar kbd,
+  .bar .long {
     display: none;
   }
 
   main,
   main.is-home,
-  main.rail-collapsed {
+  main.rail-collapsed,
+  main.roster-hidden {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr);
-    grid-template-areas: 'center';
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas: 'bar' 'center';
+  }
+
+  .bar {
+    gap: 6px;
+  }
+
+  .bar-title,
+  main:not(.rail-collapsed) .bar-title {
+    display: block;
+    order: -1;
+    flex-basis: 100%;
+    max-width: none;
   }
 
   .rail,
-  .roster {
+  .roster,
+  main.roster-hidden .roster {
     position: absolute;
     top: 0;
     bottom: 0;
     width: min(320px, 88vw);
     z-index: 15;
     background: var(--bg);
-    box-shadow: 0 0 16px rgb(0 0 0 / 20%);
+    box-shadow: 0 0 16px var(--shadow);
+    display: none;
   }
 
   .rail {
     left: 0;
-    display: none;
   }
 
   .roster {
     right: 0;
-    display: none;
   }
 
   main.rail-open .rail,
@@ -879,6 +962,11 @@ dialog .row {
     border-radius: 0;
   }
 
+  .mobile-tabs button[aria-selected='true'] {
+    font-weight: 600;
+    background: var(--hi);
+  }
+
   main.is-home .mobile-tabs {
     display: none;
   }
@@ -896,14 +984,6 @@ dialog .row {
   }
 
   main.tab-breakdown .analysis {
-    display: none;
-  }
-
-  .toolbar {
-    gap: 6px;
-  }
-
-  .desktop-only {
     display: none;
   }
 }

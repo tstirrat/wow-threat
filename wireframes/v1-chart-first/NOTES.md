@@ -17,44 +17,51 @@ Open `index.html` in a browser. Click a report in the library, or paste any
 ## Layout
 
 ```
-┌ WOW Threat │ Report ★ / Pull ▾ / Target ▾ │ Open report ⌘O · Settings · Account ┐
-├──────┬──────────────────────────────────────────────┬────────────────────────────┤
-│ Rail │ Toolbar: show preset · scale · thresholds ·  │ Roster at t                │
-│      │          window · play/speed · cursor         │  On  Pin  ● Name  thr % TPS│
-│ This │ ┌───────────────── chart ─────────────────┐  │  …                         │
-│report│ │                                          │  ├────────────────────────────┤
-│  or  │ └──────────────────────────────────────────┘  │ N events at t              │
-│ Lib  │ Aggro ribbon + event markers                  │  spell, math, modifiers    │
+┌──────┬───────────────────────────────────────────────────────────────────────────┐
+│ WOW  │ Chart bar: show · scale · thresholds · window · play · cursor │ Open report│
+│Threat│                                                  Sign in · ⚙ · roster ▯ │
+│      ├──────────────────────────────────────────────┬────────────────────────────┤
+│ This │ ┌───────────────── chart ─────────────────┐  │ Roster at t                │
+│report│ │  lines + event dots + red melee dots     │  │  On  Pin  ● Name  thr % TPS│
+│  or  │ └──────────────────────────────────────────┘  │  …                         │
+│ Lib  │ Aggro bar (class colours, fixates hatched)    │                            │
 │      │ Fight overview (drag to pan/select)           │                            │
 │      ├──────────────────────────────────────────────┴────────────────────────────┤
-│      │ Breakdown: focused player × visible window (B to toggle)                  │
+│      │ Breakdown: focused player × visible window          (B)       Shortcuts ? │
 └──────┴───────────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Rail** (collapsible): *This report* shows pulls (kill/wipe, %, duration) with
-  targets nested under the current pull. *Library* shows recent, starred reports,
-  starred guilds (including guilds you're not in), my guilds and my logs. The last two
-  need sign-in.
-- **Roster / inspector** (right): a single list replaces the legend, threat meter,
-  player search and summary table. Sorted by threat at the cursor, or at the end of
-  the window when there's no cursor. Columns: threat, % of the aggro holder, TPS over
-  the window. Below the list, every event at the cursor's exact timestamp with its
-  full threat math and modifier chain.
-- **Breakdown drawer** (bottom): the focused player's spells across the visible
-  window. Hits, raw, bonus, coefficient, threat, TPS, % of gain. Click a row to see
-  which modifiers make up its coefficient.
-- **Aggro ribbon**: who held aggro over time (fixates hatched lighter). Markers below:
-  ▲ taunt, ▽ aggro lost, ✕ death, ○ Feign Death, ticks for boss melee. Hover for
-  detail, click to jump the cursor there.
+- **No app top bar.** The chart bar is the only top bar and runs to the right edge.
+  Chart controls sit on the left; Open report, account, settings (gear) and the roster
+  toggle sit on the right. The roster sits under the bar, level with the chart.
+- **Rail** (collapsible) holds all report navigation. *This report* shows the report
+  title, star, guild and date, then pulls (kill/wipe, %, duration) with targets nested
+  under the current pull. *Library* shows recent, starred reports, starred guilds
+  (including guilds you're not in), my guilds and my logs. The last two need sign-in.
+  The chart bar shows the pull/target title only when the rail is collapsed.
+- **Roster** (right, hideable): one list replaces the legend, threat meter, player
+  search and summary table. Sorted by threat at the cursor, or at the end of the
+  window. Columns: threat, % of the aggro holder, TPS over the window.
+- **Tooltip** (replaces the v1.0 "events at cursor" panel, which testers didn't find):
+  anchored to the dot nearest the mouse. Shows the player (class colour), their share
+  of the aggro holder, every event they had at that exact timestamp with the threat
+  math and modifier chain, and "Boss melee hit" when a melee landed then.
+- **Dots** on the lines: spell events in the line colour, boss melee in red, resource
+  changes (rage gain) smaller. Each type can be hidden in settings.
+- **Aggro bar**: who held aggro over time in their class colour, fixates hatched.
+  Hover for the holder (name in class colour) and span; click to jump the cursor.
 - **Overview strip**: the whole fight. Drag inside the window box to pan, drag
   elsewhere to pick a new window, double-click to reset.
+- **Breakdown drawer** (bottom): the focused player's spells across the visible
+  window. Click a row to see which modifiers make up its coefficient. The Shortcuts
+  button sits at its right edge and stays visible when the drawer is collapsed.
 
 ## Interaction model
 
 | Input                      | Result                                                        |
 | -------------------------- | ------------------------------------------------------------- |
-| Hover chart                | Crosshair plus a small tip (time, nearest line, % of holder)  |
-| Click a line               | Focus that player (drives the breakdown, highlights the line) |
+| Hover chart                | Crosshair; tooltip on the nearest dot                         |
+| Click a dot or line        | Focus that player (drives the breakdown, highlights the line) |
 | Click empty chart space    | Set the cursor to t (snaps to the nearest visible event)      |
 | Drag on chart              | 2D zoom. Time range drives totals; Y only magnifies           |
 | Flat drag (< 12px tall)    | Time-only zoom                                                |
@@ -74,30 +81,31 @@ Open `index.html` in a browser. Click a report in the library, or paste any
 
 ### Threat scale
 
-- **Absolute** with dashed 110% (melee) and dotted 130% (ranged) curves over the
-  aggro holder's threat.
+- **Absolute**. Pull thresholds are off by default to cut clutter; when on, dashed
+  110% (melee) and dotted 130% (ranged) curves follow the aggro holder's threat.
 - **% of aggro holder**: everyone rescaled so 100% is the holder; 110/130 are flat lines.
 
 ## URL contract (hash)
 
-`#/report/<code>?pull=&target=&players=&pinned=&focus=&t=&x=a_b&y=a_b&mode=rel&thr=0&buffs=0&emu=0&nosalv=`
+`#/report/<code>?pull=&target=&players=&pinned=&focus=&t=&x=a_b&y=a_b&mode=rel&thr=1&buffs=0&emu=0&nosalv=`
 
 - `players` omitted means everyone visible. `focus=none` is an explicit "no focus".
-- The analysis settings (`buffs`, `emu`, `nosalv`) are in the link. Display settings
-  and panel open/closed state are not; they're saved in the browser.
+- The analysis settings (`buffs`, `emu`, `nosalv`) are in the link. Display settings,
+  theme and panel open/closed state are not; they're saved in the browser.
 
 ## Settings
 
-- **My display** (local): boss melee markers, fixate shading, energize events in the
-  inspector, hover tip.
+- **My display** (local): theme (system/light/dark), spell event dots, boss melee dots,
+  resource change dots, fixate shading.
 - **This analysis** (in the link): threat reduction emulation (Feign Death actually
   resets threat in the sim), inferred Salvation, and per-player "no Salvation" overrides.
   Turning inference off makes DPS pull more often. The sim reruns.
 
 ## Mobile (< 760px)
 
-Chart on top. **Menu** opens the rail from the left; **Roster** opens the roster from
-the right. Chart and Breakdown are tabs.
+The chart bar wraps, with the pull/target title on its own line. **Menu** opens the
+rail from the left; the roster button opens the roster from the right. Chart and
+Breakdown are tabs.
 
 ## Faked or simplified
 
@@ -108,11 +116,11 @@ the right. Chart and Breakdown are tabs.
 
 ## Open questions to test with this
 
-1. Is the right-hand roster wide enough to hold both the list and the events-at-t
-   section, or does the events section want its own place (e.g. under the chart)?
-2. Should clicking a line also move the cursor? Today the two are separate.
-3. Does the breakdown drawer steal too much chart height? Should it overlay instead?
-4. Is "% of aggro holder" the right relative baseline, or "% of focused player"?
-5. Should the window (zoom) TPS and the cursor threat be visually distinguished more
+1. Should clicking a line also move the cursor? Today the two are separate.
+2. Does the breakdown drawer steal too much chart height? Should it overlay instead?
+3. Is "% of aggro holder" the right relative baseline, or "% of focused player"?
+4. Should the window (zoom) TPS and the cursor threat be visually distinguished more
    clearly in the roster?
-6. Home: library-first (as here) or paste-URL-first for signed-out users?
+5. Home: library-first (as here) or paste-URL-first for signed-out users?
+6. Taunts, deaths and aggro losses no longer have their own markers (the event lane
+   was removed). Is the tooltip on the dot enough, or do they need a distinct dot shape?
