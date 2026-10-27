@@ -60,6 +60,8 @@ different rolls.
   anchored to the dot nearest the mouse. Shows the player (class colour), their share
   of the aggro holder, every event they had at that exact timestamp with the threat
   math and modifier chain, and "Boss melee hit" when a melee landed then.
+  Away from dots there is no tooltip, except over a shaded fixate area (who, span,
+  duration). Who has aggro is on the aggro bar instead.
 - **Dots** on the lines: spell events in the line colour, boss melee in red, resource
   changes (rage gain) smaller. Each type can be hidden in settings.
 - **Aggro bar**: who held aggro over time in their class colour, fixates hatched.
@@ -100,7 +102,7 @@ different rolls.
 
 | Input                      | Result                                                        |
 | -------------------------- | ------------------------------------------------------------- |
-| Hover chart                | Crosshair; tooltip on the nearest dot                         |
+| Hover chart                | Crosshair; tooltip only near a dot or over a fixate area      |
 | Click a dot or line        | Focus that player (drives player info, highlights the line)   |
 | Click empty chart space    | Set the cursor to t (snaps to the nearest visible event)      |
 | Drag on chart              | 2D zoom. Time range drives totals; Y only magnifies           |

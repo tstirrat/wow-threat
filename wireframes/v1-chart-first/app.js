@@ -1647,19 +1647,17 @@
       ax = hit.x
       ay = hit.y
     } else {
+      // Away from any dot, only shaded areas (fixates) get a tooltip.
       const t = g.tOf(pt.x)
-      const pid = lineAt(pt.x, pt.y, g)
-      const seg = WF.segmentAt(s, t)
-      if (pid) {
-        const v = WF.valueAt(s, pid, t)
-        const hv = WF.valueAt(s, seg.pid, t)
-        html = `<div class="tip-head"><span>${nameHtml(pid)} ${fmtNum(v)}</span><span class="num">${fmtTime(t, true)}</span></div>
-          <div class="muted">${seg.pid === pid ? 'Has aggro' : hv > 0 ? `${fmtPct((v / hv) * 100)} of ${esc(player(seg.pid).name)}` : ''}</div>
-          <div class="tip-hint">Click to focus</div>`
-      } else {
-        html = `<div class="tip-head"><span>Aggro: ${nameHtml(seg.pid)}</span><span class="num">${fmtTime(t, true)}</span></div>
-          <div class="tip-hint">Click to set cursor · drag to zoom · double-click to reset</div>`
+      const fixate = state.display.fixate
+        ? s.markers.find((mk) => mk.type === 'fixate' && t >= mk.t && t <= mk.end)
+        : null
+      if (!fixate) {
+        tip.hidden = true
+        return
       }
+      html = `<div class="tip-head"><span>Fixated on ${nameHtml(fixate.pid)}</span><span class="num">${fmtTime(fixate.t, true)}–${fmtTime(fixate.end, true)}</span></div>
+        <div class="muted">Boss ignores threat for ${((fixate.end - fixate.t) / 1000).toFixed(1)}s</div>`
     }
     tip.innerHTML = html
     tip.hidden = false
