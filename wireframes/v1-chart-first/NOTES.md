@@ -69,14 +69,17 @@ different rolls.
 - **Overview strip**: the whole fight. Drag inside the window box to pan, drag
   elsewhere to pick a new window, double-click to reset.
 - **Breakdown drawer** (bottom): the focused player's spells across the visible
-  window. Click a row to see which modifiers make up its coefficient. The Shortcuts
+  window. The header shows the player's initial threat auras (stances, forms, buffs
+  only; no class passives or talents) as Wowhead spell icons with name and multiplier
+  on hover; it no longer repeats the window. Click a row to see which modifiers make
+  up its coefficient. The Shortcuts
   button sits at its right edge and stays visible when the drawer is collapsed.
 
 - **Threat overrides** (what-ifs): per player, force a buff on or off (Blessing of
   Salvation, Tranquil Air Totem) regardless of buff inference, and change threat
   talent ranks (Defiance, Feral Instinct, Arcane Subtlety, Silent Resolve, …). They
   last for the whole report and rerun the sim live.
-  - **Where:** an **Overrides** button in the chart bar (count badge, <kbd>O</kbd>),
+  - **Where:** an **Overrides** button in the roster header (count badge, <kbd>O</kbd>),
     a link in Settings → This analysis, the right-click menu on any player (roster
     row or chart line), and the sliders icon on a roster row that has overrides.
   - **All-players view:** every player with overrides, a one-line summary, Edit and

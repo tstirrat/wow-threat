@@ -564,7 +564,6 @@
     const right = `<div class="bar-right">
         <button data-action="open-report">Open<span class="long"> report</span> <kbd>⌘O</kbd></button>
         ${account}
-        ${inReport ? `<button data-action="open-overrides" aria-pressed="${Boolean(state.ui.overridesOpen)}" title="Player buff and talent overrides (O)">Overrides${overrideCount() ? ` <span class="tag strong">${overrideCount()}</span>` : ''}</button>` : ''}
         <button class="icon" data-action="toggle-settings" aria-pressed="${state.ui.settingsOpen}" aria-label="Settings" title="Settings (,)">${ICONS.settings}</button>
         ${inReport ? `<button class="icon" data-action="toggle-roster" aria-pressed="${isMobile() ? state.ui.rosterOpen : !state.ui.rosterHidden}" aria-label="${state.ui.rosterHidden ? 'Show' : 'Hide'} roster" title="Roster (R)">${ICONS.roster}</button>` : ''}
       </div>`
@@ -671,10 +670,6 @@
         <span class="roster-main"><span class="swatch" style="background:${colorOf(p.id)}"></span><span class="roster-name">${esc(p.name)} <span class="tag">not in this pull</span></span><span></span><span></span><span></span><span></span></span>
       </li>`
 
-    const label =
-      state.cursor === null
-        ? `Roster at end of window (${fmtTime(t)})`
-        : `Roster at ${fmtTime(t, true)}`
 
     const tankIds = s.players.filter((p) => p.role === 'tank').map((p) => p.id)
     const sameSet = (ids) => state.visible.size === ids.length && ids.every((id) => state.visible.has(id))
@@ -690,7 +685,10 @@
       document.activeElement?.dataset?.input === 'roster-filter'
     $('#roster').innerHTML = `
       <div class="roster-head">
-        <div class="row"><h2>${label}</h2></div>
+        <div class="row roster-title">
+          <h2>Roster</h2>
+          <button data-action="open-overrides" aria-pressed="${Boolean(state.ui.overridesOpen)}" title="Player buff and talent overrides (O)">${ICONS.sliders} Overrides${overrideCount() ? ` <span class="tag strong">${overrideCount()}</span>` : ''}</button>
+        </div>
         <div class="row">
           <input type="search" placeholder="Filter players" aria-label="Filter players" data-input="roster-filter" value="${esc(state.ui.rosterFilter)}" />
           <div class="group" role="group" aria-label="Show players">
@@ -758,8 +756,7 @@
     const head = `<div class="drawer-head">
       <button class="desktop-only" data-action="toggle-breakdown" aria-expanded="${open}">${open ? 'Hide' : 'Show'} breakdown <kbd>B</kbd></button>
       <h2>${p ? `${esc(p.name)} — spell breakdown` : 'Spell breakdown'}</h2>
-      <span class="muted">Window ${fmtTime(a)}–${fmtTime(b)} (${secs.toFixed(1)}s)</span>
-      ${p ? `<span class="muted">Initial auras: ${esc(initialAuras(p))}</span>` : ''}
+      ${p ? auraIcons(p) : ''}
       ${p && overridesOf(p.id) ? `<button class="link" data-action="open-overrides" data-pid="${p.id}">Overrides: ${esc(overrideSummary(p.id).join(', '))}</button>` : ''}
       <button class="push desktop-only" data-action="shortcuts">Shortcuts <kbd>?</kbd></button>
     </div>`
@@ -829,9 +826,19 @@
       </tbody></table></div>`
   }
 
-  function initialAuras(p) {
-    const names = WF.aurasFor(p, state.analysis)
-    return names.length ? names.join(', ') : 'none affecting threat'
+  /** Threat-affecting auras the focused player starts with, as spell icons. */
+  function auraIcons(p) {
+    const auras = WF.aurasFor(p, state.analysis)
+    if (!auras.length) return '<span class="muted">No threat auras</span>'
+    return `<span class="auras" aria-label="Initial threat auras">${auras
+      .map(
+        (a) => `<span class="aura" title="${esc(a.name)} ×${a.mult}"><img src="https://wow.zamimg.com/images/wow/icons/medium/${a.icon}.jpg" alt="${esc(a.name)}" width="20" height="20" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'aura-fallback',textContent:'${esc(a.name)
+          .split(' ')
+          .map((w) => w[0])
+          .join('')
+          .slice(0, 2)}'}))" /></span>`,
+      )
+      .join('')}</span>`
   }
 
   // ===========================================================================
@@ -1982,8 +1989,8 @@
     'open-overrides': (el) => {
       const pid = el.dataset.pid ? Number(el.dataset.pid) : 'all'
       const same = state.ui.overridesOpen === pid
-      // The bar button toggles; links and badges always open.
-      if (same && el.closest('.bar')) {
+      // The roster button toggles; links and badges always open.
+      if (same && el.closest('.roster-head')) {
         state.ui.overridesOpen = null
         commit()
       } else openOverrides(pid)

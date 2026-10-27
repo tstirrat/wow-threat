@@ -31,6 +31,14 @@ const WF = (() => {
   }
 
   const m = (name, mult, schools = null) => ({ name, mult, schools })
+  // Wowhead icon names for threat auras (stances, forms, buffs).
+  const AURA_ICONS = {
+    'Defensive Stance': 'ability_warrior_defensivestance',
+    'Berserker Stance': 'ability_racial_avatar',
+    'Bear Form': 'ability_racial_bearform',
+    'Blessing of Salvation': 'spell_holy_sealofsalvation',
+    'Tranquil Air Totem': 'spell_nature_brilliance',
+  }
   // A threat talent: multiplier is 1 + perRank × rank, default rank is max.
   const tal = (name, max, perRank, schools = null) => ({
     name,
@@ -373,11 +381,10 @@ const WF = (() => {
   /** Auras that shape a player's threat for the whole fight, for display. */
   function aurasFor(player, opts) {
     const kit = kitFor(player)
-    const fixed = kit.mods
-      .filter((mod) => !mod.talent && !mod.schools)
-      .map((mod) => mod.name)
-    const buffs = BUFFS.filter((buff) => buffActive(player, buff, opts)).map((b) => b.name)
-    return [...fixed, ...buffs]
+    // Only real auras (stances, forms, buffs); class passives and talents are not.
+    const fixed = kit.mods.filter((mod) => !mod.talent && AURA_ICONS[mod.name])
+    const buffs = BUFFS.filter((buff) => buffActive(player, buff, opts))
+    return [...fixed, ...buffs].map((a) => ({ name: a.name, mult: a.mult, icon: AURA_ICONS[a.name] }))
   }
 
   const coeffOf = (mods) => mods.reduce((acc, mod) => acc * mod.mult, 1)

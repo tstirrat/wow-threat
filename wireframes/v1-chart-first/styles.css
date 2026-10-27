@@ -600,6 +600,21 @@ main:not(.rail-collapsed) .bar-title {
   gap: 2px;
 }
 
+.roster-title {
+  justify-content: space-between;
+}
+
+.roster-title button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.roster-title svg {
+  width: 13px;
+  height: 13px;
+}
+
 .roster-head input {
   flex: 1;
   min-width: 80px;
@@ -623,6 +638,7 @@ main:not(.rail-collapsed) .bar-title {
 }
 
 .roster-cols {
+  white-space: nowrap;
   font-size: 11px;
   color: var(--muted);
   padding: 2px 8px 2px 66px;
@@ -765,6 +781,28 @@ main:not(.rail-collapsed) .bar-title {
   padding: 4px 10px;
   border-bottom: 1px solid var(--line);
   flex-wrap: wrap;
+}
+
+.auras {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.aura img,
+.aura-fallback {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+}
+
+.aura-fallback {
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  font-weight: 700;
+  background: var(--hi);
 }
 
 .drawer-head .push {
