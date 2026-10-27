@@ -57,6 +57,15 @@ different rolls.
   set it shows everyone, from everyone it hides everyone. **Tanks** shows only tanks.
   **Top 5** shows the five highest threat at the cursor (or window end). The pressed
   button reflects the current set.
+- **Events tab** (side panel, <kbd>E</kbd>): a second tab beside Roster (<kbd>R</kbd>).
+  It lists everything visible players did within ±1/2/3s of the cursor (±2s default),
+  in time order: events before the cursor above a horizontal cursor line, events
+  after it below, with the offset (−0.42s / +1.10s) shown once per timestamp so
+  simultaneous events group together. Each row: player (class colour), spell or
+  "Boss melee hit" (red), threat change. Taunts, deaths and Feign Death are bold.
+  "Focused only" narrows to the focused player. Hovering a row rings its dot on
+  the chart; clicking moves the cursor there. The list keeps the cursor line
+  centred and follows playback. Pressing the active tab's key again hides the panel.
 - **Pets**: hunter and warlock pets are their own rows and lines, named
   "Wolf (Quickshot)", in the owner's class colour, drawn dashed. They get no
   Salvation. Bramblearrow's cat sits out the Gruul pulls.

@@ -628,6 +628,109 @@ main.is-home .drawer {
   justify-content: space-between;
 }
 
+.side-tabs {
+  display: flex;
+  gap: 2px;
+}
+
+.side-tabs button {
+  border-color: transparent;
+  background: none;
+  font-weight: 600;
+}
+
+.side-tabs button[aria-selected='true'] {
+  border-color: var(--line-strong);
+  background: var(--hi);
+}
+
+.roster-head label.inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ===== Events tab ========================================================= */
+
+.ev-list {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  flex: 1;
+}
+
+.ev-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 0.9fr) minmax(0, 1.1fr) 46px;
+  gap: 6px;
+  align-items: center;
+  text-align: left;
+  border: 0;
+  border-top: 1px solid var(--hi);
+  border-radius: 0;
+  background: none;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+.ev-row.same-time {
+  border-top-color: transparent;
+}
+
+.ev-row.is-focus {
+  background: var(--focus-bg);
+}
+
+.ev-row:hover {
+  background: var(--hi);
+}
+
+.ev-who,
+.ev-what {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ev-dt {
+  color: var(--muted);
+}
+
+.ev-cursor {
+  position: relative;
+  margin: 4px 0;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ev-cursor::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  border-top: 2px solid var(--chart-cursor);
+}
+
+.ev-cursor span {
+  position: relative;
+  background: var(--bg);
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ev-list .empty {
+  padding: 8px;
+  font-size: 12px;
+}
+
 .roster-title button {
   display: inline-flex;
   align-items: center;

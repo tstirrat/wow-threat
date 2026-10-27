@@ -91,6 +91,10 @@
     ui: {
       railCollapsed: prefs.railCollapsed ?? false,
       rosterHidden: prefs.rosterHidden ?? false,
+      sideTab: 'roster',
+      eventsSpan: 2,
+      eventsFocusOnly: false,
+      hoverEid: null,
       railTab: 'outline',
       breakdownOpen: prefs.breakdownOpen ?? true,
       settingsOpen: false,
@@ -624,7 +628,105 @@
     return state.cursor ?? windowRange()[1]
   }
 
+  /** Tab strip shared by the side panel's Roster and Events tabs. */
+  function sideTabs() {
+    const tab = state.ui.sideTab
+    return `<div class="row roster-title">
+      <div class="side-tabs" role="tablist">
+        <button role="tab" data-action="side-tab" data-tab="roster" aria-selected="${tab === 'roster'}" title="Roster (R)">Roster <kbd>R</kbd></button>
+        <button role="tab" data-action="side-tab" data-tab="events" aria-selected="${tab === 'events'}" title="Events around the cursor (E)">Events <kbd>E</kbd></button>
+      </div>
+      <button data-action="open-overrides" aria-pressed="${Boolean(state.ui.overridesOpen)}" title="Player buff and talent overrides (O)">${ICONS.sliders} Overrides${overrideCount() ? ` <span class="tag strong">${overrideCount()}</span>` : ''}</button>
+    </div>`
+  }
+
+  /** Show a side panel tab; pressing the active tab's key again hides the panel. */
+  function showSideTab(tab) {
+    const same = state.ui.sideTab === tab
+    if (isMobile()) {
+      state.ui.rosterOpen = !(state.ui.rosterOpen && same)
+      if (state.ui.rosterOpen) state.ui.railOpen = false
+    } else {
+      state.ui.rosterHidden = !state.ui.rosterHidden && same
+    }
+    state.ui.sideTab = tab
+    commit()
+    redrawCanvases()
+  }
+
+  // ===========================================================================
+  // Events tab: everything visible players did within ±N seconds of the cursor
+  // ===========================================================================
+
+  function renderEventsPanel() {
+    const span = state.ui.eventsSpan
+    const head = `<div class="roster-head">
+        ${sideTabs()}
+        <div class="row">
+          <div class="group" role="group" aria-label="Time around cursor">
+            ${[1, 2, 3].map((n) => `<button data-action="events-span" data-span="${n}" aria-pressed="${span === n}">±${n}s</button>`).join('')}
+          </div>
+          <label class="inline"><input type="checkbox" data-change="events-focus" ${state.ui.eventsFocusOnly ? 'checked' : ''} ${state.focus ? '' : 'disabled'} /> Focused only</label>
+        </div>
+      </div>`
+    if (state.cursor === null) {
+      $('#roster').innerHTML = `${head}<p class="empty">Click empty chart space to place a cursor. Everything visible players did ±${span}s around it appears here, before the cursor above the line and after it below. ←/→ step event by event.</p>`
+      return
+    }
+    const s = sim()
+    const c = state.cursor
+    const keep = (pid) => (state.ui.eventsFocusOnly && state.focus ? pid === state.focus : state.visible.has(pid))
+    const items = [
+      ...eventsIn(s, c - span * 1000, c + span * 1000)
+        .filter((e) => keep(e.pid) && (state.display.resourceDots || e.kind !== 'energize'))
+        .map((e) => ({ t: e.t, pid: e.pid, e })),
+      ...(state.display.bossMelee
+        ? meleeMarkers(s)
+            .filter((mk) => Math.abs(mk.t - c) <= span * 1000 && keep(mk.pid))
+            .map((mk) => ({ t: mk.t, pid: mk.pid, melee: true }))
+        : []),
+    ].sort((x, y) => x.t - y.t || (y.melee ? 1 : 0) - (x.melee ? 1 : 0))
+
+    let lastT = null
+    const row = (it) => {
+      const dt = (it.t - c) / 1000
+      const showTime = it.t !== lastT
+      lastT = it.t
+      const who = `<span class="swatch" style="background:${colorOf(it.pid)}"></span> <span style="color:${colorOf(it.pid)}">${esc(player(it.pid).name)}</span>`
+      const special = it.e && ['taunt', 'death', 'fd'].includes(it.e.kind)
+      const what = it.melee
+        ? '<span class="tip-melee">Boss melee hit</span>'
+        : `${special ? '<strong>' : ''}${esc(it.e.spell)}${special ? '</strong>' : ''}${it.e.hitType !== 'hit' ? ` <span class="tag">${it.e.hitType}</span>` : ''}`
+      const thr = it.melee ? '' : `${it.e.threat >= 0 ? '+' : ''}${fmtNum(it.e.threat)}`
+      return `<li><button class="ev-row ${it.pid === state.focus ? 'is-focus' : ''} ${showTime ? '' : 'same-time'}" data-action="jump" data-t="${it.t}" ${it.e ? `data-eid="${it.e.id}"` : ''} title="${fmtTime(it.t, true)} · click to move the cursor here">
+        <span class="ev-dt num">${showTime ? `${dt > 0 ? '+' : dt < 0 ? '−' : ''}${Math.abs(dt).toFixed(2)}s` : ''}</span>
+        <span class="ev-who">${who}</span>
+        <span class="ev-what">${what}</span>
+        <span class="ev-thr num">${thr}</span>
+      </button></li>`
+    }
+    const before = items.filter((it) => it.t <= c)
+    const after = items.filter((it) => it.t > c)
+    $('#roster').innerHTML = `${head}
+      <ol class="ev-list" id="ev-list">
+        ${before.length ? before.map(row).join('') : `<li class="empty">Nothing in the ${span}s before</li>`}
+        <li class="ev-cursor" id="ev-cursor"><span>Cursor ${fmtTime(c, true)}</span></li>
+        ${(() => {
+          lastT = null
+          return after.length ? after.map(row).join('') : `<li class="empty">Nothing in the ${span}s after</li>`
+        })()}
+      </ol>`
+    // Keep the cursor line in the middle of the list.
+    const list = $('#ev-list')
+    const line = $('#ev-cursor')
+    list.scrollTop = line.offsetTop - list.clientHeight / 2
+  }
+
   function renderRoster() {
+    if (state.ui.sideTab === 'events') {
+      renderEventsPanel()
+      return
+    }
     const s = sim()
     const t = rosterTime()
     const seg = WF.segmentAt(s, t)
@@ -697,10 +799,7 @@
       document.activeElement?.dataset?.input === 'roster-filter'
     $('#roster').innerHTML = `
       <div class="roster-head">
-        <div class="row roster-title">
-          <h2>Roster</h2>
-          <button data-action="open-overrides" aria-pressed="${Boolean(state.ui.overridesOpen)}" title="Player buff and talent overrides (O)">${ICONS.sliders} Overrides${overrideCount() ? ` <span class="tag strong">${overrideCount()}</span>` : ''}</button>
-        </div>
+        ${sideTabs()}
         <div class="row">
           <input type="search" placeholder="Filter players" aria-label="Filter players" data-input="roster-filter" value="${esc(state.ui.rosterFilter)}" />
           <div class="group" role="group" aria-label="Show players">
@@ -1430,6 +1529,18 @@
       })
     }
 
+    // Ring the event hovered in the Events tab.
+    if (state.ui.hoverEid !== null) {
+      const e = s.events[state.ui.hoverEid]
+      if (e && e.t >= g.x0 && e.t <= g.x1 && state.visible.has(e.pid)) {
+        ctx.strokeStyle = c.cursor
+        ctx.lineWidth = 2
+        ctx.beginPath()
+        ctx.arc(g.xOf(e.t), g.yOf(dotValue(e)), r + 5, 0, Math.PI * 2)
+        ctx.stroke()
+      }
+    }
+
     // Hover crosshair + hovered point ring.
     if (pointer.x !== null && !pointer.drag && pointer.x >= PAD.l && pointer.x <= PAD.l + g.plotW) {
       ctx.strokeStyle = c.hover
@@ -2084,6 +2195,14 @@
       ensureCursorVisible()
       commit()
     },
+    'side-tab': (el) => {
+      state.ui.sideTab = el.dataset.tab
+      commit()
+    },
+    'events-span': (el) => {
+      state.ui.eventsSpan = Number(el.dataset.span)
+      commit()
+    },
     'toggle-play': () => (state.ui.playing ? (stopPlayback(), commit()) : startPlayback()),
     'clear-cursor': () => {
       stopPlayback()
@@ -2149,6 +2268,10 @@
       const t = WF.talentsFor(player(pid)).find((x) => x.name === el.dataset.talent)
       const rank = Number(el.value)
       setOverride(pid, 'talents', t.name, rank === t.max ? undefined : rank)
+    },
+    'events-focus': (el) => {
+      state.ui.eventsFocusOnly = el.checked
+      commit()
     },
     'tps-window': (el) => {
       state.display.tpsWindow = Number(el.value)
@@ -2283,7 +2406,8 @@
     ['I', 'Show / hide player info'],
     ['O', 'Player buff and talent overrides'],
     ['Right-click a player', 'Player menu: focus, show only, pin, overrides'],
-    ['R', 'Show / hide the roster'],
+    ['R', 'Show the roster (again to hide the side panel)'],
+    ['E', 'Show events ±N s around the cursor (again to hide)'],
     ['A', 'Toggle absolute / % of aggro holder'],
     ['T', 'Toggle pull threshold lines'],
     ['0 or double-click', 'Reset zoom'],
@@ -2347,7 +2471,8 @@
         if (state.ui.overridesOpen) state.ui.settingsOpen = false
         commit()
       },
-      r: () => actions['toggle-roster'](),
+      r: () => showSideTab('roster'),
+      e: () => showSideTab('events'),
       a: () => {
         state.mode = state.mode === 'rel' ? 'abs' : 'rel'
         state.yRange = null
@@ -2509,6 +2634,15 @@
     if (!el || el.disabled) return
     const fn = actions[el.dataset.action]
     if (fn) fn(el, evt)
+  })
+
+  // Hovering a row in the Events tab rings that event on the chart.
+  document.addEventListener('pointerover', (evt) => {
+    const row = evt.target.closest('.ev-row[data-eid]')
+    const eid = row ? Number(row.dataset.eid) : null
+    if (eid === state.ui.hoverEid) return
+    state.ui.hoverEid = eid
+    redrawCanvases()
   })
 
   // Double-clicking a roster row isolates that player; again restores everyone.
