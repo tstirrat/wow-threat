@@ -19,7 +19,7 @@ different rolls.
 
 ```
 ┌──────┬───────────────────────────────────────────────────────────────────────────┐
-│ WOW  │ Chart bar: scale · thresholds · window · play · cursor        │ Open report│
+│ WOW  │ Chart bar: scale · reset zoom                           │ Open report│
 │Threat│                                                  Sign in · ⚙ · roster ▯ │
 │      ├──────────────────────────────────────────────┬────────────────────────────┤
 │ This │ ┌───────────────── chart ─────────────────┐  │ Roster at t                │
@@ -27,6 +27,7 @@ different rolls.
 │  or  │ └──────────────────────────────────────────┘  │  …                         │
 │ Lib  │ Aggro bar (class colours, fixates hatched)    │                            │
 │      │ Fight overview (drag to pan/select)           │                            │
+│      │ Transport: window · play/speed · cursor/clear │                            │
 │      ├──────────────────────────────────────────────┴────────────────────────────┤
 │      │ Breakdown: focused player × visible window          (B)       Shortcuts ? │
 └──────┴───────────────────────────────────────────────────────────────────────────┘
@@ -61,6 +62,8 @@ different rolls.
   changes (rage gain) smaller. Each type can be hidden in settings.
 - **Aggro bar**: who held aggro over time in their class colour, fixates hatched.
   Hover for the holder (name in class colour) and span; click to jump the cursor.
+- **Transport row** (under the overview, above the breakdown): window readout,
+  play/pause (Space) and speed, cursor time and Clear.
 - **Overview strip**: the whole fight. Drag inside the window box to pan, drag
   elsewhere to pick a new window, double-click to reset.
 - **Breakdown drawer** (bottom): the focused player's spells across the visible
@@ -107,6 +110,7 @@ different rolls.
 
 ## Settings
 
+- **Chart** (in the link): pull thresholds, with its <kbd>T</kbd> shortcut shown.
 - **My display** (local): theme (system/light/dark), spell event dots, boss melee dots,
   resource change dots, fixate shading.
 - **This analysis** (in the link): threat reduction emulation (Feign Death actually

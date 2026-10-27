@@ -356,6 +356,7 @@
       renderHome()
       return
     }
+    renderTransport()
     renderRoster()
     renderBreakdown()
     drawChart()
@@ -528,7 +529,6 @@
       $('#bar').innerHTML = `${menu}<span class="muted">Home</span>${right}`
       return
     }
-    const [a, b] = windowRange()
     const zoomed = Boolean(state.xRange || state.yRange)
     const p = pull()
     $('#bar').innerHTML = `
@@ -538,20 +538,25 @@
         <button data-action="mode" data-mode="abs" aria-pressed="${state.mode === 'abs'}">Absolute</button>
         <button data-action="mode" data-mode="rel" aria-pressed="${state.mode === 'rel'}">% of aggro</button>
       </div>
-      <label class="group"><input type="checkbox" data-change="thresholds" ${state.thresholds ? 'checked' : ''} /> Thresholds</label>
+      <button data-action="reset-zoom" ${zoomed ? '' : 'disabled'}>Reset zoom</button>
+      ${right}`
+  }
+
+  /** Transport row under the overview: window, playback and cursor. */
+  function renderTransport() {
+    const [a, b] = windowRange()
+    $('#transport').innerHTML = `
+      <span class="readout">Window ${fmtTime(a)}–${fmtTime(b)}</span>
       <div class="group">
-        <span class="readout">${fmtTime(a)}–${fmtTime(b)}</span>
-        <button data-action="reset-zoom" ${zoomed ? '' : 'disabled'}>Reset zoom</button>
-      </div>
-      <div class="group">
-        <button data-action="toggle-play" aria-pressed="${state.ui.playing}">${state.ui.playing ? 'Pause' : 'Play'}</button>
+        <button data-action="toggle-play" aria-pressed="${state.ui.playing}">${state.ui.playing ? 'Pause' : 'Play'} <kbd>Space</kbd></button>
         <select data-change="speed" aria-label="Playback speed">
           ${[1, 2, 4, 8].map((sp) => `<option value="${sp}" ${sp === state.ui.speed ? 'selected' : ''}>${sp}×</option>`).join('')}
         </select>
+      </div>
+      <div class="group">
         <span class="readout">Cursor ${state.cursor === null ? '—' : fmtTime(state.cursor, true)}</span>
         ${state.cursor === null ? '' : '<button data-action="clear-cursor">Clear</button>'}
-      </div>
-      ${right}`
+      </div>`
   }
 
   const isMobile = () => window.matchMedia('(max-width: 760px)').matches
@@ -799,6 +804,11 @@
         <h2>Settings</h2>
         <button data-action="toggle-settings">Close</button>
       </div>
+      <fieldset>
+        <legend>Chart</legend>
+        <p class="hint">Included in shared links.</p>
+        <label><input type="checkbox" data-change="thresholds" ${state.thresholds ? 'checked' : ''} /> Pull thresholds (110% melee / 130% ranged) <kbd>T</kbd></label>
+      </fieldset>
       <fieldset>
         <legend>My display</legend>
         <p class="hint">Saved in this browser. Not included in shared links.</p>
@@ -1659,7 +1669,7 @@
     if (now - lastPanelRender > 120) {
       lastPanelRender = now
       renderRoster()
-      renderBar()
+      renderTransport()
     }
     drawChart()
     drawRibbon()

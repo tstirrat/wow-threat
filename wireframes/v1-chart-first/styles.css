@@ -450,6 +450,25 @@ main:not(.rail-collapsed) .bar-title {
   height: 42px;
 }
 
+.transport {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  padding: 6px 10px 6px 56px;
+  border-top: 1px solid var(--line);
+}
+
+.transport .group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.transport .readout {
+  font-variant-numeric: tabular-nums;
+}
+
 #overview {
   cursor: grab;
 }
