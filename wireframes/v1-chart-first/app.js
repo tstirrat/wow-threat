@@ -623,13 +623,14 @@
         : `Roster at ${fmtTime(t, true)}`
 
     const tankIds = s.players.filter((p) => p.role === 'tank').map((p) => p.id)
+    const sameSet = (ids) => state.visible.size === ids.length && ids.every((id) => state.visible.has(id))
     const showing =
       state.visible.size === s.players.length
         ? 'all'
-        : state.visible.size === tankIds.length && tankIds.every((id) => state.visible.has(id))
+        : sameSet(tankIds)
           ? 'tanks'
-          : state.visible.size === 0 || (state.visible.size === 1 && state.visible.has(state.focus))
-            ? 'none'
+          : sameSet(topIds(5))
+            ? 'top'
             : 'custom'
     const refocus =
       document.activeElement?.dataset?.input === 'roster-filter'
@@ -639,9 +640,9 @@
         <div class="row">
           <input type="search" placeholder="Filter players" aria-label="Filter players" data-input="roster-filter" value="${esc(state.ui.rosterFilter)}" />
           <div class="group" role="group" aria-label="Show players">
-            <button data-action="show-all" aria-pressed="${showing === 'all'}">All on</button>
-            <button data-action="hide-all" aria-pressed="${showing === 'none'}">All off</button>
+            <button data-action="toggle-all" aria-pressed="${showing === 'all'}" title="${showing === 'all' ? 'Hide everyone' : 'Show everyone'}">All</button>
             <button data-action="show-tanks" aria-pressed="${showing === 'tanks'}">Tanks</button>
+            <button data-action="show-top" aria-pressed="${showing === 'top'}" title="Top five by threat at ${state.cursor === null ? 'the end of the window' : 'the cursor'}">Top 5</button>
           </div>
         </div>
       </div>
@@ -1696,6 +1697,9 @@
   // Actions
   // ===========================================================================
 
+  /** The n players with the most threat at the roster's time. */
+  const topIds = (n) => rosterOrder().slice(0, n)
+
   const rosterOrder = () => {
     const s = sim()
     const t = rosterTime()
@@ -1757,16 +1761,18 @@
       state.ui.expandedSpells.clear()
       commit()
     },
-    'show-all': () => {
-      state.visible = new Set(sim().players.map((p) => p.id))
+    // All is a toggle: from a partial set it shows everyone, from everyone it hides all.
+    'toggle-all': () => {
+      const everyone = sim().players.map((p) => p.id)
+      state.visible = state.visible.size === everyone.length ? new Set() : new Set(everyone)
+      commit()
+    },
+    'show-top': () => {
+      state.visible = new Set(topIds(5))
       commit()
     },
     'show-tanks': () => {
       state.visible = new Set(sim().players.filter((p) => p.role === 'tank').map((p) => p.id))
-      commit()
-    },
-    'hide-all': () => {
-      state.visible = new Set(state.focus ? [state.focus] : [])
       commit()
     },
     mode: (el) => {

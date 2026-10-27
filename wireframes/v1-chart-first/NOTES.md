@@ -46,8 +46,10 @@ different rolls.
   search and summary table. Sorted by threat at the cursor, or at the end of the
   window. Columns: threat, % of the aggro holder, TPS over the window. Each row has
   an eye (show/hide line) and a pin (filled and pressed in when pinned).
-  The header has a filter and three show buttons: **All on**, **All off** (keeps the
-  focused player visible) and **Tanks**. The pressed one reflects the current set.
+  The header has a filter and three show buttons. **All** toggles: from a partial
+  set it shows everyone, from everyone it hides everyone. **Tanks** shows only tanks.
+  **Top 5** shows the five highest threat at the cursor (or window end). The pressed
+  button reflects the current set.
 - **Pets**: hunter and warlock pets are their own rows and lines, named
   "Wolf (Quickshot)", in the owner's class colour, drawn dashed. They get no
   Salvation. Bramblearrow's cat sits out the Gruul pulls.
