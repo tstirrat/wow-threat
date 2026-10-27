@@ -45,7 +45,9 @@ different rolls.
   lives in the sidebar only.
 - **Roster** (right, hideable): one list replaces the legend, threat meter, player
   search and summary table. Sorted by threat at the cursor, or at the end of the
-  window. Columns: threat, % of the aggro holder, TPS over the window. Each row has
+  window. Columns: threat, % of the aggro holder, and rolling TPS over the last
+  N seconds before that time (5s default; 3/5/10/30s in Settings). It updates during
+  playback, so ramp-ups are visible. Window-wide TPS lives in the breakdown. Each row has
   an eye (show/hide line) and a pin (filled and pressed in when pinned).
   The header has a filter and three show buttons. **All** toggles: from a partial
   set it shows everyone, from everyone it hides everyone. **Tanks** shows only tanks.
@@ -112,7 +114,7 @@ different rolls.
 
 - **Chart** (in the link): pull thresholds, with its <kbd>T</kbd> shortcut shown.
 - **My display** (local): theme (system/light/dark), spell event dots, boss melee dots,
-  resource change dots, fixate shading.
+  resource change dots, fixate shading, rolling TPS window.
 - **This analysis** (in the link): threat reduction emulation (Feign Death actually
   resets threat in the sim), inferred Salvation, and per-player "no Salvation" overrides.
   Turning inference off makes DPS pull more often. The sim reruns.

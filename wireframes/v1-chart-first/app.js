@@ -85,6 +85,7 @@
       eventDots: true,
       resourceDots: true,
       fixate: true,
+      tpsWindow: 5,
       ...(prefs.display ?? {}),
     },
     ui: {
@@ -572,7 +573,6 @@
   function renderRoster() {
     const s = sim()
     const t = rosterTime()
-    const [a, b] = windowRange()
     const seg = WF.segmentAt(s, t)
     const holderVal = WF.valueAt(s, seg.pid, t)
     const filter = state.ui.rosterFilter.toLowerCase()
@@ -583,7 +583,9 @@
     const rows = s.players
       .map((p) => {
         const v = WF.valueAt(s, p.id, t)
-        const tps = (WF.valueAt(s, p.id, b) - WF.valueAt(s, p.id, a)) / ((b - a) / 1000)
+        // Rolling TPS: threat gained over the last N seconds before the roster time.
+        const from = Math.max(0, t - state.display.tpsWindow * 1000)
+        const tps = t > from ? (v - WF.valueAt(s, p.id, from)) / ((t - from) / 1000) : 0
         return { p, v, tps, pct: holderVal > 0 ? (v / holderVal) * 100 : NaN }
       })
       .filter((r) => !filter || r.p.name.toLowerCase().includes(filter))
@@ -651,7 +653,7 @@
           </div>
         </div>
       </div>
-      <div class="roster-cols"><span></span><span>Player</span><span class="num">Threat</span><span class="num">% aggro</span><span class="num">TPS</span></div>
+      <div class="roster-cols"><span></span><span>Player</span><span class="num">Threat</span><span class="num">% aggro</span><span class="num" title="Threat per second over the last ${state.display.tpsWindow}s">TPS ${state.display.tpsWindow}s</span></div>
       <ul class="roster-list">${rows.map(row).join('')}${absent.map(absentRow).join('')}</ul>`
 
     // Keep the filter input focused while typing.
@@ -821,6 +823,11 @@
         <label><input type="checkbox" data-change="display" data-key="bossMelee" ${d.bossMelee ? 'checked' : ''} /> Boss melee dots (red)</label>
         <label><input type="checkbox" data-change="display" data-key="resourceDots" ${d.resourceDots ? 'checked' : ''} /> Resource change dots (rage gain, small)</label>
         <label><input type="checkbox" data-change="display" data-key="fixate" ${d.fixate ? 'checked' : ''} /> Shade fixate windows on the chart</label>
+        <label>Roster TPS over the last
+          <select data-change="tps-window" aria-label="Rolling TPS window">
+            ${[3, 5, 10, 30].map((n) => `<option value="${n}" ${d.tpsWindow === n ? 'selected' : ''}>${n}s</option>`).join('')}
+          </select>
+        </label>
       </fieldset>
       <fieldset>
         <legend>This analysis</legend>
@@ -1850,6 +1857,10 @@
     },
     display: (el) => {
       state.display[el.dataset.key] = el.checked
+      commit()
+    },
+    'tps-window': (el) => {
+      state.display.tpsWindow = Number(el.value)
       commit()
     },
     theme: (el) => {
