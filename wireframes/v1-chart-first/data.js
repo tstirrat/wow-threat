@@ -499,6 +499,80 @@ const WF = (() => {
   const BASE_TPS = 760
   const simCache = new Map()
 
+  // ===========================================================================
+  // Resources and attack outcomes
+  // ===========================================================================
+
+  const MANA_MAX = 10000
+
+  // Resource cost per cast (rage/energy points, or mana).
+  const COSTS = {
+    'Heroic Strike': 15,
+    'Sunder Armor': 15,
+    Revenge: 5,
+    'Shield Slam': 20,
+    Bloodthirst: 30,
+    Whirlwind: 25,
+    Maul: 15,
+    Swipe: 20,
+    Lacerate: 15,
+    'Sinister Strike': 45,
+    Eviscerate: 35,
+    Frostbolt: 260,
+    Fireball: 410,
+    'Arcane Missiles': 655,
+    Scorch: 150,
+    'Shadow Bolt': 380,
+    Corruption: 340,
+    Immolate: 370,
+    'Curse of Agony': 215,
+    'Mind Blast': 350,
+    'Mind Flay': 205,
+    'Shadow Word: Pain': 470,
+    'Greater Heal': 710,
+    'Flash Heal': 380,
+    Renew: 410,
+    'Chain Heal': 540,
+    'Healing Wave': 620,
+    'Lesser Healing Wave': 300,
+    'Holy Light': 660,
+    'Flash of Light': 140,
+    Rejuvenation: 360,
+    Lifebloom: 220,
+    Regrowth: 650,
+    'Healing Touch': 800,
+    Stormstrike: 240,
+    'Earth Shock': 450,
+    'Crusader Strike': 230,
+    Consecration: 560,
+    'Steady Shot': 110,
+    'Multi-Shot': 230,
+    'Arcane Shot': 230,
+  }
+
+  /** Which resource a player spends (pets are not tracked). */
+  function resourceType(p) {
+    if (p.role === 'pet') return null
+    if (p.cls === 'Warrior' || (p.cls === 'Druid' && p.role === 'tank')) return 'rage'
+    if (p.cls === 'Rogue') return 'energy'
+    return 'mana'
+  }
+
+  const AVOIDED = new Set(['miss', 'dodge', 'parry', 'resist'])
+
+  /** Roll an attack outcome. Tanks stand in front, so only they get parried. */
+  function rollOutcome(p, spell, r) {
+    const x = r()
+    if (spell.kind === 'heal') return x < 0.1 ? 'crit' : 'hit'
+    if (spell.school !== 'physical') return x < 0.04 ? 'resist' : x < 0.14 ? 'crit' : 'hit'
+    if (p.range === 'ranged') return x < 0.05 ? 'miss' : x < 0.17 ? 'crit' : 'hit'
+    const parry = p.role === 'tank' ? 0.06 : 0
+    if (x < 0.05) return 'miss'
+    if (x < 0.1) return 'dodge'
+    if (x < 0.1 + parry) return 'parry'
+    return x < 0.22 + parry ? 'crit' : 'hit'
+  }
+
   /**
    * Simulate one pull against one target. Returns every event with its
    * cumulative threat, per-player series, aggro-holder segments and markers.
@@ -518,6 +592,7 @@ const WF = (() => {
 
     // --- proactive events -------------------------------------------------
     const queue = []
+    const manaRegen = new Map()
     players.forEach((p) => {
       const kit = kitFor(p)
       let pace = PACE[p.name] ?? 0.5
@@ -538,23 +613,26 @@ const WF = (() => {
           0,
         ) / totalW
       const interval = Math.min(4, Math.max(0.25, (avg * 1.05) / desired)) * 1000
+      // Mana regen covers ~80% of spend, so casters drift down over a fight.
+      const avgCost = kit.spells.reduce((a, sp) => a + sp.w * (COSTS[sp.name] ?? 0), 0) / totalW
+      manaRegen.set(p.id, 0.8 * avgCost * (1000 / interval))
 
       // Non-tanks wait a few seconds for the tank to open.
       let t = Math.floor(r() * interval) + (p.role === 'tank' ? 0 : 3000)
       while (t < D) {
         let pick = r() * totalW
         const spell = kit.spells.find((sp) => (pick -= sp.w) < 0) ?? kit.spells[0]
-        const roll = r()
-        const hitType = roll < 0.05 ? 'miss' : roll < 0.17 ? 'crit' : 'hit'
+        const hitType = rollOutcome(p, spell, r)
         const base = spell.min + r() * (spell.max - spell.min)
-        const raw = hitType === 'miss' ? 0 : Math.round(base * (hitType === 'crit' ? 2 : 1))
+        const avoided = AVOIDED.has(hitType)
+        const raw = avoided ? 0 : Math.round(base * (hitType === 'crit' ? 2 : 1))
         queue.push({
           t,
           kind: spell.kind ?? 'damage',
           pid: p.id,
           spell,
           raw,
-          bonus: hitType === 'miss' ? 0 : spell.bonus,
+          bonus: avoided ? 0 : spell.bonus,
           hitType,
         })
         t += Math.floor(interval * (0.6 + r() * 0.8))
@@ -595,6 +673,51 @@ const WF = (() => {
     const lastTaunt = new Map()
     let holder = mainTankId
     let fixate = null
+
+    const res = new Map(
+      players
+        .filter((p) => resourceType(p))
+        .map((p) => {
+          const type = resourceType(p)
+          const max = type === 'mana' ? MANA_MAX : 100
+          const regen = type === 'energy' ? 10 : type === 'mana' ? manaRegen.get(p.id) : 0
+          return [p.id, { type, cur: type === 'rage' ? 0 : max, max, regen, t: 0 }]
+        }),
+    )
+
+    /**
+     * Pay for a cast and note the resource before/after. If the player can't
+     * afford it, they auto attack instead (or do nothing without a melee swing).
+     */
+    const spend = (item) => {
+      const rs = res.get(item.pid)
+      if (!rs) return item
+      rs.cur = Math.min(rs.max, rs.cur + (rs.regen * (item.t - rs.t)) / 1000)
+      rs.t = item.t
+      let ev = item
+      let cost = COSTS[ev.spell.name] ?? 0
+      if (rs.cur < cost) {
+        const melee = kitFor(byId(item.pid)).spells.find((sp) => sp.name === 'Melee')
+        if (!melee) return null
+        const hitType = item.hitType === 'resist' ? 'miss' : item.hitType
+        const base = melee.min + r() * (melee.max - melee.min)
+        ev = {
+          ...item,
+          spell: melee,
+          hitType,
+          raw: AVOIDED.has(hitType) ? 0 : Math.round(base * (hitType === 'crit' ? 2 : 1)),
+          bonus: 0,
+        }
+        cost = 0
+      }
+      const before = rs.cur
+      rs.cur -= cost
+      if (rs.type === 'rage' && ev.spell.name === 'Melee' && !AVOIDED.has(ev.hitType)) {
+        rs.cur = Math.min(rs.max, rs.cur + (ev.hitType === 'crit' ? 24 : 12))
+      }
+      ev.resource = { type: rs.type, before: Math.round(before), after: Math.round(rs.cur), max: rs.max, cost }
+      return ev
+    }
 
     const byId = (id) => PLAYERS_BY_ID.get(id)
     const record = (ev) => {
@@ -667,6 +790,7 @@ const WF = (() => {
         mods,
         coeff,
         threat: delta,
+        resource: ev.resource ?? null,
       })
       check(ev.pid, ev.t)
     }
@@ -733,9 +857,11 @@ const WF = (() => {
       if (item.pid && dead.has(item.pid)) return
       switch (item.kind) {
         case 'damage':
-        case 'heal':
-          apply(item)
+        case 'heal': {
+          const ev = spend(item)
+          if (ev) apply(ev)
           break
+        }
         case 'taunt':
           taunt(item.pid, item.t)
           break
@@ -782,6 +908,9 @@ const WF = (() => {
           if (kit.rage) {
             const rage = 8 + Math.floor(r() * 10)
             threat.set(victimId, threat.get(victimId) + rage * 5)
+            const rs = res.get(victimId)
+            const before = rs ? rs.cur : 0
+            if (rs) rs.cur = Math.min(rs.max, rs.cur + rage)
             record({
               t: item.t,
               pid: victimId,
@@ -794,6 +923,9 @@ const WF = (() => {
               mods: [{ name: '5 threat per rage, not modified by stance', mult: 5 }],
               coeff: 5,
               threat: rage * 5,
+              resource: rs
+                ? { type: 'rage', before: Math.round(before), after: Math.round(rs.cur), max: rs.max, cost: 0 }
+                : null,
             })
           }
           break
@@ -852,6 +984,7 @@ const WF = (() => {
   return {
     PLAYERS,
     PLAYERS_BY_ID,
+    AVOIDED,
     LIBRARY,
     getReport,
     simulate,

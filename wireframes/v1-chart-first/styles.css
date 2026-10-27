@@ -549,6 +549,24 @@ main.is-home .drawer {
   color: var(--muted);
 }
 
+.event-res {
+  font-variant-numeric: tabular-nums;
+}
+
+.tag.avoid {
+  border-style: dashed;
+  color: var(--text);
+}
+
+.ev-row.is-avoided .ev-what {
+  color: var(--muted);
+}
+
+.side-tip {
+  position: fixed;
+  z-index: 25;
+}
+
 .event-top {
   display: flex;
   justify-content: space-between;
@@ -664,7 +682,7 @@ main.is-home .drawer {
 .ev-row {
   width: 100%;
   display: grid;
-  grid-template-columns: 52px minmax(0, 0.9fr) minmax(0, 1.1fr) 46px;
+  grid-template-columns: 50px minmax(0, 0.8fr) minmax(0, 1.3fr) 46px;
   gap: 6px;
   align-items: center;
   text-align: left;
@@ -689,10 +707,22 @@ main.is-home .drawer {
 }
 
 .ev-who,
-.ev-what {
+.ev-spell {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* The spell name shrinks first so the outcome tag stays readable. */
+.ev-what {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.ev-what .tag {
+  flex: none;
 }
 
 .ev-dt {

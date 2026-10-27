@@ -68,6 +68,19 @@ different rolls.
   "Focused only" narrows to the focused player (disabled while that player is hidden). Hovering a row rings its dot on
   the chart; clicking moves the cursor there. The list keeps the cursor line
   centred and follows playback. Pressing the active tab's key again hides the panel.
+- **Resources and avoidance** (for debugging a tank's button presses): every cast
+  carries the player's resource before and after it (rage, energy, or mana with %),
+  and attacks can be missed, dodged, parried (tanks only, since they stand in front)
+  or resisted (spells). WCL can supply this: cast events include `classResources`
+  for the source actor when resources are requested.
+  - Hovering a row in the Events tab shows a tooltip beside the panel with the threat
+    math, outcome and "Rage 71 → 56 (cost 15)". The chart tooltip shows the same line.
+  - Avoided attacks are tagged (Missed, Dodged, Parried, Resisted) in the Events tab
+    and drawn as hollow dots on the chart; they cost the resource but add no threat.
+  - Player info adds "Avoided: 2 of 5 attacks (40%) · 1 dodged · 1 missed" and an
+    Avoided column per spell.
+  - In the fake sim, a player who can't afford an ability auto attacks instead
+    (or does nothing without a melee swing), so starved tanks show lower TPS.
 - **Pets**: hunter and warlock pets are their own rows and lines, named
   "Wolf (Quickshot)", in the owner's class colour, drawn dashed. They get no
   Salvation. Bramblearrow's cat sits out the Gruul pulls.

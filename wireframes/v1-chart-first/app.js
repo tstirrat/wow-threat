@@ -705,9 +705,10 @@
       const special = it.e && ['taunt', 'death', 'fd'].includes(it.e.kind)
       const what = it.melee
         ? '<span class="tip-melee">Boss melee hit</span>'
-        : `${special ? '<strong>' : ''}${esc(it.e.spell)}${special ? '</strong>' : ''}${it.e.hitType !== 'hit' ? ` <span class="tag">${it.e.hitType}</span>` : ''}`
-      const thr = it.melee ? '' : `${it.e.threat >= 0 ? '+' : ''}${fmtNum(it.e.threat)}`
-      return `<li><button class="ev-row ${it.pid === state.focus ? 'is-focus' : ''} ${showTime ? '' : 'same-time'}" data-action="jump" data-t="${it.t}" ${it.e ? `data-eid="${it.e.id}"` : ''} title="${fmtTime(it.t, true)} · click to move the cursor here">
+        : `<span class="ev-spell">${special ? '<strong>' : ''}${esc(it.e.spell)}${special ? '</strong>' : ''}</span>${outcomeTag(it.e)}`
+      const avoided = it.e && isAvoided(it.e)
+      const thr = it.melee || avoided ? '' : `${it.e.threat >= 0 ? '+' : ''}${fmtNum(it.e.threat)}`
+      return `<li><button class="ev-row ${it.pid === state.focus ? 'is-focus' : ''} ${showTime ? '' : 'same-time'} ${avoided ? 'is-avoided' : ''}" data-action="jump" data-t="${it.t}" ${it.e ? `data-eid="${it.e.id}"` : `data-melee="${it.pid}"`}>
         <span class="ev-dt num">${showTime ? `${dt > 0 ? '+' : dt < 0 ? '−' : ''}${Math.abs(dt).toFixed(2)}s` : ''}</span>
         <span class="ev-who">${who}</span>
         <span class="ev-what">${what}</span>
@@ -725,6 +726,7 @@
           return after.length ? after.map(row).join('') : `<li class="empty">Nothing in the ${span}s after</li>`
         })()}
       </ol>`
+    $('#side-tip').hidden = true
     // Keep the cursor line in the middle of the list.
     const list = $('#ev-list')
     const line = $('#ev-cursor')
@@ -829,8 +831,25 @@
     }
   }
 
+  const OUTCOME_LABEL = { miss: 'Missed', dodge: 'Dodged', parry: 'Parried', resist: 'Resisted', crit: 'Crit' }
+  const isAvoided = (e) => WF.AVOIDED.has(e.hitType)
+  const outcomeTag = (e) =>
+    e.hitType === 'hit' ? '' : ` <span class="tag ${isAvoided(e) ? 'avoid' : ''}">${OUTCOME_LABEL[e.hitType] ?? e.hitType}</span>`
+
+  /** Resource line: what the player had when the event happened. */
+  function resourceLine(e) {
+    const R = e.resource
+    if (!R) return ''
+    const name = R.type[0].toUpperCase() + R.type.slice(1)
+    const fmt = (v) => (R.type === 'mana' ? `${fmtNum(v)} (${Math.round((v / R.max) * 100)}%)` : `${v}`)
+    const change = R.after - R.before
+    const detail = R.cost ? `cost ${R.cost}` : change > 0 ? `+${change}` : ''
+    return `<div class="event-res">${name} ${fmt(R.before)} → ${fmt(R.after)}${detail ? ` <span class="muted">(${detail})</span>` : ''}</div>`
+  }
+
   function eventMath(e) {
     if (e.coeff === null) return esc(e.note ?? '')
+    if (isAvoided(e)) return `<strong>${OUTCOME_LABEL[e.hitType]}</strong> · no damage, no threat`
     const base =
       e.kind === 'energize'
         ? `${e.raw} rage`
@@ -851,11 +870,12 @@
             : 'No modifiers'
         return `<li>
           <div class="event-top">
-            <span><strong>${esc(e.spell)}</strong>${e.hitType !== 'hit' ? ` <span class="tag">${e.hitType}</span>` : ''}</span>
+            <span><strong>${esc(e.spell)}</strong>${outcomeTag(e)}</span>
             <span class="num">→ ${fmtNum(e.cum)}</span>
           </div>
           <div class="event-math">${eventMath(e)}</div>
-          ${mods ? `<div class="event-mods">${mods}</div>` : ''}
+          ${resourceLine(e)}
+          ${mods && !isAvoided(e) ? `<div class="event-mods">${mods}</div>` : ''}
         </li>`
       })
       .join('')}</ul>`
@@ -882,9 +902,15 @@
     const held = s.segments
       .filter((sg) => sg.pid === p.id && sg.kind === 'aggro')
       .reduce((acc, sg) => acc + Math.max(0, Math.min(sg.end, b) - Math.max(sg.start, a)), 0)
+    const attacks = events.filter((e) => e.kind === 'damage' && e.resource)
+    const avoided = attacks.filter(isAvoided)
+    const byType = (type) => avoided.filter((e) => e.hitType === type).length
     return {
       peak,
       held,
+      attacks: attacks.length,
+      avoided: avoided.length,
+      avoidedBy: ['dodge', 'parry', 'miss', 'resist'].map((type) => [type, byType(type)]).filter(([, n]) => n),
       taunts: events.filter((e) => e.kind === 'taunt').length,
       deaths: events.filter((e) => e.kind === 'death').length,
     }
@@ -910,6 +936,11 @@
         st.peak
           ? `<button class="link" data-action="jump" data-t="${st.peak.t}">${fmtPct(st.peak.ratio)} of ${esc(player(st.peak.holder).name)} at ${fmtTime(st.peak.t, true)}</button> <span class="muted">pulls at ${limit}%</span>`
           : '<span class="muted">Held aggro the whole window</span>'
+      }</dd>
+      <dt>Avoided</dt><dd>${
+        st.avoided
+          ? `${st.avoided} of ${st.attacks} attacks <span class="muted">(${fmtPct((st.avoided / st.attacks) * 100)})</span><br /><span class="muted">${st.avoidedBy.map(([type, n]) => `${n} ${OUTCOME_LABEL[type].toLowerCase()}`).join(' · ')}</span>`
+          : `<span class="muted">${st.attacks ? 'Nothing' : 'No attacks'}</span>`
       }</dd>
       ${st.taunts || st.deaths ? `<dt>Events</dt><dd>${[st.taunts ? `${st.taunts} taunt${st.taunts > 1 ? 's' : ''}` : '', st.deaths ? `${st.deaths} death${st.deaths > 1 ? 's' : ''}` : ''].filter(Boolean).join(' · ')}</dd>` : ''}
     </dl>`
@@ -951,6 +982,7 @@
         spell: e.spell,
         school: e.school,
         hits: 0,
+        avoided: 0,
         raw: 0,
         bonus: 0,
         threat: 0,
@@ -958,6 +990,7 @@
         special: e.coeff === null,
       }
       g.hits += 1
+      if (isAvoided(e)) g.avoided += 1
       g.raw += e.raw
       g.bonus += e.bonus
       g.threat += e.threat
@@ -984,6 +1017,7 @@
         return `<tr class="spell-row" data-action="expand-spell" data-spell="${esc(g.spell)}" aria-expanded="${expanded}">
             <td>${expanded ? '▾' : '▸'} ${esc(g.spell)} <span class="muted">${esc(g.school)}</span></td>
             <td class="num">${g.hits}</td>
+            <td class="num">${g.avoided || '—'}</td>
             <td class="num">${g.special ? '—' : fmtNum(g.raw)}</td>
             <td class="num">${g.bonus ? fmtNum(g.bonus) : '—'}</td>
             <td class="num">${coeff}</td>
@@ -991,16 +1025,16 @@
             <td class="num">${fmtNum(g.threat / secs)}</td>
             <td class="num">${g.threat > 0 ? fmtPct((g.threat / positive) * 100) : '—'}</td>
           </tr>
-          ${expanded ? `<tr class="mod-row"><td colspan="8">Coefficient: ${mods}</td></tr>` : ''}`
+          ${expanded ? `<tr class="mod-row"><td colspan="9">Coefficient: ${mods}</td></tr>` : ''}`
       })
       .join('')
 
     drawer.innerHTML = `${head}<div class="drawer-body info-body">
       ${renderSummary(p, a, b, events, total, secs)}
       <div class="info-spells"><table>
-      <thead><tr><th>Spell</th><th class="num">Hits</th><th class="num">Raw</th><th class="num">Bonus</th><th class="num">Coeff</th><th class="num">Threat</th><th class="num">TPS</th><th class="num">% of gain</th></tr></thead>
-      <tbody>${body || '<tr><td colspan="8" class="empty">No events in this window.</td></tr>'}
-        <tr class="total-row"><td>Net total</td><td class="num">${events.length}</td><td></td><td></td><td></td><td class="num">${fmtNum(total)}</td><td class="num">${fmtNum(total / secs)}</td><td></td></tr>
+      <thead><tr><th>Spell</th><th class="num">Hits</th><th class="num" title="Missed, dodged, parried or resisted">Avoided</th><th class="num">Raw</th><th class="num">Bonus</th><th class="num">Coeff</th><th class="num">Threat</th><th class="num">TPS</th><th class="num">% of gain</th></tr></thead>
+      <tbody>${body || '<tr><td colspan="9" class="empty">No events in this window.</td></tr>'}
+        <tr class="total-row"><td>Net total</td><td class="num">${events.length}</td><td class="num">${events.filter(isAvoided).length || '—'}</td><td></td><td></td><td></td><td class="num">${fmtNum(total)}</td><td class="num">${fmtNum(total / secs)}</td><td></td></tr>
       </tbody></table></div></div>`
   }
 
@@ -1501,9 +1535,13 @@
       const focused = e.pid === state.focus
       ctx.globalAlpha = state.focus && !focused ? 0.4 : 1
       ctx.fillStyle = colorOf(e.pid)
+      ctx.strokeStyle = colorOf(e.pid)
+      ctx.lineWidth = 1.25
       ctx.beginPath()
       ctx.arc(g.xOf(e.t), g.yOf(dotValue(e)), resource ? r * 0.55 : focused ? r + 0.5 : r, 0, Math.PI * 2)
-      ctx.fill()
+      // Missed, dodged, parried and resisted attacks are hollow.
+      if (isAvoided(e)) ctx.stroke()
+      else ctx.fill()
     })
     ctx.globalAlpha = 1
 
@@ -2649,14 +2687,44 @@
     if (fn) fn(el, evt)
   })
 
-  // Hovering a row in the Events tab rings that event on the chart.
+  // Hovering a row in the Events tab rings that event on the chart and shows
+  // its details (threat math, outcome, resource at the time) beside the panel.
   document.addEventListener('pointerover', (evt) => {
-    const row = evt.target.closest('.ev-row[data-eid]')
-    const eid = row ? Number(row.dataset.eid) : null
+    const row = evt.target.closest('.ev-row')
+    const eid = row && row.dataset.eid ? Number(row.dataset.eid) : null
+    showSideTip(row)
     if (eid === state.ui.hoverEid) return
     state.ui.hoverEid = eid
     redrawCanvases()
   })
+
+  function showSideTip(row) {
+    const tip = $('#side-tip')
+    if (!row) {
+      tip.hidden = true
+      return
+    }
+    const s = sim()
+    const t = Number(row.dataset.t)
+    let pid
+    let body
+    if (row.dataset.eid) {
+      const e = s.events[Number(row.dataset.eid)]
+      pid = e.pid
+      body = tipEvents([e])
+    } else {
+      pid = Number(row.dataset.melee)
+      const rage = s.events.find((e) => e.t === t && e.pid === pid && e.kind === 'energize')
+      body = `<div class="tip-melee">Boss melee hit ${esc(player(pid).name)}</div>${rage ? resourceLine(rage) : ''}`
+    }
+    tip.innerHTML = `<div class="tip-head"><span>${nameHtml(pid)}</span><span class="num">${fmtTime(t, true)}</span></div>${body}`
+    tip.hidden = false
+    const rr = row.getBoundingClientRect()
+    const panel = $('#roster').getBoundingClientRect()
+    const left = panel.left - tip.offsetWidth - 8
+    tip.style.left = `${Math.max(4, left)}px`
+    tip.style.top = `${Math.max(4, Math.min(innerHeight - tip.offsetHeight - 4, rr.top + rr.height / 2 - tip.offsetHeight / 2))}px`
+  }
 
   // Double-clicking a roster row isolates that player; again restores everyone.
   document.addEventListener('dblclick', (evt) => {
