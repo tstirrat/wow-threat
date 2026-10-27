@@ -118,6 +118,15 @@ button:hover {
   background: var(--hi);
 }
 
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+button:disabled:hover {
+  background: var(--bg);
+}
+
 button[aria-pressed='true'] {
   background: var(--text);
   color: var(--bg);
@@ -608,7 +617,7 @@ main:not(.rail-collapsed) .bar-title {
 .roster-cols,
 .roster-main {
   display: grid;
-  grid-template-columns: 10px minmax(0, 1fr) 54px 44px 40px;
+  grid-template-columns: 10px minmax(0, 1fr) 16px 50px 42px 40px;
   gap: 6px;
   align-items: center;
 }
@@ -865,10 +874,121 @@ tr.total-row td {
   margin: 0;
 }
 
-.override-row {
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-head h2 {
+  flex: 1;
+}
+
+.settings .row {
   display: flex;
   gap: 6px;
+  flex-wrap: wrap;
+}
+
+.settings .group {
+  display: flex;
+  gap: 2px;
+}
+
+.ov-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.ov-list li {
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  display: grid;
+  gap: 4px;
+}
+
+.ov-item-head {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
+  gap: 8px;
+}
+
+.ov-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+}
+
+.settings label.ov-add {
+  display: grid;
+  gap: 4px;
+}
+
+.ov-effect {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.settings .group button {
+  white-space: nowrap;
+}
+
+.ov-badge {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.ov-badge svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* ===== Context menu ======================================================= */
+
+.ctx-menu {
+  position: fixed;
+  z-index: 30;
+  min-width: 200px;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 4px 14px var(--shadow);
+  padding: 4px;
+  display: grid;
+}
+
+.ctx-menu .ctx-title {
+  padding: 4px 8px 6px;
+  font-weight: 600;
+}
+
+.ctx-menu button {
+  border: 0;
+  text-align: left;
+  padding: 5px 8px;
+  border-radius: 2px;
+}
+
+.ctx-menu button:focus-visible,
+.ctx-menu button:hover {
+  background: var(--hi);
+  outline: none;
+}
+
+.ctx-menu hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 4px 0;
+  width: 100%;
 }
 
 /* ===== Dialogs ============================================================ */

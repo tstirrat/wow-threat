@@ -78,7 +78,7 @@
     yRange: null,
     mode: 'abs',
     thresholds: false,
-    analysis: { buffs: true, emu: true, noSalv: [] },
+    analysis: { buffs: true, emu: true, overrides: {} },
     display: {
       theme: 'system',
       bossMelee: true,
@@ -94,6 +94,7 @@
       railTab: 'outline',
       breakdownOpen: prefs.breakdownOpen ?? true,
       settingsOpen: false,
+      overridesOpen: null,
       railOpen: false,
       rosterOpen: false,
       mobileTab: 'chart',
@@ -183,6 +184,45 @@
     return Number.isFinite(a) && Number.isFinite(b) && b > a ? [a, b] : null
   }
 
+  /**
+   * Overrides in the URL: players joined by ",", each "pid.item.item".
+   * Items: "<buff><0|1>" (e.g. salv0) and "t<talentIndex>r<rank>" (e.g. t0r3).
+   */
+  function serializeOverrides(all) {
+    return Object.entries(all)
+      .map(([pid, ov]) => {
+        const p = player(Number(pid))
+        const buffs = Object.entries(ov.buffs ?? {}).map(([k, v]) => `${k}${v ? 1 : 0}`)
+        const talents = WF.talentsFor(p)
+          .map((t, i) => (ov.talents?.[t.name] !== undefined ? `t${i}r${ov.talents[t.name]}` : null))
+          .filter(Boolean)
+        return [pid, ...buffs, ...talents].join('.')
+      })
+      .join(',')
+  }
+
+  function parseOverrides(str) {
+    const all = {}
+    ;(str ?? '').split(',').filter(Boolean).forEach((chunk) => {
+      const [pidStr, ...items] = chunk.split('.')
+      const p = player(Number(pidStr))
+      if (!p) return
+      const ov = {}
+      items.forEach((item) => {
+        const tm = item.match(/^t(\d+)r(\d+)$/)
+        const bm = item.match(/^([a-z]+)([01])$/)
+        if (tm) {
+          const t = WF.talentsFor(p)[Number(tm[1])]
+          if (t) ov.talents = { ...ov.talents, [t.name]: Math.min(t.max, Number(tm[2])) }
+        } else if (bm && WF.BUFFS.some((b) => b.key === bm[1])) {
+          ov.buffs = { ...ov.buffs, [bm[1]]: bm[2] === '1' }
+        }
+      })
+      if (Object.keys(ov).length) all[p.id] = ov
+    })
+    return all
+  }
+
   function readUrl() {
     const hash = location.hash.replace(/^#/, '')
     const [path, query = ''] = hash.split('?')
@@ -204,7 +244,7 @@
     state.analysis = {
       buffs: q.get('buffs') !== '0',
       emu: q.get('emu') !== '0',
-      noSalv: idList(q.get('nosalv')),
+      overrides: parseOverrides(q.get('ov')),
     }
     const focus = q.get('focus')
     state.focus =
@@ -239,9 +279,8 @@
       if (state.thresholds) q.set('thr', '1')
       if (!state.analysis.buffs) q.set('buffs', '0')
       if (!state.analysis.emu) q.set('emu', '0')
-      if (state.analysis.noSalv.length) {
-        q.set('nosalv', state.analysis.noSalv.join(','))
-      }
+      const ov = serializeOverrides(state.analysis.overrides)
+      if (ov) q.set('ov', ov)
       hash = `#/report/${state.reportCode}?${q.toString().replace(/%2C/g, ',')}`
     }
     if (hash === location.hash) return
@@ -353,6 +392,7 @@
     renderBar()
     renderRail()
     renderSettings()
+    renderOverrides()
     if (state.view === 'home') {
       renderHome()
       return
@@ -509,6 +549,8 @@
     eyeOff:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 3 18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c7 0 10 7 10 7a17 17 0 0 1-2.2 3.2"/><path d="M6.6 6.6C3.8 8.3 2 12 2 12s3 7 10 7a10 10 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
     pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17v5"/><path d="M9 10.8a2 2 0 0 1-1.1 1.8l-1.8.9A2 2 0 0 0 5 15.2V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.8a2 2 0 0 0-1.1-1.8l-1.8-.9A2 2 0 0 1 15 10.8V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>',
+    sliders:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>',
     roster:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg>',
   }
@@ -522,6 +564,7 @@
     const right = `<div class="bar-right">
         <button data-action="open-report">Open<span class="long"> report</span> <kbd>⌘O</kbd></button>
         ${account}
+        ${inReport ? `<button data-action="open-overrides" aria-pressed="${Boolean(state.ui.overridesOpen)}" title="Player buff and talent overrides (O)">Overrides${overrideCount() ? ` <span class="tag strong">${overrideCount()}</span>` : ''}</button>` : ''}
         <button class="icon" data-action="toggle-settings" aria-pressed="${state.ui.settingsOpen}" aria-label="Settings" title="Settings (,)">${ICONS.settings}</button>
         ${inReport ? `<button class="icon" data-action="toggle-roster" aria-pressed="${isMobile() ? state.ui.rosterOpen : !state.ui.rosterHidden}" aria-label="${state.ui.rosterHidden ? 'Show' : 'Hide'} roster" title="Roster (R)">${ICONS.roster}</button>` : ''}
       </div>`
@@ -605,12 +648,16 @@
           : '',
         deadAt.has(p.id) ? '<span class="tag">dead</span>' : '',
       ].join('')
+      const badge = overridesOf(p.id)
+        ? `<span class="ov-badge" data-action="open-overrides" data-pid="${p.id}" title="Overrides: ${esc(overrideSummary(p.id).join(', '))}. Click to edit.">${ICONS.sliders}</span>`
+        : '<span></span>'
       return `<li class="roster-row ${state.focus === p.id ? 'is-focus' : ''} ${visible ? '' : 'is-hidden'}">
         <button class="ricon" data-action="toggle-visible" data-pid="${p.id}" aria-pressed="${!visible}" aria-label="${visible ? 'Hide' : 'Show'} ${esc(p.name)}" title="${visible ? 'Hide' : 'Show'} line">${visible ? ICONS.eye : ICONS.eyeOff}</button>
         <button class="ricon pin" data-action="toggle-pin" data-pid="${p.id}" aria-pressed="${pinned}" aria-label="${pinned ? 'Unpin' : 'Pin'} ${esc(p.name)}" title="${pinned ? 'Unpin' : 'Pin across pulls'}">${ICONS.pin}</button>
         <button class="roster-main" data-action="focus" data-pid="${p.id}" aria-label="Focus ${esc(p.name)}" title="Click to focus · double-click to show only this player">
           <span class="swatch" style="background:${colorOf(p.id)}"></span>
           <span class="roster-name">${esc(p.name)}${tags}</span>
+          ${badge}
           <span class="num">${fmtNum(v)}</span>
           <span class="num">${fmtPct(pct)}</span>
           <span class="num">${fmtNum(tps)}</span>
@@ -621,7 +668,7 @@
     const absentRow = (p) => `<li class="roster-row is-absent">
         <button class="ricon" disabled aria-label="Not in this pull">${ICONS.eyeOff}</button>
         <button class="ricon pin" data-action="toggle-pin" data-pid="${p.id}" aria-pressed="true" aria-label="Unpin ${esc(p.name)}" title="Unpin">${ICONS.pin}</button>
-        <span class="roster-main"><span class="swatch" style="background:${colorOf(p.id)}"></span><span class="roster-name">${esc(p.name)} <span class="tag">not in this pull</span></span><span></span><span></span><span></span></span>
+        <span class="roster-main"><span class="swatch" style="background:${colorOf(p.id)}"></span><span class="roster-name">${esc(p.name)} <span class="tag">not in this pull</span></span><span></span><span></span><span></span><span></span></span>
       </li>`
 
     const label =
@@ -653,7 +700,7 @@
           </div>
         </div>
       </div>
-      <div class="roster-cols"><span></span><span>Player</span><span class="num">Threat</span><span class="num">% aggro</span><span class="num" title="Threat per second over the last ${state.display.tpsWindow}s">TPS ${state.display.tpsWindow}s</span></div>
+      <div class="roster-cols"><span></span><span>Player</span><span></span><span class="num">Threat</span><span class="num">% aggro</span><span class="num" title="Threat per second over the last ${state.display.tpsWindow}s">TPS ${state.display.tpsWindow}s</span></div>
       <ul class="roster-list">${rows.map(row).join('')}${absent.map(absentRow).join('')}</ul>`
 
     // Keep the filter input focused while typing.
@@ -680,7 +727,7 @@
     return `<ul class="tip-events">${list
       .map((e) => {
         const mods = e.mods.length
-          ? e.mods.map((m) => `${esc(m.name)} ×${m.mult}`).join(' · ')
+          ? e.mods.map((m) => `${esc(m.name)} ×${m.mult}${m.overridden ? ' <em>(override)</em>' : ''}`).join(' · ')
           : e.coeff === null
             ? ''
             : 'No modifiers'
@@ -713,6 +760,7 @@
       <h2>${p ? `${esc(p.name)} — spell breakdown` : 'Spell breakdown'}</h2>
       <span class="muted">Window ${fmtTime(a)}–${fmtTime(b)} (${secs.toFixed(1)}s)</span>
       ${p ? `<span class="muted">Initial auras: ${esc(initialAuras(p))}</span>` : ''}
+      ${p && overridesOf(p.id) ? `<button class="link" data-action="open-overrides" data-pid="${p.id}">Overrides: ${esc(overrideSummary(p.id).join(', '))}</button>` : ''}
       <button class="push desktop-only" data-action="shortcuts">Shortcuts <kbd>?</kbd></button>
     </div>`
 
@@ -756,7 +804,7 @@
             ? '5 / rage'
             : `×${g.sample.coeff.toFixed(3)}`
         const mods = g.sample.mods.length
-          ? g.sample.mods.map((m) => `${esc(m.name)} ×${m.mult}`).join(' · ')
+          ? g.sample.mods.map((m) => `${esc(m.name)} ×${m.mult}${m.overridden ? ' <em>(override)</em>' : ''}`).join(' · ')
           : g.special
             ? esc(g.sample.note ?? '')
             : 'No modifiers apply to this spell'
@@ -782,12 +830,161 @@
   }
 
   function initialAuras(p) {
-    const kit = WF.kitFor(p)
-    const names = kit.mods.filter((m) => !m.schools).map((m) => m.name)
-    if (state.analysis.buffs && p.role !== 'tank' && p.role !== 'pet' && !state.analysis.noSalv.includes(p.id)) {
-      names.push('Blessing of Salvation')
-    }
+    const names = WF.aurasFor(p, state.analysis)
     return names.length ? names.join(', ') : 'none affecting threat'
+  }
+
+  // ===========================================================================
+  // Threat overrides
+  // ===========================================================================
+
+  const overridesOf = (pid) => state.analysis.overrides[pid]
+  const overrideCount = () => Object.keys(state.analysis.overrides).length
+
+  /** Set (or clear, with value undefined) one buff or talent override. */
+  function setOverride(pid, kind, key, value) {
+    const all = structuredClone(state.analysis.overrides)
+    const ov = all[pid] ?? {}
+    const group = { ...(ov[kind] ?? {}) }
+    if (value === undefined) delete group[key]
+    else group[key] = value
+    if (Object.keys(group).length) ov[kind] = group
+    else delete ov[kind]
+    if (Object.keys(ov).length) all[pid] = ov
+    else delete all[pid]
+    state.analysis.overrides = all
+    commit()
+  }
+
+  function clearOverrides(pid) {
+    const all = { ...state.analysis.overrides }
+    if (pid === undefined) state.analysis.overrides = {}
+    else {
+      delete all[pid]
+      state.analysis.overrides = all
+    }
+    commit()
+  }
+
+  /** Short human summary of one player's overrides. */
+  function overrideSummary(pid) {
+    const ov = overridesOf(pid)
+    if (!ov) return []
+    const p = player(pid)
+    const buffs = WF.BUFFS.filter((b) => ov.buffs?.[b.key] !== undefined).map(
+      (b) => `${b.name}: ${ov.buffs[b.key] ? 'on' : 'off'}`,
+    )
+    const talents = WF.talentsFor(p)
+      .filter((t) => ov.talents?.[t.name] !== undefined)
+      .map((t) => `${t.name} ${ov.talents[t.name]}/${t.max}`)
+    return [...buffs, ...talents]
+  }
+
+  function openOverrides(pid = 'all') {
+    state.ui.overridesOpen = pid
+    state.ui.settingsOpen = false
+    commit()
+  }
+
+  function renderOverrides() {
+    const el = $('#overrides')
+    const mode = state.ui.overridesOpen
+    el.hidden = !mode || state.view !== 'report'
+    if (el.hidden) return
+    const head = (title, back = false) => `
+      <div class="panel-head">
+        ${back ? '<button data-action="open-overrides">← All overrides</button>' : ''}
+        <h2>${title}</h2>
+        <button data-action="close-overrides">Close</button>
+      </div>`
+
+    if (mode === 'all') {
+      const ids = Object.keys(state.analysis.overrides).map(Number)
+      const candidates = sim().players.filter((p) => !overridesOf(p.id))
+      el.innerHTML = `
+        ${head('Threat overrides')}
+        <p class="hint">Force buffs on or off and change threat talents per player. Overrides win over buff inference, last for the whole report, and are included in shared links.</p>
+        <div class="row">
+          <button data-action="clear-overrides" ${ids.length ? '' : 'disabled'}>Clear all${ids.length ? ` (${ids.length})` : ''}</button>
+        </div>
+        ${
+          ids.length
+            ? `<ul class="ov-list">${ids
+                .map(
+                  (pid) => `<li>
+                    <div class="ov-item-head">
+                      <span><span class="swatch" style="background:${colorOf(pid)}"></span> <strong>${esc(player(pid).name)}</strong> <span class="muted">${esc(player(pid).cls)}</span></span>
+                      <span class="row">
+                        <button data-action="open-overrides" data-pid="${pid}">Edit</button>
+                        <button data-action="clear-player-overrides" data-pid="${pid}">Clear</button>
+                      </span>
+                    </div>
+                    <div class="muted">${overrideSummary(pid).map(esc).join(' · ')}</div>
+                  </li>`,
+                )
+                .join('')}</ul>`
+            : '<p class="empty">No overrides yet. Right-click a player in the roster or on the chart, or pick one below.</p>'
+        }
+        <label class="ov-add">Override a player
+          <select data-change="ov-add">
+            <option value="">Choose…</option>
+            ${candidates.map((p) => `<option value="${p.id}">${esc(p.name)} (${esc(p.cls)})</option>`).join('')}
+          </select>
+        </label>`
+      return
+    }
+
+    const pid = mode
+    const p = player(pid)
+    const ov = overridesOf(pid) ?? {}
+    const an = state.analysis
+    const buffRow = (b) => {
+      const forced = ov.buffs?.[b.key]
+      const inferred = WF.buffInferred(p, b, an)
+      const opt = (label, value, pressed) =>
+        `<button data-action="ov-buff" data-pid="${pid}" data-key="${b.key}" data-val="${value}" aria-pressed="${pressed}">${label}</button>`
+      return `<div class="ov-row">
+        <span>${esc(b.name)} <span class="muted">×${b.mult}</span></span>
+        <span class="group" role="group" aria-label="${esc(b.name)}">
+          ${opt(`Auto (${inferred ? 'on' : 'off'})`, 'auto', forced === undefined)}
+          ${opt('On', 'on', forced === true)}
+          ${opt('Off', 'off', forced === false)}
+        </span>
+      </div>`
+    }
+    const talents = WF.talentsFor(p)
+    const talentRow = (t) => {
+      const rank = WF.talentRank(p, t, an)
+      const overridden = ov.talents?.[t.name] !== undefined
+      const mult = (r) => (1 + t.perRank * r).toFixed(2)
+      return `<div class="ov-row">
+        <span>${esc(t.name)}${t.schools ? ` <span class="muted">(${t.schools.join('/')})</span>` : ''}${overridden ? ' <span class="tag strong">changed</span>' : ''}</span>
+        <select data-change="ov-talent" data-pid="${pid}" data-talent="${esc(t.name)}" aria-label="${esc(t.name)} rank">
+          ${Array.from({ length: t.max + 1 }, (_, r) => `<option value="${r}" ${r === rank ? 'selected' : ''}>${r}/${t.max} ×${mult(r)}${r === t.max ? ' (log)' : ''}</option>`).join('')}
+        </select>
+      </div>`
+    }
+    // Before/after: same report with this player's overrides removed.
+    const t = rosterTime()
+    const without = { ...an, overrides: { ...an.overrides } }
+    delete without.overrides[pid]
+    const now = WF.valueAt(sim(), pid, t)
+    const before = WF.valueAt(WF.simulate(report(), pull(), target(), without), pid, t)
+    el.innerHTML = `
+      ${head(`<span class="swatch" style="background:${colorOf(pid)}"></span> ${esc(p.name)} <span class="muted">${esc(p.cls)} ${esc(p.role)}</span>`, true)}
+      <p class="hint">Applies to every pull in this report. Included in shared links.</p>
+      <fieldset>
+        <legend>Buffs</legend>
+        ${WF.BUFFS.map(buffRow).join('')}
+      </fieldset>
+      <fieldset>
+        <legend>Threat talents</legend>
+        ${talents.length ? talents.map(talentRow).join('') : `<p class="hint">${p.role === 'pet' ? 'Pets have no threat talents.' : 'No threat talents for this class and spec.'}</p>`}
+      </fieldset>
+      <p class="ov-effect">Threat at ${fmtTime(t)}: <strong>${fmtNum(now)}</strong> <span class="muted">(without these overrides: ${fmtNum(before)})</span></p>
+      <div class="row">
+        <button data-action="clear-player-overrides" data-pid="${pid}" ${overridesOf(pid) ? '' : 'disabled'}>Reset ${esc(p.name)}</button>
+      </div>`
   }
 
   // ===========================================================================
@@ -800,9 +997,9 @@
     if (!state.ui.settingsOpen) return
     const d = state.display
     const an = state.analysis
-    const players = state.view === 'report' ? sim().players.filter((p) => p.role !== 'tank' && p.role !== 'pet') : []
+    const n = overrideCount()
     el.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="panel-head">
         <h2>Settings</h2>
         <button data-action="toggle-settings">Close</button>
       </div>
@@ -825,7 +1022,7 @@
         <label><input type="checkbox" data-change="display" data-key="fixate" ${d.fixate ? 'checked' : ''} /> Shade fixate windows on the chart</label>
         <label>Roster TPS over the last
           <select data-change="tps-window" aria-label="Rolling TPS window">
-            ${[3, 5, 10, 30].map((n) => `<option value="${n}" ${d.tpsWindow === n ? 'selected' : ''}>${n}s</option>`).join('')}
+            ${[3, 5, 10, 30].map((v) => `<option value="${v}" ${d.tpsWindow === v ? 'selected' : ''}>${v}s</option>`).join('')}
           </select>
         </label>
       </fieldset>
@@ -834,25 +1031,8 @@
         <p class="hint">Changes the threat numbers. Included in shared links so everyone sees the same chart.</p>
         <label><input type="checkbox" data-change="analysis" data-key="emu" ${an.emu ? 'checked' : ''} /> Threat reduction emulation (Feign Death, etc.)</label>
         <label><input type="checkbox" data-change="analysis" data-key="buffs" ${an.buffs ? 'checked' : ''} /> Infer common threat buffs (Blessing of Salvation)</label>
-        <div>
-          <strong>Player overrides</strong>
-          <p class="hint">Remove inferred Salvation from specific players.</p>
-          ${players.length === 0 ? '<p class="hint">Open a report to set overrides.</p>' : ''}
-          ${an.noSalv
-            .map(
-              (id) =>
-                `<div class="override-row"><span>${esc(player(id).name)}: no Salvation</span><button data-action="remove-override" data-pid="${id}">Remove</button></div>`,
-            )
-            .join('')}
-          ${
-            players.length
-              ? `<div class="override-row"><select data-change="add-override" aria-label="Add override for player">
-                  <option value="">Add override…</option>
-                  ${players.filter((p) => !an.noSalv.includes(p.id)).map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}
-                </select></div>`
-              : ''
-          }
-        </div>
+        <p class="hint">Per-player buff and talent overrides win over inference.</p>
+        ${state.view === 'report' ? `<div class="row"><button data-action="open-overrides">Player overrides${n ? ` (${n})` : ''} <kbd>O</kbd></button></div>` : ''}
       </fieldset>`
   }
 
@@ -1733,6 +1913,7 @@
     'open-report': () => openDialog(),
     'toggle-settings': () => {
       state.ui.settingsOpen = !state.ui.settingsOpen
+      if (state.ui.settingsOpen) state.ui.overridesOpen = null
       commit()
     },
     'sign-in': () => {
@@ -1798,6 +1979,25 @@
       commit()
     },
     'reset-zoom': () => resetZoom(),
+    'open-overrides': (el) => {
+      const pid = el.dataset.pid ? Number(el.dataset.pid) : 'all'
+      const same = state.ui.overridesOpen === pid
+      // The bar button toggles; links and badges always open.
+      if (same && el.closest('.bar')) {
+        state.ui.overridesOpen = null
+        commit()
+      } else openOverrides(pid)
+    },
+    'close-overrides': () => {
+      state.ui.overridesOpen = null
+      commit()
+    },
+    'clear-overrides': () => clearOverrides(),
+    'clear-player-overrides': (el) => clearOverrides(Number(el.dataset.pid)),
+    'ov-buff': (el) => {
+      const v = el.dataset.val
+      setOverride(Number(el.dataset.pid), 'buffs', el.dataset.key, v === 'auto' ? undefined : v === 'on')
+    },
     'toggle-play': () => (state.ui.playing ? (stopPlayback(), commit()) : startPlayback()),
     'clear-cursor': () => {
       stopPlayback()
@@ -1809,10 +2009,6 @@
       commit()
     },
     'expand-spell': (el) => toggleSet(state.ui.expandedSpells, el.dataset.spell),
-    'remove-override': (el) => {
-      state.analysis.noSalv = state.analysis.noSalv.filter((id) => id !== Number(el.dataset.pid))
-      commit()
-    },
     'mobile-rail': () => {
       state.ui.railOpen = !state.ui.railOpen
       state.ui.rosterOpen = false
@@ -1859,6 +2055,15 @@
       state.display[el.dataset.key] = el.checked
       commit()
     },
+    'ov-add': (el) => {
+      if (el.value) openOverrides(Number(el.value))
+    },
+    'ov-talent': (el) => {
+      const pid = Number(el.dataset.pid)
+      const t = WF.talentsFor(player(pid)).find((x) => x.name === el.dataset.talent)
+      const rank = Number(el.value)
+      setOverride(pid, 'talents', t.name, rank === t.max ? undefined : rank)
+    },
     'tps-window': (el) => {
       state.display.tpsWindow = Number(el.value)
       commit()
@@ -1869,10 +2074,6 @@
     },
     analysis: (el) => {
       state.analysis[el.dataset.key] = el.checked
-      commit()
-    },
-    'add-override': (el) => {
-      if (el.value) state.analysis.noSalv = [...state.analysis.noSalv, Number(el.value)]
       commit()
     },
   }
@@ -1994,6 +2195,8 @@
     ['P', 'Pin / unpin the focused player'],
     ['H', 'Hide / show the focused player'],
     ['B', 'Show / hide the breakdown'],
+    ['O', 'Player buff and talent overrides'],
+    ['Right-click a player', 'Player menu: focus, show only, pin, overrides'],
     ['R', 'Show / hide the roster'],
     ['A', 'Toggle absolute / % of aggro holder'],
     ['T', 'Toggle pull threshold lines'],
@@ -2026,6 +2229,8 @@
       return
     }
     if (state.view !== 'report') return
+    // Let Space/Enter activate a focused button instead of playback.
+    if (tag === 'BUTTON' && (evt.key === ' ' || evt.key === 'Enter')) return
 
     const key = evt.key
     if (mod && (key === 'ArrowLeft' || key === 'ArrowRight')) {
@@ -2051,6 +2256,11 @@
       p: () => state.focus && toggleSet(state.pinned, state.focus),
       h: () => state.focus && toggleSet(state.visible, state.focus),
       b: () => actions['toggle-breakdown'](),
+      o: () => {
+        state.ui.overridesOpen = state.ui.overridesOpen ? null : 'all'
+        if (state.ui.overridesOpen) state.ui.settingsOpen = false
+        commit()
+      },
       r: () => actions['toggle-roster'](),
       a: () => {
         state.mode = state.mode === 'rel' ? 'abs' : 'rel'
@@ -2065,7 +2275,9 @@
       ',': () => actions['toggle-settings'](),
       '?': () => $('#shortcuts').showModal(),
       Escape: () => {
+        if (closeContextMenu()) return
         if (state.ui.settingsOpen) state.ui.settingsOpen = false
+        else if (state.ui.overridesOpen) state.ui.overridesOpen = null
         else if (state.ui.rosterOpen || state.ui.railOpen) {
           state.ui.rosterOpen = false
           state.ui.railOpen = false
@@ -2096,6 +2308,111 @@
     state.ui.expandedSpells.clear()
     commit()
   }
+
+  // ===========================================================================
+  // Player context menu (right-click a roster row or a line)
+  // ===========================================================================
+
+  function openContextMenu(pid, x, y) {
+    const menu = $('#ctx-menu')
+    const p = player(pid)
+    const item = (cmd, label) =>
+      `<button role="menuitem" data-action="ctx" data-cmd="${cmd}" data-pid="${pid}">${label}</button>`
+    menu.innerHTML = `
+      <div class="ctx-title"><span class="swatch" style="background:${colorOf(pid)}"></span> ${esc(p.name)}</div>
+      ${item('focus', state.focus === pid ? 'Unfocus' : 'Focus')}
+      ${item('only', 'Show only this player')}
+      ${item('visible', state.visible.has(pid) ? 'Hide line' : 'Show line')}
+      ${item('pin', state.pinned.has(pid) ? 'Unpin' : 'Pin across pulls')}
+      <hr />
+      ${item('overrides', 'Override buffs and talents…')}
+      ${overridesOf(pid) ? item('clear', 'Clear overrides') : ''}`
+    menu.hidden = false
+    const r = menu.getBoundingClientRect()
+    menu.style.left = `${Math.max(4, Math.min(x, innerWidth - r.width - 4))}px`
+    menu.style.top = `${Math.max(4, Math.min(y, innerHeight - r.height - 4))}px`
+    menu.querySelector('button').focus()
+  }
+
+  /** Close the menu; returns whether it was open. */
+  function closeContextMenu() {
+    const menu = $('#ctx-menu')
+    if (menu.hidden) return false
+    menu.hidden = true
+    return true
+  }
+
+  actions.ctx = (el) => {
+    const pid = Number(el.dataset.pid)
+    closeContextMenu()
+    switch (el.dataset.cmd) {
+      case 'focus':
+        state.focus = state.focus === pid ? null : pid
+        state.visible.add(pid)
+        break
+      case 'only':
+        state.visible = new Set([pid])
+        state.focus = pid
+        break
+      case 'visible':
+        if (state.visible.has(pid)) state.visible.delete(pid)
+        else state.visible.add(pid)
+        break
+      case 'pin':
+        if (state.pinned.has(pid)) state.pinned.delete(pid)
+        else state.pinned.add(pid)
+        break
+      case 'overrides':
+        openOverrides(pid)
+        return
+      case 'clear':
+        clearOverrides(pid)
+        return
+    }
+    commit()
+  }
+
+  document.addEventListener('contextmenu', (evt) => {
+    const row = evt.target.closest('.roster-row')
+    const main = row && row.querySelector('.roster-main[data-pid]')
+    if (main) {
+      evt.preventDefault()
+      openContextMenu(Number(main.dataset.pid), evt.clientX, evt.clientY)
+      return
+    }
+    if (evt.target.id === 'chart') {
+      const pt = chartPoint(evt)
+      const g = chartGeom(pt.w, pt.h)
+      const hit = nearestPoint(pt.x, pt.y, g)
+      const pid = hit ? hit.pid : lineAt(pt.x, pt.y, g)
+      if (pid) {
+        evt.preventDefault()
+        openContextMenu(pid, evt.clientX, evt.clientY)
+      }
+    }
+  })
+
+  document.addEventListener('pointerdown', (evt) => {
+    if (!evt.target.closest('#ctx-menu')) closeContextMenu()
+  })
+  window.addEventListener('resize', closeContextMenu)
+  window.addEventListener('blur', closeContextMenu)
+
+  $('#ctx-menu').addEventListener('keydown', (evt) => {
+    const items = [...$('#ctx-menu').querySelectorAll('button')]
+    const i = items.indexOf(document.activeElement)
+    if (evt.key === 'ArrowDown' || evt.key === 'ArrowUp') {
+      evt.preventDefault()
+      evt.stopPropagation()
+      const next = (i + (evt.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length
+      items[next].focus()
+    } else if (evt.key === 'Escape') {
+      evt.stopPropagation()
+      closeContextMenu()
+    } else if (evt.key !== 'Enter' && evt.key !== ' ' && evt.key !== 'Tab') {
+      evt.stopPropagation()
+    }
+  })
 
   // ===========================================================================
   // Boot

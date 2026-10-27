@@ -72,6 +72,23 @@ different rolls.
   window. Click a row to see which modifiers make up its coefficient. The Shortcuts
   button sits at its right edge and stays visible when the drawer is collapsed.
 
+- **Threat overrides** (what-ifs): per player, force a buff on or off (Blessing of
+  Salvation, Tranquil Air Totem) regardless of buff inference, and change threat
+  talent ranks (Defiance, Feral Instinct, Arcane Subtlety, Silent Resolve, …). They
+  last for the whole report and rerun the sim live.
+  - **Where:** an **Overrides** button in the chart bar (count badge, <kbd>O</kbd>),
+    a link in Settings → This analysis, the right-click menu on any player (roster
+    row or chart line), and the sliders icon on a roster row that has overrides.
+  - **All-players view:** every player with overrides, a one-line summary, Edit and
+    Clear per player, **Clear all**, and a picker to start on someone new.
+  - **Player view:** buffs as Auto (shows the inferred value) / On / Off, talents as
+    rank pickers showing the multiplier per rank, "changed" tags, Reset, and the
+    player's threat at the cursor with and without their overrides.
+  - Overridden modifiers are marked "(override)" in the tooltip and breakdown, and
+    the breakdown header links to the focused player's overrides.
+- **Right-click menu** on a player: Focus, Show only, Hide/Show line, Pin, Override
+  buffs and talents…, Clear overrides. Arrow keys move through it, Esc closes.
+
 ## Interaction model
 
 | Input                      | Result                                                        |
@@ -104,10 +121,15 @@ different rolls.
 
 ## URL contract (hash)
 
-`#/report/<code>?pull=&target=&players=&pinned=&focus=&t=&x=a_b&y=a_b&mode=rel&thr=1&buffs=0&emu=0&nosalv=`
+`#/report/<code>?pull=&target=&players=&pinned=&focus=&t=&x=a_b&y=a_b&mode=rel&thr=1&buffs=0&emu=0&ov=`
+
+- `ov` lists players joined by `,`, each `pid.item.item`: `salv0`/`salv1`, `tranq0`/
+  `tranq1` force a buff; `t<index>r<rank>` sets a talent rank. Example:
+  `ov=1.salv1.t0r2,8.salv0` = Brakka with Salvation and Defiance 2/5, Pyrelle without
+  Salvation.
 
 - `players` omitted means everyone visible. `focus=none` is an explicit "no focus".
-- The analysis settings (`buffs`, `emu`, `nosalv`) are in the link. Display settings,
+- The analysis settings (`buffs`, `emu`, `ov`) are in the link. Display settings,
   theme and panel open/closed state are not; they're saved in the browser.
 
 ## Settings
@@ -116,8 +138,8 @@ different rolls.
 - **My display** (local): theme (system/light/dark), spell event dots, boss melee dots,
   resource change dots, fixate shading, rolling TPS window.
 - **This analysis** (in the link): threat reduction emulation (Feign Death actually
-  resets threat in the sim), inferred Salvation, and per-player "no Salvation" overrides.
-  Turning inference off makes DPS pull more often. The sim reruns.
+  resets threat in the sim) and inferred Salvation, plus a button into the player
+  overrides panel. Turning inference off makes DPS pull more often. The sim reruns.
 
 ## Mobile (< 760px)
 

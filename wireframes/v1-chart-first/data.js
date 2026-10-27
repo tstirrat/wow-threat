@@ -31,6 +31,14 @@ const WF = (() => {
   }
 
   const m = (name, mult, schools = null) => ({ name, mult, schools })
+  // A threat talent: multiplier is 1 + perRank × rank, default rank is max.
+  const tal = (name, max, perRank, schools = null) => ({
+    name,
+    talent: true,
+    max,
+    perRank,
+    schools,
+  })
   const s = (name, school, min, max, bonus = 0, w = 1, spellMult = 1) => ({
     name,
     school,
@@ -143,7 +151,7 @@ const WF = (() => {
 
   const KITS = {
     'Warrior:tank': {
-      mods: [m('Defensive Stance', 1.3), m('Defiance (5/5)', 1.15)],
+      mods: [m('Defensive Stance', 1.3), tal('Defiance', 5, 0.03)],
       spells: [
         s('Sunder Armor', 'physical', 0, 0, 301, 3),
         s('Heroic Strike', 'physical', 700, 1100, 194, 3),
@@ -155,7 +163,7 @@ const WF = (() => {
       rage: true,
     },
     'Druid:tank': {
-      mods: [m('Bear Form', 1.3), m('Feral Instinct (5/5)', 1.15)],
+      mods: [m('Bear Form', 1.3), tal('Feral Instinct', 5, 0.03)],
       spells: [
         s('Maul', 'physical', 700, 1000, 322, 3, 1.75),
         s('Swipe', 'physical', 300, 450, 0, 2, 1.75),
@@ -204,9 +212,9 @@ const WF = (() => {
     },
     'Mage:dps': {
       mods: [
-        m('Arcane Subtlety (2/2)', 0.6, ['arcane']),
-        m('Frost Channeling (3/3)', 0.9, ['frost']),
-        m('Burning Soul (2/2)', 0.9, ['fire']),
+        tal('Arcane Subtlety', 2, -0.2, ['arcane']),
+        tal('Frost Channeling', 3, -0.0333, ['frost']),
+        tal('Burning Soul', 2, -0.05, ['fire']),
       ],
       spells: [
         s('Frostbolt', 'frost', 1200, 1600, 0, 4),
@@ -216,7 +224,7 @@ const WF = (() => {
       ],
     },
     'Warlock:dps': {
-      mods: [m('Destructive Reach (2/2)', 0.9, ['shadow', 'fire'])],
+      mods: [tal('Destructive Reach', 2, -0.05, ['shadow', 'fire'])],
       spells: [
         s('Shadow Bolt', 'shadow', 1500, 2100, 0, 5),
         s('Corruption', 'shadow', 400, 500, 0, 2),
@@ -234,7 +242,7 @@ const WF = (() => {
       ],
     },
     'Priest:dps': {
-      mods: [m('Shadow Affinity (3/3)', 0.75, ['shadow'])],
+      mods: [tal('Shadow Affinity', 3, -0.0833, ['shadow'])],
       spells: [
         s('Mind Blast', 'shadow', 1100, 1400, 0, 2),
         s('Mind Flay', 'shadow', 400, 550, 0, 4),
@@ -242,7 +250,7 @@ const WF = (() => {
       ],
     },
     'Priest:healer': {
-      mods: [m('Silent Resolve (5/5)', 0.8)],
+      mods: [tal('Silent Resolve', 5, -0.04)],
       spells: [
         heal('Greater Heal', 2500, 3500, 2),
         heal('Flash Heal', 1200, 1600, 3),
@@ -250,7 +258,7 @@ const WF = (() => {
       ],
     },
     'Shaman:healer': {
-      mods: [m('Healing Grace (3/3)', 0.85)],
+      mods: [tal('Healing Grace', 3, -0.05)],
       spells: [
         heal('Chain Heal', 1500, 2200, 4),
         heal('Healing Wave', 2200, 3000, 1),
@@ -265,7 +273,7 @@ const WF = (() => {
       ],
     },
     'Druid:healer': {
-      mods: [m('Subtlety (5/5)', 0.8)],
+      mods: [tal('Subtlety', 5, -0.04)],
       spells: [
         heal('Rejuvenation', 500, 700, 3),
         heal('Lifebloom', 400, 600, 3),
@@ -298,32 +306,78 @@ const WF = (() => {
     },
   }
 
-  const SALVATION = m('Blessing of Salvation', 0.7)
+  // Buffs a player can be forced into or out of. Salvation is inferred for
+  // non-tanks when buff inference is on; Tranquil Air only via an override.
+  const BUFFS = [
+    { key: 'salv', name: 'Blessing of Salvation', mult: 0.7, inferred: true },
+    { key: 'tranq', name: 'Tranquil Air Totem', mult: 0.8, inferred: false },
+  ]
 
   const kitFor = (p) => (p.kit ? PET_KITS[p.kit] : KITS[`${p.cls}:${p.role}`])
+
+  /** Threat talents for a player's kit. */
+  const talentsFor = (p) => kitFor(p).mods.filter((mod) => mod.talent)
+
+  /** Whether a buff is inferred (before overrides) for this player. */
+  const buffInferred = (player, buff, opts) =>
+    buff.inferred && opts.buffs && player.role !== 'tank' && player.role !== 'pet'
+
+  /** Whether a buff is active for a player once overrides are applied. */
+  function buffActive(player, buff, opts) {
+    const forced = opts.overrides[player.id]?.buffs?.[buff.key]
+    return forced ?? buffInferred(player, buff, opts)
+  }
+
+  /** Effective rank of a talent for a player once overrides are applied. */
+  const talentRank = (player, mod, opts) =>
+    opts.overrides[player.id]?.talents?.[mod.name] ?? mod.max
+
+  const round = (n) => Math.round(n * 10000) / 10000
 
   /** Modifiers that apply to one spell for one player under the given options. */
   function modsFor(player, spell, opts) {
     const kit = kitFor(player)
-    const mods = kit.mods.filter(
-      (mod) => !mod.schools || mod.schools.includes(spell.school),
-    )
-    const out = mods.map((mod) => ({ name: mod.name, mult: mod.mult }))
+    const ov = opts.overrides[player.id] ?? {}
+    const out = []
+    kit.mods
+      .filter((mod) => !mod.schools || mod.schools.includes(spell.school))
+      .forEach((mod) => {
+        if (!mod.talent) {
+          out.push({ name: mod.name, mult: mod.mult })
+          return
+        }
+        const rank = talentRank(player, mod, opts)
+        if (rank === 0) return
+        out.push({
+          name: `${mod.name} (${rank}/${mod.max})`,
+          mult: round(1 + mod.perRank * rank),
+          overridden: ov.talents?.[mod.name] !== undefined,
+        })
+      })
     if (spell.spellMult !== 1) {
       out.push({
         name: spell.kind === 'heal' ? 'Healing threat' : `${spell.name} (spell)`,
         mult: spell.spellMult,
       })
     }
-    if (
-      opts.buffs &&
-      player.role !== 'tank' &&
-      player.role !== 'pet' &&
-      !opts.noSalv.includes(player.id)
-    ) {
-      out.push({ name: SALVATION.name, mult: SALVATION.mult })
-    }
+    BUFFS.filter((buff) => buffActive(player, buff, opts)).forEach((buff) =>
+      out.push({
+        name: buff.name,
+        mult: buff.mult,
+        overridden: ov.buffs?.[buff.key] !== undefined,
+      }),
+    )
     return out
+  }
+
+  /** Auras that shape a player's threat for the whole fight, for display. */
+  function aurasFor(player, opts) {
+    const kit = kitFor(player)
+    const fixed = kit.mods
+      .filter((mod) => !mod.talent && !mod.schools)
+      .map((mod) => mod.name)
+    const buffs = BUFFS.filter((buff) => buffActive(player, buff, opts)).map((b) => b.name)
+    return [...fixed, ...buffs]
   }
 
   const coeffOf = (mods) => mods.reduce((acc, mod) => acc * mod.mult, 1)
@@ -443,7 +497,7 @@ const WF = (() => {
    * cumulative threat, per-player series, aggro-holder segments and markers.
    */
   function simulate(report, pull, target, opts) {
-    const key = `${report.code}|${pull.id}|${target.id}|${opts.buffs}|${opts.emu}|${opts.noSalv.join(',')}`
+    const key = `${report.code}|${pull.id}|${target.id}|${opts.buffs}|${opts.emu}|${JSON.stringify(opts.overrides)}`
     const cached = simCache.get(key)
     if (cached) return cached
 
@@ -465,7 +519,7 @@ const WF = (() => {
       const desired = BASE_TPS * pace * (p.role === 'tank' ? 1 : aggression)
       // Interval assumes Salvation on non-tanks so toggling buff inference
       // changes output rather than being absorbed.
-      const assumeOpts = { buffs: true, noSalv: [] }
+      const assumeOpts = { buffs: true, overrides: {} }
       const totalW = kit.spells.reduce((a, sp) => a + sp.w, 0)
       const avg =
         kit.spells.reduce(
@@ -800,5 +854,11 @@ const WF = (() => {
     lastAtOrBefore,
     kitFor,
     modsFor,
+    BUFFS,
+    talentsFor,
+    talentRank,
+    buffActive,
+    buffInferred,
+    aurasFor,
   }
 })()
