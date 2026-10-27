@@ -534,17 +534,6 @@
     $('#bar').innerHTML = `
       ${menu}
       <span class="bar-title" title="Pull and target">#${p.id} ${esc(p.name)} · ${p.outcome === 'kill' ? 'Kill' : `Wipe ${p.pct}%`}${p.targets.length > 1 ? ` › ${esc(target().name)}` : ''}</span>
-      <div class="group">
-        <label for="preset">Show</label>
-        <select id="preset" data-change="preset">
-          <option value="">Custom (${state.visible.size})</option>
-          <option value="all">Everyone</option>
-          <option value="tanks">Tanks only</option>
-          <option value="focus-tanks">Focused + tanks</option>
-          <option value="focus">Focused only</option>
-          <option value="pinned">Pinned only</option>
-        </select>
-      </div>
       <div class="group" role="group" aria-label="Threat scale">
         <button data-action="mode" data-mode="abs" aria-pressed="${state.mode === 'abs'}">Absolute</button>
         <button data-action="mode" data-mode="rel" aria-pressed="${state.mode === 'rel'}">% of aggro</button>
@@ -633,6 +622,15 @@
         ? `Roster at end of window (${fmtTime(t)})`
         : `Roster at ${fmtTime(t, true)}`
 
+    const tankIds = s.players.filter((p) => p.role === 'tank').map((p) => p.id)
+    const showing =
+      state.visible.size === s.players.length
+        ? 'all'
+        : state.visible.size === tankIds.length && tankIds.every((id) => state.visible.has(id))
+          ? 'tanks'
+          : state.visible.size === 0 || (state.visible.size === 1 && state.visible.has(state.focus))
+            ? 'none'
+            : 'custom'
     const refocus =
       document.activeElement?.dataset?.input === 'roster-filter'
     $('#roster').innerHTML = `
@@ -640,8 +638,11 @@
         <div class="row"><h2>${label}</h2></div>
         <div class="row">
           <input type="search" placeholder="Filter players" aria-label="Filter players" data-input="roster-filter" value="${esc(state.ui.rosterFilter)}" />
-          <button data-action="show-all">All on</button>
-          <button data-action="hide-all">All off</button>
+          <div class="group" role="group" aria-label="Show players">
+            <button data-action="show-all" aria-pressed="${showing === 'all'}">All on</button>
+            <button data-action="hide-all" aria-pressed="${showing === 'none'}">All off</button>
+            <button data-action="show-tanks" aria-pressed="${showing === 'tanks'}">Tanks</button>
+          </div>
         </div>
       </div>
       <div class="roster-cols"><span></span><span>Player</span><span class="num">Threat</span><span class="num">% aggro</span><span class="num">TPS</span></div>
@@ -1760,6 +1761,10 @@
       state.visible = new Set(sim().players.map((p) => p.id))
       commit()
     },
+    'show-tanks': () => {
+      state.visible = new Set(sim().players.filter((p) => p.role === 'tank').map((p) => p.id))
+      commit()
+    },
     'hide-all': () => {
       state.visible = new Set(state.focus ? [state.focus] : [])
       commit()
@@ -1825,20 +1830,6 @@
     },
     speed: (el) => {
       state.ui.speed = Number(el.value)
-      commit()
-    },
-    preset: (el) => {
-      const s = sim()
-      const tanks = s.players.filter((p) => p.role === 'tank').map((p) => p.id)
-      const f = state.focus ? [state.focus] : []
-      const sets = {
-        all: s.players.map((p) => p.id),
-        tanks,
-        'focus-tanks': [...f, ...tanks],
-        focus: f,
-        pinned: [...state.pinned],
-      }
-      if (sets[el.value]) state.visible = new Set(sets[el.value])
       commit()
     },
     display: (el) => {

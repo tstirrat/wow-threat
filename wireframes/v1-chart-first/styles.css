@@ -567,6 +567,11 @@ main:not(.rail-collapsed) .bar-title {
   flex-wrap: wrap;
 }
 
+.roster-head .group {
+  display: flex;
+  gap: 2px;
+}
+
 .roster-head input {
   flex: 1;
   min-width: 80px;

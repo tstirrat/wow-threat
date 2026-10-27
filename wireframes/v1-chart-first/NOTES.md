@@ -19,7 +19,7 @@ different rolls.
 
 ```
 ┌──────┬───────────────────────────────────────────────────────────────────────────┐
-│ WOW  │ Chart bar: show · scale · thresholds · window · play · cursor │ Open report│
+│ WOW  │ Chart bar: scale · thresholds · window · play · cursor        │ Open report│
 │Threat│                                                  Sign in · ⚙ · roster ▯ │
 │      ├──────────────────────────────────────────────┬────────────────────────────┤
 │ This │ ┌───────────────── chart ─────────────────┐  │ Roster at t                │
@@ -46,6 +46,8 @@ different rolls.
   search and summary table. Sorted by threat at the cursor, or at the end of the
   window. Columns: threat, % of the aggro holder, TPS over the window. Each row has
   an eye (show/hide line) and a pin (filled and pressed in when pinned).
+  The header has a filter and three show buttons: **All on**, **All off** (keeps the
+  focused player visible) and **Tanks**. The pressed one reflects the current set.
 - **Pets**: hunter and warlock pets are their own rows and lines, named
   "Wolf (Quickshot)", in the owner's class colour, drawn dashed. They get no
   Salvation. Bramblearrow's cat sits out the Gruul pulls.
