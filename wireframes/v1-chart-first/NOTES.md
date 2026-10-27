@@ -19,7 +19,7 @@ different rolls.
 
 ```
 ┌──────┬───────────────────────────────────────────────────────────────────────────┐
-│ WOW  │ Chart bar: scale · reset zoom                           │ Open report│
+│ WOW  │ Open report ⌘O │ scale · reset zoom                     │    Sign in │
 │Threat│                                                  Sign in · ⚙ · roster ▯ │
 │      ├──────────────────────────────────────────────┬────────────────────────────┤
 │ This │ ┌───────────────── chart ─────────────────┐  │ Roster        Overrides    │
@@ -34,8 +34,8 @@ different rolls.
 ```
 
 - **No app top bar.** The chart bar is the only top bar and runs to the right edge.
-  Chart controls sit on the left; Open report, account, settings (gear) and the roster
-  toggle sit on the right. The roster sits under the bar, level with the chart.
+  Open report (⌘O) leads on the left, then a divider and the chart controls; account,
+  settings (gear) and the roster toggle sit on the right. The roster sits under the bar, level with the chart.
 - **Rail** (collapsible) holds all report navigation. *This report* shows the report
   title, star, guild and date, then pulls (kill/wipe, %, duration) with targets nested
   under the current pull. *Library* shows recent, starred reports, starred guilds

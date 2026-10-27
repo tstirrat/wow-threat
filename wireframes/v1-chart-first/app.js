@@ -565,12 +565,14 @@
       ? `<button data-action="sign-out" title="Signed in with Warcraft Logs. Click to sign out.">Tstirrat<span class="long"> (sign out)</span></button>`
       : `<button data-action="sign-in" title="Sign in with Warcraft Logs">Sign in</button>`
     const right = `<div class="bar-right">
-        <button data-action="open-report">Open<span class="long"> report</span> <kbd>⌘O</kbd></button>
         ${account}
         <button class="icon" data-action="toggle-settings" aria-pressed="${state.ui.settingsOpen}" aria-label="Settings" title="Settings (,)">${ICONS.settings}</button>
         ${inReport ? `<button class="icon" data-action="toggle-roster" aria-pressed="${isMobile() ? state.ui.rosterOpen : !state.ui.rosterHidden}" aria-label="${state.ui.rosterHidden ? 'Show' : 'Hide'} roster" title="Roster (R)">${ICONS.roster}</button>` : ''}
       </div>`
-    const menu = '<button class="only-mobile" data-action="mobile-rail" aria-label="Open navigation">Menu</button>'
+    // Open report leads the bar; a divider separates it from the chart controls.
+    const menu = `<button class="only-mobile" data-action="mobile-rail" aria-label="Open navigation">Menu</button>
+      <button data-action="open-report">Open<span class="long"> report</span> <kbd>⌘O</kbd></button>
+      <span class="bar-divider" aria-hidden="true"></span>`
     if (!inReport) {
       $('#bar').innerHTML = `${menu}<span class="muted">Home</span>${right}`
       return

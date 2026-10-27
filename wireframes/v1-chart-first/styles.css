@@ -267,6 +267,13 @@ main:not(.rail-collapsed) .bar-title {
   max-width: 240px;
 }
 
+.bar-divider {
+  align-self: stretch;
+  width: 1px;
+  margin: 2px 0;
+  background: var(--line-strong);
+}
+
 .bar-right {
   margin-left: auto;
   display: flex;
