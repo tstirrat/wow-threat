@@ -94,6 +94,11 @@ const WF = (() => {
     { id: 17, name: 'Brightwater', cls: 'Shaman', role: 'healer', range: 'ranged' },
     { id: 18, name: 'Holyfist', cls: 'Paladin', role: 'healer', range: 'ranged' },
     { id: 19, name: 'Thornroot', cls: 'Druid', role: 'healer', range: 'ranged' },
+    // Pets take their owner's class colour and are drawn dashed.
+    { id: 20, name: 'Wolf (Quickshot)', cls: 'Hunter', role: 'pet', range: 'melee', owner: 13, kit: 'pet:wolf' },
+    { id: 21, name: 'Cat (Bramblearrow)', cls: 'Hunter', role: 'pet', range: 'melee', owner: 14, kit: 'pet:cat' },
+    { id: 22, name: 'Imp (Hexlord)', cls: 'Warlock', role: 'pet', range: 'ranged', owner: 11, kit: 'pet:imp' },
+    { id: 23, name: 'Voidwalker (Morwen)', cls: 'Warlock', role: 'pet', range: 'melee', owner: 12, kit: 'pet:voidwalker' },
   ].map((p) => ({
     ...p,
     colorLight: CLASS_COLORS_LIGHT[p.cls],
@@ -124,6 +129,10 @@ const WF = (() => {
     Brightwater: 0.18,
     Holyfist: 0.2,
     Thornroot: 0.16,
+    'Wolf (Quickshot)': 0.42,
+    'Cat (Bramblearrow)': 0.32,
+    'Imp (Hexlord)': 0.3,
+    'Voidwalker (Morwen)': 0.26,
   }
 
   const REACTIVE = {
@@ -266,9 +275,32 @@ const WF = (() => {
     },
   }
 
+  const PET_KITS = {
+    'pet:wolf': {
+      mods: [],
+      spells: [
+        s('Bite', 'physical', 300, 450, 0, 2),
+        s('Growl', 'physical', 0, 0, 415, 1),
+        s('Melee', 'physical', 200, 350, 0, 4),
+      ],
+    },
+    'pet:cat': {
+      mods: [],
+      spells: [s('Claw', 'physical', 250, 380, 0, 3), s('Melee', 'physical', 200, 350, 0, 4)],
+    },
+    'pet:imp': {
+      mods: [],
+      spells: [s('Firebolt', 'fire', 300, 400, 0, 1)],
+    },
+    'pet:voidwalker': {
+      mods: [],
+      spells: [s('Torment', 'shadow', 0, 0, 395, 1), s('Melee', 'physical', 150, 250, 0, 4)],
+    },
+  }
+
   const SALVATION = m('Blessing of Salvation', 0.7)
 
-  const kitFor = (p) => KITS[`${p.cls}:${p.role}`]
+  const kitFor = (p) => (p.kit ? PET_KITS[p.kit] : KITS[`${p.cls}:${p.role}`])
 
   /** Modifiers that apply to one spell for one player under the given options. */
   function modsFor(player, spell, opts) {
@@ -286,6 +318,7 @@ const WF = (() => {
     if (
       opts.buffs &&
       player.role !== 'tank' &&
+      player.role !== 'pet' &&
       !opts.noSalv.includes(player.id)
     ) {
       out.push({ name: SALVATION.name, mult: SALVATION.mult })
@@ -310,6 +343,8 @@ const WF = (() => {
 
   const ALL_IDS = PLAYERS.map((p) => p.id)
   const GRUUL_IDS = ALL_IDS.filter((id) => id !== 4)
+  // Bramblearrow's cat sits out the Gruul pulls (pet dismissed).
+  GRUUL_IDS.splice(GRUUL_IDS.indexOf(21), 1)
 
   const PULL_TEMPLATES = [
     { boss: 'High King Maulgar', outcome: 'wipe', pct: 62, dur: 182000, targets: MAULGAR_TARGETS, ids: ALL_IDS },
@@ -478,7 +513,7 @@ const WF = (() => {
       }
     }
     players
-      .filter((p) => p.cls === 'Hunter')
+      .filter((p) => p.cls === 'Hunter' && p.role !== 'pet')
       .forEach((p) => {
         queue.push({ t: Math.floor(D * (0.2 + r() * 0.3)), kind: 'fd', pid: p.id })
         queue.push({ t: Math.floor(D * (0.55 + r() * 0.35)), kind: 'fd', pid: p.id })

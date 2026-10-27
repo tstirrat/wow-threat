@@ -512,31 +512,35 @@ main:not(.rail-collapsed) .bar-title {
 /* ===== Home =============================================================== */
 
 .home {
-  overflow: auto;
-  padding: 24px;
   flex: 1;
-}
-
-.home-inner {
-  max-width: 880px;
   display: grid;
-  gap: 24px;
+  place-items: center;
+  padding: 24px;
 }
 
 .home-open {
+  width: min(560px, 100%);
+  display: grid;
+  gap: 10px;
+}
+
+.home-open h2 {
+  font-size: 15px;
+}
+
+.home-row {
   display: flex;
   gap: 8px;
 }
 
-.home-open input {
+.home-row input {
   flex: 1;
-  padding: 6px 8px;
+  min-width: 0;
+  padding: 8px 10px;
 }
 
-.home-cols {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 20px;
+.home-open p {
+  margin: 0;
 }
 
 /* ===== Roster ============================================================= */
@@ -588,7 +592,7 @@ main:not(.rail-collapsed) .bar-title {
 .roster-cols {
   font-size: 11px;
   color: var(--muted);
-  padding: 2px 8px 2px 74px;
+  padding: 2px 8px 2px 66px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -600,10 +604,44 @@ main:not(.rail-collapsed) .bar-title {
   border-bottom: 1px solid var(--hi);
 }
 
-.roster-row > button:not(.roster-main) {
-  font-size: 11px;
-  padding: 0 4px;
-  width: 34px;
+.roster-row > button.ricon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  padding: 0;
+  border-color: transparent;
+  background: none;
+  color: var(--text);
+}
+
+.roster-row > button.ricon:hover {
+  background: var(--hi);
+}
+
+.roster-row > button.ricon svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* Hidden line: eye-off, muted. */
+.roster-row > button.ricon[data-action='toggle-visible'][aria-pressed='true'] {
+  color: var(--muted);
+}
+
+/* Pinned: filled pin on a pressed-in button. */
+.roster-row > button.pin {
+  color: var(--muted);
+}
+
+.roster-row > button.pin[aria-pressed='true'] {
+  color: var(--text);
+  background: var(--hi);
+  border-color: var(--line-strong);
+  box-shadow: inset 0 1px 2px var(--shadow);
+}
+
+.roster-row > button.pin[aria-pressed='true'] svg {
+  fill: currentColor;
 }
 
 .roster-main {

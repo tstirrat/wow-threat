@@ -1,8 +1,9 @@
 # v1: chart-first
 
-Open `index.html` in a browser. Click a report in the library, or paste any
-`…warcraftlogs.com/reports/<code>` URL. Every code loads the same fake raid
-(5 pulls: Maulgar ×3, Gruul ×2) with different rolls.
+Open `index.html` in a browser. Click a report in the sidebar library, or paste any
+`…warcraftlogs.com/reports/<code>` URL into the box on the home page (or ⌘O).
+Every code loads the same fake raid (5 pulls: Maulgar ×3, Gruul ×2) with
+different rolls.
 
 ## Brief
 
@@ -39,9 +40,15 @@ Open `index.html` in a browser. Click a report in the library, or paste any
   under the current pull. *Library* shows recent, starred reports, starred guilds
   (including guilds you're not in), my guilds and my logs. The last two need sign-in.
   The chart bar shows the pull/target title only when the rail is collapsed.
+- **Home**: just a centred box for pasting a report URL, with a ⌘O hint. The library
+  lives in the sidebar only.
 - **Roster** (right, hideable): one list replaces the legend, threat meter, player
   search and summary table. Sorted by threat at the cursor, or at the end of the
-  window. Columns: threat, % of the aggro holder, TPS over the window.
+  window. Columns: threat, % of the aggro holder, TPS over the window. Each row has
+  an eye (show/hide line) and a pin (filled and pressed in when pinned).
+- **Pets**: hunter and warlock pets are their own rows and lines, named
+  "Wolf (Quickshot)", in the owner's class colour, drawn dashed. They get no
+  Salvation. Bramblearrow's cat sits out the Gruul pulls.
 - **Tooltip** (replaces the v1.0 "events at cursor" panel, which testers didn't find):
   anchored to the dot nearest the mouse. Shows the player (class colour), their share
   of the aggro holder, every event they had at that exact timestamp with the threat
@@ -68,7 +75,8 @@ Open `index.html` in a browser. Click a report in the library, or paste any
 | Double-click chart         | Reset zoom                                                    |
 | Space                      | Play/pause from the cursor (stops at the window's right edge) |
 | ← / →                      | Step to the previous/next event (focused player, or visible)  |
-| Roster row                 | Focus. **On** toggles visibility, **Pin** pins                |
+| Roster row                 | Focus. Eye toggles visibility, pin icon pins                  |
+| Double-click roster row    | Show only that player; double-click again to show everyone    |
 
 ### Player states
 
@@ -121,6 +129,7 @@ Breakdown are tabs.
 3. Is "% of aggro holder" the right relative baseline, or "% of focused player"?
 4. Should the window (zoom) TPS and the cursor threat be visually distinguished more
    clearly in the roster?
-5. Home: library-first (as here) or paste-URL-first for signed-out users?
+5. Should pets be grouped under their owner in the roster instead of ranked on
+   their own?
 6. Taunts, deaths and aggro losses no longer have their own markers (the event lane
    was removed). Is the tooltip on the dot enough, or do they need a distinct dot shape?

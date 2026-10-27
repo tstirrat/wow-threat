@@ -481,16 +481,19 @@
   // ===========================================================================
 
   function renderHome() {
-    $('#home').innerHTML = `
-      <div class="home-inner">
-        <form class="home-open" id="home-open">
-          <input id="home-input" placeholder="Paste a Warcraft Logs report URL" aria-label="Warcraft Logs report URL" />
+    const home = $('#home')
+    if (home.querySelector('#home-open')) return
+    home.innerHTML = `
+      <form class="home-open" id="home-open">
+        <label for="home-input"><h2>Open a Warcraft Logs report</h2></label>
+        <div class="home-row">
+          <input id="home-input" placeholder="https://fresh.warcraftlogs.com/reports/…" autocomplete="off" />
           <button class="primary">Open</button>
-        </form>
+        </div>
         <p class="error" id="home-error" hidden></p>
-        <p class="muted">Wireframe note: the rail shows the same library. On home it is the main content; inside a report it is one click away.</p>
-        <div class="home-cols">${renderLibrary()}</div>
-      </div>`
+        <p class="muted">Paste a report link. Press <kbd>⌘O</kbd> from anywhere to open another. Your starred reports and guilds are in the sidebar.</p>
+      </form>`
+    $('#home-input').focus()
   }
 
   // ===========================================================================
@@ -500,6 +503,10 @@
   const ICONS = {
     settings:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+    eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
+    eyeOff:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 3 18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c7 0 10 7 10 7a17 17 0 0 1-2.2 3.2"/><path d="M6.6 6.6C3.8 8.3 2 12 2 12s3 7 10 7a10 10 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
+    pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17v5"/><path d="M9 10.8a2 2 0 0 1-1.1 1.8l-1.8.9A2 2 0 0 0 5 15.2V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.8a2 2 0 0 0-1.1-1.8l-1.8-.9A2 2 0 0 1 15 10.8V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>',
     roster:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg>',
   }
@@ -603,9 +610,9 @@
         deadAt.has(p.id) ? '<span class="tag">dead</span>' : '',
       ].join('')
       return `<li class="roster-row ${state.focus === p.id ? 'is-focus' : ''} ${visible ? '' : 'is-hidden'}">
-        <button data-action="toggle-visible" data-pid="${p.id}" aria-pressed="${visible}" aria-label="${visible ? 'Hide' : 'Show'} ${esc(p.name)}">${visible ? 'On' : 'Off'}</button>
-        <button data-action="toggle-pin" data-pid="${p.id}" aria-pressed="${pinned}" aria-label="${pinned ? 'Unpin' : 'Pin'} ${esc(p.name)}">Pin</button>
-        <button class="roster-main" data-action="focus" data-pid="${p.id}" aria-label="Focus ${esc(p.name)}">
+        <button class="ricon" data-action="toggle-visible" data-pid="${p.id}" aria-pressed="${!visible}" aria-label="${visible ? 'Hide' : 'Show'} ${esc(p.name)}" title="${visible ? 'Hide' : 'Show'} line">${visible ? ICONS.eye : ICONS.eyeOff}</button>
+        <button class="ricon pin" data-action="toggle-pin" data-pid="${p.id}" aria-pressed="${pinned}" aria-label="${pinned ? 'Unpin' : 'Pin'} ${esc(p.name)}" title="${pinned ? 'Unpin' : 'Pin across pulls'}">${ICONS.pin}</button>
+        <button class="roster-main" data-action="focus" data-pid="${p.id}" aria-label="Focus ${esc(p.name)}" title="Click to focus · double-click to show only this player">
           <span class="swatch" style="background:${colorOf(p.id)}"></span>
           <span class="roster-name">${esc(p.name)}${tags}</span>
           <span class="num">${fmtNum(v)}</span>
@@ -616,8 +623,8 @@
       </li>`
     }
     const absentRow = (p) => `<li class="roster-row is-absent">
-        <button disabled>—</button>
-        <button data-action="toggle-pin" data-pid="${p.id}" aria-pressed="true" aria-label="Unpin ${esc(p.name)}">Pin</button>
+        <button class="ricon" disabled aria-label="Not in this pull">${ICONS.eyeOff}</button>
+        <button class="ricon pin" data-action="toggle-pin" data-pid="${p.id}" aria-pressed="true" aria-label="Unpin ${esc(p.name)}" title="Unpin">${ICONS.pin}</button>
         <span class="roster-main"><span class="swatch" style="background:${colorOf(p.id)}"></span><span class="roster-name">${esc(p.name)} <span class="tag">not in this pull</span></span><span></span><span></span><span></span></span>
       </li>`
 
@@ -768,7 +775,7 @@
   function initialAuras(p) {
     const kit = WF.kitFor(p)
     const names = kit.mods.filter((m) => !m.schools).map((m) => m.name)
-    if (state.analysis.buffs && p.role !== 'tank' && !state.analysis.noSalv.includes(p.id)) {
+    if (state.analysis.buffs && p.role !== 'tank' && p.role !== 'pet' && !state.analysis.noSalv.includes(p.id)) {
       names.push('Blessing of Salvation')
     }
     return names.length ? names.join(', ') : 'none affecting threat'
@@ -784,7 +791,7 @@
     if (!state.ui.settingsOpen) return
     const d = state.display
     const an = state.analysis
-    const players = state.view === 'report' ? sim().players.filter((p) => p.role !== 'tank') : []
+    const players = state.view === 'report' ? sim().players.filter((p) => p.role !== 'tank' && p.role !== 'pet') : []
     el.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center">
         <h2>Settings</h2>
@@ -1088,6 +1095,8 @@
       ctx.strokeStyle = colorOf(pid)
       ctx.globalAlpha = state.focus && !focused ? 0.4 : 1
       ctx.lineWidth = focused ? 2.75 : 1.25
+      // Pets share their owner's class colour, so draw them dashed.
+      ctx.setLineDash(player(pid).role === 'pet' ? [6, 3] : [])
       ctx.beginPath()
       arr.forEach((v, i) => {
         const x = PAD.l + (i / g.smp.n) * g.plotW
@@ -1097,6 +1106,7 @@
       })
       ctx.stroke()
     })
+    ctx.setLineDash([])
     ctx.globalAlpha = 1
 
     // Event dots: spell events in the line colour, resource changes smaller.
@@ -1962,6 +1972,7 @@
     ['Shift + ← / →', 'Move the cursor 1 second'],
     ['Space', 'Play / pause from the cursor'],
     ['[ / ]', 'Focus the player above / below in the roster'],
+    ['Double-click roster row', 'Show only that player (again to show everyone)'],
     ['P', 'Pin / unpin the focused player'],
     ['H', 'Hide / show the focused player'],
     ['B', 'Show / hide the breakdown'],
@@ -2071,6 +2082,18 @@
     if (!el || el.disabled) return
     const fn = actions[el.dataset.action]
     if (fn) fn(el, evt)
+  })
+
+  // Double-clicking a roster row isolates that player; again restores everyone.
+  document.addEventListener('dblclick', (evt) => {
+    const el = evt.target.closest('.roster-main[data-pid]')
+    if (!el) return
+    const pid = Number(el.dataset.pid)
+    const isolated = state.visible.size === 1 && state.visible.has(pid)
+    state.visible = isolated ? new Set(sim().players.map((p) => p.id)) : new Set([pid])
+    state.focus = pid
+    state.ui.expandedSpells.clear()
+    commit()
   })
 
   document.addEventListener('change', (evt) => {
