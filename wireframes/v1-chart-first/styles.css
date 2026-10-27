@@ -253,18 +253,14 @@ main.is-home .drawer {
   font-variant-numeric: tabular-nums;
 }
 
-/* The expanded rail already shows the pull and target, so the title only
-   appears when the rail is collapsed or off-canvas. */
-main:not(.rail-collapsed) .bar-title {
-  display: none;
-}
-
 .bar-title {
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 240px;
+  /* Fills the space between the chart controls and the right-hand actions. */
+  flex: 1 1 0;
+  min-width: 160px;
 }
 
 .bar-divider {
@@ -1191,8 +1187,7 @@ dialog .row {
     gap: 6px;
   }
 
-  .bar-title,
-  main:not(.rail-collapsed) .bar-title {
+  .bar-title {
     display: block;
     order: -1;
     flex-basis: 100%;

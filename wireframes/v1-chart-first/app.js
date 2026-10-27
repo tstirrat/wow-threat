@@ -581,12 +581,15 @@
     const p = pull()
     $('#bar').innerHTML = `
       ${menu}
-      <span class="bar-title" title="Pull and target">#${p.id} ${esc(p.name)} · ${p.outcome === 'kill' ? 'Kill' : `Wipe ${p.pct}%`}${p.targets.length > 1 ? ` › ${esc(target().name)}` : ''}</span>
       <div class="group" role="group" aria-label="Threat scale">
         <button data-action="mode" data-mode="abs" aria-pressed="${state.mode === 'abs'}">Absolute</button>
         <button data-action="mode" data-mode="rel" aria-pressed="${state.mode === 'rel'}" title="Toggle with A">% of aggro</button>
       </div>
       <button data-action="reset-zoom" ${zoomed ? '' : 'disabled'}>Reset zoom</button>
+      <span class="bar-title" title="Report, pull and target">
+        <span class="muted">${esc(report().title)} ›</span>
+        #${p.id} ${esc(p.name)} · ${p.outcome === 'kill' ? 'Kill' : `Wipe ${p.pct}%`} · ${fmtTime(p.durationMs)}${p.targets.length > 1 ? ` › ${esc(target().name)}` : ''}
+      </span>
       ${right}`
   }
 

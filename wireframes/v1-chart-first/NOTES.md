@@ -40,7 +40,8 @@ different rolls.
   title, star, guild and date, then pulls (kill/wipe, %, duration) with targets nested
   under the current pull. *Library* shows recent, starred reports, starred guilds
   (including guilds you're not in), my guilds and my logs. The last two need sign-in.
-  The chart bar shows the pull/target title only when the rail is collapsed.
+  The chart bar always shows "Report › #pull Boss · Wipe/Kill · duration › target"
+  after the chart controls, so screenshots carry their context.
 - **Home**: just a centred box for pasting a report URL, with a ⌘O hint. The library
   lives in the sidebar only.
 - **Roster** (right, hideable): one list replaces the legend, threat meter, player
