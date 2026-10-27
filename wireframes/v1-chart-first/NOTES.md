@@ -19,7 +19,7 @@ different rolls.
 
 ```
 ┌──────┬───────────────────────────────────────────────────────────────────────────┐
-│ WOW  │ Open report ⌘O │ scale · reset zoom                     │    Sign in │
+│ WOW  │ Open report ⌘O │ Report › #pull Boss · outcome › target │    Sign in │
 │Threat│                                                  Sign in · ⚙ · roster ▯ │
 │      ├──────────────────────────────────────────────┬────────────────────────────┤
 │ This │ ┌───────────────── chart ─────────────────┐  │ Roster        Overrides    │
@@ -34,14 +34,17 @@ different rolls.
 ```
 
 - **No app top bar.** The chart bar is the only top bar and runs to the right edge.
-  Open report (⌘O) leads on the left, then a divider and the chart controls; account,
-  settings (gear) and the roster toggle sit on the right. The roster sits under the bar, level with the chart.
+  Open report (⌘O) leads on the left, then a divider and the report/fight title;
+  account, settings (gear) and the roster toggle sit on the right. The roster sits under the bar, level with the chart.
 - **Rail** (collapsible) holds all report navigation. *This report* shows the report
   title, star, guild and date, then pulls (kill/wipe, %, duration) with targets nested
   under the current pull. *Library* shows recent, starred reports, starred guilds
   (including guilds you're not in), my guilds and my logs. The last two need sign-in.
-  The chart bar always shows "Report › #pull Boss · Wipe/Kill · duration › target"
-  after the chart controls, so screenshots carry their context.
+  The chart bar always shows "Report › #pull Boss · Wipe/Kill · duration › target",
+  so screenshots carry their context.
+- **Floating chart controls** (top right of the plot): a single scale toggle that
+  reads Absolute or % of aggro (<kbd>A</kbd>), and Reset zoom to its left, shown only
+  while zoomed.
 - **Home**: just a centred box for pasting a report URL, with a ⌘O hint. The library
   lives in the sidebar only.
 - **Roster** (right, hideable): one list replaces the legend, threat meter, player

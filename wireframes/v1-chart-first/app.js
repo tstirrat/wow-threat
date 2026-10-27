@@ -398,6 +398,7 @@
       return
     }
     renderTransport()
+    renderChartControls()
     renderRoster()
     renderBreakdown()
     drawChart()
@@ -577,20 +578,23 @@
       $('#bar').innerHTML = `${menu}<span class="muted">Home</span>${right}`
       return
     }
-    const zoomed = Boolean(state.xRange || state.yRange)
     const p = pull()
     $('#bar').innerHTML = `
       ${menu}
-      <div class="group" role="group" aria-label="Threat scale">
-        <button data-action="mode" data-mode="abs" aria-pressed="${state.mode === 'abs'}">Absolute</button>
-        <button data-action="mode" data-mode="rel" aria-pressed="${state.mode === 'rel'}" title="Toggle with A">% of aggro</button>
-      </div>
-      <button data-action="reset-zoom" ${zoomed ? '' : 'disabled'}>Reset zoom</button>
       <span class="bar-title" title="Report, pull and target">
         <span class="muted">${esc(report().title)} ›</span>
         #${p.id} ${esc(p.name)} · ${p.outcome === 'kill' ? 'Kill' : `Wipe ${p.pct}%`} · ${fmtTime(p.durationMs)}${p.targets.length > 1 ? ` › ${esc(target().name)}` : ''}
       </span>
       ${right}`
+  }
+
+  /** Floating chart controls (top right of the plot): reset zoom and scale toggle. */
+  function renderChartControls() {
+    const zoomed = Boolean(state.xRange || state.yRange)
+    const rel = state.mode === 'rel'
+    $('#chart-float').innerHTML = `
+      ${zoomed ? '<button data-action="reset-zoom" title="Reset zoom (0 or double-click)">Reset zoom</button>' : ''}
+      <button data-action="toggle-mode" aria-pressed="${rel}" title="Switch to ${rel ? 'absolute threat' : '% of aggro holder'} (A)">${rel ? '% of aggro' : 'Absolute'} <kbd>A</kbd></button>`
   }
 
   /** Transport row under the overview: window, playback and cursor. */
@@ -2042,6 +2046,11 @@
     },
     'show-tanks': () => {
       state.visible = new Set(sim().players.filter((p) => p.role === 'tank').map((p) => p.id))
+      commit()
+    },
+    'toggle-mode': () => {
+      state.mode = state.mode === 'rel' ? 'abs' : 'rel'
+      state.yRange = null
       commit()
     },
     mode: (el) => {

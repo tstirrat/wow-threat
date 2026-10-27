@@ -485,6 +485,27 @@ main.is-home .drawer {
   cursor: grab;
 }
 
+/* Floats inside the plot's top-right corner (matches the canvas padding). */
+.chart-float {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  gap: 4px;
+  z-index: 4;
+}
+
+.chart-float button {
+  background: var(--bg);
+  box-shadow: 0 1px 4px var(--shadow);
+}
+
+.chart-float button[aria-pressed='true'] {
+  background: var(--bg);
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+
 .hover-tip {
   position: absolute;
   pointer-events: none;
