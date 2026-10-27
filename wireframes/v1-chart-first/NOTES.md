@@ -22,14 +22,14 @@ different rolls.
 │ WOW  │ Chart bar: scale · reset zoom                           │ Open report│
 │Threat│                                                  Sign in · ⚙ · roster ▯ │
 │      ├──────────────────────────────────────────────┬────────────────────────────┤
-│ This │ ┌───────────────── chart ─────────────────┐  │ Roster at t                │
+│ This │ ┌───────────────── chart ─────────────────┐  │ Roster        Overrides    │
 │report│ │  lines + event dots + red melee dots     │  │  On  Pin  ● Name  thr % TPS│
 │  or  │ └──────────────────────────────────────────┘  │  …                         │
 │ Lib  │ Aggro bar (class colours, fixates hatched)    │                            │
 │      │ Fight overview (drag to pan/select)           │                            │
 │      │ Transport: window · play/speed · cursor/clear │                            │
 │      ├──────────────────────────────────────────────┴────────────────────────────┤
-│      │ Breakdown: focused player × visible window          (B)       Shortcuts ? │
+│      │ Player info (I): name · role · auras │ summary │ spells   Shortcuts ?   │
 └──────┴───────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -47,7 +47,7 @@ different rolls.
   search and summary table. Sorted by threat at the cursor, or at the end of the
   window. Columns: threat, % of the aggro holder, and rolling TPS over the last
   N seconds before that time (5s default; 3/5/10/30s in Settings). It updates during
-  playback, so ramp-ups are visible. Window-wide TPS lives in the breakdown. Each row has
+  playback, so ramp-ups are visible. Window-wide TPS lives in player info. Each row has
   an eye (show/hide line) and a pin (filled and pressed in when pinned).
   The header has a filter and three show buttons. **All** toggles: from a partial
   set it shows everyone, from everyone it hides everyone. **Tanks** shows only tanks.
@@ -64,17 +64,21 @@ different rolls.
   changes (rage gain) smaller. Each type can be hidden in settings.
 - **Aggro bar**: who held aggro over time in their class colour, fixates hatched.
   Hover for the holder (name in class colour) and span; click to jump the cursor.
-- **Transport row** (under the overview, above the breakdown): window readout,
+- **Transport row** (under the overview, above player info): window readout,
   play/pause (Space) and speed, cursor time and Clear.
 - **Overview strip**: the whole fight. Drag inside the window box to pan, drag
   elsewhere to pick a new window, double-click to reset.
-- **Breakdown drawer** (bottom): the focused player's spells across the visible
-  window. The header shows the player's initial threat auras (stances, forms, buffs
-  only; no class passives or talents) as Wowhead spell icons with name and multiplier
-  on hover; it no longer repeats the window. Click a row to see which modifiers make
-  up its coefficient. The Shortcuts
-  button sits at its right edge and stays visible when the drawer is collapsed.
-
+- **Player info drawer** (bottom, <kbd>I</kbd>): the focused player across the
+  visible window. The title bar stays useful when collapsed: player name in class
+  colour, a tank or healer icon, and their initial threat auras as Wowhead spell
+  icons (stances, forms, buffs only), plus an overrides link. Expanded, it shows:
+  - **Summary** (left): class/role/range (or pet owner), threat talents with ranks
+    and multipliers, threat and TPS in the window, time holding aggro, **closest to
+    pulling** (highest % of the aggro holder while not holding it, with its pull
+    limit; fixates excluded; click to jump the cursor there), taunts and deaths.
+  - **Spells** (right): hits, raw, bonus, coefficient, threat, TPS, % of gain. Click
+    a row to see the modifiers behind its coefficient.
+  The Shortcuts button sits at the bar's right edge.
 - **Threat overrides** (what-ifs): per player, force a buff on or off (Blessing of
   Salvation, Tranquil Air Totem) regardless of buff inference, and change threat
   talent ranks (Defiance, Feral Instinct, Arcane Subtlety, Silent Resolve, …). They
@@ -87,8 +91,8 @@ different rolls.
   - **Player view:** buffs as Auto (shows the inferred value) / On / Off, talents as
     rank pickers showing the multiplier per rank, "changed" tags, Reset, and the
     player's threat at the cursor with and without their overrides.
-  - Overridden modifiers are marked "(override)" in the tooltip and breakdown, and
-    the breakdown header links to the focused player's overrides.
+  - Overridden modifiers are marked "(override)" in the tooltip and player info, and
+    the player info bar links to the focused player's overrides.
 - **Right-click menu** on a player: Focus, Show only, Hide/Show line, Pin, Override
   buffs and talents…, Clear overrides. Arrow keys move through it, Esc closes.
 
@@ -97,7 +101,7 @@ different rolls.
 | Input                      | Result                                                        |
 | -------------------------- | ------------------------------------------------------------- |
 | Hover chart                | Crosshair; tooltip on the nearest dot                         |
-| Click a dot or line        | Focus that player (drives the breakdown, highlights the line) |
+| Click a dot or line        | Focus that player (drives player info, highlights the line)   |
 | Click empty chart space    | Set the cursor to t (snaps to the nearest visible event)      |
 | Drag on chart              | 2D zoom. Time range drives totals; Y only magnifies           |
 | Flat drag (< 12px tall)    | Time-only zoom                                                |
@@ -148,7 +152,7 @@ different rolls.
 
 The chart bar wraps, with the pull/target title on its own line. **Menu** opens the
 rail from the left; the roster button opens the roster from the right. Chart and
-Breakdown are tabs.
+Player info are tabs.
 
 ## Faked or simplified
 
@@ -160,7 +164,7 @@ Breakdown are tabs.
 ## Open questions to test with this
 
 1. Should clicking a line also move the cursor? Today the two are separate.
-2. Does the breakdown drawer steal too much chart height? Should it overlay instead?
+2. Does the player info drawer steal too much chart height? Should it overlay instead?
 3. Is "% of aggro holder" the right relative baseline, or "% of focused player"?
 4. Should the window (zoom) TPS and the cursor threat be visually distinguished more
    clearly in the roster?

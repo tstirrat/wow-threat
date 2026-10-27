@@ -805,6 +805,57 @@ main:not(.rail-collapsed) .bar-title {
   background: var(--hi);
 }
 
+.drawer-head h2 {
+  font-size: 14px;
+}
+
+.role-icon {
+  display: inline-grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+.role-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.info-body {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.info-summary {
+  margin: 0;
+  padding: 8px 12px;
+  border-right: 1px solid var(--line);
+  overflow: auto;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  align-content: start;
+}
+
+.info-summary dt {
+  color: var(--muted);
+}
+
+.info-summary dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+ul.plain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.info-spells {
+  overflow: auto;
+}
+
 .drawer-head .push {
   margin-left: auto;
 }
@@ -1205,5 +1256,19 @@ dialog .row {
 
   main.tab-breakdown .analysis {
     display: none;
+  }
+
+  .info-body {
+    grid-template-columns: minmax(0, 1fr);
+    overflow: auto;
+  }
+
+  .info-summary {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .info-spells {
+    overflow: visible;
   }
 }

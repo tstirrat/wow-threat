@@ -551,6 +551,9 @@
     pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17v5"/><path d="M9 10.8a2 2 0 0 1-1.1 1.8l-1.8.9A2 2 0 0 0 5 15.2V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.8a2 2 0 0 0-1.1-1.8l-1.8-.9A2 2 0 0 1 15 10.8V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>',
     sliders:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>',
+    tank: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+    healer:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
     roster:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg>',
   }
@@ -742,8 +745,65 @@
   }
 
   // ===========================================================================
-  // Breakdown drawer
+  // Player info drawer: summary + spell breakdown for the focused player
   // ===========================================================================
+
+  /** Window stats for the summary column. */
+  function playerStats(p, a, b, events) {
+    const s = sim()
+    // Closest to pulling: highest share of the holder's threat while not holding aggro.
+    let peak = null
+    events.forEach((e) => {
+      const seg = WF.segmentAt(s, e.t)
+      // Fixates force aggro regardless of threat, so they say nothing about pulling.
+      if (seg.pid === p.id || seg.kind === 'fixate') return
+      const hv = WF.valueAt(s, seg.pid, e.t)
+      if (hv <= 0) return
+      const ratio = (e.cum / hv) * 100
+      if (!peak || ratio > peak.ratio) peak = { ratio, t: e.t, holder: seg.pid }
+    })
+    const held = s.segments
+      .filter((sg) => sg.pid === p.id && sg.kind === 'aggro')
+      .reduce((acc, sg) => acc + Math.max(0, Math.min(sg.end, b) - Math.max(sg.start, a)), 0)
+    return {
+      peak,
+      held,
+      taunts: events.filter((e) => e.kind === 'taunt').length,
+      deaths: events.filter((e) => e.kind === 'death').length,
+    }
+  }
+
+  function renderSummary(p, a, b, events, total, secs) {
+    const st = playerStats(p, a, b, events)
+    const owner = p.owner ? player(p.owner) : null
+    const talents = WF.talentsFor(p)
+      .map((t) => {
+        const rank = WF.talentRank(p, t, state.analysis)
+        const changed = overridesOf(p.id)?.talents?.[t.name] !== undefined
+        return `<li>${esc(t.name)} ${rank}/${t.max} <span class="muted">×${(1 + t.perRank * rank).toFixed(2)}${t.schools ? ` ${t.schools.join('/')}` : ''}</span>${changed ? ' <em>(override)</em>' : ''}</li>`
+      })
+      .join('')
+    const limit = p.range === 'melee' ? 110 : 130
+    return `<dl class="info-summary">
+      <dt>Class</dt><dd>${esc(p.cls)} · ${esc(p.role)}${owner ? ` of ${esc(owner.name)}` : ''} · ${esc(p.range)}</dd>
+      <dt>Threat talents</dt><dd>${talents ? `<ul class="plain">${talents}</ul>` : '<span class="muted">None</span>'}</dd>
+      <dt>Threat</dt><dd class="num-left">${fmtNum(total)} <span class="muted">· ${fmtNum(total / secs)} TPS over ${fmtTime(b - a)}</span></dd>
+      <dt>Aggro held</dt><dd class="num-left">${st.held ? `${fmtTime(st.held)} <span class="muted">(${fmtPct((st.held / (b - a)) * 100)})</span>` : '<span class="muted">Never</span>'}</dd>
+      <dt>Closest to pulling</dt><dd>${
+        st.peak
+          ? `<button class="link" data-action="jump" data-t="${st.peak.t}">${fmtPct(st.peak.ratio)} of ${esc(player(st.peak.holder).name)} at ${fmtTime(st.peak.t, true)}</button> <span class="muted">pulls at ${limit}%</span>`
+          : '<span class="muted">Held aggro the whole window</span>'
+      }</dd>
+      ${st.taunts || st.deaths ? `<dt>Events</dt><dd>${[st.taunts ? `${st.taunts} taunt${st.taunts > 1 ? 's' : ''}` : '', st.deaths ? `${st.deaths} death${st.deaths > 1 ? 's' : ''}` : ''].filter(Boolean).join(' · ')}</dd>` : ''}
+    </dl>`
+  }
+
+  function roleIcon(p) {
+    if (p.role === 'tank') return `<span class="role-icon" title="Tank">${ICONS.tank}</span>`
+    if (p.role === 'healer') return `<span class="role-icon" title="Healer">${ICONS.healer}</span>`
+    if (p.role === 'pet') return '<span class="tag">pet</span>'
+    return ''
+  }
 
   function renderBreakdown() {
     const open = state.ui.breakdownOpen || state.ui.mobileTab === 'breakdown'
@@ -754,15 +814,14 @@
     const p = state.focus ? player(state.focus) : null
 
     const head = `<div class="drawer-head">
-      <button class="desktop-only" data-action="toggle-breakdown" aria-expanded="${open}">${open ? 'Hide' : 'Show'} breakdown <kbd>B</kbd></button>
-      <h2>${p ? `${esc(p.name)} — spell breakdown` : 'Spell breakdown'}</h2>
-      ${p ? auraIcons(p) : ''}
+      <button class="desktop-only" data-action="toggle-breakdown" aria-expanded="${open}" title="${open ? 'Collapse' : 'Expand'} player info (I)">${open ? '▾' : '▸'} Player info <kbd>I</kbd></button>
+      ${p ? `<h2 style="color:${colorOf(p.id)}">${esc(p.name)}</h2>${roleIcon(p)}${auraIcons(p)}` : ''}
       ${p && overridesOf(p.id) ? `<button class="link" data-action="open-overrides" data-pid="${p.id}">Overrides: ${esc(overrideSummary(p.id).join(', '))}</button>` : ''}
       <button class="push desktop-only" data-action="shortcuts">Shortcuts <kbd>?</kbd></button>
     </div>`
 
     if (!p) {
-      drawer.innerHTML = `${head}<div class="drawer-body"><p class="empty">Focus a player to see which spells made their threat in this window. Click a line on the chart or a name in the roster.</p></div>`
+      drawer.innerHTML = `${head}<div class="drawer-body"><p class="empty">Focus a player to see their summary and which spells made their threat in this window. Click a line on the chart or a name in the roster.</p></div>`
       return
     }
 
@@ -819,11 +878,13 @@
       })
       .join('')
 
-    drawer.innerHTML = `${head}<div class="drawer-body"><table>
+    drawer.innerHTML = `${head}<div class="drawer-body info-body">
+      ${renderSummary(p, a, b, events, total, secs)}
+      <div class="info-spells"><table>
       <thead><tr><th>Spell</th><th class="num">Hits</th><th class="num">Raw</th><th class="num">Bonus</th><th class="num">Coeff</th><th class="num">Threat</th><th class="num">TPS</th><th class="num">% of gain</th></tr></thead>
       <tbody>${body || '<tr><td colspan="8" class="empty">No events in this window.</td></tr>'}
         <tr class="total-row"><td>Net total</td><td class="num">${events.length}</td><td></td><td></td><td></td><td class="num">${fmtNum(total)}</td><td class="num">${fmtNum(total / secs)}</td><td></td></tr>
-      </tbody></table></div>`
+      </tbody></table></div></div>`
   }
 
   /** Threat-affecting auras the focused player starts with, as spell icons. */
@@ -2005,6 +2066,12 @@
       const v = el.dataset.val
       setOverride(Number(el.dataset.pid), 'buffs', el.dataset.key, v === 'auto' ? undefined : v === 'on')
     },
+    jump: (el) => {
+      stopPlayback()
+      state.cursor = Number(el.dataset.t)
+      ensureCursorVisible()
+      commit()
+    },
     'toggle-play': () => (state.ui.playing ? (stopPlayback(), commit()) : startPlayback()),
     'clear-cursor': () => {
       stopPlayback()
@@ -2201,7 +2268,7 @@
     ['Double-click roster row', 'Show only that player (again to show everyone)'],
     ['P', 'Pin / unpin the focused player'],
     ['H', 'Hide / show the focused player'],
-    ['B', 'Show / hide the breakdown'],
+    ['I', 'Show / hide player info'],
     ['O', 'Player buff and talent overrides'],
     ['Right-click a player', 'Player menu: focus, show only, pin, overrides'],
     ['R', 'Show / hide the roster'],
@@ -2262,7 +2329,7 @@
       ']': () => cycleFocus(1),
       p: () => state.focus && toggleSet(state.pinned, state.focus),
       h: () => state.focus && toggleSet(state.visible, state.focus),
-      b: () => actions['toggle-breakdown'](),
+      i: () => actions['toggle-breakdown'](),
       o: () => {
         state.ui.overridesOpen = state.ui.overridesOpen ? null : 'all'
         if (state.ui.overridesOpen) state.ui.settingsOpen = false
