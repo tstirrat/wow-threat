@@ -522,7 +522,7 @@
         <button data-action="open-report">Open<span class="long"> report</span> <kbd>⌘O</kbd></button>
         ${account}
         <button class="icon" data-action="toggle-settings" aria-pressed="${state.ui.settingsOpen}" aria-label="Settings" title="Settings (,)">${ICONS.settings}</button>
-        ${inReport ? `<button class="icon" data-action="toggle-roster" aria-pressed="${isMobile() ? state.ui.rosterOpen : !state.ui.rosterHidden}" aria-label="${state.ui.rosterHidden ? 'Show' : 'Hide'} roster" title="Roster">${ICONS.roster}</button>` : ''}
+        ${inReport ? `<button class="icon" data-action="toggle-roster" aria-pressed="${isMobile() ? state.ui.rosterOpen : !state.ui.rosterHidden}" aria-label="${state.ui.rosterHidden ? 'Show' : 'Hide'} roster" title="Roster (R)">${ICONS.roster}</button>` : ''}
       </div>`
     const menu = '<button class="only-mobile" data-action="mobile-rail" aria-label="Open navigation">Menu</button>'
     if (!inReport) {
@@ -536,7 +536,7 @@
       <span class="bar-title" title="Pull and target">#${p.id} ${esc(p.name)} · ${p.outcome === 'kill' ? 'Kill' : `Wipe ${p.pct}%`}${p.targets.length > 1 ? ` › ${esc(target().name)}` : ''}</span>
       <div class="group" role="group" aria-label="Threat scale">
         <button data-action="mode" data-mode="abs" aria-pressed="${state.mode === 'abs'}">Absolute</button>
-        <button data-action="mode" data-mode="rel" aria-pressed="${state.mode === 'rel'}">% of aggro</button>
+        <button data-action="mode" data-mode="rel" aria-pressed="${state.mode === 'rel'}" title="Toggle with A">% of aggro</button>
       </div>
       <button data-action="reset-zoom" ${zoomed ? '' : 'disabled'}>Reset zoom</button>
       ${right}`
@@ -1983,7 +1983,8 @@
     ['P', 'Pin / unpin the focused player'],
     ['H', 'Hide / show the focused player'],
     ['B', 'Show / hide the breakdown'],
-    ['R', 'Toggle absolute / % of aggro holder'],
+    ['R', 'Show / hide the roster'],
+    ['A', 'Toggle absolute / % of aggro holder'],
     ['T', 'Toggle pull threshold lines'],
     ['0 or double-click', 'Reset zoom'],
     ['Esc', 'Close panel, or clear the cursor'],
@@ -2039,7 +2040,8 @@
       p: () => state.focus && toggleSet(state.pinned, state.focus),
       h: () => state.focus && toggleSet(state.visible, state.focus),
       b: () => actions['toggle-breakdown'](),
-      r: () => {
+      r: () => actions['toggle-roster'](),
+      a: () => {
         state.mode = state.mode === 'rel' ? 'abs' : 'rel'
         state.yRange = null
         commit()
@@ -2063,6 +2065,10 @@
         commit()
       },
     }
+    // Single-key shortcuts never fire with ⌘/Ctrl/Alt (so ⌘R still reloads),
+    // and letters also need Shift up.
+    if (mod || evt.altKey) return
+    if (/^[a-z]$/i.test(key) && evt.shiftKey) return
     const handler = handlers[key.length === 1 ? key.toLowerCase() : key] ?? handlers[key]
     if (handler) {
       evt.preventDefault()
