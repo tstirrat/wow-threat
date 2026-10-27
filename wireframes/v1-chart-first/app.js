@@ -658,16 +658,25 @@
   // Events tab: everything visible players did within ±N seconds of the cursor
   // ===========================================================================
 
+  /** Only players shown on the chart (eye on) and not filtered out of the roster. */
+  function eventsListed(pid) {
+    const filter = state.ui.rosterFilter.toLowerCase()
+    return state.visible.has(pid) && (!filter || player(pid).name.toLowerCase().includes(filter))
+  }
+
   function renderEventsPanel() {
     const span = state.ui.eventsSpan
+    const focusListed = state.focus !== null && eventsListed(state.focus)
+    const focusOnly = state.ui.eventsFocusOnly && focusListed
     const head = `<div class="roster-head">
         ${sideTabs()}
         <div class="row">
           <div class="group" role="group" aria-label="Time around cursor">
             ${[1, 2, 3].map((n) => `<button data-action="events-span" data-span="${n}" aria-pressed="${span === n}">±${n}s</button>`).join('')}
           </div>
-          <label class="inline"><input type="checkbox" data-change="events-focus" ${state.ui.eventsFocusOnly ? 'checked' : ''} ${state.focus ? '' : 'disabled'} /> Focused only</label>
+          <label class="inline" title="${focusListed ? '' : 'The focused player is hidden'}"><input type="checkbox" data-change="events-focus" ${focusOnly ? 'checked' : ''} ${focusListed ? '' : 'disabled'} /> Focused only</label>
         </div>
+        ${state.ui.rosterFilter ? `<div class="row muted">Roster filter “${esc(state.ui.rosterFilter)}” applies <button class="link" data-action="clear-filter">Clear</button></div>` : ''}
       </div>`
     if (state.cursor === null) {
       $('#roster').innerHTML = `${head}<p class="empty">Click empty chart space to place a cursor. Everything visible players did ±${span}s around it appears here, before the cursor above the line and after it below. ←/→ step event by event.</p>`
@@ -675,7 +684,7 @@
     }
     const s = sim()
     const c = state.cursor
-    const keep = (pid) => (state.ui.eventsFocusOnly && state.focus ? pid === state.focus : state.visible.has(pid))
+    const keep = (pid) => eventsListed(pid) && (!focusOnly || pid === state.focus)
     const items = [
       ...eventsIn(s, c - span * 1000, c + span * 1000)
         .filter((e) => keep(e.pid) && (state.display.resourceDots || e.kind !== 'energize'))
@@ -2197,6 +2206,10 @@
     },
     'side-tab': (el) => {
       state.ui.sideTab = el.dataset.tab
+      commit()
+    },
+    'clear-filter': () => {
+      state.ui.rosterFilter = ''
       commit()
     },
     'events-span': (el) => {
