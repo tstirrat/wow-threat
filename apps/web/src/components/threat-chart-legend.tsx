@@ -61,7 +61,7 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
   return (
     <Card
       aria-label="Threat legend"
-      className="min-h-0 max-h-[560px]"
+      className="min-h-0 max-h-[560px] lg:h-full lg:max-h-none"
       size="sm"
     >
       <CardHeader className="border-b border-border">

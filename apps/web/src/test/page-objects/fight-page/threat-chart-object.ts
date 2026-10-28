@@ -14,10 +14,15 @@ export class ThreatChartObject {
   readonly section: Locator
 
   constructor(private readonly page: Page) {
-    this.section = page
-      .getByRole('region')
-      .filter({ has: page.getByLabel('Target') })
-      .first()
+    this.section = page.getByRole('region', { name: 'Fight workspace' })
+  }
+
+  chartRegion(): Locator {
+    return this.section.locator('[data-region="chart"]')
+  }
+
+  rosterRegion(): Locator {
+    return this.section.locator('[data-region="roster"]')
   }
 
   targetControl(): Locator {
@@ -29,7 +34,7 @@ export class ThreatChartObject {
   }
 
   legendRoot(): Locator {
-    return this.section.locator('[aria-label="Threat legend"]')
+    return this.rosterRegion().locator('[aria-label="Threat legend"]')
   }
 
   showPetsCheckbox(): Locator {

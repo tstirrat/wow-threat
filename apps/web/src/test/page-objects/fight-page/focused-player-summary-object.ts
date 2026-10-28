@@ -7,7 +7,9 @@ export class FocusedPlayerSummaryObject {
   readonly section: Locator
 
   constructor(page: Page) {
-    this.section = page.getByRole('region', { name: 'Focused player summary' })
+    this.section = page
+      .locator('[data-region="drawer"]')
+      .getByRole('region', { name: 'Focused player summary' })
   }
 
   breakdownTable(): Locator {
