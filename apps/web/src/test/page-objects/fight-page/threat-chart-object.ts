@@ -41,36 +41,6 @@ export class ThreatChartObject {
     return this.rosterRegion().locator('[aria-label="Threat legend"]')
   }
 
-  showPetsCheckbox(): Locator {
-    return this.section.getByRole('checkbox', { name: 'Show pets' })
-  }
-
-  showEnergizeEventsCheckbox(): Locator {
-    return this.section.getByRole('checkbox', { name: 'Show energize events' })
-  }
-
-  showFixateBandsCheckbox(): Locator {
-    return this.section.getByRole('checkbox', { name: 'Show fixate areas' })
-  }
-
-  bossDamageOffToggle(): Locator {
-    return this.section.getByRole('radio', { name: 'Boss damage off' })
-  }
-
-  bossDamageMeleeToggle(): Locator {
-    return this.section.getByRole('radio', { name: 'Boss damage melee' })
-  }
-
-  bossDamageAllToggle(): Locator {
-    return this.section.getByRole('radio', { name: 'Boss damage all' })
-  }
-
-  inferThreatReductionCheckbox(): Locator {
-    return this.section.getByRole('checkbox', {
-      name: 'Infer common threat buffs',
-    })
-  }
-
   chartContainer(): Locator {
     return this.section.locator('.echarts-for-react')
   }
@@ -185,64 +155,6 @@ export class ThreatChartObject {
 
   async clearIsolate(): Promise<void> {
     await this.clearIsolateButton().click()
-  }
-
-  async setShowPets(checked: boolean): Promise<void> {
-    const showPetsCheckbox = this.showPetsCheckbox()
-    const isChecked = await showPetsCheckbox.isChecked()
-
-    if (isChecked === checked) {
-      return
-    }
-
-    await showPetsCheckbox.click()
-  }
-
-  async setShowEnergizeEvents(checked: boolean): Promise<void> {
-    const showEnergizeEventsCheckbox = this.showEnergizeEventsCheckbox()
-    const isChecked = await showEnergizeEventsCheckbox.isChecked()
-
-    if (isChecked === checked) {
-      return
-    }
-
-    await showEnergizeEventsCheckbox.click()
-  }
-
-  async setShowFixateBands(checked: boolean): Promise<void> {
-    const showFixateBandsCheckbox = this.showFixateBandsCheckbox()
-    const isChecked = await showFixateBandsCheckbox.isChecked()
-
-    if (isChecked === checked) {
-      return
-    }
-
-    await showFixateBandsCheckbox.click()
-  }
-
-  async setBossDamageMode(mode: 'off' | 'melee' | 'all'): Promise<void> {
-    if (mode === 'off') {
-      await this.bossDamageOffToggle().click()
-      return
-    }
-
-    if (mode === 'melee') {
-      await this.bossDamageMeleeToggle().click()
-      return
-    }
-
-    await this.bossDamageAllToggle().click()
-  }
-
-  async setInferThreatReduction(checked: boolean): Promise<void> {
-    const inferThreatReductionCheckbox = this.inferThreatReductionCheckbox()
-    const isChecked = await inferThreatReductionCheckbox.isChecked()
-
-    if (isChecked === checked) {
-      return
-    }
-
-    await inferThreatReductionCheckbox.click()
   }
 
   async seriesClickPointByStroke(strokeColor: string): Promise<Point | null> {
