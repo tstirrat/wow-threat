@@ -1,5 +1,5 @@
 /**
- * App bar: report input, starred reports, theme toggle and account menu.
+ * App bar: open report, title slot, account menu, theme toggle and settings/roster slots.
  */
 import { getReport } from '@/api/reports'
 import { useAuth } from '@/auth/auth-provider'
@@ -23,13 +23,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { useReportIndex } from '@/hooks/use-report-index'
-import { useUserSettings } from '@/hooks/use-user-settings'
 import { useWclRateLimit } from '@/hooks/use-wcl-rate-limit'
 import { defaultHost } from '@/lib/constants'
 import { buildBossKillNavigationFights } from '@/lib/fight-navigation'
 import { superKey } from '@/lib/keyboard-shortcut'
 import { parseReportInput } from '@/lib/wcl-url'
-import { ChevronDown, Home, RefreshCw, Search, Star } from 'lucide-react'
+import { ChevronDown, Home, RefreshCw, Search } from 'lucide-react'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, useEffect, useMemo, useRef, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
@@ -66,9 +65,9 @@ interface AppBarProps {
   onReportError: (message: string | null) => void
 }
 
-/** Top bar: home link, report input, starred reports, theme toggle and account menu. */
+/** Top bar: home icon, open report, divider, title slot, account menu, theme toggle and settings/roster slots. */
 export const AppBar: FC<AppBarProps> = ({ isLandingPage, onReportError }) => {
-  const { barTitle } = useAppShell()
+  const { barRosterToggle, barSettings, barTitle } = useAppShell()
   const posthog = usePostHog()
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
   const [isSubmittingReport, setIsSubmittingReport] = useState(false)
@@ -77,7 +76,6 @@ export const AppBar: FC<AppBarProps> = ({ isLandingPage, onReportError }) => {
   const reportInputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
   const { addRecentReport, searchReports } = useReportIndex()
-  const { settings, isLoading: isUserSettingsLoading } = useUserSettings()
   const {
     authEnabled,
     isBusy,
@@ -129,7 +127,6 @@ export const AppBar: FC<AppBarProps> = ({ isLandingPage, onReportError }) => {
     [isReportInputVisible, reportInputValue, searchReports],
   )
   const isWclAuthenticated = Boolean(wclUserId)
-  const shouldShowStarredDropdown = isWclAuthenticated && !isLandingPage
   const displayUserName = wclUserName ?? 'Warcraft Logs user'
   const handleAccountMenuOpenChange = (nextOpen: boolean): void => {
     setIsAccountMenuOpen(nextOpen)
@@ -195,19 +192,16 @@ export const AppBar: FC<AppBarProps> = ({ isLandingPage, onReportError }) => {
 
   return (
     <header className="border-b border-border bg-card" data-testid="app-bar">
-      <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3">
-        <h1 className="text-lg font-semibold">
-          <Link
-            aria-label="Go to home"
-            className="inline-flex items-center gap-2"
-            to="/"
-          >
-            <Home aria-hidden="true" className="size-4" />
-            <span>WoW Threat</span>
-          </Link>
-        </h1>
+      <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2 min-[760px]:flex-nowrap">
+        <Link
+          aria-label="Go to home"
+          className="inline-flex shrink-0 items-center text-foreground"
+          to="/"
+        >
+          <Home aria-hidden="true" className="size-4" />
+        </Link>
 
-        <div className="flex items-center justify-start">
+        <div className="flex shrink-0 items-center justify-start">
           <div
             aria-hidden={!isReportInputVisible}
             data-testid="report-input-container"
@@ -228,7 +222,7 @@ export const AppBar: FC<AppBarProps> = ({ isLandingPage, onReportError }) => {
                 isSubmitting={isSubmittingReport}
                 inputAriaLabel="Open report"
                 onSelectSuggestion={(suggestion) => {
-                  setReportErrorMessage(null)
+                  onReportError(null)
                   setReportInputValue('')
                   navigate(`/report/${suggestion.reportId}`, {
                     state: {
@@ -305,58 +299,22 @@ export const AppBar: FC<AppBarProps> = ({ isLandingPage, onReportError }) => {
               </div>
             </TooltipProvider>
           ) : null}
-          {shouldShowStarredDropdown ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  className="ml-2"
-                  size="sm"
-                  type="button"
-                  variant="outline"
-                >
-                  <Star aria-hidden="true" className="size-3.5" />
-                  Starred
-                  <ChevronDown aria-hidden="true" className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-72">
-                <DropdownMenuLabel>Starred reports</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {isUserSettingsLoading ? (
-                  <DropdownMenuItem disabled>
-                    Loading starred reports...
-                  </DropdownMenuItem>
-                ) : settings.starredReports.length === 0 ? (
-                  <DropdownMenuItem disabled>
-                    No starred reports yet
-                  </DropdownMenuItem>
-                ) : (
-                  settings.starredReports.map((report) => (
-                    <DropdownMenuItem asChild key={report.reportId}>
-                      <Link
-                        state={{ host: report.sourceHost }}
-                        to={`/report/${report.reportId}`}
-                      >
-                        {report.title || report.reportId}
-                      </Link>
-                    </DropdownMenuItem>
-                  ))
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : null}
-          {barTitle ? (
-            <div
-              className="ml-3 min-w-0 truncate text-sm text-muted-foreground"
-              data-testid="app-bar-title"
-            >
-              {barTitle}
-            </div>
-          ) : null}
         </div>
 
-        <div className="flex items-center justify-end gap-2">
-          <ModeToggle />
+        <span
+          aria-hidden="true"
+          className="hidden h-5 w-px shrink-0 bg-border min-[760px]:block"
+          data-testid="app-bar-divider"
+        />
+
+        <div
+          className="order-last min-w-0 basis-full truncate text-sm text-muted-foreground min-[760px]:order-none min-[760px]:basis-0 min-[760px]:flex-1"
+          data-testid="app-bar-title"
+        >
+          {barTitle}
+        </div>
+
+        <div className="ml-auto flex shrink-0 items-center justify-end gap-2 min-[760px]:ml-0">
           {!authEnabled ? (
             <span className="text-sm text-muted-foreground">Auth disabled</span>
           ) : isInitializing ? (
@@ -476,6 +434,9 @@ export const AppBar: FC<AppBarProps> = ({ isLandingPage, onReportError }) => {
               Sign in with WCL
             </Button>
           )}
+          <ModeToggle />
+          {barSettings}
+          {barRosterToggle}
         </div>
       </div>
     </header>
