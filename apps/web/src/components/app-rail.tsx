@@ -1,11 +1,12 @@
 /**
- * Collapsible left rail with report and library slots. Open on every page load.
+ * Collapsible left rail: "This report" and "Library" tabs on report routes, Library alone elsewhere. Open on every page load.
  */
 import { ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { type FC, type ReactNode, useState } from 'react'
 
 import { useAppShell } from '../routes/app-shell-context'
 import { Button } from './ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
 
 export interface AppRailProps {
   librarySection?: ReactNode
@@ -13,6 +14,7 @@ export interface AppRailProps {
 
 export const AppRail: FC<AppRailProps> = ({ librarySection = null }) => {
   const [isOpen, setIsOpen] = useState(true)
+  const [activeTab, setActiveTab] = useState('report')
   const { railReportSection } = useAppShell()
 
   return (
@@ -41,10 +43,44 @@ export const AppRail: FC<AppRailProps> = ({ librarySection = null }) => {
         </Button>
       </div>
       {isOpen ? (
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-          <div data-testid="app-rail-report-section">{railReportSection}</div>
-          <div data-testid="app-rail-library-section">{librarySection}</div>
-        </div>
+        railReportSection ? (
+          <Tabs
+            className="flex min-h-0 flex-1 flex-col"
+            onValueChange={setActiveTab}
+            value={activeTab}
+          >
+            <TabsList aria-label="Sidebar sections">
+              <TabsTrigger value="report">This report</TabsTrigger>
+              <TabsTrigger value="library">Library</TabsTrigger>
+            </TabsList>
+            <TabsContent
+              data-testid="app-rail-report-section"
+              forceMount
+              hidden={activeTab !== 'report'}
+              value="report"
+            >
+              {railReportSection}
+            </TabsContent>
+            <TabsContent
+              data-testid="app-rail-library-section"
+              forceMount
+              hidden={activeTab !== 'library'}
+              value="library"
+            >
+              {librarySection}
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <div
+            className="flex min-h-0 flex-1 flex-col overflow-y-auto"
+            data-testid="app-rail-library-section"
+          >
+            <h2 className="border-b border-border px-4 py-1.5 text-xs font-medium">
+              Library
+            </h2>
+            {librarySection}
+          </div>
+        )
       ) : null}
     </aside>
   )

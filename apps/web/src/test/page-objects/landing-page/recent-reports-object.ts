@@ -1,5 +1,5 @@
 /**
- * Page object for landing-page recent reports and zero-state examples.
+ * Page object for the rail library's recent reports and the landing box's example reports.
  */
 import { type Locator, type Page } from '@playwright/test'
 
@@ -11,7 +11,9 @@ export class RecentReportsObject {
   }
 
   recentReportsSection(): Locator {
-    return this.page.getByRole('region', { name: /Recent logs/i })
+    return this.page
+      .getByTestId('app-rail')
+      .getByRole('region', { name: /Recent logs/i })
   }
 
   noRecentReportsText(): Locator {
@@ -39,7 +41,7 @@ export class RecentReportsObject {
   }
 
   exampleReportsSection(): Locator {
-    return this.recentReportsSection()
+    return this.page.getByRole('region', { name: 'Open a report' })
   }
 
   exampleReportsList(): Locator {
