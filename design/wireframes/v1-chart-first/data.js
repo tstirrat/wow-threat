@@ -1,0 +1,1004 @@
+/**
+ * Fake report data and a tiny threat simulation for the v1 wireframe.
+ *
+ * Everything here is invented and deterministic per report/pull/target, so
+ * links reproduce the same chart. Nothing is imported from the app; the
+ * numbers only need to be plausible enough to exercise the interactions.
+ */
+// eslint-disable-next-line no-unused-vars
+const WF = (() => {
+  // ===========================================================================
+  // Helpers
+  // ===========================================================================
+
+  function rng(seed) {
+    let a = seed >>> 0
+    return () => {
+      a = (a + 0x6d2b79f5) | 0
+      let t = Math.imul(a ^ (a >>> 15), 1 | a)
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+    }
+  }
+
+  function hash(str) {
+    let h = 2166136261
+    for (const c of str) {
+      h ^= c.charCodeAt(0)
+      h = Math.imul(h, 16777619)
+    }
+    return h >>> 0
+  }
+
+  const m = (name, mult, schools = null) => ({ name, mult, schools })
+  // Wowhead icon names for threat auras (stances, forms, buffs).
+  const AURA_ICONS = {
+    'Defensive Stance': 'ability_warrior_defensivestance',
+    'Berserker Stance': 'ability_racial_avatar',
+    'Bear Form': 'ability_racial_bearform',
+    'Blessing of Salvation': 'spell_holy_sealofsalvation',
+    'Tranquil Air Totem': 'spell_nature_brilliance',
+  }
+  // A threat talent: multiplier is 1 + perRank × rank, default rank is max.
+  const tal = (name, max, perRank, schools = null) => ({
+    name,
+    talent: true,
+    max,
+    perRank,
+    schools,
+  })
+  const s = (name, school, min, max, bonus = 0, w = 1, spellMult = 1) => ({
+    name,
+    school,
+    min,
+    max,
+    bonus,
+    w,
+    spellMult,
+  })
+  const heal = (name, min, max, w = 1) => ({
+    ...s(name, 'holy', min, max, 0, w, 0.5),
+    kind: 'heal',
+  })
+
+  // ===========================================================================
+  // Roster and class kits
+  // ===========================================================================
+
+  // Class colours per theme: darker variants stay legible on white, game
+  // colours on dark.
+  const CLASS_COLORS_LIGHT = {
+    Warrior: '#9B6C41',
+    Paladin: '#C44884',
+    Hunter: '#608029',
+    Rogue: '#8E7318',
+    Priest: '#6b6b6b',
+    Shaman: '#0070DD',
+    Mage: '#08809C',
+    Warlock: '#7366D6',
+    Druid: '#CB4F00',
+  }
+  const CLASS_COLORS_DARK = {
+    Warrior: '#C79C6E',
+    Paladin: '#F58CBA',
+    Hunter: '#ABD473',
+    Rogue: '#FFF569',
+    Priest: '#E8E8E8',
+    Shaman: '#2E8BFF',
+    Mage: '#69CCF0',
+    Warlock: '#9482C9',
+    Druid: '#FF7D0A',
+  }
+
+  const PLAYERS = [
+    { id: 1, name: 'Brakka', cls: 'Warrior', role: 'tank', range: 'melee' },
+    { id: 2, name: 'Oakhide', cls: 'Druid', role: 'tank', range: 'melee' },
+    { id: 3, name: 'Vexa', cls: 'Rogue', role: 'dps', range: 'melee' },
+    { id: 4, name: 'Sneakpeek', cls: 'Rogue', role: 'dps', range: 'melee' },
+    { id: 5, name: 'Grimtusk', cls: 'Warrior', role: 'dps', range: 'melee' },
+    { id: 6, name: 'Stormfist', cls: 'Shaman', role: 'dps', range: 'melee' },
+    { id: 7, name: 'Kallen', cls: 'Paladin', role: 'dps', range: 'melee' },
+    { id: 8, name: 'Pyrelle', cls: 'Mage', role: 'dps', range: 'ranged' },
+    { id: 9, name: 'Frostbyte', cls: 'Mage', role: 'dps', range: 'ranged' },
+    { id: 10, name: 'Ashveil', cls: 'Mage', role: 'dps', range: 'ranged' },
+    { id: 11, name: 'Hexlord', cls: 'Warlock', role: 'dps', range: 'ranged' },
+    { id: 12, name: 'Morwen', cls: 'Warlock', role: 'dps', range: 'ranged' },
+    { id: 13, name: 'Quickshot', cls: 'Hunter', role: 'dps', range: 'ranged' },
+    { id: 14, name: 'Bramblearrow', cls: 'Hunter', role: 'dps', range: 'ranged' },
+    { id: 15, name: 'Shadowmend', cls: 'Priest', role: 'dps', range: 'ranged' },
+    { id: 16, name: 'Lumina', cls: 'Priest', role: 'healer', range: 'ranged' },
+    { id: 17, name: 'Brightwater', cls: 'Shaman', role: 'healer', range: 'ranged' },
+    { id: 18, name: 'Holyfist', cls: 'Paladin', role: 'healer', range: 'ranged' },
+    { id: 19, name: 'Thornroot', cls: 'Druid', role: 'healer', range: 'ranged' },
+    // Pets take their owner's class colour and are drawn dashed.
+    { id: 20, name: 'Wolf (Quickshot)', cls: 'Hunter', role: 'pet', range: 'melee', owner: 13, kit: 'pet:wolf' },
+    { id: 21, name: 'Cat (Bramblearrow)', cls: 'Hunter', role: 'pet', range: 'melee', owner: 14, kit: 'pet:cat' },
+    { id: 22, name: 'Imp (Hexlord)', cls: 'Warlock', role: 'pet', range: 'ranged', owner: 11, kit: 'pet:imp' },
+    { id: 23, name: 'Voidwalker (Morwen)', cls: 'Warlock', role: 'pet', range: 'melee', owner: 12, kit: 'pet:voidwalker' },
+  ].map((p) => ({
+    ...p,
+    colorLight: CLASS_COLORS_LIGHT[p.cls],
+    colorDark: CLASS_COLORS_DARK[p.cls],
+  }))
+
+  const PLAYERS_BY_ID = new Map(PLAYERS.map((p) => [p.id, p]))
+
+  // Relative threat output (1.0 = main tank pace) so some players live close
+  // to the pull thresholds.
+  const PACE = {
+    Brakka: 1,
+    Oakhide: 0.72,
+    Vexa: 0.95,
+    Sneakpeek: 0.74,
+    Grimtusk: 0.86,
+    Stormfist: 0.6,
+    Kallen: 0.55,
+    Pyrelle: 1.12,
+    Frostbyte: 0.82,
+    Ashveil: 0.7,
+    Hexlord: 1.02,
+    Morwen: 0.72,
+    Quickshot: 0.92,
+    Bramblearrow: 0.64,
+    Shadowmend: 0.6,
+    Lumina: 0.22,
+    Brightwater: 0.18,
+    Holyfist: 0.2,
+    Thornroot: 0.16,
+    'Wolf (Quickshot)': 0.42,
+    'Cat (Bramblearrow)': 0.32,
+    'Imp (Hexlord)': 0.3,
+    'Voidwalker (Morwen)': 0.26,
+  }
+
+  const REACTIVE = {
+    thorns: s('Thorns', 'nature', 60, 60),
+    retAura: s('Retribution Aura', 'holy', 35, 35),
+    spikes: s('Thorium Spikes', 'fire', 25, 35),
+  }
+
+  const KITS = {
+    'Warrior:tank': {
+      mods: [m('Defensive Stance', 1.3), tal('Defiance', 5, 0.03)],
+      spells: [
+        s('Sunder Armor', 'physical', 0, 0, 301, 3),
+        s('Heroic Strike', 'physical', 700, 1100, 194, 3),
+        s('Revenge', 'physical', 450, 700, 355, 2),
+        s('Shield Slam', 'physical', 900, 1300, 254, 2),
+        s('Melee', 'physical', 500, 900, 0, 4),
+      ],
+      reactive: [REACTIVE.thorns, REACTIVE.retAura, REACTIVE.spikes],
+      rage: true,
+    },
+    'Druid:tank': {
+      mods: [m('Bear Form', 1.3), tal('Feral Instinct', 5, 0.03)],
+      spells: [
+        s('Maul', 'physical', 700, 1000, 322, 3, 1.75),
+        s('Swipe', 'physical', 300, 450, 0, 2, 1.75),
+        s('Lacerate', 'physical', 200, 300, 267, 2),
+        s('Faerie Fire (Feral)', 'nature', 0, 0, 108, 1),
+        s('Melee', 'physical', 400, 700, 0, 4),
+      ],
+      reactive: [REACTIVE.thorns, REACTIVE.retAura],
+      rage: true,
+    },
+    'Rogue:dps': {
+      mods: [m('Rogue base threat', 0.71)],
+      spells: [
+        s('Sinister Strike', 'physical', 700, 950, 0, 4),
+        s('Melee', 'physical', 400, 700, 0, 5),
+        s('Eviscerate', 'physical', 1800, 2600, 0, 1),
+        s('Instant Poison', 'nature', 250, 330, 0, 3),
+      ],
+    },
+    'Warrior:dps': {
+      mods: [m('Berserker Stance', 0.8)],
+      spells: [
+        s('Bloodthirst', 'physical', 1100, 1500, 0, 2),
+        s('Whirlwind', 'physical', 900, 1300, 0, 2),
+        s('Heroic Strike', 'physical', 900, 1300, 194, 2),
+        s('Melee', 'physical', 700, 1100, 0, 4),
+      ],
+    },
+    'Shaman:dps': {
+      mods: [],
+      spells: [
+        s('Stormstrike', 'physical', 1000, 1400, 0, 1),
+        s('Melee', 'physical', 600, 900, 0, 4),
+        s('Windfury Attack', 'physical', 600, 900, 0, 2),
+        s('Earth Shock', 'nature', 700, 900, 0, 1, 2),
+      ],
+    },
+    'Paladin:dps': {
+      mods: [],
+      spells: [
+        s('Seal of Command', 'holy', 500, 800, 0, 3),
+        s('Crusader Strike', 'physical', 800, 1100, 0, 2),
+        s('Melee', 'physical', 700, 1000, 0, 4),
+        s('Consecration', 'holy', 150, 200, 0, 2),
+      ],
+    },
+    'Mage:dps': {
+      mods: [
+        tal('Arcane Subtlety', 2, -0.2, ['arcane']),
+        tal('Frost Channeling', 3, -0.0333, ['frost']),
+        tal('Burning Soul', 2, -0.05, ['fire']),
+      ],
+      spells: [
+        s('Frostbolt', 'frost', 1200, 1600, 0, 4),
+        s('Fireball', 'fire', 1500, 2000, 0, 2),
+        s('Arcane Missiles', 'arcane', 1300, 1700, 0, 1),
+        s('Scorch', 'fire', 700, 900, 0, 1),
+      ],
+    },
+    'Warlock:dps': {
+      mods: [tal('Destructive Reach', 2, -0.05, ['shadow', 'fire'])],
+      spells: [
+        s('Shadow Bolt', 'shadow', 1500, 2100, 0, 5),
+        s('Corruption', 'shadow', 400, 500, 0, 2),
+        s('Immolate', 'fire', 700, 900, 0, 1),
+        s('Curse of Agony', 'shadow', 300, 400, 0, 1),
+      ],
+    },
+    'Hunter:dps': {
+      mods: [],
+      spells: [
+        s('Auto Shot', 'physical', 500, 800, 0, 4),
+        s('Steady Shot', 'physical', 700, 1000, 0, 3),
+        s('Multi-Shot', 'physical', 600, 900, 0, 1),
+        s('Arcane Shot', 'arcane', 600, 800, 0, 1),
+      ],
+    },
+    'Priest:dps': {
+      mods: [tal('Shadow Affinity', 3, -0.0833, ['shadow'])],
+      spells: [
+        s('Mind Blast', 'shadow', 1100, 1400, 0, 2),
+        s('Mind Flay', 'shadow', 400, 550, 0, 4),
+        s('Shadow Word: Pain', 'shadow', 300, 400, 0, 2),
+      ],
+    },
+    'Priest:healer': {
+      mods: [tal('Silent Resolve', 5, -0.04)],
+      spells: [
+        heal('Greater Heal', 2500, 3500, 2),
+        heal('Flash Heal', 1200, 1600, 3),
+        heal('Renew', 600, 800, 3),
+      ],
+    },
+    'Shaman:healer': {
+      mods: [tal('Healing Grace', 3, -0.05)],
+      spells: [
+        heal('Chain Heal', 1500, 2200, 4),
+        heal('Healing Wave', 2200, 3000, 1),
+        heal('Lesser Healing Wave', 1000, 1300, 2),
+      ],
+    },
+    'Paladin:healer': {
+      mods: [],
+      spells: [
+        heal('Holy Light', 2200, 3000, 2),
+        heal('Flash of Light', 700, 900, 4),
+      ],
+    },
+    'Druid:healer': {
+      mods: [tal('Subtlety', 5, -0.04)],
+      spells: [
+        heal('Rejuvenation', 500, 700, 3),
+        heal('Lifebloom', 400, 600, 3),
+        heal('Regrowth', 1400, 1900, 1),
+        heal('Healing Touch', 2500, 3200, 1),
+      ],
+    },
+  }
+
+  const PET_KITS = {
+    'pet:wolf': {
+      mods: [],
+      spells: [
+        s('Bite', 'physical', 300, 450, 0, 2),
+        s('Growl', 'physical', 0, 0, 415, 1),
+        s('Melee', 'physical', 200, 350, 0, 4),
+      ],
+    },
+    'pet:cat': {
+      mods: [],
+      spells: [s('Claw', 'physical', 250, 380, 0, 3), s('Melee', 'physical', 200, 350, 0, 4)],
+    },
+    'pet:imp': {
+      mods: [],
+      spells: [s('Firebolt', 'fire', 300, 400, 0, 1)],
+    },
+    'pet:voidwalker': {
+      mods: [],
+      spells: [s('Torment', 'shadow', 0, 0, 395, 1), s('Melee', 'physical', 150, 250, 0, 4)],
+    },
+  }
+
+  // Buffs a player can be forced into or out of. Salvation is inferred for
+  // non-tanks when buff inference is on; Tranquil Air only via an override.
+  const BUFFS = [
+    { key: 'salv', name: 'Blessing of Salvation', mult: 0.7, inferred: true },
+    { key: 'tranq', name: 'Tranquil Air Totem', mult: 0.8, inferred: false },
+  ]
+
+  const kitFor = (p) => (p.kit ? PET_KITS[p.kit] : KITS[`${p.cls}:${p.role}`])
+
+  /** Threat talents for a player's kit. */
+  const talentsFor = (p) => kitFor(p).mods.filter((mod) => mod.talent)
+
+  /** Whether a buff is inferred (before overrides) for this player. */
+  const buffInferred = (player, buff, opts) =>
+    buff.inferred && opts.buffs && player.role !== 'tank' && player.role !== 'pet'
+
+  /** Whether a buff is active for a player once overrides are applied. */
+  function buffActive(player, buff, opts) {
+    const forced = opts.overrides[player.id]?.buffs?.[buff.key]
+    return forced ?? buffInferred(player, buff, opts)
+  }
+
+  /** Effective rank of a talent for a player once overrides are applied. */
+  const talentRank = (player, mod, opts) =>
+    opts.overrides[player.id]?.talents?.[mod.name] ?? mod.max
+
+  const round = (n) => Math.round(n * 10000) / 10000
+
+  /** Modifiers that apply to one spell for one player under the given options. */
+  function modsFor(player, spell, opts) {
+    const kit = kitFor(player)
+    const ov = opts.overrides[player.id] ?? {}
+    const out = []
+    kit.mods
+      .filter((mod) => !mod.schools || mod.schools.includes(spell.school))
+      .forEach((mod) => {
+        if (!mod.talent) {
+          out.push({ name: mod.name, mult: mod.mult })
+          return
+        }
+        const rank = talentRank(player, mod, opts)
+        if (rank === 0) return
+        out.push({
+          name: `${mod.name} (${rank}/${mod.max})`,
+          mult: round(1 + mod.perRank * rank),
+          overridden: ov.talents?.[mod.name] !== undefined,
+        })
+      })
+    if (spell.spellMult !== 1) {
+      out.push({
+        name: spell.kind === 'heal' ? 'Healing threat' : `${spell.name} (spell)`,
+        mult: spell.spellMult,
+      })
+    }
+    BUFFS.filter((buff) => buffActive(player, buff, opts)).forEach((buff) =>
+      out.push({
+        name: buff.name,
+        mult: buff.mult,
+        overridden: ov.buffs?.[buff.key] !== undefined,
+      }),
+    )
+    return out
+  }
+
+  /** Auras that shape a player's threat for the whole fight, for display. */
+  function aurasFor(player, opts) {
+    const kit = kitFor(player)
+    // Only real auras (stances, forms, buffs); class passives and talents are not.
+    const fixed = kit.mods.filter((mod) => !mod.talent && AURA_ICONS[mod.name])
+    const buffs = BUFFS.filter((buff) => buffActive(player, buff, opts))
+    return [...fixed, ...buffs].map((a) => ({ name: a.name, mult: a.mult, icon: AURA_ICONS[a.name] }))
+  }
+
+  const coeffOf = (mods) => mods.reduce((acc, mod) => acc * mod.mult, 1)
+
+  // ===========================================================================
+  // Reports, pulls and the library
+  // ===========================================================================
+
+  const MAULGAR_TARGETS = [
+    { id: 'maulgar', name: 'High King Maulgar', primary: true },
+    { id: 'kiggler', name: 'Kiggler the Crazed' },
+    { id: 'blindeye', name: 'Blindeye the Seer' },
+    { id: 'olm', name: 'Olm the Summoner' },
+    { id: 'krosh', name: 'Krosh Firehand' },
+  ]
+  const GRUUL_TARGETS = [{ id: 'gruul', name: 'Gruul the Dragonkiller', primary: true }]
+
+  const ALL_IDS = PLAYERS.map((p) => p.id)
+  const GRUUL_IDS = ALL_IDS.filter((id) => id !== 4)
+  // Bramblearrow's cat sits out the Gruul pulls (pet dismissed).
+  GRUUL_IDS.splice(GRUUL_IDS.indexOf(21), 1)
+
+  const PULL_TEMPLATES = [
+    { boss: 'High King Maulgar', outcome: 'wipe', pct: 62, dur: 182000, targets: MAULGAR_TARGETS, ids: ALL_IDS },
+    { boss: 'High King Maulgar', outcome: 'wipe', pct: 31, dur: 211000, targets: MAULGAR_TARGETS, ids: ALL_IDS },
+    { boss: 'High King Maulgar', outcome: 'kill', pct: 0, dur: 268000, targets: MAULGAR_TARGETS, ids: ALL_IDS },
+    { boss: 'Gruul the Dragonkiller', outcome: 'wipe', pct: 48, dur: 196000, targets: GRUUL_TARGETS, ids: GRUUL_IDS },
+    { boss: 'Gruul the Dragonkiller', outcome: 'kill', pct: 0, dur: 301000, targets: GRUUL_TARGETS, ids: GRUUL_IDS },
+  ]
+
+  const LIBRARY = {
+    recent: [
+      { code: 'aB3dK9xQ2mN7pL4r', title: "Gruul's Lair", guild: 'Hand of Ragnaros', date: 'Oct 22' },
+      { code: 'Zt8wQ1vR5yU2iO9p', title: "Gruul's Lair + Magtheridon", guild: 'Salt and Pepper', date: 'Oct 20' },
+      { code: 'Lm4nB7vC1xZ8aS3d', title: 'Karazhan', guild: 'Hand of Ragnaros', date: 'Oct 18' },
+    ],
+    starred: [
+      { code: 'Qw2eR4tY6uI8oP0a', title: "Gruul's Lair (first kill)", guild: 'Hand of Ragnaros', date: 'Sep 30' },
+    ],
+    myLogs: [
+      { code: 'aB3dK9xQ2mN7pL4r', title: "Gruul's Lair", guild: 'Hand of Ragnaros', date: 'Oct 22' },
+      { code: 'Hj5kL7mN9bV1cX3z', title: 'Karazhan (alt run)', guild: '—', date: 'Oct 19' },
+    ],
+    guilds: [
+      {
+        id: 'hor',
+        name: 'Hand of Ragnaros',
+        server: 'Dreamscythe',
+        member: true,
+        reports: [
+          { code: 'aB3dK9xQ2mN7pL4r', title: "Gruul's Lair", date: 'Oct 22' },
+          { code: 'Lm4nB7vC1xZ8aS3d', title: 'Karazhan', date: 'Oct 18' },
+          { code: 'Pq9wE3rT5yU7iO1k', title: "Gruul's Lair", date: 'Oct 15' },
+        ],
+      },
+      {
+        id: 'sp',
+        name: 'Salt and Pepper',
+        server: 'Nightslayer',
+        member: true,
+        reports: [
+          { code: 'Zt8wQ1vR5yU2iO9p', title: "Gruul's Lair + Magtheridon", date: 'Oct 20' },
+          { code: 'Rf6gT8hY0uJ2kI4l', title: 'Karazhan', date: 'Oct 13' },
+        ],
+      },
+      {
+        id: 'pp',
+        name: 'Progress Pending',
+        server: 'Spineshatter',
+        member: false,
+        reports: [
+          { code: 'Vb1nM3kL5jH7gF9d', title: "Gruul's Lair + Magtheridon", date: 'Oct 21' },
+          { code: 'Cx2zA4sD6fG8hJ0k', title: 'Serpentshrine Cavern', date: 'Oct 16' },
+        ],
+      },
+    ],
+  }
+
+  const titleByCode = new Map(
+    [
+      ...LIBRARY.recent,
+      ...LIBRARY.starred,
+      ...LIBRARY.myLogs,
+      ...LIBRARY.guilds.flatMap((g) => g.reports.map((r) => ({ ...r, guild: g.name }))),
+    ].map((r) => [r.code, r]),
+  )
+
+  /** Build a fake report. Every code gets the same raid with different rolls. */
+  function getReport(code) {
+    const known = titleByCode.get(code)
+    return {
+      code,
+      title: known ? known.title : `Report ${code.slice(0, 6)}`,
+      guild: known ? known.guild : 'Unknown guild',
+      date: known ? known.date : 'Oct 24',
+      pulls: PULL_TEMPLATES.map((tpl, i) => ({
+        id: i + 1,
+        name: tpl.boss,
+        outcome: tpl.outcome,
+        pct: tpl.pct,
+        durationMs: tpl.dur,
+        targets: tpl.targets,
+        playerIds: tpl.ids,
+      })),
+    }
+  }
+
+  // ===========================================================================
+  // Simulation
+  // ===========================================================================
+
+  const BASE_TPS = 760
+  const simCache = new Map()
+
+  // ===========================================================================
+  // Resources and attack outcomes
+  // ===========================================================================
+
+  const MANA_MAX = 10000
+
+  // Resource cost per cast (rage/energy points, or mana).
+  const COSTS = {
+    'Heroic Strike': 15,
+    'Sunder Armor': 15,
+    Revenge: 5,
+    'Shield Slam': 20,
+    Bloodthirst: 30,
+    Whirlwind: 25,
+    Maul: 15,
+    Swipe: 20,
+    Lacerate: 15,
+    'Sinister Strike': 45,
+    Eviscerate: 35,
+    Frostbolt: 260,
+    Fireball: 410,
+    'Arcane Missiles': 655,
+    Scorch: 150,
+    'Shadow Bolt': 380,
+    Corruption: 340,
+    Immolate: 370,
+    'Curse of Agony': 215,
+    'Mind Blast': 350,
+    'Mind Flay': 205,
+    'Shadow Word: Pain': 470,
+    'Greater Heal': 710,
+    'Flash Heal': 380,
+    Renew: 410,
+    'Chain Heal': 540,
+    'Healing Wave': 620,
+    'Lesser Healing Wave': 300,
+    'Holy Light': 660,
+    'Flash of Light': 140,
+    Rejuvenation: 360,
+    Lifebloom: 220,
+    Regrowth: 650,
+    'Healing Touch': 800,
+    Stormstrike: 240,
+    'Earth Shock': 450,
+    'Crusader Strike': 230,
+    Consecration: 560,
+    'Steady Shot': 110,
+    'Multi-Shot': 230,
+    'Arcane Shot': 230,
+  }
+
+  /** Which resource a player spends (pets are not tracked). */
+  function resourceType(p) {
+    if (p.role === 'pet') return null
+    if (p.cls === 'Warrior' || (p.cls === 'Druid' && p.role === 'tank')) return 'rage'
+    if (p.cls === 'Rogue') return 'energy'
+    return 'mana'
+  }
+
+  const AVOIDED = new Set(['miss', 'dodge', 'parry', 'resist'])
+
+  /** Roll an attack outcome. Tanks stand in front, so only they get parried. */
+  function rollOutcome(p, spell, r) {
+    const x = r()
+    if (spell.kind === 'heal') return x < 0.1 ? 'crit' : 'hit'
+    if (spell.school !== 'physical') return x < 0.04 ? 'resist' : x < 0.14 ? 'crit' : 'hit'
+    if (p.range === 'ranged') return x < 0.05 ? 'miss' : x < 0.17 ? 'crit' : 'hit'
+    const parry = p.role === 'tank' ? 0.06 : 0
+    if (x < 0.05) return 'miss'
+    if (x < 0.1) return 'dodge'
+    if (x < 0.1 + parry) return 'parry'
+    return x < 0.22 + parry ? 'crit' : 'hit'
+  }
+
+  /**
+   * Simulate one pull against one target. Returns every event with its
+   * cumulative threat, per-player series, aggro-holder segments and markers.
+   */
+  function simulate(report, pull, target, opts) {
+    const key = `${report.code}|${pull.id}|${target.id}|${opts.buffs}|${opts.emu}|${JSON.stringify(opts.overrides)}`
+    const cached = simCache.get(key)
+    if (cached) return cached
+
+    const r = rng(hash(`${report.code}:${pull.id}:${target.id}`))
+    const D = pull.durationMs
+    const players = pull.playerIds.map((id) => PLAYERS_BY_ID.get(id))
+    const mainTankId = target.primary ? 1 : 2
+    const offTankId = mainTankId === 1 ? 2 : 1
+    const aggression = (pull.outcome === 'wipe' ? 1.08 : 0.96) * (0.95 + r() * 0.1)
+    const isMain = target.primary
+
+    // --- proactive events -------------------------------------------------
+    const queue = []
+    const manaRegen = new Map()
+    players.forEach((p) => {
+      const kit = kitFor(p)
+      let pace = PACE[p.name] ?? 0.5
+      if (p.role === 'tank') pace = p.id === mainTankId ? 1 : 0.72
+      else if (!isMain) pace *= 0.55
+      const desired = BASE_TPS * pace * (p.role === 'tank' ? 1 : aggression)
+      // Interval assumes Salvation on non-tanks so toggling buff inference
+      // changes output rather than being absorbed.
+      const assumeOpts = { buffs: true, overrides: {} }
+      const totalW = kit.spells.reduce((a, sp) => a + sp.w, 0)
+      const avg =
+        kit.spells.reduce(
+          (a, sp) =>
+            a +
+            sp.w *
+              ((sp.min + sp.max) / 2 + sp.bonus) *
+              coeffOf(modsFor(p, sp, assumeOpts)),
+          0,
+        ) / totalW
+      const interval = Math.min(4, Math.max(0.25, (avg * 1.05) / desired)) * 1000
+      // Mana regen covers ~80% of spend, so casters drift down over a fight.
+      const avgCost = kit.spells.reduce((a, sp) => a + sp.w * (COSTS[sp.name] ?? 0), 0) / totalW
+      manaRegen.set(p.id, 0.8 * avgCost * (1000 / interval))
+
+      // Non-tanks wait a few seconds for the tank to open.
+      let t = Math.floor(r() * interval) + (p.role === 'tank' ? 0 : 3000)
+      while (t < D) {
+        let pick = r() * totalW
+        const spell = kit.spells.find((sp) => (pick -= sp.w) < 0) ?? kit.spells[0]
+        const hitType = rollOutcome(p, spell, r)
+        const base = spell.min + r() * (spell.max - spell.min)
+        const avoided = AVOIDED.has(hitType)
+        const raw = avoided ? 0 : Math.round(base * (hitType === 'crit' ? 2 : 1))
+        queue.push({
+          t,
+          kind: spell.kind ?? 'damage',
+          pid: p.id,
+          spell,
+          raw,
+          bonus: avoided ? 0 : spell.bonus,
+          hitType,
+        })
+        t += Math.floor(interval * (0.6 + r() * 0.8))
+      }
+    })
+
+    // --- scripted events --------------------------------------------------
+    if (isMain) {
+      queue.push({ t: Math.floor(D * 0.33), kind: 'taunt', pid: offTankId })
+      queue.push({ t: Math.floor(D * 0.67), kind: 'taunt', pid: mainTankId })
+      if (pull.name === 'High King Maulgar') {
+        const ranged = players.filter((p) => p.range === 'ranged' && p.role === 'dps')
+        const victim = ranged[Math.floor(r() * ranged.length)]
+        const start = Math.floor(D * 0.5)
+        queue.push({ t: start, kind: 'fixateStart', pid: victim.id, until: start + 6000 })
+        queue.push({ t: start + 6000, kind: 'fixateEnd', pid: victim.id })
+      }
+    }
+    players
+      .filter((p) => p.cls === 'Hunter' && p.role !== 'pet')
+      .forEach((p) => {
+        queue.push({ t: Math.floor(D * (0.2 + r() * 0.3)), kind: 'fd', pid: p.id })
+        queue.push({ t: Math.floor(D * (0.55 + r() * 0.35)), kind: 'fd', pid: p.id })
+      })
+    for (let t = 1500; t < D; t += 1900 + Math.floor(r() * 200)) {
+      queue.push({ t, kind: 'swing', pid: 0 })
+    }
+    queue.sort((a, b) => a.t - b.t)
+
+    // --- run --------------------------------------------------------------
+    const threat = new Map(players.map((p) => [p.id, 0]))
+    const series = new Map(players.map((p) => [p.id, { t: [0], v: [0] }]))
+    const dead = new Set()
+    const events = []
+    const markers = []
+    const segments = [{ start: 0, end: D, pid: mainTankId, kind: 'aggro' }]
+    const pending = []
+    const lastTaunt = new Map()
+    let holder = mainTankId
+    let fixate = null
+
+    const res = new Map(
+      players
+        .filter((p) => resourceType(p))
+        .map((p) => {
+          const type = resourceType(p)
+          const max = type === 'mana' ? MANA_MAX : 100
+          const regen = type === 'energy' ? 10 : type === 'mana' ? manaRegen.get(p.id) : 0
+          return [p.id, { type, cur: type === 'rage' ? 0 : max, max, regen, t: 0 }]
+        }),
+    )
+
+    /**
+     * Pay for a cast and note the resource before/after. If the player can't
+     * afford it, they auto attack instead (or do nothing without a melee swing).
+     */
+    const spend = (item) => {
+      const rs = res.get(item.pid)
+      if (!rs) return item
+      rs.cur = Math.min(rs.max, rs.cur + (rs.regen * (item.t - rs.t)) / 1000)
+      rs.t = item.t
+      let ev = item
+      let cost = COSTS[ev.spell.name] ?? 0
+      if (rs.cur < cost) {
+        const melee = kitFor(byId(item.pid)).spells.find((sp) => sp.name === 'Melee')
+        if (!melee) return null
+        const hitType = item.hitType === 'resist' ? 'miss' : item.hitType
+        const base = melee.min + r() * (melee.max - melee.min)
+        ev = {
+          ...item,
+          spell: melee,
+          hitType,
+          raw: AVOIDED.has(hitType) ? 0 : Math.round(base * (hitType === 'crit' ? 2 : 1)),
+          bonus: 0,
+        }
+        cost = 0
+      }
+      const before = rs.cur
+      rs.cur -= cost
+      if (rs.type === 'rage' && ev.spell.name === 'Melee' && !AVOIDED.has(ev.hitType)) {
+        rs.cur = Math.min(rs.max, rs.cur + (ev.hitType === 'crit' ? 24 : 12))
+      }
+      ev.resource = { type: rs.type, before: Math.round(before), after: Math.round(rs.cur), max: rs.max, cost }
+      return ev
+    }
+
+    const byId = (id) => PLAYERS_BY_ID.get(id)
+    const record = (ev) => {
+      ev.cum = threat.get(ev.pid)
+      ev.id = events.length
+      events.push(ev)
+      const ser = series.get(ev.pid)
+      ser.t.push(ev.t)
+      ser.v.push(ev.cum)
+    }
+    const setHolder = (pid, t, kind = 'aggro') => {
+      const last = segments[segments.length - 1]
+      if (last.pid === pid && last.kind === kind) return
+      if (last.start === t) {
+        last.pid = pid
+        last.kind = kind
+        return
+      }
+      last.end = t
+      segments.push({ start: t, end: D, pid, kind })
+    }
+    const schedule = (item) => {
+      pending.push(item)
+      pending.sort((a, b) => a.t - b.t)
+    }
+    const reassign = (t) => {
+      const alive = players.filter((p) => !dead.has(p.id))
+      if (alive.length === 0) return
+      const top = alive.reduce((a, b) => (threat.get(b.id) > threat.get(a.id) ? b : a))
+      holder = top.id
+      setHolder(holder, t)
+      if (top.role !== 'tank') respondTo(top.id, t)
+    }
+    // A tank usually taunts back; otherwise the puller dies a few seconds later.
+    const respondTo = (pullerId, t) => {
+      schedule({ t: t + 2200 + Math.floor(r() * 1800), kind: 'death', pid: pullerId })
+      const tank = [mainTankId, offTankId].find(
+        (id) => !dead.has(id) && t - (lastTaunt.get(id) ?? -1e9) > 10000,
+      )
+      if (tank && r() < (pull.outcome === 'wipe' ? 0.5 : 0.85)) {
+        schedule({ t: t + 900 + Math.floor(r() * 700), kind: 'taunt', pid: tank })
+      }
+    }
+    const check = (pid, t) => {
+      if (fixate || pid === holder || dead.has(pid)) return
+      const p = byId(pid)
+      const limit = threat.get(holder) * (p.range === 'melee' ? 1.1 : 1.3)
+      if (threat.get(pid) > limit && threat.get(pid) > 0) {
+        markers.push({ t, type: 'aggroLoss', pid: holder, to: pid })
+        holder = pid
+        setHolder(pid, t)
+        if (p.role !== 'tank') respondTo(pid, t)
+      }
+    }
+    const apply = (ev) => {
+      const p = byId(ev.pid)
+      const mods = modsFor(p, ev.spell, opts)
+      const coeff = coeffOf(mods)
+      const delta = (ev.raw + ev.bonus) * coeff
+      threat.set(ev.pid, threat.get(ev.pid) + delta)
+      record({
+        t: ev.t,
+        pid: ev.pid,
+        kind: ev.kind,
+        spell: ev.spell.name,
+        school: ev.spell.school,
+        hitType: ev.hitType ?? 'hit',
+        raw: ev.raw,
+        bonus: ev.bonus,
+        mods,
+        coeff,
+        threat: delta,
+        resource: ev.resource ?? null,
+      })
+      check(ev.pid, ev.t)
+    }
+    const taunt = (pid, t) => {
+      if (dead.has(pid)) return
+      lastTaunt.set(pid, t)
+      const before = threat.get(pid)
+      const after = Math.max(before, threat.get(holder))
+      threat.set(pid, after)
+      record({
+        t,
+        pid,
+        kind: 'taunt',
+        spell: 'Taunt',
+        school: 'physical',
+        hitType: 'hit',
+        raw: 0,
+        bonus: 0,
+        mods: [],
+        coeff: null,
+        threat: after - before,
+        note: `Threat set to ${byId(holder).name}'s (${Math.round(after)})`,
+      })
+      markers.push({ t, type: 'taunt', pid, from: holder })
+      if (!fixate) {
+        holder = pid
+        setHolder(pid, t)
+      }
+    }
+    const die = (pid, t) => {
+      if (dead.has(pid) || holder !== pid) return
+      dead.add(pid)
+      const before = threat.get(pid)
+      threat.set(pid, 0)
+      record({
+        t,
+        pid,
+        kind: 'death',
+        spell: 'Death',
+        school: 'physical',
+        hitType: 'hit',
+        raw: 0,
+        bonus: 0,
+        mods: [],
+        coeff: null,
+        threat: -before,
+        note: 'Threat cleared on death',
+      })
+      markers.push({ t, type: 'death', pid })
+      if (fixate && fixate.pid === pid) fixate = null
+      reassign(t)
+    }
+    const flush = (t) => {
+      while (pending.length && pending[0].t <= t) {
+        const item = pending.shift()
+        if (item.t >= D) continue
+        if (item.kind === 'death') die(item.pid, item.t)
+        else taunt(item.pid, item.t)
+      }
+    }
+
+    queue.forEach((item) => {
+      flush(item.t)
+      if (item.pid && dead.has(item.pid)) return
+      switch (item.kind) {
+        case 'damage':
+        case 'heal': {
+          const ev = spend(item)
+          if (ev) apply(ev)
+          break
+        }
+        case 'taunt':
+          taunt(item.pid, item.t)
+          break
+        case 'fixateStart':
+          fixate = { pid: item.pid, until: item.until }
+          setHolder(item.pid, item.t, 'fixate')
+          markers.push({ t: item.t, end: item.until, type: 'fixate', pid: item.pid })
+          break
+        case 'fixateEnd':
+          if (!fixate) break
+          fixate = null
+          setHolder(holder, item.t)
+          break
+        case 'fd': {
+          const before = threat.get(item.pid)
+          if (opts.emu) threat.set(item.pid, 0)
+          record({
+            t: item.t,
+            pid: item.pid,
+            kind: 'fd',
+            spell: 'Feign Death',
+            school: 'physical',
+            hitType: 'hit',
+            raw: 0,
+            bonus: 0,
+            mods: [],
+            coeff: null,
+            threat: opts.emu ? -before : 0,
+            note: opts.emu ? 'Threat reset by Feign Death' : 'Threat reduction emulation off: no change',
+          })
+          markers.push({ t: item.t, type: 'fd', pid: item.pid })
+          if (opts.emu && holder === item.pid) reassign(item.t)
+          break
+        }
+        case 'swing': {
+          const victimId = fixate ? fixate.pid : holder
+          if (dead.has(victimId)) break
+          markers.push({ t: item.t, type: 'bossMelee', pid: victimId })
+          const victim = byId(victimId)
+          const kit = kitFor(victim)
+          ;(kit.reactive ?? []).forEach((spell) =>
+            apply({ t: item.t, kind: 'damage', pid: victimId, spell, raw: spell.min, bonus: 0, hitType: 'hit' }),
+          )
+          if (kit.rage) {
+            const rage = 8 + Math.floor(r() * 10)
+            threat.set(victimId, threat.get(victimId) + rage * 5)
+            const rs = res.get(victimId)
+            const before = rs ? rs.cur : 0
+            if (rs) rs.cur = Math.min(rs.max, rs.cur + rage)
+            record({
+              t: item.t,
+              pid: victimId,
+              kind: 'energize',
+              spell: 'Rage gain (damage taken)',
+              school: 'physical',
+              hitType: 'hit',
+              raw: rage,
+              bonus: 0,
+              mods: [{ name: '5 threat per rage, not modified by stance', mult: 5 }],
+              coeff: 5,
+              threat: rage * 5,
+              resource: rs
+                ? { type: 'rage', before: Math.round(before), after: Math.round(rs.cur), max: rs.max, cost: 0 }
+                : null,
+            })
+          }
+          break
+        }
+      }
+    })
+    flush(D)
+
+    const result = { key, D, players, events, series, segments, markers, mainTankId }
+    simCache.set(key, result)
+    return result
+  }
+
+  // ===========================================================================
+  // Queries
+  // ===========================================================================
+
+  /** Index of the last element in a sorted array with value <= x, or -1. */
+  function lastAtOrBefore(arr, x) {
+    let lo = 0
+    let hi = arr.length - 1
+    let ans = -1
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1
+      if (arr[mid] <= x) {
+        ans = mid
+        lo = mid + 1
+      } else hi = mid - 1
+    }
+    return ans
+  }
+
+  /** Cumulative threat of one player at time t. */
+  function valueAt(sim, pid, t) {
+    const ser = sim.series.get(pid)
+    if (!ser) return 0
+    const i = lastAtOrBefore(ser.t, t)
+    return i < 0 ? 0 : ser.v[i]
+  }
+
+  /** Aggro segment covering time t. */
+  function segmentAt(sim, t) {
+    const seg = sim.segments.find((sg) => t >= sg.start && t < sg.end)
+    return seg ?? sim.segments[sim.segments.length - 1]
+  }
+
+  /** Tank with the most threat over the whole fight, or null. */
+  function topTank(sim) {
+    const tanks = sim.players.filter((p) => p.role === 'tank')
+    if (tanks.length === 0) return null
+    const total = (pid) =>
+      sim.events.filter((e) => e.pid === pid && e.threat > 0).reduce((a, e) => a + e.threat, 0)
+    return tanks.reduce((a, b) => (total(b.id) > total(a.id) ? b : a)).id
+  }
+
+  return {
+    PLAYERS,
+    PLAYERS_BY_ID,
+    AVOIDED,
+    LIBRARY,
+    getReport,
+    simulate,
+    valueAt,
+    segmentAt,
+    topTank,
+    lastAtOrBefore,
+    kitFor,
+    modsFor,
+    BUFFS,
+    talentsFor,
+    talentRank,
+    buffActive,
+    buffInferred,
+    aurasFor,
+  }
+})()

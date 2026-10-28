@@ -1,0 +1,85 @@
+<!doctype html>
+<!--
+  WOW Threat wireframe v1: chart-first, full-window layout.
+  Self-contained greybox prototype with fake data. Open this file directly in a browser.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WOW Threat wireframe v1</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main id="app">
+      <aside class="rail" id="rail" aria-label="Navigation"></aside>
+
+      <header class="bar" id="bar"></header>
+
+      <section class="center" id="center">
+        <div class="mobile-tabs only-mobile" role="tablist">
+          <button role="tab" data-action="mobile-tab" data-tab="chart">Chart</button>
+          <button role="tab" data-action="mobile-tab" data-tab="breakdown">Player info</button>
+        </div>
+
+        <div class="home" id="home" hidden></div>
+
+        <div class="analysis" id="analysis">
+          <div class="chart-wrap" id="chart-wrap">
+            <canvas id="chart"></canvas>
+            <div class="chart-float" id="chart-float"></div>
+            <div class="hover-tip" id="hover-tip" hidden></div>
+          </div>
+          <div class="lane-wrap lane-aggro">
+            <canvas id="ribbon"></canvas>
+            <div class="hover-tip" id="ribbon-tip" hidden></div>
+          </div>
+          <div class="lane-wrap lane-overview">
+            <canvas id="overview"></canvas>
+          </div>
+          <div class="transport" id="transport"></div>
+        </div>
+      </section>
+
+      <aside class="roster" id="roster" aria-label="Roster"></aside>
+
+      <section class="drawer" id="drawer" aria-label="Player info"></section>
+
+      <aside class="settings" id="settings" hidden aria-label="Settings"></aside>
+      <aside class="settings" id="overrides" hidden aria-label="Threat overrides"></aside>
+    </main>
+
+    <div class="ctx-menu" id="ctx-menu" role="menu" hidden></div>
+    <div class="hover-tip side-tip" id="side-tip" hidden></div>
+
+    <dialog id="open-dialog">
+      <form method="dialog" id="open-form">
+        <h2>Open a report</h2>
+        <label for="open-input">Warcraft Logs report URL or code</label>
+        <input id="open-input" autocomplete="off" placeholder="https://fresh.warcraftlogs.com/reports/…" />
+        <p class="error" id="open-error" hidden></p>
+        <div class="row">
+          <button value="cancel" formnovalidate>Cancel</button>
+          <button value="open" class="primary">Open</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="switcher">
+      <form method="dialog" id="switcher-form">
+        <label for="switcher-input">Jump to pull or target</label>
+        <input id="switcher-input" autocomplete="off" placeholder="Type a boss, pull number, or target" />
+        <ul id="switcher-list"></ul>
+      </form>
+    </dialog>
+
+    <dialog id="shortcuts">
+      <h2>Keyboard shortcuts</h2>
+      <dl class="shortcut-list" id="shortcut-list"></dl>
+      <form method="dialog"><button>Close</button></form>
+    </dialog>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
