@@ -8,6 +8,10 @@ import { useLocation, useParams } from 'react-router-dom'
 
 import { ErrorBoundary } from '../components/error-boundary'
 import { ErrorState } from '../components/error-state'
+import {
+  FightSettingsButton,
+  FightSettingsPanel,
+} from '../components/fight-settings-panel'
 import { FightWorkspace } from '../components/fight-workspace'
 import {
   FightTitle,
@@ -24,10 +28,10 @@ import { PlayerThreatOverridesPanel } from '../components/player-threat-override
 import { SectionCard } from '../components/section-card'
 import { TargetSelector } from '../components/target-selector'
 import { ThreatChart, type ThreatChartProps } from '../components/threat-chart'
-import { ThreatChartControls } from '../components/threat-chart-controls'
 import { ThreatMeter } from '../components/threat-meter'
 import { useFightData } from '../hooks/use-fight-data'
 import { useFightEvents } from '../hooks/use-fight-events'
+import { useFightSettingsPanel } from '../hooks/use-fight-settings-panel'
 import { usePlayerThreatOverrides } from '../hooks/use-player-threat-overrides'
 import { useReplayMode } from '../hooks/use-replay-mode'
 import { useUserSettings } from '../hooks/use-user-settings'
@@ -44,6 +48,7 @@ import {
   serializeTalentRankOverridesByActor,
 } from '../lib/threat-overrides'
 import { buildCharacterUrl, buildFightRankingsUrl } from '../lib/wcl-url'
+import { useBarSettings } from '../routes/app-shell-context'
 import { useReportRouteContext } from '../routes/report-layout-context'
 import type { BossDamageMode } from '../types/app'
 import { useFightPageDerivedState } from './hooks/use-fight-page-derived-state'
@@ -156,6 +161,15 @@ export const FightPage: FC = () => {
       : 'melee'
     : 'off'
   const { disableScope, enableScope } = useHotkeysContext()
+  const settingsPanel = useFightSettingsPanel()
+  useBarSettings(
+    <FightSettingsButton
+      triggerRef={settingsPanel.triggerRef}
+      onOpen={() => {
+        settingsPanel.setOpen(true)
+      }}
+    />,
+  )
   const [isChartReady, setIsChartReady] = useState(false)
   const [registeredResetZoom, setRegisteredResetZoom] = useState<
     (() => void) | null
@@ -513,26 +527,6 @@ export const FightPage: FC = () => {
               <FightChartLoadingSkeleton loadingMessage="Loading fight settings" />
             ) : (
               <>
-                <ThreatChartControls
-                  onResetZoom={() => {
-                    registeredResetZoom?.()
-                  }}
-                  isResetZoomDisabled={
-                    !isChartReady ||
-                    registeredResetZoom === null ||
-                    replayMode.isReplayMode
-                  }
-                  showFixateBands={userSettings.showFixateBands}
-                  onShowFixateBandsChange={handleShowFixateBandsChange}
-                  showEnergizeEvents={userSettings.showEnergizeEvents}
-                  onShowEnergizeEventsChange={handleShowEnergizeEventsChange}
-                  bossDamageMode={bossDamageMode}
-                  onBossDamageModeChange={handleBossDamageModeChange}
-                  inferThreatReduction={userSettings.inferThreatReduction}
-                  onInferThreatReductionChange={
-                    handleInferThreatReductionChange
-                  }
-                />
                 <PlaybackControls
                   isPlaying={replayMode.isPlaying}
                   isReplayMode={replayMode.isReplayMode}
@@ -600,6 +594,21 @@ export const FightPage: FC = () => {
             </SectionCard>
           ) : null
         }
+      />
+      <FightSettingsPanel
+        bossDamageMode={bossDamageMode}
+        inferThreatReduction={userSettings.inferThreatReduction}
+        isOpen={settingsPanel.isOpen}
+        showEnergizeEvents={userSettings.showEnergizeEvents}
+        showFixateBands={userSettings.showFixateBands}
+        showPets={userSettings.showPets}
+        triggerRef={settingsPanel.triggerRef}
+        onBossDamageModeChange={handleBossDamageModeChange}
+        onInferThreatReductionChange={handleInferThreatReductionChange}
+        onOpenChange={settingsPanel.setOpen}
+        onShowEnergizeEventsChange={handleShowEnergizeEventsChange}
+        onShowFixateBandsChange={handleShowFixateBandsChange}
+        onShowPetsChange={handleShowPetsChange}
       />
       {overridePanelActor ? (
         <PlayerThreatOverridesPanel

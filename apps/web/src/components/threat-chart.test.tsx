@@ -7,7 +7,7 @@ import type { CSSProperties, FC } from 'react'
 import { HotkeysProvider } from 'react-hotkeys-hook'
 import { describe, expect, it, vi } from 'vitest'
 
-import type { ThreatSeries } from '../types/app'
+import type { ThreatPoint, ThreatSeries } from '../types/app'
 import { ThreatChart, type ThreatChartProps } from './threat-chart'
 
 vi.mock('echarts-for-react/esm/core', () => {
@@ -44,6 +44,22 @@ function createSeries(
     invulnerabilityWindows: [],
     ...overrides,
   }
+}
+
+function createZoomablePoints(): ThreatPoint[] {
+  return [0, 10000].map((timeMs) => ({
+    timestamp: timeMs,
+    timeMs,
+    totalThreat: timeMs / 100,
+    threatDelta: 0,
+    amount: 0,
+    baseThreat: 0,
+    modifiedThreat: 0,
+    spellSchool: null,
+    eventType: 'damage',
+    abilityName: 'Hit',
+    modifiers: [],
+  }))
 }
 
 function renderChart(overrides: Partial<ThreatChartProps> = {}) {
@@ -170,5 +186,52 @@ describe('ThreatChart', () => {
       expect(onShowPetsChange).not.toHaveBeenCalled()
       expect(onTogglePinnedPlayer).not.toHaveBeenCalled()
     })
+  })
+
+  it('shows a floating reset zoom button only while zoomed', async () => {
+    const onWindowChange = vi.fn()
+    const full = renderChart({
+      onWindowChange,
+      series: [
+        createSeries({
+          actorId: 1,
+          label: 'Tanky',
+          points: createZoomablePoints(),
+        }),
+      ],
+    })
+    expect(screen.queryByRole('button', { name: 'Reset zoom' })).toBeNull()
+    full.unmount()
+
+    renderChart({
+      onWindowChange,
+      windowStartMs: 2000,
+      windowEndMs: 5000,
+      series: [
+        createSeries({
+          actorId: 1,
+          label: 'Tanky',
+          points: createZoomablePoints(),
+        }),
+      ],
+    })
+    await userEvent.click(screen.getByRole('button', { name: 'Reset zoom' }))
+    expect(onWindowChange).toHaveBeenCalledWith(null, null)
+  })
+
+  it('hides the floating reset zoom button in replay mode', () => {
+    renderChart({
+      isReplayMode: true,
+      windowStartMs: 2000,
+      windowEndMs: 5000,
+      series: [
+        createSeries({
+          actorId: 1,
+          label: 'Tanky',
+          points: createZoomablePoints(),
+        }),
+      ],
+    })
+    expect(screen.queryByRole('button', { name: 'Reset zoom' })).toBeNull()
   })
 })

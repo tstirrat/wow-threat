@@ -6,6 +6,7 @@ import { type Page } from '@playwright/test'
 import { FightQuickSwitcherObject } from '../components/fight-quick-switcher-object'
 import { KeyboardShortcutsOverlayObject } from '../components/keyboard-shortcuts-overlay-object'
 import { FightPageHeaderObject } from './fight-page-header-object'
+import { FightSettingsObject } from './fight-settings-object'
 import { FocusedPlayerSummaryObject } from './focused-player-summary-object'
 import { PlayerThreatOverridesObject } from './player-threat-overrides-object'
 import { ReplayModeObject } from './replay-mode-object'
@@ -13,6 +14,7 @@ import { ThreatChartObject } from './threat-chart-object'
 
 export class FightPageObject {
   readonly chart: ThreatChartObject
+  readonly settings: FightSettingsObject
   readonly header: FightPageHeaderObject
   readonly quickSwitch: FightQuickSwitcherObject
   readonly overrides: PlayerThreatOverridesObject
@@ -21,6 +23,7 @@ export class FightPageObject {
   readonly summary: FocusedPlayerSummaryObject
 
   constructor(readonly page: Page) {
+    this.settings = new FightSettingsObject(page)
     this.header = new FightPageHeaderObject(page)
     this.quickSwitch = new FightQuickSwitcherObject(page)
     this.overrides = new PlayerThreatOverridesObject(page)

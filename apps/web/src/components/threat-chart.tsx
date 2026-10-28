@@ -32,6 +32,7 @@ import type { BossDamageMode, ThreatSeries } from '../types/app'
 import { ThreatChartLegend } from './threat-chart-legend'
 import { ThreatChartPlayerSearch } from './threat-chart-player-search'
 import { createThreatChartTooltipFormatter } from './threat-chart-tooltip'
+import { Button } from './ui/button'
 
 export type ThreatChartProps = {
   series: ThreatSeries[]
@@ -123,6 +124,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   })
   const {
     consumeSuppressedSeriesClick,
+    isZoomed,
     resetZoom,
     toggleLastZoom,
     yAxisWindow,
@@ -599,6 +601,17 @@ export const ThreatChart: FC<ThreatChartProps> = ({
             click: handleSeriesChartClick,
           }}
         />
+        {isZoomed && !isReplayMode ? (
+          <Button
+            className="absolute right-3 top-3 z-10 bg-background/90 shadow-sm"
+            size="sm"
+            type="button"
+            variant="outline"
+            onClick={resetZoom}
+          >
+            Reset zoom
+          </Button>
+        ) : null}
       </div>
       {legendContainer
         ? createPortal(
