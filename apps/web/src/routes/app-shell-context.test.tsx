@@ -9,6 +9,7 @@ import {
   useBarRosterToggle,
   useBarSettings,
   useBarTitle,
+  useBarTitleTrailing,
 } from './app-shell-context'
 import { AppShellProvider } from './app-shell-provider'
 
@@ -69,5 +70,31 @@ describe('app shell context', () => {
     )
     expect(screen.getByTestId('settings')).toBeEmptyDOMElement()
     expect(screen.getByTestId('roster')).toBeEmptyDOMElement()
+  })
+})
+
+describe('bar title trailing slot', () => {
+  it('renders after the title only while filled', () => {
+    const Reader = () => (
+      <div data-testid="trailing">{useAppShell().barTitleTrailing}</div>
+    )
+    const Filler = () => {
+      useBarTitleTrailing('Target')
+      return null
+    }
+    const { rerender } = render(
+      <AppShellProvider>
+        <Reader />
+        <Filler />
+      </AppShellProvider>,
+    )
+    expect(screen.getByTestId('trailing')).toHaveTextContent('Target')
+
+    rerender(
+      <AppShellProvider>
+        <Reader />
+      </AppShellProvider>,
+    )
+    expect(screen.getByTestId('trailing')).toBeEmptyDOMElement()
   })
 })

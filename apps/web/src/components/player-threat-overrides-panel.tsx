@@ -35,6 +35,8 @@ export interface PlayerThreatOverridesPanelProps {
     state: AuraOverrideState,
   ) => void
   onClose: () => void
+  /** Offset left of the fight roster panel so it is not covered. */
+  avoidRoster?: boolean
   onReset: () => void
   onTalentRankOverrideChange: (
     option: TalentThreatOverrideOption,
@@ -151,6 +153,7 @@ export const PlayerThreatOverridesPanel: FC<
   isRecalculating,
   onAuraOverrideChange,
   onClose,
+  avoidRoster = false,
   onReset,
   onTalentRankOverrideChange,
   options,
@@ -186,7 +189,7 @@ export const PlayerThreatOverridesPanel: FC<
   return (
     <aside
       aria-label={`Threat overrides for ${actor.name}`}
-      className="fixed right-4 top-20 z-50 w-[min(21rem,calc(100vw-2rem))]"
+      className={`fixed top-20 z-50 w-[min(21rem,calc(100vw-2rem))] ${avoidRoster ? 'right-4 lg:right-[calc(17rem+1.5rem)]' : 'right-4'}`}
       ref={panelRef}
     >
       <Card

@@ -21,7 +21,6 @@ describe('FightWorkspace', () => {
   it('places each slot in its named grid area', () => {
     render(
       <FightWorkspace
-        header={<p>header content</p>}
         chart={<p>chart content</p>}
         roster={<p>roster content</p>}
         transport={<p>transport content</p>}
@@ -29,7 +28,7 @@ describe('FightWorkspace', () => {
       />,
     )
 
-    const regions = ['header', 'chart', 'roster', 'transport', 'drawer']
+    const regions = ['chart', 'roster', 'transport', 'drawer']
     regions.forEach((name) => {
       const region = getRegion(name)
       expect(within(region).getByText(`${name} content`)).toBeInTheDocument()
@@ -38,15 +37,23 @@ describe('FightWorkspace', () => {
   })
 
   it('names chart and roster side by side on large screens', () => {
-    render(<FightWorkspace header={null} chart={null} />)
+    render(<FightWorkspace chart={null} />)
 
     expect(
       screen.getByRole('region', { name: 'Fight workspace' }).className,
     ).toContain("'chart_roster'")
   })
 
+  it('hides the roster region and gives the chart the full width when roster is hidden', () => {
+    render(<FightWorkspace chart={null} isRosterVisible={false} roster="x" />)
+
+    const workspace = screen.getByRole('region', { name: 'Fight workspace' })
+    expect(workspace.className).not.toContain("'chart_roster'")
+    expect(getRegion('roster').className).toContain('hidden')
+  })
+
   it('omits transport and drawer regions when they have no content', () => {
-    render(<FightWorkspace header={null} chart={<p>chart</p>} />)
+    render(<FightWorkspace chart={<p>chart</p>} />)
 
     const workspace = screen.getByRole('region', { name: 'Fight workspace' })
     expect(workspace.querySelector('[data-region="transport"]')).toBeNull()
@@ -54,13 +61,7 @@ describe('FightWorkspace', () => {
   })
 
   it('names the workspace region from the label prop', () => {
-    render(
-      <FightWorkspace
-        label="Patchwerk fight workspace"
-        header={null}
-        chart={null}
-      />,
-    )
+    render(<FightWorkspace label="Patchwerk fight workspace" chart={null} />)
 
     expect(
       screen.getByRole('region', { name: 'Patchwerk fight workspace' }),
@@ -71,7 +72,6 @@ describe('FightWorkspace', () => {
     let rosterContainer: HTMLDivElement | null = null
     render(
       <FightWorkspace
-        header={null}
         chart={null}
         rosterRef={(element) => {
           rosterContainer = element

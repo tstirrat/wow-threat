@@ -26,7 +26,11 @@ export class ThreatChartObject {
   }
 
   targetControl(): Locator {
-    return this.section.getByLabel('Target')
+    return this.page.getByTestId('app-bar-title').getByLabel('Target')
+  }
+
+  rosterToggle(): Locator {
+    return this.page.getByRole('button', { name: /^(Hide|Show) roster$/ })
   }
 
   resetZoomButton(): Locator {
