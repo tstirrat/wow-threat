@@ -6,6 +6,18 @@ import { type Locator, type Page } from '@playwright/test'
 export class ReplayModeObject {
   constructor(private readonly page: Page) {}
 
+  transport(): Locator {
+    return this.page.getByRole('group', { name: 'Playback controls' })
+  }
+
+  clearButton(): Locator {
+    return this.transport().getByRole('button', { name: 'Clear', exact: true })
+  }
+
+  cursorReadout(): Locator {
+    return this.transport().getByTestId('transport-cursor')
+  }
+
   replayButton(): Locator {
     return this.page.getByRole('button', { name: 'Replay', exact: true })
   }

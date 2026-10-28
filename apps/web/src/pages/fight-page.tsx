@@ -526,17 +526,6 @@ export const FightPage: FC = () => {
                     handleInferThreatReductionChange
                   }
                 />
-                <PlaybackControls
-                  isPlaying={replayMode.isPlaying}
-                  isReplayMode={replayMode.isReplayMode}
-                  playbackSpeed={replayMode.playbackSpeed}
-                  hasPlayhead={replayMode.effectivePlayheadMs !== null}
-                  onTogglePlayPause={replayMode.togglePlayPause}
-                  onIncreaseSpeed={replayMode.increaseSpeed}
-                  onDecreaseSpeed={replayMode.decreaseSpeed}
-                  onToggleReplayMode={replayMode.toggleReplayMode}
-                  onClearPlayhead={replayMode.clearPlayhead}
-                />
               </>
             )}
             {isUserSettingsLoading ? null : selectedTarget === null ? (
@@ -577,6 +566,22 @@ export const FightPage: FC = () => {
               onExpandedChange={setIsThreatMeterExpanded}
             />
           ) : null
+        }
+        transport={
+          isUserSettingsLoading ? null : (
+            <PlaybackControls
+              isPlaying={replayMode.isPlaying}
+              isReplayMode={replayMode.isReplayMode}
+              playbackSpeed={replayMode.playbackSpeed}
+              hasPlayhead={replayMode.effectivePlayheadMs !== null}
+              playheadMs={replayMode.effectivePlayheadMs}
+              onTogglePlayPause={replayMode.togglePlayPause}
+              onIncreaseSpeed={replayMode.increaseSpeed}
+              onDecreaseSpeed={replayMode.decreaseSpeed}
+              onToggleReplayMode={replayMode.toggleReplayMode}
+              onClearPlayhead={replayMode.clearPlayhead}
+            />
+          )
         }
         drawer={
           !isUserSettingsLoading && eventsData ? (
