@@ -251,6 +251,39 @@ test.describe('fight page', () => {
     await expect(fightPage.chart.rosterRegion()).toBeHidden()
   })
 
+  test('collapses the player info drawer with the chevron and I key, persisting across reloads', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(`${svgFightUrl}&focusId=1`)
+    await expect(fightPage.summary.breakdownTable()).toBeVisible()
+    await expect(fightPage.summary.toggleButton()).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    )
+
+    await fightPage.summary.toggleButton().click()
+    await expect(fightPage.summary.breakdownTable()).toBeHidden()
+    await expect(fightPage.summary.focusedActorText('Aegistank')).toBeVisible()
+
+    await page.reload()
+    await expect(fightPage.summary.toggleButton()).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    )
+    await expect(fightPage.summary.breakdownTable()).toBeHidden()
+
+    await page.keyboard.press('i')
+    await expect(fightPage.summary.breakdownTable()).toBeVisible()
+
+    await fightPage.summary.shortcutsButton().click()
+    await expect(fightPage.shortcuts.dialog()).toBeVisible()
+    await expect(
+      fightPage.shortcuts.shortcutListItem('Show / hide player info drawer'),
+    ).toBeVisible()
+  })
+
   test('applies players query param as initial legend visibility', async ({
     page,
   }) => {

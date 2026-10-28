@@ -97,3 +97,13 @@ export function useBarRosterToggle(node: ReactNode): void {
     return () => setBarRosterToggle(null)
   }, [node, setBarRosterToggle])
 }
+
+/** Lets descendants of the shell open the keyboard shortcuts overlay. */
+export const ShortcutsOverlayContext = createContext<{
+  openShortcuts: () => void
+}>({ openShortcuts: noop })
+
+/** Returns the callback that opens the keyboard shortcuts overlay. */
+export function useOpenShortcuts(): () => void {
+  return useContext(ShortcutsOverlayContext).openShortcuts
+}
