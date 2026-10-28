@@ -172,7 +172,6 @@ describe('RootLayout', () => {
     renderLayout('/')
 
     expect(screen.getByRole('link', { name: 'Go to home' })).toBeTruthy()
-    expect(screen.getByText('WoW Threat')).toBeTruthy()
   })
 
   it('shows wcl api rate limit details inside the account dropdown', async () => {
@@ -251,7 +250,7 @@ describe('RootLayout', () => {
     expect(screen.getByLabelText('Open report')).toBeTruthy()
   })
 
-  it('shows starred reports dropdown on non-landing routes for signed-in users', async () => {
+  it('does not render a starred dropdown and orders bar sections', () => {
     useWclRateLimitMock.mockReturnValue(createMockWclRateLimitValue())
     useAuthMock.mockReturnValue(
       createMockAuthValue({
@@ -261,29 +260,26 @@ describe('RootLayout', () => {
         wclUserId: '12345',
       }),
     )
-    useUserSettingsMock.mockReturnValue({
-      settings: {
-        showPets: false,
-        showFixateBands: true,
-        showEnergizeEvents: false,
-        inferThreatReduction: false,
-        starredReports: [
-          {
-            reportId: 'ABC123',
-            title: 'Pinned report',
-            sourceHost: 'fresh.warcraftlogs.com',
-            starredAt: 1,
-          },
-        ],
-        starredEntities: [],
-      },
-      isLoading: false,
-    })
 
     renderLayout('/report/abc123')
 
-    await userEvent.click(screen.getByRole('button', { name: /Starred/i }))
-    expect(screen.getByText('Pinned report')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /Starred/i })).toBeNull()
+
+    const bar = screen.getByTestId('app-bar')
+    const order = [
+      screen.getByRole('link', { name: 'Go to home' }),
+      screen.getByTestId('report-input-container'),
+      screen.getByTestId('app-bar-divider'),
+      screen.getByTestId('app-bar-title'),
+      screen.getByRole('button', { name: /Warcraft Logs user|12345/ }),
+    ]
+    expect(bar).toContainElement(order[0] as HTMLElement)
+    order.slice(1).forEach((el, i) => {
+      const prev = order[i] as HTMLElement
+      expect(
+        prev.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy()
+    })
   })
 
   it('opens report input with cmd/ctrl+o shortcut', async () => {

@@ -1,15 +1,19 @@
 /**
- * Slot context letting routed pages fill the app bar title and the rail report section.
+ * Slot context letting routed pages fill the app bar title, bar settings and roster toggle, and the rail report section.
  */
 import { type ReactNode, createContext, useContext, useEffect } from 'react'
 
 export interface AppShellSlots {
   setBarTitle: (node: ReactNode) => void
+  setBarSettings: (node: ReactNode) => void
+  setBarRosterToggle: (node: ReactNode) => void
   setRailReportSection: (node: ReactNode) => void
 }
 
 export interface AppShellContextValue extends AppShellSlots {
   barTitle: ReactNode
+  barSettings: ReactNode
+  barRosterToggle: ReactNode
   railReportSection: ReactNode
 }
 
@@ -17,14 +21,20 @@ const noop = (): void => undefined
 
 export const AppShellContext = createContext<AppShellContextValue>({
   barTitle: null,
+  barSettings: null,
+  barRosterToggle: null,
   railReportSection: null,
   setBarTitle: noop,
+  setBarSettings: noop,
+  setBarRosterToggle: noop,
   setRailReportSection: noop,
 })
 
 /** Stable setters only, so slot fillers do not re-render when slot content changes. */
 export const AppShellSettersContext = createContext<AppShellSlots>({
   setBarTitle: noop,
+  setBarSettings: noop,
+  setBarRosterToggle: noop,
   setRailReportSection: noop,
 })
 
@@ -51,4 +61,24 @@ export function useRailReportSection(node: ReactNode): void {
     setRailReportSection(node)
     return () => setRailReportSection(null)
   }, [node, setRailReportSection])
+}
+
+/** Fills the app bar settings slot while the calling component is mounted. */
+export function useBarSettings(node: ReactNode): void {
+  const { setBarSettings } = useContext(AppShellSettersContext)
+
+  useEffect(() => {
+    setBarSettings(node)
+    return () => setBarSettings(null)
+  }, [node, setBarSettings])
+}
+
+/** Fills the app bar roster-toggle slot while the calling component is mounted. */
+export function useBarRosterToggle(node: ReactNode): void {
+  const { setBarRosterToggle } = useContext(AppShellSettersContext)
+
+  useEffect(() => {
+    setBarRosterToggle(node)
+    return () => setBarRosterToggle(null)
+  }, [node, setBarRosterToggle])
 }
