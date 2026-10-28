@@ -14,7 +14,7 @@ export class ThreatChartObject {
   readonly section: Locator
 
   constructor(private readonly page: Page) {
-    this.section = page.getByRole('region', { name: 'Fight workspace' })
+    this.section = page.getByRole('region', { name: /fight workspace$/i })
   }
 
   chartRegion(): Locator {

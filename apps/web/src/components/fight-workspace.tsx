@@ -4,6 +4,7 @@
 import type { FC, ReactNode, Ref } from 'react'
 
 export type FightWorkspaceProps = {
+  label?: string
   header: ReactNode
   chart: ReactNode
   roster?: ReactNode
@@ -22,6 +23,7 @@ const workspaceGridClassName = [
 
 /** Lay out the fight page regions; the roster fills the chart row without stretching it. */
 export const FightWorkspace: FC<FightWorkspaceProps> = ({
+  label = 'Fight workspace',
   header,
   chart,
   roster,
@@ -31,7 +33,7 @@ export const FightWorkspace: FC<FightWorkspaceProps> = ({
 }) => {
   return (
     <section
-      aria-label="Fight workspace"
+      aria-label={label}
       className={workspaceGridClassName}
       data-testid="fight-workspace"
     >

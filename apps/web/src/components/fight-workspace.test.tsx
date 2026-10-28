@@ -53,6 +53,20 @@ describe('FightWorkspace', () => {
     expect(workspace.querySelector('[data-region="drawer"]')).toBeNull()
   })
 
+  it('names the workspace region from the label prop', () => {
+    render(
+      <FightWorkspace
+        label="Patchwerk fight workspace"
+        header={null}
+        chart={null}
+      />,
+    )
+
+    expect(
+      screen.getByRole('region', { name: 'Patchwerk fight workspace' }),
+    ).toBeInTheDocument()
+  })
+
   it('exposes the roster container through rosterRef', () => {
     let rosterContainer: HTMLDivElement | null = null
     render(

@@ -527,6 +527,7 @@ export const FightPage: FC = () => {
     <>
       <title>{pageTitle}</title>
       <FightWorkspace
+        label={`${fightData.name} fight workspace`}
         header={
           <FightWorkspaceHeader
             title={
