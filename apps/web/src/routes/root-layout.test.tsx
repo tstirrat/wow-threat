@@ -36,6 +36,9 @@ vi.mock('@/api/reports', () => ({
 vi.mock('posthog-js/react', () => ({
   usePostHog: () => null,
 }))
+vi.mock('@/components/rail-library', () => ({
+  RailLibrary: () => <div data-testid="rail-library-stub" />,
+}))
 vi.mock('@/hooks/use-page-view-tracking', () => ({
   usePageViewTracking: () => undefined,
 }))

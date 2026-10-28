@@ -6,6 +6,7 @@ import { AppBar } from '@/components/app-bar'
 import { AppRail } from '@/components/app-rail'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { FightPageKeyboardShortcutsOverlay } from '@/components/fight-page-keyboard-shortcuts-overlay'
+import { RailLibrary } from '@/components/rail-library'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { usePageViewTracking } from '@/hooks/use-page-view-tracking'
 import { type FC, useState } from 'react'
@@ -67,7 +68,7 @@ export const RootLayout: FC = () => {
           onClose={closeKeyboardOverlay}
         />
         <div className="row-span-2">
-          <AppRail />
+          <AppRail librarySection={<RailLibrary />} />
         </div>
         <AppBar
           isLandingPage={isLandingPage}

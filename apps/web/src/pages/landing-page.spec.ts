@@ -26,8 +26,12 @@ async function expectPathname(page: Page, pathname: string): Promise<void> {
   await expect(page).toHaveURL((url) => url.pathname === pathname)
 }
 
+function landingBox(page: Page) {
+  return page.getByRole('region', { name: 'Open a report' })
+}
+
 async function fillReportInput(page: Page, value: string): Promise<void> {
-  const reportInput = page.getByRole('combobox', { name: 'Open report' })
+  const reportInput = page.getByRole('combobox', { name: 'Report URL or ID' })
   await reportInput.click()
   await reportInput.fill(value)
 }
@@ -58,7 +62,7 @@ test.describe('landing page', () => {
     await expect(recentReports.recentReportsSection()).toBeVisible()
     await expect(recentReports.noRecentReportsText()).toBeVisible()
     await fillReportInput(page, e2eValidFreshReportUrl)
-    await page.getByRole('button', { name: 'Load report' }).click()
+    await landingBox(page).getByRole('button', { name: 'Load report' }).click()
 
     await expectPathname(page, `/report/${e2eReportId}`)
   })
@@ -69,7 +73,7 @@ test.describe('landing page', () => {
       page,
       'https://www.warcraftlogs.com/reports/not-supported-host',
     )
-    await page.getByRole('button', { name: 'Load report' }).click()
+    await landingBox(page).getByRole('button', { name: 'Load report' }).click()
 
     await expectPathname(page, '/')
     await expect(page.getByRole('alert')).toContainText(
@@ -102,9 +106,8 @@ test.describe('landing page', () => {
     await page.goto('/')
 
     await expect(
-      page.getByText('Paste a report into the input above'),
+      page.getByRole('heading', { name: 'Open a Warcraft Logs report' }),
     ).toBeVisible()
-    await expect(page.getByText(/Ctrl|⌘/)).toBeVisible()
     await expect(recentReports.exampleReportsSection()).toBeVisible()
     await expect(recentReports.exampleReportsList()).toBeVisible()
     await maybeCaptureScreenshot(page)
@@ -120,7 +123,7 @@ test.describe('landing page', () => {
 
     await page.goto('/')
     await fillReportInput(page, e2eValidFreshReportUrl)
-    await page.getByRole('button', { name: 'Load report' }).click()
+    await landingBox(page).getByRole('button', { name: 'Load report' }).click()
 
     await expectPathname(page, `/report/${e2eReportId}`)
     await expect(
@@ -140,7 +143,7 @@ test.describe('landing page', () => {
 
     await page.goto('/')
     await fillReportInput(page, e2eValidFreshReportUrl)
-    await page.getByRole('button', { name: 'Load report' }).click()
+    await landingBox(page).getByRole('button', { name: 'Load report' }).click()
     await expectPathname(page, `/report/${e2eReportId}`)
     await expect(
       page.getByRole('region', { name: 'Report header' }),
@@ -161,7 +164,7 @@ test.describe('landing page', () => {
   }) => {
     await page.goto('/')
     await fillReportInput(page, e2eValidFreshReportUrl)
-    await page.getByRole('button', { name: 'Load report' }).click()
+    await landingBox(page).getByRole('button', { name: 'Load report' }).click()
     await expectPathname(page, `/report/${e2eReportId}`)
 
     await page.getByRole('button', { name: 'Open report input' }).click()
@@ -174,7 +177,7 @@ test.describe('landing page', () => {
     page,
   }) => {
     await page.goto('/')
-    const reportInput = page.getByRole('combobox', { name: 'Open report' })
+    const reportInput = page.getByRole('combobox', { name: 'Report URL or ID' })
     await reportInput.click()
     await reportInput.fill(e2eValidFreshReportUrl)
     await reportInput.press('Enter')
