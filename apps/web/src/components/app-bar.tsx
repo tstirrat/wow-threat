@@ -67,7 +67,8 @@ interface AppBarProps {
 
 /** Top bar: home icon, open report, divider, title slot, account menu, theme toggle and settings/roster slots. */
 export const AppBar: FC<AppBarProps> = ({ isLandingPage, onReportError }) => {
-  const { barRosterToggle, barSettings, barTitle } = useAppShell()
+  const { barRosterToggle, barSettings, barTitle, barTitleTrailing } =
+    useAppShell()
   const posthog = usePostHog()
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
   const [isSubmittingReport, setIsSubmittingReport] = useState(false)
@@ -308,10 +309,16 @@ export const AppBar: FC<AppBarProps> = ({ isLandingPage, onReportError }) => {
         />
 
         <div
-          className="order-last min-w-0 basis-full truncate text-sm text-muted-foreground min-[760px]:order-none min-[760px]:basis-0 min-[760px]:flex-1"
+          className="order-last flex min-w-0 basis-full items-center gap-2 text-sm text-muted-foreground min-[760px]:order-none min-[760px]:basis-0 min-[760px]:flex-1"
           data-testid="app-bar-title"
         >
-          {barTitle}
+          <div className="min-w-0 truncate">{barTitle}</div>
+          {barTitle && barTitleTrailing ? (
+            <>
+              <span aria-hidden="true">›</span>
+              <div className="shrink-0">{barTitleTrailing}</div>
+            </>
+          ) : null}
         </div>
 
         <div className="ml-auto flex shrink-0 items-center justify-end gap-2 min-[760px]:ml-0">

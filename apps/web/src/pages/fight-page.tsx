@@ -8,15 +8,12 @@ import { useLocation, useParams } from 'react-router-dom'
 
 import { ErrorBoundary } from '../components/error-boundary'
 import { ErrorState } from '../components/error-state'
+import { FightBarTarget } from '../components/fight-bar-target'
 import {
   FightSettingsButton,
   FightSettingsPanel,
 } from '../components/fight-settings-panel'
 import { FightWorkspace } from '../components/fight-workspace'
-import {
-  FightTitle,
-  FightWorkspaceHeader,
-} from '../components/fight-workspace-header'
 import {
   FightChartLoadingSkeleton,
   FightPageLoadingSkeleton,
@@ -25,8 +22,8 @@ import {
 import { PlaybackControls } from '../components/playback-controls'
 import { PlayerSummaryTable } from '../components/player-summary-table'
 import { PlayerThreatOverridesPanel } from '../components/player-threat-overrides-panel'
+import { RosterToggleButton } from '../components/roster-toggle-button'
 import { SectionCard } from '../components/section-card'
-import { TargetSelector } from '../components/target-selector'
 import { ThreatChart, type ThreatChartProps } from '../components/threat-chart'
 import { ThreatMeter } from '../components/threat-meter'
 import { useFightData } from '../hooks/use-fight-data'
@@ -34,6 +31,7 @@ import { useFightEvents } from '../hooks/use-fight-events'
 import { useFightSettingsPanel } from '../hooks/use-fight-settings-panel'
 import { usePlayerThreatOverrides } from '../hooks/use-player-threat-overrides'
 import { useReplayMode } from '../hooks/use-replay-mode'
+import { useRosterVisibility } from '../hooks/use-roster-visibility'
 import { useUserSettings } from '../hooks/use-user-settings'
 import { parseBooleanQueryParam } from '../lib/query-params'
 import { getThreatAtTime } from '../lib/threat-at-time'
@@ -48,7 +46,11 @@ import {
   serializeTalentRankOverridesByActor,
 } from '../lib/threat-overrides'
 import { buildCharacterUrl, buildFightRankingsUrl } from '../lib/wcl-url'
-import { useBarSettings } from '../routes/app-shell-context'
+import {
+  useBarRosterToggle,
+  useBarSettings,
+  useBarTitleTrailing,
+} from '../routes/app-shell-context'
 import { useReportRouteContext } from '../routes/report-layout-context'
 import type { BossDamageMode } from '../types/app'
 import { useFightPageDerivedState } from './hooks/use-fight-page-derived-state'
@@ -250,6 +252,25 @@ export const FightPage: FC = () => {
     visibleSeriesCount: visibleSeries.length,
     posthog,
   })
+
+  const { isRosterVisible, toggleRoster } = useRosterVisibility()
+  useBarRosterToggle(
+    <RosterToggleButton
+      isRosterVisible={isRosterVisible}
+      onToggle={toggleRoster}
+    />,
+  )
+  useBarTitleTrailing(
+    fightData ? (
+      <FightBarTarget
+        fightName={fightData.name}
+        selectedTarget={selectedTarget}
+        targets={targetOptions}
+        warcraftLogsUrl={buildFightRankingsUrl(reportHost, reportId, fightId)}
+        onTargetChange={handleTargetChange}
+      />
+    ) : null,
+  )
 
   useEffect(() => {
     enableScope('fight-page')
@@ -493,34 +514,6 @@ export const FightPage: FC = () => {
       <title>{pageTitle}</title>
       <FightWorkspace
         label={`${fightData.name} fight workspace`}
-        header={
-          <FightWorkspaceHeader
-            title={
-              <FightTitle
-                durationMs={fightDurationMs}
-                fightName={fightData.name}
-                warcraftLogsUrl={buildFightRankingsUrl(
-                  reportHost,
-                  reportId,
-                  fightId,
-                )}
-              />
-            }
-            actions={
-              selectedTarget ? (
-                <TargetSelector
-                  targets={targetOptions}
-                  selectedTarget={selectedTarget}
-                  onChange={handleTargetChange}
-                />
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No valid targets available.
-                </p>
-              )
-            }
-          />
-        }
         chart={
           <>
             {isUserSettingsLoading ? (
@@ -562,6 +555,7 @@ export const FightPage: FC = () => {
             )}
           </>
         }
+        isRosterVisible={isRosterVisible}
         rosterRef={setLegendContainer}
         roster={
           isUserSettingsLoading ||
@@ -619,6 +613,7 @@ export const FightPage: FC = () => {
               String(overridePanelActor.id)
             ]
           }
+          avoidRoster={isRosterVisible}
           isRecalculating={eventsQuery.isFetching}
           options={overridePanelOptions}
           onAuraOverrideChange={(option, state) => {
