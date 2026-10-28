@@ -11,7 +11,9 @@ export class FightPageHeaderObject {
   }
 
   section(): Locator {
-    return this.page.getByRole('region', { name: 'Report header' })
+    return this.page
+      .getByTestId('app-rail')
+      .getByRole('region', { name: 'Report header' })
   }
 
   warcraftLogsReportLink(): Locator {

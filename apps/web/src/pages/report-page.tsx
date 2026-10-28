@@ -16,10 +16,10 @@ export const ReportPage: FC = () => {
       <title>{`${reportTitle} | WOW Threat`}</title>
       <SectionCard
         title="Choose a fight"
-        subtitle="Select a boss kill above to load threat details for that encounter."
+        subtitle="Select a boss kill in the sidebar to load threat details for that encounter."
       >
         <p className="text-sm text-muted-foreground">
-          Choose a fight from the quick switcher to view the chart and legend.
+          Choose a fight from the sidebar to view the chart and legend.
         </p>
       </SectionCard>
     </>

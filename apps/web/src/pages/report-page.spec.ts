@@ -49,7 +49,7 @@ test.describe('report page', () => {
     ).toBeVisible()
     await expect(
       page.getByText(
-        'Choose a fight from the quick switcher to view the chart and legend.',
+        'Choose a fight from the sidebar to view the chart and legend.',
       ),
     ).toBeVisible()
     await maybeCaptureScreenshot(page)

@@ -1,5 +1,5 @@
 /**
- * Shared report route layout with compact header and fight quick switcher.
+ * Shared report route layout: fills the rail outline and bar title, renders the outlet full height.
  */
 import { threatConfigIds } from '@wow-threat/config'
 import { usePostHog } from 'posthog-js/react'
@@ -7,15 +7,15 @@ import { type FC, useEffect, useRef } from 'react'
 import { Outlet, useLocation, useParams } from 'react-router-dom'
 
 import { ErrorState } from '../components/error-state'
-import { FightQuickSwitcher } from '../components/fight-quick-switcher'
 import {
-  ReportSummaryHeader,
-  ReportSummaryHeaderSkeleton,
-} from '../components/report-summary-header'
+  ReportOutline,
+  ReportOutlineSkeleton,
+} from '../components/report-outline'
 import { useReportData } from '../hooks/use-report-data'
 import { useReportIndex } from '../hooks/use-report-index'
 import { useUserSettings } from '../hooks/use-user-settings'
 import { buildBossKillNavigationFights } from '../lib/fight-navigation'
+import { formatClockDuration } from '../lib/format'
 import { parseBooleanQueryParam } from '../lib/query-params'
 import { parsePlayersParam } from '../lib/search-params'
 import {
@@ -23,11 +23,35 @@ import {
   resolveCurrentThreatConfig,
 } from '../lib/threat-config'
 import type { WarcraftLogsHost } from '../types/app'
+import { useBarTitle, useRailReportSection } from './app-shell-context'
 import type { ReportRouteContext } from './report-layout-context'
 
 interface LocationState {
   host?: WarcraftLogsHost
 }
+
+type ReportBarTitleProps = {
+  reportTitle: string
+  fightLabel: string | null
+}
+
+/** Breadcrumb for the app bar: report title, then the current fight when on one. */
+const ReportBarTitle: FC<ReportBarTitleProps> = ({
+  reportTitle,
+  fightLabel,
+}) => (
+  <span className="flex min-w-0 items-center gap-2 text-sm">
+    <span className="truncate font-medium">{reportTitle}</span>
+    {fightLabel ? (
+      <>
+        <span aria-hidden="true" className="text-muted-foreground">
+          ›
+        </span>
+        <span className="truncate text-muted-foreground">{fightLabel}</span>
+      </>
+    ) : null}
+  </span>
+)
 
 /** Render report-scoped chrome shared by report landing and fight pages. */
 export const ReportLayout: FC = () => {
@@ -88,6 +112,57 @@ export const ReportLayout: FC = () => {
     })
   }, [data, posthog, reportId])
 
+  const reportTitle = data ? data.title.trim() || reportId : reportId
+  const selectedFightId = Number.isNaN(fightId) ? null : fightId
+  const selectedFight =
+    data?.fights.find((fight) => fight.id === selectedFightId) ?? null
+  const fightLabel = selectedFight
+    ? `#${selectedFight.id} ${selectedFight.name} · ${selectedFight.kill ? 'Kill' : 'Wipe'} · ${formatClockDuration(selectedFight.endTime - selectedFight.startTime)}`
+    : null
+  const threatConfig = data
+    ? resolveCurrentThreatConfig(data, forcedThreatConfig.configId)
+    : null
+  const threatConfigLabel = threatConfig
+    ? `${threatConfig.displayName} v${threatConfig.version}`
+    : 'No supported config'
+
+  useBarTitle(
+    data && reportId ? (
+      <ReportBarTitle fightLabel={fightLabel} reportTitle={reportTitle} />
+    ) : null,
+  )
+  useRailReportSection(
+    data && reportId && !forcedThreatConfig.isInvalid ? (
+      <ReportOutline
+        configId={forcedThreatConfig.configId}
+        eventsMode={eventsMode}
+        forceFresh={forceFresh}
+        isStarToggleDisabled={isUserSettingsLoading || isSavingUserSettings}
+        isStarred={isReportStarred(reportId)}
+        onToggleStar={() => {
+          void toggleStarredReport({
+            reportId,
+            title: data.title || reportId,
+            sourceHost: reportHost,
+            zoneName: data.zone?.name ?? null,
+            startTime: data.startTime,
+            bossKillCount: buildBossKillNavigationFights(data.fights).length,
+            guildName: data.guild?.name ?? null,
+            guildFaction: data.guild?.faction ?? null,
+          })
+        }}
+        pinnedPlayerIds={pinnedPlayerIds}
+        report={data}
+        reportHost={reportHost}
+        reportId={reportId}
+        selectedFightId={selectedFightId}
+        threatConfigLabel={threatConfigLabel}
+      />
+    ) : isLoading && reportId ? (
+      <ReportOutlineSkeleton />
+    ) : null,
+  )
+
   if (forcedThreatConfig.isInvalid) {
     return (
       <>
@@ -116,7 +191,6 @@ export const ReportLayout: FC = () => {
     return (
       <>
         <title>{`${reportId} | WOW Threat`}</title>
-        <ReportSummaryHeaderSkeleton />
       </>
     )
   }
@@ -133,15 +207,6 @@ export const ReportLayout: FC = () => {
     )
   }
 
-  const reportTitle = data.title.trim() || reportId
-  const threatConfig = resolveCurrentThreatConfig(
-    data,
-    forcedThreatConfig.configId,
-  )
-  const threatConfigLabel = threatConfig
-    ? `${threatConfig.displayName} v${threatConfig.version}`
-    : 'No supported config'
-  const selectedFightId = Number.isNaN(fightId) ? null : fightId
   const outletContext: ReportRouteContext = {
     reportId,
     reportData: data,
@@ -151,38 +216,10 @@ export const ReportLayout: FC = () => {
   return (
     <>
       <title>{`${reportTitle} | WOW Threat`}</title>
-      <div className="space-y-5">
-        <ReportSummaryHeader
-          isStarToggleDisabled={isUserSettingsLoading || isSavingUserSettings}
-          isStarred={isReportStarred(reportId)}
-          onToggleStar={() => {
-            void toggleStarredReport({
-              reportId,
-              title: data.title || reportId,
-              sourceHost: reportHost,
-              zoneName: data.zone?.name ?? null,
-              startTime: data.startTime,
-              bossKillCount: buildBossKillNavigationFights(data.fights).length,
-              guildName: data.guild?.name ?? null,
-              guildFaction: data.guild?.faction ?? null,
-            })
-          }}
-          report={data}
-          reportHost={reportHost}
-          reportId={reportId}
-          selectedFightId={selectedFightId}
-          threatConfigLabel={threatConfigLabel}
-        />
-        <FightQuickSwitcher
-          configId={forcedThreatConfig.configId}
-          eventsMode={eventsMode}
-          fights={data.fights}
-          forceFresh={forceFresh}
-          pinnedPlayerIds={pinnedPlayerIds}
-          reportId={reportId}
-          selectedFightId={selectedFightId}
-        />
-        <Outlet context={outletContext} />
+      <div className="flex h-full min-h-0 flex-col">
+        <div className="min-h-0 flex-1">
+          <Outlet context={outletContext} />
+        </div>
       </div>
     </>
   )
