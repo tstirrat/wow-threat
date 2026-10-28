@@ -97,7 +97,7 @@ describe('ThreatChart', () => {
 
     const canvasRegion = screen.getByTestId('threat-chart-canvas-region')
     expect(canvasRegion.className).toContain('flex-1')
-    expect(canvasRegion.className).toContain('min-h-[560px]')
+    expect(canvasRegion.className).toContain('min-h-[240px]')
   })
 
   it('renders the legend into the provided legend container', () => {

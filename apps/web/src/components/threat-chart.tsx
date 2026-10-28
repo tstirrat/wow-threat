@@ -583,7 +583,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         }}
       />
       <div
-        className="relative min-h-[560px] flex-1"
+        className="relative min-h-[240px] flex-1"
         data-testid="threat-chart-canvas-region"
       >
         <ReactEChartsCore

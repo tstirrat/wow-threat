@@ -46,7 +46,7 @@ export const FightWorkspace: FC<FightWorkspaceProps> = ({
       data-testid="fight-workspace"
     >
       <div
-        className="flex min-h-0 min-w-0 flex-col gap-3 rounded-lg bg-card p-4 text-xs/relaxed text-card-foreground ring-foreground/10 [grid-area:chart] dark:ring-1"
+        className="flex min-h-0 min-w-0 flex-col gap-3 overflow-hidden rounded-lg bg-card p-4 text-xs/relaxed text-card-foreground ring-foreground/10 [grid-area:chart] dark:ring-1"
         data-region="chart"
       >
         {chart}

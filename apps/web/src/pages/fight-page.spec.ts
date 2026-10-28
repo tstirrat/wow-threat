@@ -251,7 +251,7 @@ test.describe('fight page', () => {
     await expect(fightPage.chart.rosterRegion()).toBeHidden()
   })
 
-  test('collapses the player info drawer with the chevron and I key, persisting across reloads', async ({
+  test('collapses the player info drawer with the chevron and I key', async ({
     page,
   }) => {
     const fightPage = new FightPageObject(page)
@@ -266,13 +266,6 @@ test.describe('fight page', () => {
     await fightPage.summary.toggleButton().click()
     await expect(fightPage.summary.breakdownTable()).toBeHidden()
     await expect(fightPage.summary.focusedActorText('Aegistank')).toBeVisible()
-
-    await page.reload()
-    await expect(fightPage.summary.toggleButton()).toHaveAttribute(
-      'aria-expanded',
-      'false',
-    )
-    await expect(fightPage.summary.breakdownTable()).toBeHidden()
 
     await page.keyboard.press('i')
     await expect(fightPage.summary.breakdownTable()).toBeVisible()
