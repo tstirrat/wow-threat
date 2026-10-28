@@ -1,11 +1,13 @@
 /**
- * ECharts threat timeline with deep-linkable zoom and a custom legend panel.
+ * ECharts threat timeline with deep-linkable zoom; fills its container height and
+ * portals its legend into a container owned by the fight workspace.
  */
 import type { EChartsOption } from 'echarts'
 import * as echarts from 'echarts'
 import ReactEChartsCore from 'echarts-for-react/esm/core'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useHotkeys } from 'react-hotkeys-hook'
 
 import { useThreatChartLegendState } from '../hooks/use-threat-chart-legend-state'
@@ -61,7 +63,7 @@ export type ThreatChartProps = {
   isReplayMode?: boolean
   playheadMs?: number | null
   onPlayheadChange?: (timeMs: number) => void
-  rightPanel?: React.ReactNode
+  legendContainer?: HTMLElement | null
   fightId?: number
   reportId?: string
 }
@@ -96,7 +98,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   isReplayMode = false,
   playheadMs = null,
   onPlayheadChange,
-  rightPanel,
+  legendContainer = null,
   fightId,
   reportId,
 }) => {
@@ -478,7 +480,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex min-h-0 flex-1 flex-col">
       <ThreatChartPlayerSearch
         isOpen={isPlayerSearchOpen}
         query={playerSearchQuery}
@@ -496,40 +498,45 @@ export const ThreatChart: FC<ThreatChartProps> = ({
           })
         }}
       />
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_14rem]">
-        <div>
-          <ReactEChartsCore
-            echarts={echarts}
-            ref={chartRef}
-            notMerge
-            opts={{ renderer }}
-            option={option}
-            style={{ height: 560, width: '100%' }}
-            onChartReady={() => {
-              setIsChartReady(true)
-            }}
-            onEvents={{
-              click: handleSeriesChartClick,
-            }}
-          />
-        </div>
-        {rightPanel ?? (
-          <ThreatChartLegend
-            series={series}
-            isActorVisible={isActorVisible}
-            onActorClick={handleLegendItemClick}
-            onActorFocus={onSeriesClick}
-            onOpenPlayerOverrides={onOpenPlayerOverrides}
-            actorIdsWithThreatOverrides={actorIdsWithThreatOverrides}
-            pinnedPlayerIds={pinnedPlayerIds}
-            onTogglePinnedPlayer={onTogglePinnedPlayer}
-            showClearSelections={canClearIsolate}
-            onClearSelections={handleClearSelections}
-            showPets={showPets}
-            onShowPetsChange={onShowPetsChange}
-          />
-        )}
+      <div
+        className="relative min-h-[560px] flex-1"
+        data-testid="threat-chart-canvas-region"
+      >
+        <ReactEChartsCore
+          className="absolute inset-0"
+          echarts={echarts}
+          ref={chartRef}
+          notMerge
+          opts={{ renderer }}
+          option={option}
+          style={{ height: '100%', width: '100%' }}
+          onChartReady={() => {
+            setIsChartReady(true)
+          }}
+          onEvents={{
+            click: handleSeriesChartClick,
+          }}
+        />
       </div>
+      {legendContainer
+        ? createPortal(
+            <ThreatChartLegend
+              series={series}
+              isActorVisible={isActorVisible}
+              onActorClick={handleLegendItemClick}
+              onActorFocus={onSeriesClick}
+              onOpenPlayerOverrides={onOpenPlayerOverrides}
+              actorIdsWithThreatOverrides={actorIdsWithThreatOverrides}
+              pinnedPlayerIds={pinnedPlayerIds}
+              onTogglePinnedPlayer={onTogglePinnedPlayer}
+              showClearSelections={canClearIsolate}
+              onClearSelections={handleClearSelections}
+              showPets={showPets}
+              onShowPetsChange={onShowPetsChange}
+            />,
+            legendContainer,
+          )
+        : null}
     </div>
   )
 }

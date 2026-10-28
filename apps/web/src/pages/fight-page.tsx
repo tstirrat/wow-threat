@@ -1,7 +1,6 @@
 /**
  * Fight-level page with target filter and player-focused chart interactions.
  */
-import { ExternalLink } from 'lucide-react'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { useHotkeys, useHotkeysContext } from 'react-hotkeys-hook'
@@ -9,6 +8,16 @@ import { useLocation, useParams } from 'react-router-dom'
 
 import { ErrorBoundary } from '../components/error-boundary'
 import { ErrorState } from '../components/error-state'
+import { FightWorkspace } from '../components/fight-workspace'
+import {
+  FightTitle,
+  FightWorkspaceHeader,
+} from '../components/fight-workspace-header'
+import {
+  FightChartLoadingSkeleton,
+  FightPageLoadingSkeleton,
+  FightRosterLoadingSkeleton,
+} from '../components/fight-workspace-skeletons'
 import { PlaybackControls } from '../components/playback-controls'
 import { PlayerSummaryTable } from '../components/player-summary-table'
 import { PlayerThreatOverridesPanel } from '../components/player-threat-overrides-panel'
@@ -17,13 +26,11 @@ import { TargetSelector } from '../components/target-selector'
 import { ThreatChart, type ThreatChartProps } from '../components/threat-chart'
 import { ThreatChartControls } from '../components/threat-chart-controls'
 import { ThreatMeter } from '../components/threat-meter'
-import { Skeleton } from '../components/ui/skeleton'
 import { useFightData } from '../hooks/use-fight-data'
 import { useFightEvents } from '../hooks/use-fight-events'
 import { usePlayerThreatOverrides } from '../hooks/use-player-threat-overrides'
 import { useReplayMode } from '../hooks/use-replay-mode'
 import { useUserSettings } from '../hooks/use-user-settings'
-import { formatClockDuration } from '../lib/format'
 import { parseBooleanQueryParam } from '../lib/query-params'
 import { getThreatAtTime } from '../lib/threat-at-time'
 import {
@@ -42,73 +49,6 @@ import type { BossDamageMode } from '../types/app'
 import { useFightPageDerivedState } from './hooks/use-fight-page-derived-state'
 import { useFightPageInteractions } from './hooks/use-fight-page-interactions'
 import { useFightPageLoadTracking } from './hooks/use-fight-page-load-tracking'
-
-const FightPageLoadingSkeleton: FC = () => {
-  return (
-    <section aria-label="Loading fight data" aria-live="polite" role="status">
-      <SectionCard
-        title={<Skeleton className="h-6 w-40" />}
-        headerRight={
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-5 w-20" />
-            <Skeleton className="h-7 w-40" />
-          </div>
-        }
-      >
-        <div className="space-y-3">
-          <Skeleton className="h-8 w-24" />
-          <Skeleton className="h-[560px] w-full" />
-        </div>
-      </SectionCard>
-    </section>
-  )
-}
-
-const FightChartLoadingSkeleton: FC<{
-  loadingMessage?: string
-  showControlsSkeleton?: boolean
-}> = ({
-  loadingMessage = 'Loading fight events',
-  showControlsSkeleton = true,
-}) => {
-  return (
-    <section
-      aria-label="Loading fight events chart"
-      aria-live="polite"
-      role="status"
-    >
-      <div className="space-y-3">
-        {showControlsSkeleton ? (
-          <div
-            className="flex flex-wrap items-center gap-2"
-            data-testid="fight-chart-controls-skeleton"
-          >
-            <Skeleton className="h-9 w-24" />
-            <Skeleton className="h-5 w-36" />
-            <Skeleton className="h-5 w-40" />
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-5 w-52" />
-          </div>
-        ) : null}
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_14rem]">
-          <div className="relative h-[560px] w-full">
-            <Skeleton
-              className="h-full w-full"
-              data-testid="fight-chart-skeleton"
-            />
-            <p className="pointer-events-none absolute inset-0 flex items-center justify-center px-4 text-center text-sm text-muted-foreground">
-              {loadingMessage}
-            </p>
-          </div>
-          <Skeleton
-            className="h-[560px] w-full"
-            data-testid="fight-legend-skeleton"
-          />
-        </div>
-      </div>
-    </section>
-  )
-}
 
 export const FightPage: FC = () => {
   const params = useParams<{ fightId: string }>()
@@ -245,6 +185,9 @@ export const FightPage: FC = () => {
       : null
 
   const [isThreatMeterExpanded, setIsThreatMeterExpanded] = useState(false)
+  const [legendContainer, setLegendContainer] = useState<HTMLDivElement | null>(
+    null,
+  )
   const [overridePanelActorId, setOverridePanelActorId] = useState<
     number | null
   >(null)
@@ -525,6 +468,7 @@ export const FightPage: FC = () => {
     )
   }
 
+  const showThreatMeter = replayMode.isReplayMode && threatAtPlayhead !== null
   const chartProps: ThreatChartProps = {
     renderer: chartRenderer,
     series: visibleSeries,
@@ -557,40 +501,9 @@ export const FightPage: FC = () => {
     isReplayMode: replayMode.isReplayMode,
     playheadMs: replayMode.effectivePlayheadMs,
     onPlayheadChange: replayMode.setPlayheadMs,
-    rightPanel:
-      replayMode.isReplayMode && threatAtPlayhead ? (
-        <ThreatMeter
-          entries={threatAtPlayhead}
-          focusedActorId={queryState.state.focusId}
-          selectedPlayerIds={queryState.state.players}
-          playheadMs={replayMode.effectivePlayheadMs ?? 0}
-          isExpanded={isThreatMeterExpanded}
-          onExpandedChange={setIsThreatMeterExpanded}
-        />
-      ) : undefined,
+    legendContainer: showThreatMeter ? null : legendContainer,
   }
 
-  const fightTimelineTitle = (
-    <div className="flex flex-wrap items-center gap-2">
-      <span>{fightData.name}</span>
-      <span className="text-muted-foreground">|</span>
-      <span className="text-muted-foreground">
-        {formatClockDuration(fightDurationMs)}
-      </span>
-      <span className="text-muted-foreground">|</span>
-      <a
-        aria-label={`Open ${fightData.name} on Warcraft Logs`}
-        className="inline-flex items-center gap-1 leading-none hover:opacity-80"
-        href={buildFightRankingsUrl(reportHost, reportId, fightId)}
-        rel="noreferrer"
-        target="_blank"
-        title={`Open ${fightData.name} on Warcraft Logs`}
-      >
-        <span className="text-[10px] font-medium tracking-wide">WCL</span>
-        <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
-      </a>
-    </div>
-  )
   const focusedPlayerActor = focusedPlayerSummary
     ? (fightData.actors.find(
         (actor) =>
@@ -613,98 +526,130 @@ export const FightPage: FC = () => {
   return (
     <>
       <title>{pageTitle}</title>
-      <div className="space-y-5">
-        <SectionCard
-          title={fightTimelineTitle}
-          headerRight={
-            selectedTarget ? (
-              <div>
+      <FightWorkspace
+        label={`${fightData.name} fight workspace`}
+        header={
+          <FightWorkspaceHeader
+            title={
+              <FightTitle
+                durationMs={fightDurationMs}
+                fightName={fightData.name}
+                warcraftLogsUrl={buildFightRankingsUrl(
+                  reportHost,
+                  reportId,
+                  fightId,
+                )}
+              />
+            }
+            actions={
+              selectedTarget ? (
                 <TargetSelector
                   targets={targetOptions}
                   selectedTarget={selectedTarget}
                   onChange={handleTargetChange}
                 />
-              </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No valid targets available.
+                </p>
+              )
+            }
+          />
+        }
+        chart={
+          <>
+            {isUserSettingsLoading ? (
+              <FightChartLoadingSkeleton loadingMessage="Loading fight settings" />
             ) : (
+              <>
+                <ThreatChartControls
+                  onResetZoom={() => {
+                    registeredResetZoom?.()
+                  }}
+                  isResetZoomDisabled={
+                    !isChartReady ||
+                    registeredResetZoom === null ||
+                    replayMode.isReplayMode
+                  }
+                  showFixateBands={userSettings.showFixateBands}
+                  onShowFixateBandsChange={handleShowFixateBandsChange}
+                  showEnergizeEvents={userSettings.showEnergizeEvents}
+                  onShowEnergizeEventsChange={handleShowEnergizeEventsChange}
+                  bossDamageMode={bossDamageMode}
+                  onBossDamageModeChange={handleBossDamageModeChange}
+                  inferThreatReduction={userSettings.inferThreatReduction}
+                  onInferThreatReductionChange={
+                    handleInferThreatReductionChange
+                  }
+                />
+                <PlaybackControls
+                  isPlaying={replayMode.isPlaying}
+                  isReplayMode={replayMode.isReplayMode}
+                  playbackSpeed={replayMode.playbackSpeed}
+                  hasPlayhead={replayMode.effectivePlayheadMs !== null}
+                  onTogglePlayPause={replayMode.togglePlayPause}
+                  onIncreaseSpeed={replayMode.increaseSpeed}
+                  onDecreaseSpeed={replayMode.decreaseSpeed}
+                  onToggleReplayMode={replayMode.toggleReplayMode}
+                  onClearPlayhead={replayMode.clearPlayhead}
+                />
+              </>
+            )}
+            {isUserSettingsLoading ? null : selectedTarget === null ? (
               <p className="text-sm text-muted-foreground">
-                No valid targets available.
+                No valid targets available for this fight.
               </p>
-            )
-          }
-        >
-          {isUserSettingsLoading ? (
-            <FightChartLoadingSkeleton loadingMessage="Loading fight settings" />
-          ) : (
-            <>
-              <ThreatChartControls
-                onResetZoom={() => {
-                  registeredResetZoom?.()
-                }}
-                isResetZoomDisabled={
-                  !isChartReady ||
-                  registeredResetZoom === null ||
-                  replayMode.isReplayMode
+            ) : eventsQuery.isLoading ? (
+              <FightChartLoadingSkeleton
+                loadingMessage={
+                  eventsQuery.loadingMessage || 'Loading fight events'
                 }
-                showFixateBands={userSettings.showFixateBands}
-                onShowFixateBandsChange={handleShowFixateBandsChange}
-                showEnergizeEvents={userSettings.showEnergizeEvents}
-                onShowEnergizeEventsChange={handleShowEnergizeEventsChange}
-                bossDamageMode={bossDamageMode}
-                onBossDamageModeChange={handleBossDamageModeChange}
-                inferThreatReduction={userSettings.inferThreatReduction}
-                onInferThreatReductionChange={handleInferThreatReductionChange}
+                showControlsSkeleton={false}
               />
-              <PlaybackControls
-                isPlaying={replayMode.isPlaying}
-                isReplayMode={replayMode.isReplayMode}
-                playbackSpeed={replayMode.playbackSpeed}
-                hasPlayhead={replayMode.effectivePlayheadMs !== null}
-                onTogglePlayPause={replayMode.togglePlayPause}
-                onIncreaseSpeed={replayMode.increaseSpeed}
-                onDecreaseSpeed={replayMode.decreaseSpeed}
-                onToggleReplayMode={replayMode.toggleReplayMode}
-                onClearPlayhead={replayMode.clearPlayhead}
+            ) : chartProps.series.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No threat points are available for this target.
+              </p>
+            ) : (
+              <ErrorBoundary>
+                <ThreatChart {...chartProps} />
+              </ErrorBoundary>
+            )}
+          </>
+        }
+        rosterRef={setLegendContainer}
+        roster={
+          isUserSettingsLoading ||
+          (selectedTarget !== null && eventsQuery.isLoading) ? (
+            <FightRosterLoadingSkeleton />
+          ) : showThreatMeter && chartProps.series.length > 0 ? (
+            <ThreatMeter
+              entries={threatAtPlayhead}
+              focusedActorId={queryState.state.focusId}
+              selectedPlayerIds={queryState.state.players}
+              playheadMs={replayMode.effectivePlayheadMs ?? 0}
+              isExpanded={isThreatMeterExpanded}
+              onExpandedChange={setIsThreatMeterExpanded}
+            />
+          ) : null
+        }
+        drawer={
+          !isUserSettingsLoading && eventsData ? (
+            <SectionCard
+              title="Focused player summary"
+              subtitle="Totals and ability TPS are calculated from the currently visible chart window."
+            >
+              <PlayerSummaryTable
+                summary={focusedPlayerSummary}
+                rows={focusedPlayerRows}
+                initialAuras={initialAuras}
+                wowhead={wowheadLinksConfig}
+                warcraftLogsUrl={focusedPlayerWclUrl}
               />
-            </>
-          )}
-
-          {isUserSettingsLoading ? null : selectedTarget === null ? (
-            <p className="text-sm text-muted-foreground">
-              No valid targets available for this fight.
-            </p>
-          ) : eventsQuery.isLoading ? (
-            <FightChartLoadingSkeleton
-              loadingMessage={
-                eventsQuery.loadingMessage || 'Loading fight events'
-              }
-              showControlsSkeleton={false}
-            />
-          ) : chartProps.series.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No threat points are available for this target.
-            </p>
-          ) : (
-            <ErrorBoundary>
-              <ThreatChart {...chartProps} />
-            </ErrorBoundary>
-          )}
-        </SectionCard>
-
-        {!isUserSettingsLoading && eventsData ? (
-          <SectionCard
-            title="Focused player summary"
-            subtitle="Totals and ability TPS are calculated from the currently visible chart window."
-          >
-            <PlayerSummaryTable
-              summary={focusedPlayerSummary}
-              rows={focusedPlayerRows}
-              initialAuras={initialAuras}
-              wowhead={wowheadLinksConfig}
-              warcraftLogsUrl={focusedPlayerWclUrl}
-            />
-          </SectionCard>
-        ) : null}
-      </div>
+            </SectionCard>
+          ) : null
+        }
+      />
       {overridePanelActor ? (
         <PlayerThreatOverridesPanel
           actor={overridePanelActor}
