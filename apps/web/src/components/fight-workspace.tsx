@@ -1,13 +1,13 @@
 /**
- * Fight workspace grid with named header, chart, roster, transport and drawer regions.
+ * Fight workspace grid with named chart, roster, transport and drawer regions.
  */
 import type { FC, ReactNode, Ref } from 'react'
 
 export type FightWorkspaceProps = {
   label?: string
-  header: ReactNode
   chart: ReactNode
   roster?: ReactNode
+  isRosterVisible?: boolean
   rosterRef?: Ref<HTMLDivElement>
   transport?: ReactNode
   drawer?: ReactNode
@@ -15,18 +15,26 @@ export type FightWorkspaceProps = {
 
 const workspaceGridClassName = [
   'grid h-full min-h-0 grid-cols-1 gap-3',
-  "[grid-template-areas:'header'_'chart'_'roster'_'transport'_'drawer']",
-  'lg:grid-cols-[minmax(0,1fr)_14rem]',
-  'lg:grid-rows-[auto_minmax(0,1fr)_auto_auto]',
-  "lg:[grid-template-areas:'header_header'_'chart_roster'_'transport_transport'_'drawer_drawer']",
+  "[grid-template-areas:'chart'_'roster'_'transport'_'drawer']",
+  'lg:grid-rows-[minmax(0,1fr)_auto_auto]',
+].join(' ')
+
+const rosterVisibleGridClassName = [
+  'lg:grid-cols-[minmax(0,1fr)_17rem]',
+  "lg:[grid-template-areas:'chart_roster'_'transport_transport'_'drawer_drawer']",
+].join(' ')
+
+const rosterHiddenGridClassName = [
+  'lg:grid-cols-[minmax(0,1fr)]',
+  "lg:[grid-template-areas:'chart'_'transport'_'drawer']",
 ].join(' ')
 
 /** Lay out the fight page regions; the roster fills the chart row without stretching it. */
 export const FightWorkspace: FC<FightWorkspaceProps> = ({
   label = 'Fight workspace',
-  header,
   chart,
   roster,
+  isRosterVisible = true,
   rosterRef,
   transport,
   drawer,
@@ -34,12 +42,9 @@ export const FightWorkspace: FC<FightWorkspaceProps> = ({
   return (
     <section
       aria-label={label}
-      className={workspaceGridClassName}
+      className={`${workspaceGridClassName} ${isRosterVisible ? rosterVisibleGridClassName : rosterHiddenGridClassName}`}
       data-testid="fight-workspace"
     >
-      <div className="min-w-0 [grid-area:header]" data-region="header">
-        {header}
-      </div>
       <div
         className="flex min-h-0 min-w-0 flex-col gap-3 rounded-lg bg-card p-4 text-xs/relaxed text-card-foreground ring-foreground/10 [grid-area:chart] dark:ring-1"
         data-region="chart"
@@ -47,7 +52,7 @@ export const FightWorkspace: FC<FightWorkspaceProps> = ({
         {chart}
       </div>
       <div
-        className="relative min-h-0 min-w-0 [grid-area:roster]"
+        className={`relative min-h-0 min-w-0 [grid-area:roster] ${isRosterVisible ? '' : 'hidden'}`}
         data-region="roster"
       >
         <div className="flex flex-col lg:absolute lg:inset-0" ref={rosterRef}>

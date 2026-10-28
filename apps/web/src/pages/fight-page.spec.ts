@@ -223,6 +223,30 @@ test.describe('fight page', () => {
     await expectSearchParam(page, 'targetId', '102')
   })
 
+  test('hides and restores the roster with the toolbar button and R key, persisting across reloads', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(svgFightUrl)
+    await expect(fightPage.chart.legendToggle('Aegistank')).toBeVisible()
+
+    await fightPage.chart.rosterToggle().click()
+    await expect(fightPage.chart.rosterRegion()).toBeHidden()
+    await expect(
+      page.getByRole('button', { name: 'Show roster' }),
+    ).toHaveAttribute('aria-pressed', 'false')
+
+    await page.reload()
+    await expect(fightPage.chart.rosterRegion()).toBeHidden()
+
+    await page.keyboard.press('r')
+    await expect(fightPage.chart.rosterRegion()).toBeVisible()
+    await expect(fightPage.chart.legendToggle('Aegistank')).toBeVisible()
+    await page.keyboard.press('r')
+    await expect(fightPage.chart.rosterRegion()).toBeHidden()
+  })
+
   test('applies players query param as initial legend visibility', async ({
     page,
   }) => {
@@ -478,6 +502,9 @@ test.describe('fight page', () => {
       fightPage.shortcuts.shortcutListItem('Cycle boss damage markers'),
     ).toBeVisible()
     await expect(
+      fightPage.shortcuts.shortcutListItem('Show / hide roster panel'),
+    ).toBeVisible()
+    await expect(
       fightPage.shortcuts.shortcutListItem('Pin / unpin focused player'),
     ).toBeVisible()
     await expect(
@@ -651,10 +678,6 @@ test.describe('fight page', () => {
     await expect.poll(() => fightPage.chart.renderer()).toBe('svg')
 
     await expect(fightPage.replay.replayButton()).toBeVisible()
-    await expect(fightPage.replay.threatMeter()).toHaveCount(0)
-
-    // R no longer toggles replay mode
-    await page.keyboard.press('r')
     await expect(fightPage.replay.threatMeter()).toHaveCount(0)
 
     await fightPage.replay.togglePlayPauseWithKey()

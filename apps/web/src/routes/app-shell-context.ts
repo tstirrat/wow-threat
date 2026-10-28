@@ -5,6 +5,7 @@ import { type ReactNode, createContext, useContext, useEffect } from 'react'
 
 export interface AppShellSlots {
   setBarTitle: (node: ReactNode) => void
+  setBarTitleTrailing: (node: ReactNode) => void
   setBarSettings: (node: ReactNode) => void
   setBarRosterToggle: (node: ReactNode) => void
   setRailReportSection: (node: ReactNode) => void
@@ -12,6 +13,7 @@ export interface AppShellSlots {
 
 export interface AppShellContextValue extends AppShellSlots {
   barTitle: ReactNode
+  barTitleTrailing: ReactNode
   barSettings: ReactNode
   barRosterToggle: ReactNode
   railReportSection: ReactNode
@@ -21,10 +23,12 @@ const noop = (): void => undefined
 
 export const AppShellContext = createContext<AppShellContextValue>({
   barTitle: null,
+  barTitleTrailing: null,
   barSettings: null,
   barRosterToggle: null,
   railReportSection: null,
   setBarTitle: noop,
+  setBarTitleTrailing: noop,
   setBarSettings: noop,
   setBarRosterToggle: noop,
   setRailReportSection: noop,
@@ -33,6 +37,7 @@ export const AppShellContext = createContext<AppShellContextValue>({
 /** Stable setters only, so slot fillers do not re-render when slot content changes. */
 export const AppShellSettersContext = createContext<AppShellSlots>({
   setBarTitle: noop,
+  setBarTitleTrailing: noop,
   setBarSettings: noop,
   setBarRosterToggle: noop,
   setRailReportSection: noop,
@@ -51,6 +56,16 @@ export function useBarTitle(node: ReactNode): void {
     setBarTitle(node)
     return () => setBarTitle(null)
   }, [node, setBarTitle])
+}
+
+/** Fills the crumb after the app bar title (e.g. the fight target picker) while mounted. */
+export function useBarTitleTrailing(node: ReactNode): void {
+  const { setBarTitleTrailing } = useContext(AppShellSettersContext)
+
+  useEffect(() => {
+    setBarTitleTrailing(node)
+    return () => setBarTitleTrailing(null)
+  }, [node, setBarTitleTrailing])
 }
 
 /** Fills the rail report section while the calling component is mounted. */
