@@ -185,6 +185,7 @@ export const FightSettingsPanel: FC<FightSettingsPanelProps> = ({
   <Sheet modal={false} open={isOpen} onOpenChange={onOpenChange}>
     <SheetContent
       aria-label="Settings"
+      className="max-[760px]:w-full max-[760px]:border-l-0"
       closeLabel="Close settings"
       onCloseAutoFocus={(event) => {
         event.preventDefault()

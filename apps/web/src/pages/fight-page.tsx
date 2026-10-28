@@ -254,7 +254,7 @@ export const FightPage: FC = () => {
     posthog,
   })
 
-  const { isRosterVisible, toggleRoster } = useRosterVisibility()
+  const { closeRoster, isRosterVisible, toggleRoster } = useRosterVisibility()
   const { isPlayerInfoOpen, togglePlayerInfo } = usePlayerInfoDrawer()
   useBarRosterToggle(
     <RosterToggleButton
@@ -544,6 +544,7 @@ export const FightPage: FC = () => {
           </>
         }
         isRosterVisible={isRosterVisible}
+        onCloseRoster={closeRoster}
         rosterRef={setLegendContainer}
         roster={
           isUserSettingsLoading ||

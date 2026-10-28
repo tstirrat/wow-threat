@@ -6,6 +6,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import { ShortcutsOverlayContext } from '../routes/app-shell-context'
+import { stubMatchMedia } from '../test/helpers/match-media'
 import type { FocusedPlayerSummary, InitialAuraDisplay } from '../types/app'
 import { PlayerInfoDrawer } from './player-info-drawer'
 
@@ -83,5 +84,15 @@ describe('PlayerInfoDrawer', () => {
       screen.getByRole('button', { name: 'Show keyboard shortcuts' }),
     )
     expect(openShortcuts).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps the body expanded below 760px, where it is shown as a tab', () => {
+    const restoreMatchMedia = stubMatchMedia(true)
+    try {
+      renderDrawer(false)
+      expect(screen.getByText('drawer body')).toBeInTheDocument()
+    } finally {
+      restoreMatchMedia()
+    }
   })
 })

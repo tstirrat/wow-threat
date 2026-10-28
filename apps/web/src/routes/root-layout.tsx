@@ -25,6 +25,12 @@ export const RootLayout: FC = () => {
   const { hotkeys } = useHotkeysContext()
   const location = useLocation()
   const isLandingPage = location.pathname === '/'
+  // The off-canvas rail stays open only on the route it was opened on, so it closes after picking a fight.
+  const [railOpenPathname, setRailOpenPathname] = useState<string | null>(null)
+  const isMobileRailOpen = railOpenPathname === location.pathname
+  const setIsMobileRailOpen = (isOpen: boolean): void => {
+    setRailOpenPathname(isOpen ? location.pathname : null)
+  }
   const { authEnabled, authError } = useAuth()
 
   useHotkeys(
@@ -66,22 +72,30 @@ export const RootLayout: FC = () => {
   return (
     <AppShellProvider>
       <ShortcutsOverlayContext.Provider value={shortcutsOverlay}>
-        <div className="grid h-screen grid-cols-[auto_minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] text-foreground">
+        <div className="grid h-screen grid-cols-[auto_minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] text-foreground max-[760px]:h-dvh max-[760px]:grid-cols-[minmax(0,1fr)]">
           <FightPageKeyboardShortcutsOverlay
             hotkeys={hotkeys}
             isOpen={isKeyboardOverlayOpen}
             onClose={closeKeyboardOverlay}
           />
-          <div className="row-span-2">
-            <AppRail librarySection={<RailLibrary />} />
+          <div className="row-span-2 max-[760px]:hidden">
+            <AppRail
+              isMobileOpen={isMobileRailOpen}
+              librarySection={<RailLibrary />}
+              onMobileOpenChange={setIsMobileRailOpen}
+            />
           </div>
           <AppBar
             isLandingPage={isLandingPage}
+            isRailOpen={isMobileRailOpen}
+            onOpenRail={() => setIsMobileRailOpen(true)}
             onReportError={setReportErrorMessage}
           />
           <main
             className={`min-h-0 overflow-y-auto ${
-              isLandingPage ? 'mx-auto w-full max-w-7xl px-4 py-6' : 'p-4'
+              isLandingPage
+                ? 'mx-auto w-full max-w-7xl px-4 py-6'
+                : 'p-4 max-[760px]:p-2'
             }`}
           >
             {reportErrorMessage ? (
