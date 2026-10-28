@@ -13,6 +13,7 @@ import { type FC, useState } from 'react'
 import { useHotkeys, useHotkeysContext } from 'react-hotkeys-hook'
 import { Outlet, useLocation } from 'react-router-dom'
 
+import { ShortcutsOverlayContext } from './app-shell-context'
 import { AppShellProvider } from './app-shell-provider'
 
 export const RootLayout: FC = () => {
@@ -58,42 +59,51 @@ export const RootLayout: FC = () => {
   const closeKeyboardOverlay = (): void => {
     setIsKeyboardOverlayOpen(false)
   }
+  const shortcutsOverlay = {
+    openShortcuts: () => setIsKeyboardOverlayOpen(true),
+  }
 
   return (
     <AppShellProvider>
-      <div className="grid h-screen grid-cols-[auto_minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] text-foreground">
-        <FightPageKeyboardShortcutsOverlay
-          hotkeys={hotkeys}
-          isOpen={isKeyboardOverlayOpen}
-          onClose={closeKeyboardOverlay}
-        />
-        <div className="row-span-2">
-          <AppRail librarySection={<RailLibrary />} />
+      <ShortcutsOverlayContext.Provider value={shortcutsOverlay}>
+        <div className="grid h-screen grid-cols-[auto_minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] text-foreground">
+          <FightPageKeyboardShortcutsOverlay
+            hotkeys={hotkeys}
+            isOpen={isKeyboardOverlayOpen}
+            onClose={closeKeyboardOverlay}
+          />
+          <div className="row-span-2">
+            <AppRail librarySection={<RailLibrary />} />
+          </div>
+          <AppBar
+            isLandingPage={isLandingPage}
+            onReportError={setReportErrorMessage}
+          />
+          <main
+            className={`min-h-0 overflow-y-auto ${
+              isLandingPage ? 'mx-auto w-full max-w-7xl px-4 py-6' : 'p-4'
+            }`}
+          >
+            {reportErrorMessage ? (
+              <Alert aria-live="polite" className="mb-4" variant="destructive">
+                <AlertDescription>{reportErrorMessage}</AlertDescription>
+              </Alert>
+            ) : null}
+            {authEnabled && authError ? (
+              <Alert
+                aria-live="assertive"
+                className="mb-4"
+                variant="destructive"
+              >
+                <AlertDescription>{authError}</AlertDescription>
+              </Alert>
+            ) : null}
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
+          </main>
         </div>
-        <AppBar
-          isLandingPage={isLandingPage}
-          onReportError={setReportErrorMessage}
-        />
-        <main
-          className={`min-h-0 overflow-y-auto ${
-            isLandingPage ? 'mx-auto w-full max-w-7xl px-4 py-6' : 'p-4'
-          }`}
-        >
-          {reportErrorMessage ? (
-            <Alert aria-live="polite" className="mb-4" variant="destructive">
-              <AlertDescription>{reportErrorMessage}</AlertDescription>
-            </Alert>
-          ) : null}
-          {authEnabled && authError ? (
-            <Alert aria-live="assertive" className="mb-4" variant="destructive">
-              <AlertDescription>{authError}</AlertDescription>
-            </Alert>
-          ) : null}
-          <ErrorBoundary>
-            <Outlet />
-          </ErrorBoundary>
-        </main>
-      </div>
+      </ShortcutsOverlayContext.Provider>
     </AppShellProvider>
   )
 }

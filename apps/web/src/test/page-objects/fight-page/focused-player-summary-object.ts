@@ -4,12 +4,24 @@
 import { type Locator, type Page } from '@playwright/test'
 
 export class FocusedPlayerSummaryObject {
+  readonly drawer: Locator
   readonly section: Locator
 
   constructor(page: Page) {
-    this.section = page
+    this.drawer = page
       .locator('[data-region="drawer"]')
-      .getByRole('region', { name: 'Focused player summary' })
+      .getByRole('region', { name: 'Player info' })
+    this.section = this.drawer
+  }
+
+  toggleButton(): Locator {
+    return this.drawer.getByRole('button', {
+      name: /^(Collapse|Expand) player info$/,
+    })
+  }
+
+  shortcutsButton(): Locator {
+    return this.drawer.getByRole('button', { name: 'Show keyboard shortcuts' })
   }
 
   breakdownTable(): Locator {

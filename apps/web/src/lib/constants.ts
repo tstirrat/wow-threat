@@ -16,6 +16,7 @@ export const threatChartShowFixateBandsStorageKey =
   'wow-threat.threat-chart.show-fixate-bands'
 export const starredGuildReportsCacheTtlMs = 1000 * 60 * 60
 export const rosterHiddenStorageKey = 'wow-threat.roster-hidden'
+export const playerInfoClosedStorageKey = 'wow-threat.player-info-closed'
 export const reportSearchIndexStorageKey = 'wow-threat.report-search-index'
 export const reportSearchIndexRefreshIntervalMs = 1000 * 60 * 60
 export const reportSearchIndexRetentionMs = 1000 * 60 * 60 * 24 * 30

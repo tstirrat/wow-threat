@@ -20,15 +20,16 @@ import {
   FightRosterLoadingSkeleton,
 } from '../components/fight-workspace-skeletons'
 import { PlaybackControls } from '../components/playback-controls'
+import { PlayerInfoDrawer } from '../components/player-info-drawer'
 import { PlayerSummaryTable } from '../components/player-summary-table'
 import { PlayerThreatOverridesPanel } from '../components/player-threat-overrides-panel'
 import { RosterToggleButton } from '../components/roster-toggle-button'
-import { SectionCard } from '../components/section-card'
 import { ThreatChart, type ThreatChartProps } from '../components/threat-chart'
 import { ThreatMeter } from '../components/threat-meter'
 import { useFightData } from '../hooks/use-fight-data'
 import { useFightEvents } from '../hooks/use-fight-events'
 import { useFightSettingsPanel } from '../hooks/use-fight-settings-panel'
+import { usePlayerInfoDrawer } from '../hooks/use-player-info-drawer'
 import { usePlayerThreatOverrides } from '../hooks/use-player-threat-overrides'
 import { useReplayMode } from '../hooks/use-replay-mode'
 import { useRosterVisibility } from '../hooks/use-roster-visibility'
@@ -254,6 +255,7 @@ export const FightPage: FC = () => {
   })
 
   const { isRosterVisible, toggleRoster } = useRosterVisibility()
+  const { isPlayerInfoOpen, togglePlayerInfo } = usePlayerInfoDrawer()
   useBarRosterToggle(
     <RosterToggleButton
       isRosterVisible={isRosterVisible}
@@ -574,9 +576,12 @@ export const FightPage: FC = () => {
         }
         drawer={
           !isUserSettingsLoading && eventsData ? (
-            <SectionCard
-              title="Focused player summary"
-              subtitle="Totals and ability TPS are calculated from the currently visible chart window."
+            <PlayerInfoDrawer
+              isOpen={isPlayerInfoOpen}
+              onToggle={togglePlayerInfo}
+              summary={focusedPlayerSummary}
+              initialAuras={initialAuras}
+              wowhead={wowheadLinksConfig}
             >
               <PlayerSummaryTable
                 summary={focusedPlayerSummary}
@@ -585,7 +590,7 @@ export const FightPage: FC = () => {
                 wowhead={wowheadLinksConfig}
                 warcraftLogsUrl={focusedPlayerWclUrl}
               />
-            </SectionCard>
+            </PlayerInfoDrawer>
           ) : null
         }
       />
