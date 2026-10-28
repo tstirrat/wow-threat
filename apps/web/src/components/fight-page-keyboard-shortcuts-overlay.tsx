@@ -28,7 +28,7 @@ export interface FightPageKeyboardShortcutsOverlayProps {
   onClose: () => void
 }
 
-function formatHotkeyPart(part: string): string {
+function formatHotkeyPart(part: string, isShifted: boolean): string {
   const normalized = part.trim().toLowerCase()
   if (normalized.length === 0) {
     return ''
@@ -71,11 +71,11 @@ function formatHotkeyPart(part: string): string {
   }
 
   if (normalized === 'period') {
-    return '>'
+    return isShifted ? '>' : '.'
   }
 
   if (normalized === 'comma') {
-    return '<'
+    return isShifted ? '<' : ','
   }
 
   if (normalized.length === 1) {
@@ -88,12 +88,16 @@ function formatHotkeyPart(part: string): string {
 function renderHotkey(hotkey: string): JSX.Element {
   const alternatives = hotkey
     .split(',')
-    .map((combo) =>
-      combo
-        .split('+')
-        .map((part) => formatHotkeyPart(part))
-        .filter((part) => part.length > 0),
-    )
+    .map((combo) => {
+      const parts = combo.split('+')
+      const isShifted = parts.some(
+        (part) => part.trim().toLowerCase() === 'shift',
+      )
+
+      return parts
+        .map((part) => formatHotkeyPart(part, isShifted))
+        .filter((part) => part.length > 0)
+    })
     .filter((combo) => combo.length > 0)
 
   return (

@@ -55,6 +55,7 @@ export function useThreatChartZoom({
   zoomToggleContextKey?: string
 }): {
   consumeSuppressedSeriesClick: () => boolean
+  isZoomed: boolean
   resetZoom: () => void
   setYAxisWindow: (window: ThreatChartYAxisWindow | null) => void
   toggleLastZoom: () => void
@@ -382,6 +383,7 @@ export function useThreatChartZoom({
 
   return {
     consumeSuppressedSeriesClick,
+    isZoomed: !isFullChartZoom,
     resetZoom,
     setYAxisWindow: updateYAxisWindow,
     toggleLastZoom,

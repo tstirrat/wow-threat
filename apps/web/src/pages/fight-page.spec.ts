@@ -162,14 +162,18 @@ test.describe('fight page', () => {
     await expect(fightPage.chart.legendToggle('Wolfie')).toHaveCount(0)
     await maybeCaptureScreenshot(page)
 
-    await expect(fightPage.chart.showEnergizeEventsCheckbox()).not.toBeChecked()
-    await expect(fightPage.chart.showFixateBandsCheckbox()).toBeChecked()
-    await expect(fightPage.chart.bossDamageMeleeToggle()).toBeChecked()
+    await fightPage.settings.open()
     await expect(
-      fightPage.chart.inferThreatReductionCheckbox(),
+      fightPage.settings.showEnergizeEventsCheckbox(),
     ).not.toBeChecked()
-    await expect(fightPage.chart.showPetsCheckbox()).not.toBeChecked()
-    await fightPage.chart.setShowPets(true)
+    await expect(fightPage.settings.showFixateBandsCheckbox()).toBeChecked()
+    await expect(fightPage.settings.bossDamageMeleeToggle()).toBeChecked()
+    await expect(
+      fightPage.settings.inferThreatReductionCheckbox(),
+    ).not.toBeChecked()
+    await expect(fightPage.settings.showPetsCheckbox()).not.toBeChecked()
+    await fightPage.settings.setShowPets(true)
+    await fightPage.settings.close()
     await expect(fightPage.chart.legendToggle('Wolfie')).toBeVisible()
     const labels = await fightPage.chart.legendToggleLabels()
     const ownerIndex = labels.indexOf('Arrowyn')
@@ -385,40 +389,49 @@ test.describe('fight page', () => {
     const fightPage = new FightPageObject(page)
 
     await fightPage.goto(svgFightUrl)
-    await expect(fightPage.chart.showEnergizeEventsCheckbox()).not.toBeChecked()
-    await expect(fightPage.chart.showFixateBandsCheckbox()).toBeChecked()
-    await expect(fightPage.chart.bossDamageMeleeToggle()).toBeChecked()
+    await fightPage.settings.open()
     await expect(
-      fightPage.chart.inferThreatReductionCheckbox(),
+      fightPage.settings.showEnergizeEventsCheckbox(),
     ).not.toBeChecked()
-    await expect(fightPage.chart.showPetsCheckbox()).not.toBeChecked()
+    await expect(fightPage.settings.showFixateBandsCheckbox()).toBeChecked()
+    await expect(fightPage.settings.bossDamageMeleeToggle()).toBeChecked()
+    await expect(
+      fightPage.settings.inferThreatReductionCheckbox(),
+    ).not.toBeChecked()
+    await expect(fightPage.settings.showPetsCheckbox()).not.toBeChecked()
 
-    await fightPage.chart.setShowEnergizeEvents(true)
-    await fightPage.chart.setShowFixateBands(false)
-    await fightPage.chart.setBossDamageMode('off')
-    await fightPage.chart.setInferThreatReduction(true)
-    await fightPage.chart.setShowPets(true)
-    await expect(fightPage.chart.showEnergizeEventsCheckbox()).toBeChecked()
-    await expect(fightPage.chart.showFixateBandsCheckbox()).not.toBeChecked()
-    await expect(fightPage.chart.bossDamageOffToggle()).toBeChecked()
-    await expect(fightPage.chart.inferThreatReductionCheckbox()).toBeChecked()
-    await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
+    await fightPage.settings.setShowEnergizeEvents(true)
+    await fightPage.settings.setShowFixateBands(false)
+    await fightPage.settings.setBossDamageMode('off')
+    await fightPage.settings.setInferThreatReduction(true)
+    await fightPage.settings.setShowPets(true)
+    await expect(fightPage.settings.showEnergizeEventsCheckbox()).toBeChecked()
+    await expect(fightPage.settings.showFixateBandsCheckbox()).not.toBeChecked()
+    await expect(fightPage.settings.bossDamageOffToggle()).toBeChecked()
+    await expect(
+      fightPage.settings.inferThreatReductionCheckbox(),
+    ).toBeChecked()
+    await expect(fightPage.settings.showPetsCheckbox()).toBeChecked()
 
     await fightPage.quickSwitch.clickFight('Grobbulus')
     await expectPathname(page, `/report/${e2eReportId}/fight/30`)
-    await expect(fightPage.chart.showEnergizeEventsCheckbox()).toBeChecked()
-    await expect(fightPage.chart.showFixateBandsCheckbox()).not.toBeChecked()
-    await expect(fightPage.chart.bossDamageOffToggle()).toBeChecked()
-    await expect(fightPage.chart.inferThreatReductionCheckbox()).toBeChecked()
-    await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
+    await expect(fightPage.settings.showEnergizeEventsCheckbox()).toBeChecked()
+    await expect(fightPage.settings.showFixateBandsCheckbox()).not.toBeChecked()
+    await expect(fightPage.settings.bossDamageOffToggle()).toBeChecked()
+    await expect(
+      fightPage.settings.inferThreatReductionCheckbox(),
+    ).toBeChecked()
+    await expect(fightPage.settings.showPetsCheckbox()).toBeChecked()
 
     await fightPage.quickSwitch.clickFight('Patchwerk')
     await expectPathname(page, `/report/${e2eReportId}/fight/26`)
-    await expect(fightPage.chart.showEnergizeEventsCheckbox()).toBeChecked()
-    await expect(fightPage.chart.showFixateBandsCheckbox()).not.toBeChecked()
-    await expect(fightPage.chart.bossDamageOffToggle()).toBeChecked()
-    await expect(fightPage.chart.inferThreatReductionCheckbox()).toBeChecked()
-    await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
+    await expect(fightPage.settings.showEnergizeEventsCheckbox()).toBeChecked()
+    await expect(fightPage.settings.showFixateBandsCheckbox()).not.toBeChecked()
+    await expect(fightPage.settings.bossDamageOffToggle()).toBeChecked()
+    await expect(
+      fightPage.settings.inferThreatReductionCheckbox(),
+    ).toBeChecked()
+    await expect(fightPage.settings.showPetsCheckbox()).toBeChecked()
   })
 
   test('supports keyboard shortcuts for toggles, clear isolate, and shortcuts overlay', async ({
@@ -427,15 +440,24 @@ test.describe('fight page', () => {
     const fightPage = new FightPageObject(page)
 
     await fightPage.goto(svgFightUrl)
-    await expect(fightPage.chart.bossDamageMeleeToggle()).toBeChecked()
-    await expect(fightPage.chart.showEnergizeEventsCheckbox()).not.toBeChecked()
-    await expect(fightPage.chart.showPetsCheckbox()).not.toBeChecked()
+    await fightPage.settings.open()
+    await expect(fightPage.settings.bossDamageMeleeToggle()).toBeChecked()
+    await expect(
+      fightPage.settings.showEnergizeEventsCheckbox(),
+    ).not.toBeChecked()
+    await expect(fightPage.settings.showPetsCheckbox()).not.toBeChecked()
+
+    await fightPage.settings.close()
 
     await page.keyboard.press('b')
-    await expect(fightPage.chart.bossDamageAllToggle()).toBeChecked()
     // Former show-pets / energize keys are unbound.
     await page.keyboard.press('e')
-    await expect(fightPage.chart.showEnergizeEventsCheckbox()).not.toBeChecked()
+    await fightPage.settings.open()
+    await expect(fightPage.settings.bossDamageAllToggle()).toBeChecked()
+    await expect(
+      fightPage.settings.showEnergizeEventsCheckbox(),
+    ).not.toBeChecked()
+    await fightPage.settings.close()
 
     await fightPage.chart.isolateLegend('Aegistank')
     await expect(fightPage.chart.clearIsolateButton()).toBeVisible()
@@ -552,6 +574,9 @@ test.describe('fight page', () => {
     await expect(
       fightPage.shortcuts.shortcutKey('Open player search', '/'),
     ).toBeVisible()
+    await expect(
+      fightPage.shortcuts.shortcutKey('Open settings', ','),
+    ).toBeVisible()
     await fightPage.shortcuts.closeWithEscape()
     await expect(fightPage.shortcuts.dialog()).toHaveCount(0)
   })
@@ -658,15 +683,49 @@ test.describe('fight page', () => {
     await fightPage.goto(svgFightUrl)
 
     await expect(fightPage.chart.targetControl()).toBeVisible()
-    await expect(fightPage.chart.resetZoomButton()).toBeVisible()
-    await expect(fightPage.chart.resetZoomButton()).toBeDisabled()
+    await expect(fightPage.settings.gearButton()).toBeVisible()
     await expect(page.getByTestId('fight-chart-skeleton')).toBeVisible()
     await expect(
       page.getByRole('status', { name: 'Loading fight data' }),
     ).toHaveCount(0)
     await expect.poll(() => fightPage.chart.renderer()).toBe('svg')
-    await expect(fightPage.chart.resetZoomButton()).toBeEnabled()
     await expect(page.getByTestId('fight-chart-skeleton')).toHaveCount(0)
+  })
+
+  test('shows floating reset zoom only while zoomed and clears the window', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(`${svgFightUrl}&startMs=1000&endMs=2000`)
+    await expect(fightPage.chart.resetZoomButton()).toBeVisible()
+
+    await fightPage.chart.resetZoomButton().click()
+    await expectSearchParam(page, 'startMs', null)
+    await expectSearchParam(page, 'endMs', null)
+    await expect(fightPage.chart.resetZoomButton()).toHaveCount(0)
+  })
+
+  test('opens settings from the gear and comma, closes with Escape and returns focus', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(svgFightUrl)
+    await expect(fightPage.chart.legendToggle('Aegistank')).toBeVisible()
+
+    await fightPage.settings.gearButton().click()
+    await expect(fightPage.settings.panel()).toBeVisible()
+    await expect(fightPage.settings.panel()).toContainText('My display')
+    await expect(fightPage.settings.panel()).toContainText('This analysis')
+    await page.keyboard.press('Escape')
+    await expect(fightPage.settings.panel()).toHaveCount(0)
+    await expect(fightPage.settings.gearButton()).toBeFocused()
+
+    await page.keyboard.press(',')
+    await expect(fightPage.settings.panel()).toBeVisible()
+    await fightPage.settings.close()
+    await expect(fightPage.settings.gearButton()).toBeFocused()
   })
 
   test('enters replay mode and plays via Space, then exits with Escape', async ({
