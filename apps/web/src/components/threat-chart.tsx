@@ -111,6 +111,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     visibleIsolatedActorId,
     isActorVisible,
     clearIsolate,
+    toggleActorVisibility,
     handleLegendItemClick,
   } = useThreatChartLegendState(series, selectedPlayerIds)
 
@@ -172,6 +173,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     isPlayerSearchOpen,
     openPlayerSearch,
     closePlayerSearch,
+    focusedPlayerId,
     isolateFocusedPlayer,
     playerSearchQuery,
     resolvedHighlightedPlayerId,
@@ -283,7 +285,24 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   )
 
   useHotkeys(
-    'i',
+    '0',
+    (event) => {
+      event.preventDefault()
+      resetZoom()
+    },
+    {
+      description: 'Reset zoom',
+      metadata: {
+        order: 46,
+        showInFightOverlay: true,
+      },
+      scopes: ['fight-page'],
+    },
+    [resetZoom],
+  )
+
+  useHotkeys(
+    'shift+i',
     (event) => {
       event.preventDefault()
       isolateFocusedPlayer()
@@ -297,6 +316,69 @@ export const ThreatChart: FC<ThreatChartProps> = ({
       scopes: ['fight-page'],
     },
     [isolateFocusedPlayer],
+  )
+
+  useHotkeys(
+    'p',
+    (event) => {
+      if (focusedPlayerId === null) {
+        return
+      }
+
+      event.preventDefault()
+      onTogglePinnedPlayer(focusedPlayerId)
+    },
+    {
+      description: 'Pin / unpin focused player',
+      metadata: {
+        order: 51,
+        showInFightOverlay: true,
+      },
+      scopes: ['fight-page'],
+    },
+    [focusedPlayerId, onTogglePinnedPlayer],
+  )
+
+  useHotkeys(
+    'h',
+    (event) => {
+      if (focusedActorId === null) {
+        return
+      }
+
+      event.preventDefault()
+      toggleActorVisibility(focusedActorId)
+    },
+    {
+      description: "Hide / show focused player's line",
+      metadata: {
+        order: 52,
+        showInFightOverlay: true,
+      },
+      scopes: ['fight-page'],
+    },
+    [focusedActorId, toggleActorVisibility],
+  )
+
+  useHotkeys(
+    'o',
+    (event) => {
+      if (focusedPlayerId === null) {
+        return
+      }
+
+      event.preventDefault()
+      onOpenPlayerOverrides(focusedPlayerId)
+    },
+    {
+      description: 'Open threat overrides for focused player',
+      metadata: {
+        order: 53,
+        showInFightOverlay: true,
+      },
+      scopes: ['fight-page'],
+    },
+    [focusedPlayerId, onOpenPlayerOverrides],
   )
 
   useHotkeys(

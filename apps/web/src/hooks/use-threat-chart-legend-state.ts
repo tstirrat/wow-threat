@@ -12,6 +12,7 @@ export interface UseThreatChartLegendStateResult {
   visibleIsolatedActorId: number | null
   isActorVisible: (actorId: number) => boolean
   clearIsolate: () => void
+  toggleActorVisibility: (actorId: number) => void
   handleLegendItemClick: (actorId: number) => void
 }
 
@@ -212,6 +213,7 @@ export function useThreatChartLegendState(
     visibleIsolatedActorId,
     isActorVisible,
     clearIsolate,
+    toggleActorVisibility,
     handleLegendItemClick,
   }
 }

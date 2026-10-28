@@ -102,6 +102,7 @@ export const PlaybackControls: FC<PlaybackControlsProps> = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              aria-label={isPlaying ? 'Pause' : 'Play'}
               size="icon-sm"
               type="button"
               variant="outline"

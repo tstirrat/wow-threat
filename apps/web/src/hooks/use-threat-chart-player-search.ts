@@ -60,6 +60,7 @@ export interface UseThreatChartPlayerSearchResult {
     shouldAddToFilter: boolean
     selectionMethod: 'click' | 'keyboard'
   }) => void
+  focusedPlayerId: number | null
   isolateFocusedPlayer: () => void
 }
 
@@ -256,6 +257,7 @@ export function useThreatChartPlayerSearch({
     setHighlightedPlayerId,
     handlePlayerSearchInputKeyDown,
     selectPlayer,
+    focusedPlayerId,
     isolateFocusedPlayer,
   }
 }

@@ -120,48 +120,56 @@ export function useReplayMode({
     playheadRef.current = clamped
   }, [])
 
+  const startPlayback = useCallback(
+    (fromMs: number): void => {
+      const startMs = fromMs
+      if (startMs >= maxMs) {
+        playheadRef.current = 0
+        setLocalPlayheadMs(0)
+      } else {
+        playheadRef.current = startMs
+      }
+
+      setIsPlaying(true)
+      lastFrameTimeRef.current = null
+
+      const tick = (frameTime: number): void => {
+        if (lastFrameTimeRef.current === null) {
+          lastFrameTimeRef.current = frameTime
+          rafRef.current = requestAnimationFrame(tick)
+          return
+        }
+
+        const deltaMs =
+          (frameTime - lastFrameTimeRef.current) * speedRef.current
+        lastFrameTimeRef.current = frameTime
+
+        const nextMs = Math.min(playheadRef.current + deltaMs, maxMsRef.current)
+        playheadRef.current = nextMs
+        setLocalPlayheadMs(nextMs)
+
+        if (nextMs >= maxMsRef.current) {
+          setIsPlaying(false)
+          lastFrameTimeRef.current = null
+          rafRef.current = null
+          return
+        }
+
+        rafRef.current = requestAnimationFrame(tick)
+      }
+
+      rafRef.current = requestAnimationFrame(tick)
+    },
+    [maxMs],
+  )
+
   const play = useCallback((): void => {
     if (!isReplayMode) {
       return
     }
 
-    const startMs = effectivePlayheadMs ?? 0
-    if (startMs >= maxMs) {
-      playheadRef.current = 0
-      setLocalPlayheadMs(0)
-    } else {
-      playheadRef.current = startMs
-    }
-
-    setIsPlaying(true)
-    lastFrameTimeRef.current = null
-
-    const tick = (frameTime: number): void => {
-      if (lastFrameTimeRef.current === null) {
-        lastFrameTimeRef.current = frameTime
-        rafRef.current = requestAnimationFrame(tick)
-        return
-      }
-
-      const deltaMs = (frameTime - lastFrameTimeRef.current) * speedRef.current
-      lastFrameTimeRef.current = frameTime
-
-      const nextMs = Math.min(playheadRef.current + deltaMs, maxMsRef.current)
-      playheadRef.current = nextMs
-      setLocalPlayheadMs(nextMs)
-
-      if (nextMs >= maxMsRef.current) {
-        setIsPlaying(false)
-        lastFrameTimeRef.current = null
-        rafRef.current = null
-        return
-      }
-
-      rafRef.current = requestAnimationFrame(tick)
-    }
-
-    rafRef.current = requestAnimationFrame(tick)
-  }, [effectivePlayheadMs, isReplayMode, maxMs])
+    startPlayback(effectivePlayheadMs ?? 0)
+  }, [effectivePlayheadMs, isReplayMode, startPlayback])
 
   const pause = useCallback((): void => {
     stopAnimation()
@@ -172,12 +180,26 @@ export function useReplayMode({
   }, [localPlayheadMs, onCommitState, stopAnimation])
 
   const togglePlayPause = useCallback((): void => {
+    if (!isReplayMode) {
+      enterReplayMode()
+      startPlayback(committedPlayheadMs ?? 0)
+      return
+    }
+
     if (isPlaying) {
       pause()
     } else {
       play()
     }
-  }, [isPlaying, pause, play])
+  }, [
+    committedPlayheadMs,
+    enterReplayMode,
+    isPlaying,
+    isReplayMode,
+    pause,
+    play,
+    startPlayback,
+  ])
 
   const increaseSpeed = useCallback((): void => {
     setSpeedIndex((current) =>

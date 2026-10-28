@@ -125,6 +125,33 @@ describe('useReplayMode', () => {
     })
   })
 
+  describe('togglePlayPause', () => {
+    it('enters replay mode and starts playing when not in replay mode', () => {
+      const { result } = renderHook(() => useReplayMode(createProps()))
+
+      act(() => {
+        result.current.togglePlayPause()
+      })
+
+      expect(result.current.isReplayMode).toBe(true)
+      expect(result.current.isPlaying).toBe(true)
+    })
+
+    it('pauses when already playing', () => {
+      const { result } = renderHook(() => useReplayMode(createProps()))
+
+      act(() => {
+        result.current.togglePlayPause()
+      })
+      act(() => {
+        result.current.togglePlayPause()
+      })
+
+      expect(result.current.isReplayMode).toBe(true)
+      expect(result.current.isPlaying).toBe(false)
+    })
+  })
+
   describe('clearPlayhead', () => {
     it('clears everything and commits null state', () => {
       const onCommitState = vi.fn()
