@@ -409,10 +409,9 @@ test.describe('fight page', () => {
 
     await page.keyboard.press('b')
     await expect(fightPage.chart.bossDamageAllToggle()).toBeChecked()
-    await page.keyboard.press('p')
-    await expect(fightPage.chart.showPetsCheckbox()).toBeChecked()
+    // Former show-pets / energize keys are unbound.
     await page.keyboard.press('e')
-    await expect(fightPage.chart.showEnergizeEventsCheckbox()).toBeChecked()
+    await expect(fightPage.chart.showEnergizeEventsCheckbox()).not.toBeChecked()
 
     await fightPage.chart.isolateLegend('Aegistank')
     await expect(fightPage.chart.clearIsolateButton()).toBeVisible()
@@ -426,16 +425,16 @@ test.describe('fight page', () => {
     await fightPage.chart.focusLegend('Bladefury')
     await expectSearchParam(page, 'focusId', '2')
     await expect(fightPage.summary.focusedActorText('Bladefury')).toBeVisible()
-    await page.keyboard.press('i')
+    await page.keyboard.press('Shift+i')
     await expectSearchParam(page, 'players', '2')
-    await page.keyboard.press('i')
+    await page.keyboard.press('Shift+i')
     await expectSearchParam(page, 'players', null)
 
     await fightPage.chart.toggleLegend('Bladefury')
     await expectSearchParam(page, 'players', '1,3')
-    await page.keyboard.press('i')
+    await page.keyboard.press('Shift+i')
     await expectSearchParam(page, 'players', '2')
-    await page.keyboard.press('i')
+    await page.keyboard.press('Shift+i')
     await expectSearchParam(page, 'players', '1,3')
 
     await page.keyboard.press('c')
@@ -443,9 +442,9 @@ test.describe('fight page', () => {
 
     await fightPage.chart.toggleLegend('Arrowyn')
     await expectSearchParam(page, 'players', '1,2')
-    await page.keyboard.press('i')
+    await page.keyboard.press('Shift+i')
     await expectSearchParam(page, 'players', '2')
-    await page.keyboard.press('i')
+    await page.keyboard.press('Shift+i')
     await expectSearchParam(page, 'players', '1,2')
 
     const playerSearch = page.getByRole('dialog', {
@@ -479,11 +478,11 @@ test.describe('fight page', () => {
       fightPage.shortcuts.shortcutListItem('Cycle boss damage markers'),
     ).toBeVisible()
     await expect(
-      fightPage.shortcuts.shortcutListItem('Toggle show pets'),
+      fightPage.shortcuts.shortcutListItem('Pin / unpin focused player'),
     ).toBeVisible()
     await expect(
       fightPage.shortcuts.shortcutListItem('Toggle show energize events'),
-    ).toBeVisible()
+    ).toHaveCount(0)
     await expect(
       fightPage.shortcuts.shortcutListItem('Clear isolate'),
     ).toBeVisible()
@@ -500,10 +499,19 @@ test.describe('fight page', () => {
       fightPage.shortcuts.shortcutKey('Cycle boss damage markers', 'B'),
     ).toBeVisible()
     await expect(
-      fightPage.shortcuts.shortcutKey('Toggle show pets', 'P'),
+      fightPage.shortcuts.shortcutKey('Pin / unpin focused player', 'P'),
     ).toBeVisible()
     await expect(
-      fightPage.shortcuts.shortcutKey('Toggle show energize events', 'E'),
+      fightPage.shortcuts.shortcutKey("Hide / show focused player's line", 'H'),
+    ).toBeVisible()
+    await expect(
+      fightPage.shortcuts.shortcutKey(
+        'Open threat overrides for focused player',
+        'O',
+      ),
+    ).toBeVisible()
+    await expect(
+      fightPage.shortcuts.shortcutKey('Reset zoom', '0'),
     ).toBeVisible()
     await expect(
       fightPage.shortcuts.shortcutKey('Clear isolate', 'C'),
@@ -634,40 +642,34 @@ test.describe('fight page', () => {
     await expect(page.getByTestId('fight-chart-skeleton')).toHaveCount(0)
   })
 
-  test('enters and exits replay mode via R key', async ({ page }) => {
+  test('enters replay mode and plays via Space, then exits with Escape', async ({
+    page,
+  }) => {
     const fightPage = new FightPageObject(page)
 
     await fightPage.goto(svgFightUrl)
     await expect.poll(() => fightPage.chart.renderer()).toBe('svg')
 
-    // Replay button visible before entering
     await expect(fightPage.replay.replayButton()).toBeVisible()
     await expect(fightPage.replay.threatMeter()).toHaveCount(0)
 
-    // Enter replay mode
-    await fightPage.replay.enterWithKey()
+    // R no longer toggles replay mode
+    await page.keyboard.press('r')
+    await expect(fightPage.replay.threatMeter()).toHaveCount(0)
+
+    await fightPage.replay.togglePlayPauseWithKey()
     await expect(fightPage.replay.threatMeter()).toBeVisible()
     await expect(fightPage.replay.exitReplayButton()).toBeVisible()
     await expect(fightPage.replay.replayButton()).toHaveCount(0)
     await expectSearchParam(page, 'replay', '1')
+    await expect(fightPage.replay.playPauseButton()).toHaveAccessibleName(
+      'Pause',
+    )
 
-    // Exit replay mode with R
-    await fightPage.replay.exitWithKey()
-    await expect(fightPage.replay.threatMeter()).toHaveCount(0)
-    await expect(fightPage.chart.legendRoot()).toBeVisible()
-    await expectSearchParam(page, 'replay', '0')
-    // Playhead persists in URL after exit
-    await expectSearchParam(page, 'playheadMs', '0')
-  })
-
-  test('exits replay mode via Escape key', async ({ page }) => {
-    const fightPage = new FightPageObject(page)
-
-    await fightPage.goto(svgFightUrl)
-    await expect.poll(() => fightPage.chart.renderer()).toBe('svg')
-
-    await fightPage.replay.enterWithKey()
-    await expect(fightPage.replay.threatMeter()).toBeVisible()
+    await fightPage.replay.togglePlayPauseWithKey()
+    await expect(fightPage.replay.playPauseButton()).toHaveAccessibleName(
+      'Play',
+    )
 
     await fightPage.replay.exitWithEscape()
     await expect(fightPage.replay.threatMeter()).toHaveCount(0)
@@ -705,12 +707,9 @@ test.describe('fight page', () => {
     // Verify replay shortcuts
     await expect(
       fightPage.shortcuts.shortcutListItem('Toggle replay mode'),
-    ).toBeVisible()
+    ).toHaveCount(0)
     await expect(
-      fightPage.shortcuts.shortcutKey('Toggle replay mode', 'R'),
-    ).toBeVisible()
-    await expect(
-      fightPage.shortcuts.shortcutListItem('Play / Pause'),
+      fightPage.shortcuts.shortcutListItem('Play / Pause (enters replay mode)'),
     ).toBeVisible()
     await expect(
       fightPage.shortcuts.shortcutListItem('Increase playback speed'),

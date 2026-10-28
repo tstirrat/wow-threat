@@ -269,66 +269,17 @@ export const FightPage: FC = () => {
   )
 
   useHotkeys(
-    'p',
-    (event) => {
-      event.preventDefault()
-      handleShowPetsChange(!userSettings.showPets)
-    },
-    {
-      description: 'Toggle show pets',
-      metadata: {
-        order: 20,
-        showInFightOverlay: true,
-      },
-      scopes: ['fight-page'],
-    },
-    [handleShowPetsChange, userSettings.showPets],
-  )
-
-  useHotkeys(
-    'e',
-    (event) => {
-      event.preventDefault()
-      handleShowEnergizeEventsChange(!userSettings.showEnergizeEvents)
-    },
-    {
-      description: 'Toggle show energize events',
-      metadata: {
-        order: 30,
-        showInFightOverlay: true,
-      },
-      scopes: ['fight-page'],
-    },
-    [handleShowEnergizeEventsChange, userSettings.showEnergizeEvents],
-  )
-
-  useHotkeys(
-    'r',
-    (event) => {
-      event.preventDefault()
-      replayMode.toggleReplayMode()
-    },
-    {
-      description: 'Toggle replay mode',
-      metadata: { group: 'Replay', order: 70, showInFightOverlay: true },
-      scopes: ['fight-page'],
-    },
-    [replayMode.toggleReplayMode],
-  )
-
-  useHotkeys(
     'space',
     (event) => {
-      if (!replayMode.isReplayMode) return
       event.preventDefault()
       replayMode.togglePlayPause()
     },
     {
-      description: 'Play / Pause',
-      metadata: { group: 'Replay', order: 71, showInFightOverlay: true },
+      description: 'Play / Pause (enters replay mode)',
+      metadata: { group: 'Replay', order: 70, showInFightOverlay: true },
       scopes: ['fight-page'],
     },
-    [replayMode.isReplayMode, replayMode.togglePlayPause],
+    [replayMode.togglePlayPause],
   )
 
   useHotkeys(

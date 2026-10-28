@@ -32,12 +32,8 @@ export class ReplayModeObject {
     return this.page.getByTestId('threat-meter')
   }
 
-  async enterWithKey(): Promise<void> {
-    await this.page.keyboard.press('r')
-  }
-
-  async exitWithKey(): Promise<void> {
-    await this.page.keyboard.press('r')
+  async togglePlayPauseWithKey(): Promise<void> {
+    await this.page.keyboard.press('Space')
   }
 
   async exitWithEscape(): Promise<void> {
