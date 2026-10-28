@@ -1,9 +1,10 @@
 /**
- * Playback controls for replay mode: play/pause, speed, and mode toggle.
+ * Transport row for replay mode: play/pause and speed on the left, cursor time and clear on the right.
  */
-import { Pause, Play, X } from 'lucide-react'
+import { Pause, Play } from 'lucide-react'
 import type { FC } from 'react'
 
+import { formatTimelineTime } from '../lib/format'
 import { Button } from './ui/button'
 import { Kbd } from './ui/kbd'
 import {
@@ -18,6 +19,7 @@ export type PlaybackControlsProps = {
   isReplayMode: boolean
   playbackSpeed: number
   hasPlayhead: boolean
+  playheadMs?: number | null
   onTogglePlayPause: () => void
   onIncreaseSpeed: () => void
   onDecreaseSpeed: () => void
@@ -25,44 +27,90 @@ export type PlaybackControlsProps = {
   onClearPlayhead: () => void
 }
 
-/** Inline playback controls rendered alongside chart controls. */
+/** Compact transport row rendered directly under the chart. */
 export const PlaybackControls: FC<PlaybackControlsProps> = ({
   isPlaying,
   isReplayMode,
   playbackSpeed,
   hasPlayhead,
+  playheadMs = null,
   onTogglePlayPause,
   onIncreaseSpeed,
   onDecreaseSpeed,
   onToggleReplayMode,
   onClearPlayhead,
 }) => {
-  if (!isReplayMode && !hasPlayhead) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              size="sm"
-              type="button"
-              variant="outline"
-              onClick={onToggleReplayMode}
-            >
-              Replay
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            Enter replay mode <Kbd>R</Kbd>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    )
-  }
+  return (
+    <TooltipProvider>
+      <div
+        aria-label="Playback controls"
+        className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg bg-card px-3 py-2 text-xs text-card-foreground ring-foreground/10 dark:ring-1"
+        role="group"
+      >
+        <div className="flex flex-wrap items-center gap-1">
+          {isReplayMode ? (
+            <>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    aria-label={isPlaying ? 'Pause' : 'Play'}
+                    size="icon-sm"
+                    type="button"
+                    variant="outline"
+                    onClick={onTogglePlayPause}
+                  >
+                    {isPlaying ? (
+                      <Pause className="h-3.5 w-3.5" />
+                    ) : (
+                      <Play className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isPlaying ? 'Pause' : 'Play'} <Kbd>Space</Kbd>
+                </TooltipContent>
+              </Tooltip>
 
-  if (!isReplayMode && hasPlayhead) {
-    return (
-      <TooltipProvider>
-        <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon-sm"
+                      type="button"
+                      variant="ghost"
+                      onClick={onDecreaseSpeed}
+                    >
+                      <span className="text-[10px] font-medium">&lt;</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Slower <Kbd>&lt;</Kbd>
+                  </TooltipContent>
+                </Tooltip>
+
+                <span className="min-w-8 text-center text-xs font-medium tabular-nums text-muted-foreground">
+                  {playbackSpeed}x
+                </span>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon-sm"
+                      type="button"
+                      variant="ghost"
+                      onClick={onIncreaseSpeed}
+                    >
+                      <span className="text-[10px] font-medium">&gt;</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Faster <Kbd>&gt;</Kbd>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </>
+          ) : null}
+
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -71,122 +119,49 @@ export const PlaybackControls: FC<PlaybackControlsProps> = ({
                 variant="outline"
                 onClick={onToggleReplayMode}
               >
-                Resume Replay
+                {isReplayMode
+                  ? 'Exit Replay'
+                  : hasPlayhead
+                    ? 'Resume Replay'
+                    : 'Replay'}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              Re-enter replay mode <Kbd>R</Kbd>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon-sm"
-                type="button"
-                variant="ghost"
-                onClick={onClearPlayhead}
-              >
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Clear playhead</TooltipContent>
-          </Tooltip>
-        </div>
-      </TooltipProvider>
-    )
-  }
-
-  return (
-    <TooltipProvider>
-      <div className="flex items-center gap-1">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              aria-label={isPlaying ? 'Pause' : 'Play'}
-              size="icon-sm"
-              type="button"
-              variant="outline"
-              onClick={onTogglePlayPause}
-            >
-              {isPlaying ? (
-                <Pause className="h-3.5 w-3.5" />
+              {isReplayMode ? (
+                <>
+                  Exit replay mode <Kbd>Esc</Kbd>
+                </>
               ) : (
-                <Play className="h-3.5 w-3.5" />
+                <>
+                  {hasPlayhead ? 'Re-enter' : 'Enter'} replay mode{' '}
+                  <Kbd>Space</Kbd>
+                </>
               )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {isPlaying ? 'Pause' : 'Play'} <Kbd>Space</Kbd>
-          </TooltipContent>
-        </Tooltip>
-
-        <div className="flex items-center gap-0.5">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon-sm"
-                type="button"
-                variant="ghost"
-                onClick={onDecreaseSpeed}
-              >
-                <span className="text-[10px] font-medium">&lt;</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              Slower <Kbd>&lt;</Kbd>
-            </TooltipContent>
-          </Tooltip>
-
-          <span className="min-w-8 text-center text-xs font-medium tabular-nums text-muted-foreground">
-            {playbackSpeed}x
-          </span>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon-sm"
-                type="button"
-                variant="ghost"
-                onClick={onIncreaseSpeed}
-              >
-                <span className="text-[10px] font-medium">&gt;</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              Faster <Kbd>&gt;</Kbd>
             </TooltipContent>
           </Tooltip>
         </div>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
+        <div className="flex items-center gap-2">
+          <span
+            className="tabular-nums text-muted-foreground"
+            data-testid="transport-cursor"
+          >
+            Cursor{' '}
+            {hasPlayhead && playheadMs !== null
+              ? formatTimelineTime(playheadMs)
+              : '—'}
+          </span>
+          {hasPlayhead ? (
             <Button
               size="sm"
-              type="button"
-              variant="outline"
-              onClick={onToggleReplayMode}
-            >
-              Exit Replay
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            Exit replay mode <Kbd>R</Kbd> or <Kbd>Esc</Kbd>
-          </TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              size="icon-sm"
               type="button"
               variant="ghost"
               onClick={onClearPlayhead}
             >
-              <X className="h-3.5 w-3.5" />
+              Clear
             </Button>
-          </TooltipTrigger>
-          <TooltipContent>Clear playhead</TooltipContent>
-        </Tooltip>
+          ) : null}
+        </div>
       </div>
     </TooltipProvider>
   )

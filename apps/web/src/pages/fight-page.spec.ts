@@ -769,6 +769,8 @@ test.describe('fight page', () => {
 
     await expect(fightPage.replay.threatMeter()).toBeVisible()
     await expect(fightPage.replay.exitReplayButton()).toBeVisible()
+    await expect(fightPage.replay.cursorReadout()).toContainText('0:05.000')
+    await expect(fightPage.replay.clearButton()).toBeVisible()
   })
 
   test('shows replay shortcuts in grouped section of shortcuts overlay', async ({

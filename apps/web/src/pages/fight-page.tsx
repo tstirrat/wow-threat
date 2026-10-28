@@ -518,21 +518,7 @@ export const FightPage: FC = () => {
           <>
             {isUserSettingsLoading ? (
               <FightChartLoadingSkeleton loadingMessage="Loading fight settings" />
-            ) : (
-              <>
-                <PlaybackControls
-                  isPlaying={replayMode.isPlaying}
-                  isReplayMode={replayMode.isReplayMode}
-                  playbackSpeed={replayMode.playbackSpeed}
-                  hasPlayhead={replayMode.effectivePlayheadMs !== null}
-                  onTogglePlayPause={replayMode.togglePlayPause}
-                  onIncreaseSpeed={replayMode.increaseSpeed}
-                  onDecreaseSpeed={replayMode.decreaseSpeed}
-                  onToggleReplayMode={replayMode.toggleReplayMode}
-                  onClearPlayhead={replayMode.clearPlayhead}
-                />
-              </>
-            )}
+            ) : null}
             {isUserSettingsLoading ? null : selectedTarget === null ? (
               <p className="text-sm text-muted-foreground">
                 No valid targets available for this fight.
@@ -571,6 +557,22 @@ export const FightPage: FC = () => {
               onExpandedChange={setIsThreatMeterExpanded}
             />
           ) : null
+        }
+        transport={
+          isUserSettingsLoading ? null : (
+            <PlaybackControls
+              isPlaying={replayMode.isPlaying}
+              isReplayMode={replayMode.isReplayMode}
+              playbackSpeed={replayMode.playbackSpeed}
+              hasPlayhead={replayMode.effectivePlayheadMs !== null}
+              playheadMs={replayMode.effectivePlayheadMs}
+              onTogglePlayPause={replayMode.togglePlayPause}
+              onIncreaseSpeed={replayMode.increaseSpeed}
+              onDecreaseSpeed={replayMode.decreaseSpeed}
+              onToggleReplayMode={replayMode.toggleReplayMode}
+              onClearPlayhead={replayMode.clearPlayhead}
+            />
+          )
         }
         drawer={
           !isUserSettingsLoading && eventsData ? (
