@@ -1,6 +1,8 @@
 /**
  * Fight navigation grouping helpers for report-level navigation lists.
  */
+import type { ThreatConfigId } from '@wow-threat/config'
+
 import type { ReportFightSummary } from '../types/api'
 
 type BossFightSummary = ReportFightSummary
@@ -233,4 +235,45 @@ export function buildFightNavigationGroups(
     bossEncounters,
     trashFights,
   }
+}
+
+export interface FightLinkOptions {
+  reportId: string
+  fightId: number
+  configId?: ThreatConfigId | null
+  eventsMode?: string | null
+  forceFresh?: boolean
+  pinnedPlayerIds?: number[]
+}
+
+/** Build a fight route path that carries pinned players, config, fresh and eventsMode. */
+export function buildFightLinkPath({
+  reportId,
+  fightId,
+  configId = null,
+  eventsMode = null,
+  forceFresh = false,
+  pinnedPlayerIds = [],
+}: FightLinkOptions): string {
+  const pinnedPlayers = [...new Set(pinnedPlayerIds)].sort(
+    (left, right) => left - right,
+  )
+  const searchParams = new URLSearchParams()
+  if (forceFresh) {
+    searchParams.set('fresh', '1')
+  }
+  if (pinnedPlayers.length > 0) {
+    const pinnedPlayerParam = pinnedPlayers.join(',')
+    searchParams.set('pinnedPlayers', pinnedPlayerParam)
+    searchParams.set('players', pinnedPlayerParam)
+  }
+  if (eventsMode) {
+    searchParams.set('eventsMode', eventsMode)
+  }
+  if (configId) {
+    searchParams.set('config', configId)
+  }
+  const search = searchParams.toString()
+
+  return `/report/${reportId}/fight/${fightId}${search.length > 0 ? `?${search}` : ''}`
 }

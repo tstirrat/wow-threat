@@ -1,5 +1,5 @@
 /**
- * Page object for the shared fight quick-switcher component.
+ * Page object for the rail pull list (fight quick switch) in the report outline.
  */
 import { type Locator, type Page } from '@playwright/test'
 
@@ -7,7 +7,9 @@ export class FightQuickSwitcherObject {
   readonly root: Locator
 
   constructor(page: Page) {
-    this.root = page.getByRole('navigation', { name: 'Fight quick switch' })
+    this.root = page
+      .getByTestId('app-rail')
+      .getByRole('navigation', { name: 'Fight quick switch' })
   }
 
   fightLink(name: string): Locator {
