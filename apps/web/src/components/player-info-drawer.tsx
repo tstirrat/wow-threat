@@ -1,9 +1,11 @@
 /**
  * Bottom drawer for the focused player's summary, with a title bar that stays visible when collapsed.
+ * Below 760px it is shown as its own tab, always expanded.
  */
 import { ChevronDown, ChevronUp, Keyboard } from 'lucide-react'
 import { type FC, type ReactNode, useId } from 'react'
 
+import { useIsMobileLayout } from '../hooks/use-is-mobile-layout'
 import { useOpenShortcuts } from '../routes/app-shell-context'
 import type {
   FocusedPlayerSummary,
@@ -35,17 +37,20 @@ export const PlayerInfoDrawer: FC<PlayerInfoDrawerProps> = ({
   const titleId = useId()
   const bodyId = useId()
   const openShortcuts = useOpenShortcuts()
+  const isMobile = useIsMobileLayout()
+  const isExpanded = isOpen || isMobile
   const toggleLabel = isOpen ? 'Collapse player info' : 'Expand player info'
   const ChevronIcon = isOpen ? ChevronDown : ChevronUp
 
   return (
     <section
       aria-labelledby={titleId}
-      className="flex min-h-0 flex-col rounded-lg bg-card text-card-foreground ring-foreground/10 dark:ring-1"
+      className="flex min-h-0 flex-col rounded-lg bg-card text-card-foreground ring-foreground/10 max-[760px]:flex-1 dark:ring-1"
     >
       <div className="flex items-center gap-2 px-3 py-1.5">
         <Button
           aria-controls={bodyId}
+          className="max-[760px]:hidden"
           aria-expanded={isOpen}
           aria-keyshortcuts="I"
           aria-label={toggleLabel}
@@ -60,7 +65,7 @@ export const PlayerInfoDrawer: FC<PlayerInfoDrawerProps> = ({
         <h2 className="text-sm font-medium" id={titleId}>
           Player info
         </h2>
-        {!isOpen && summary ? (
+        {!isExpanded && summary ? (
           <>
             <PlayerName color={summary.color} label={summary.label} />
             <div
@@ -73,7 +78,7 @@ export const PlayerInfoDrawer: FC<PlayerInfoDrawerProps> = ({
         ) : null}
         <Button
           aria-label="Show keyboard shortcuts"
-          className="ml-auto"
+          className="ml-auto max-[760px]:hidden"
           size="icon"
           title="Keyboard shortcuts (?)"
           type="button"
@@ -83,9 +88,9 @@ export const PlayerInfoDrawer: FC<PlayerInfoDrawerProps> = ({
           <Keyboard aria-hidden="true" className="h-4 w-4" />
         </Button>
       </div>
-      {isOpen ? (
+      {isExpanded ? (
         <div
-          className="max-h-[40vh] min-h-0 overflow-y-auto border-t border-border p-3"
+          className="max-h-[40vh] min-h-0 overflow-y-auto border-t border-border p-3 max-[760px]:max-h-none max-[760px]:flex-1 max-[760px]:p-2"
           id={bodyId}
         >
           {children}
