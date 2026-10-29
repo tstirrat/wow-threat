@@ -595,7 +595,6 @@ export const FightPage: FC = () => {
               onBodyHeightChange={setPlayerInfoHeight}
               summary={focusedPlayerSummary}
               initialAuras={initialAuras}
-              wowhead={wowheadLinksConfig}
             >
               <PlayerSummaryTable
                 summary={focusedPlayerSummary}

@@ -24,8 +24,8 @@ const summary: FocusedPlayerSummary = {
 }
 const auras: InitialAuraDisplay[] = [
   { spellId: 25780, name: 'Righteous Fury', stacks: 1, isNotable: true },
+  { spellId: 1126, name: 'Mark of the Wild', stacks: 1, isNotable: false },
 ]
-const wowhead = { domain: 'tbc' }
 
 const renderDrawer = (
   isOpen: boolean,
@@ -38,7 +38,6 @@ const renderDrawer = (
         initialAuras={auras}
         isOpen={isOpen}
         summary={summary}
-        wowhead={wowhead}
         onToggle={onToggle}
       >
         <p>drawer body</p>
@@ -47,6 +46,21 @@ const renderDrawer = (
   )
 
 describe('PlayerInfoDrawer', () => {
+  it('toggles when clicking anywhere on the bar but not the shortcuts button', async () => {
+    const user = userEvent.setup()
+    const onToggle = vi.fn()
+    const openShortcuts = vi.fn()
+    renderDrawer(true, onToggle, openShortcuts)
+
+    await user.click(screen.getByText('Player info'))
+    expect(onToggle).toHaveBeenCalledTimes(1)
+    await user.click(
+      screen.getByRole('button', { name: 'Show keyboard shortcuts' }),
+    )
+    expect(openShortcuts).toHaveBeenCalledTimes(1)
+    expect(onToggle).toHaveBeenCalledTimes(1)
+  })
+
   it('defaults the body to a third of the viewport height', () => {
     renderDrawer(true)
     expect(
@@ -66,7 +80,6 @@ describe('PlayerInfoDrawer', () => {
           initialAuras={auras}
           isOpen
           summary={summary}
-          wowhead={wowhead}
           onBodyHeightChange={onBodyHeightChange}
           onToggle={vi.fn()}
         >
@@ -95,7 +108,12 @@ describe('PlayerInfoDrawer', () => {
     expect(screen.getByText('Aegistank')).toHaveStyle({
       color: summary.color,
     })
-    expect(screen.getByText('Righteous Fury')).toBeInTheDocument()
+    expect(
+      screen.getByRole('img', { name: 'Righteous Fury' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('img', { name: 'Mark of the Wild' }),
+    ).not.toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'Expand player info' }),
     ).toHaveAttribute('aria-expanded', 'false')
