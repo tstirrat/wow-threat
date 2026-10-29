@@ -122,6 +122,7 @@ describe('ReportOutline', () => {
           report={report}
           reportHost="fresh.warcraftlogs.com"
           reportId={report.code}
+          selectedFightId={40}
           threatConfigLabel="Era v1"
         />
       </MemoryRouter>,
@@ -135,6 +136,43 @@ describe('ReportOutline', () => {
       '/report/ABC123xyz/fight/40?targetId=11',
     )
     expect(screen.queryByText('Hound')).toBeNull()
+  })
+
+  it('hides boss targets for fights that are not selected', () => {
+    const report = createReport()
+    report.actors.push(
+      { id: 10, name: 'Garr', type: 'NPC', subType: 'Boss' },
+      { id: 11, name: 'Firesworn', type: 'NPC', subType: 'Boss' },
+    )
+    report.fights = [
+      createFight({
+        id: 40,
+        name: 'Garr',
+        enemyNPCs: [10, 11].map((id) => ({
+          id,
+          gameID: id,
+          instanceCount: 1,
+          groupCount: 1,
+          petOwner: null,
+        })),
+      }),
+    ]
+
+    render(
+      <MemoryRouter>
+        <ReportOutline
+          isStarred={false}
+          onToggleStar={() => {}}
+          report={report}
+          reportHost="fresh.warcraftlogs.com"
+          reportId={report.code}
+          selectedFightId={null}
+          threatConfigLabel="Era v1"
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.queryByRole('link', { name: 'Firesworn' })).toBeNull()
   })
 
   it('shows report-level player count when no fight is selected', () => {

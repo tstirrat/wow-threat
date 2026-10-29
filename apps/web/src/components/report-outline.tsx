@@ -215,7 +215,9 @@ const PullList: FC<PullListProps> = ({
           {bossPullFights.map((fight) => {
             const isCurrentFight = fight.id === selectedFightId
             const wipePercentage = resolveWipeBossPercentage(fight)
-            const bossTargets = resolveFightBossTargets(fight, actors)
+            const bossTargets = isCurrentFight
+              ? resolveFightBossTargets(fight, actors)
+              : []
 
             return (
               <li key={fight.id}>
