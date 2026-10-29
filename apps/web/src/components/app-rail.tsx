@@ -191,6 +191,13 @@ export const AppRail: FC<AppRailProps> = ({
           closeLabel="Close sidebar"
           side="left"
           withOverlay
+          onOpenAutoFocus={(event) => {
+            // Focusing the footer's tooltip trigger opens its tooltip, which swallows the first Escape.
+            event.preventDefault()
+            if (event.currentTarget instanceof HTMLElement) {
+              event.currentTarget.focus()
+            }
+          }}
         >
           <SheetTitle className="sr-only">Sidebar</SheetTitle>
           <aside
