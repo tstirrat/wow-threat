@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  formatAxisTime,
   formatClockDuration,
   formatNumber,
   formatReportHeaderDate,
@@ -132,5 +133,15 @@ describe('formatReportHeaderDate ordinal suffixes', () => {
 
   it('uses rd for 23rd', () => {
     expect(ordinalFor(23)).toBe('23rd')
+  })
+})
+
+describe('formatAxisTime', () => {
+  it('omits milliseconds for wide spans', () => {
+    expect(formatAxisTime(65500, 120000)).toBe('1:05')
+  })
+
+  it('includes milliseconds when zoomed to a short span', () => {
+    expect(formatAxisTime(65500, 4000)).toBe('1:05.500')
   })
 })

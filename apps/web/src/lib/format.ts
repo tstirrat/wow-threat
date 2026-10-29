@@ -22,6 +22,16 @@ export function formatTimelineTime(valueMs: number): string {
   return `${minutes}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`
 }
 
+/** Visible axis span below which tick labels include milliseconds. */
+const AXIS_MILLISECOND_SPAN_MS = 10_000
+
+/** Format an axis tick as m:ss, adding milliseconds when zoomed to a short span. */
+export function formatAxisTime(valueMs: number, spanMs: number): string {
+  return spanMs < AXIS_MILLISECOND_SPAN_MS
+    ? formatTimelineTime(valueMs)
+    : formatClockDuration(valueMs)
+}
+
 function formatOrdinal(value: number): string {
   const remainder10 = value % 10
   const remainder100 = value % 100
