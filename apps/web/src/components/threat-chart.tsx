@@ -19,7 +19,7 @@ import { useThreatChartSeriesData } from '../hooks/use-threat-chart-series-data'
 import { useThreatChartThemeColors } from '../hooks/use-threat-chart-theme-colors'
 import { useThreatChartVisiblePlayers } from '../hooks/use-threat-chart-visible-players'
 import { useThreatChartZoom } from '../hooks/use-threat-chart-zoom'
-import { formatTimelineTime } from '../lib/format'
+import { formatAxisTime, formatTimelineTime } from '../lib/format'
 import { resolveSeriesWindowBounds } from '../lib/threat-aggregation'
 import { resolvePointSize } from '../lib/threat-chart-point-size'
 import {
@@ -407,6 +407,9 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     themeColors,
   })
 
+  const axisSpanMs =
+    (selectedWindow?.end ?? bounds.max) - (selectedWindow?.start ?? bounds.min)
+
   const option: EChartsOption = {
     animation: false,
     grid: {
@@ -435,7 +438,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
       max: selectedWindow?.end ?? bounds.max,
       axisLabel: {
         color: themeColors.muted,
-        formatter: (value: number) => formatTimelineTime(value),
+        formatter: (value: number) => formatAxisTime(value, axisSpanMs),
       },
       axisLine: {
         lineStyle: {
