@@ -17,6 +17,7 @@ export const threatChartShowFixateBandsStorageKey =
 export const starredGuildReportsCacheTtlMs = 1000 * 60 * 60
 export const rosterHiddenStorageKey = 'wow-threat.roster-hidden'
 export const playerInfoClosedStorageKey = 'wow-threat.player-info-closed'
+export const playerInfoHeightStorageKey = 'wow-threat.player-info-height'
 /** Matches Tailwind's `max-[760px]:` variant; below it the rail and roster go off-canvas. */
 export const mobileLayoutMediaQuery = '(width < 760px)'
 export const reportSearchIndexStorageKey = 'wow-threat.report-search-index'

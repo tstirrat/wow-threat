@@ -4,11 +4,17 @@
 import { useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 
-import { playerInfoClosedStorageKey } from '../lib/constants'
+import {
+  playerInfoClosedStorageKey,
+  playerInfoHeightStorageKey,
+} from '../lib/constants'
 
 export type PlayerInfoDrawer = {
   isPlayerInfoOpen: boolean
   togglePlayerInfo: () => void
+  /** Persisted body height in px, or null until the user has resized it. */
+  playerInfoHeight: number | null
+  setPlayerInfoHeight: (height: number) => void
 }
 
 function loadPlayerInfoOpen(): boolean {
@@ -27,9 +33,35 @@ function savePlayerInfoOpen(isOpen: boolean): void {
   }
 }
 
+function loadPlayerInfoHeight(): number | null {
+  try {
+    const stored = Number(
+      window.localStorage.getItem(playerInfoHeightStorageKey),
+    )
+    return Number.isFinite(stored) && stored > 0 ? stored : null
+  } catch {
+    return null
+  }
+}
+
+function savePlayerInfoHeight(height: number): void {
+  try {
+    window.localStorage.setItem(playerInfoHeightStorageKey, String(height))
+  } catch {
+    // Keep resizing responsive when storage is unavailable.
+  }
+}
+
 /** Track whether the player info drawer is expanded; persists the choice and binds I. */
 export function usePlayerInfoDrawer(): PlayerInfoDrawer {
   const [isPlayerInfoOpen, setIsPlayerInfoOpen] = useState(loadPlayerInfoOpen)
+
+  const [playerInfoHeight, setHeight] = useState(loadPlayerInfoHeight)
+
+  const setPlayerInfoHeight = (height: number): void => {
+    savePlayerInfoHeight(height)
+    setHeight(height)
+  }
 
   const togglePlayerInfo = (): void => {
     const next = !isPlayerInfoOpen
@@ -54,5 +86,10 @@ export function usePlayerInfoDrawer(): PlayerInfoDrawer {
     [isPlayerInfoOpen],
   )
 
-  return { isPlayerInfoOpen, togglePlayerInfo }
+  return {
+    isPlayerInfoOpen,
+    togglePlayerInfo,
+    playerInfoHeight,
+    setPlayerInfoHeight,
+  }
 }

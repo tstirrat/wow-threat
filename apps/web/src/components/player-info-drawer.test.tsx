@@ -47,6 +47,38 @@ const renderDrawer = (
   )
 
 describe('PlayerInfoDrawer', () => {
+  it('defaults the body to a third of the viewport height', () => {
+    renderDrawer(true)
+    expect(
+      screen.getByText('drawer body').parentElement?.parentElement,
+    ).toHaveStyle({
+      height: `${Math.round(window.innerHeight / 3)}px`,
+    })
+  })
+
+  it('resizes with arrow keys on the drag handle', async () => {
+    const user = userEvent.setup()
+    const onBodyHeightChange = vi.fn()
+    render(
+      <ShortcutsOverlayContext.Provider value={{ openShortcuts: vi.fn() }}>
+        <PlayerInfoDrawer
+          bodyHeight={300}
+          initialAuras={auras}
+          isOpen
+          summary={summary}
+          wowhead={wowhead}
+          onBodyHeightChange={onBodyHeightChange}
+          onToggle={vi.fn()}
+        >
+          <p>drawer body</p>
+        </PlayerInfoDrawer>
+      </ShortcutsOverlayContext.Provider>,
+    )
+    screen.getByRole('separator', { name: 'Resize player info' }).focus()
+    await user.keyboard('{ArrowUp}')
+    expect(onBodyHeightChange).toHaveBeenCalledWith(324)
+  })
+
   it('shows the body and hides player and auras in the bar when open', () => {
     renderDrawer(true)
     expect(screen.getByText('drawer body')).toBeInTheDocument()
@@ -59,7 +91,7 @@ describe('PlayerInfoDrawer', () => {
 
   it('shows the focused player and initial auras in the bar when collapsed', () => {
     renderDrawer(false)
-    expect(screen.queryByText('drawer body')).not.toBeInTheDocument()
+    expect(screen.getByText('drawer body').closest('[inert]')).not.toBeNull()
     expect(screen.getByText('Aegistank')).toHaveStyle({
       color: summary.color,
     })
