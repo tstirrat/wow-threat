@@ -13,6 +13,12 @@ import { RailAccount } from './rail-account'
 import { Button } from './ui/button'
 import { Sheet, SheetContent, SheetTitle } from './ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './ui/tooltip'
 
 export interface AppRailProps {
   librarySection?: ReactNode
@@ -40,11 +46,17 @@ const RailBody: FC<RailBodyProps> = ({
       value={activeTab}
     >
       <TabsList aria-label="Sidebar sections" className="h-9 shrink-0">
-        <TabsTrigger className="gap-1.5 max-[760px]:min-h-10" value="report">
+        <TabsTrigger
+          className="inline-flex items-center gap-1.5 whitespace-nowrap max-[760px]:min-h-10"
+          value="report"
+        >
           <FileText aria-hidden="true" className="size-3.5" />
           This report
         </TabsTrigger>
-        <TabsTrigger className="gap-1.5 max-[760px]:min-h-10" value="library">
+        <TabsTrigger
+          className="inline-flex items-center gap-1.5 whitespace-nowrap max-[760px]:min-h-10"
+          value="library"
+        >
           <Library aria-hidden="true" className="size-3.5" />
           Library
         </TabsTrigger>
@@ -91,33 +103,55 @@ const CollapsedRailTabs: FC<CollapsedRailTabsProps> = ({
   hasReport,
   onSelect,
 }) => (
-  <div
-    className="flex min-h-0 flex-1 flex-col items-center gap-1 py-2"
-    data-testid="app-rail-collapsed-tabs"
-  >
-    {hasReport ? (
+  <TooltipProvider delayDuration={0}>
+    <div
+      className="flex min-h-0 flex-1 flex-col items-center gap-1 py-2"
+      data-testid="app-rail-collapsed-tabs"
+    >
+      {hasReport ? (
+        <CollapsedRailTab
+          icon={<FileText aria-hidden="true" />}
+          label="This report"
+          onClick={() => onSelect('report')}
+        />
+      ) : null}
+      <CollapsedRailTab
+        icon={<Library aria-hidden="true" />}
+        label="Library"
+        onClick={() => onSelect('library')}
+      />
+    </div>
+  </TooltipProvider>
+)
+
+type CollapsedRailTabProps = {
+  icon: ReactNode
+  label: string
+  onClick: () => void
+}
+
+/** Icon button with a right-hand tooltip naming the section. */
+const CollapsedRailTab: FC<CollapsedRailTabProps> = ({
+  icon,
+  label,
+  onClick,
+}) => (
+  <Tooltip>
+    <TooltipTrigger asChild>
       <Button
-        aria-label="This report"
+        aria-label={label}
         size="icon"
-        title="This report"
         type="button"
         variant="ghost"
-        onClick={() => onSelect('report')}
+        onClick={onClick}
       >
-        <FileText aria-hidden="true" />
+        {icon}
       </Button>
-    ) : null}
-    <Button
-      aria-label="Library"
-      size="icon"
-      title="Library"
-      type="button"
-      variant="ghost"
-      onClick={() => onSelect('library')}
-    >
-      <Library aria-hidden="true" />
-    </Button>
-  </div>
+    </TooltipTrigger>
+    <TooltipContent side="right" withArrow>
+      {label}
+    </TooltipContent>
+  </Tooltip>
 )
 
 export const AppRail: FC<AppRailProps> = ({
