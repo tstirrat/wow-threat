@@ -43,8 +43,8 @@ export const fixateMarkAreaColor: LinearGradientColor = {
   colorStops: [
     { offset: 0, color: 'rgba(249, 115, 22, 0.78)' },
     { offset: 0.004, color: 'rgba(249, 115, 22, 0.78)' },
-    { offset: 0.004, color: 'rgba(255, 212, 173, 0.21)' },
-    { offset: 1, color: 'rgba(255, 212, 173, 0.21)' },
+    { offset: 0.004, color: 'rgba(255, 212, 173, 0.105)' },
+    { offset: 1, color: 'rgba(255, 212, 173, 0.105)' },
   ],
   global: false,
 }
