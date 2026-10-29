@@ -23,7 +23,6 @@ import type {
 } from '../types/app'
 import { InitialAuras } from './initial-auras'
 import { PlayerName } from './player-name'
-import { Card, CardContent } from './ui/card'
 import {
   Table,
   TableBody,
@@ -196,7 +195,7 @@ export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
 }) => {
   if (!summary) {
     return (
-      <p aria-live="polite" className="text-sm text-muted-foreground">
+      <p aria-live="polite" className="p-3 text-xs text-muted-foreground">
         Click a chart line to focus an actor.
       </p>
     )
@@ -205,139 +204,135 @@ export const PlayerSummaryTable: FC<PlayerSummaryTableProps> = ({
   const totalAmount = summary.totalDamage + summary.totalHealing
 
   return (
-    <div className="grid gap-4 md:grid-cols-[280px_minmax(0,1fr)]">
-      <Card size="sm">
-        <CardContent className="space-y-2">
-          <div className="text-xs uppercase tracking-wide text-foreground">
-            Focused actor
-          </div>
-          <div className="flex items-center gap-2 text-base">
+    <div className="grid md:grid-cols-[17rem_minmax(0,1fr)]">
+      <div className="space-y-3 p-3 max-md:border-b max-md:border-border md:border-r md:border-border">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2 text-sm font-medium">
             <PlayerName color={summary.color} label={summary.label} />
             {warcraftLogsUrl ? (
               <a
                 aria-label={`Open ${summary.label} on Warcraft Logs`}
-                className="inline-flex items-center gap-1 text-xs font-medium leading-none hover:opacity-80"
+                className="inline-flex items-center gap-1 text-[10px] font-medium leading-none text-muted-foreground hover:text-foreground"
                 href={warcraftLogsUrl}
                 rel="noopener noreferrer"
                 target="_blank"
                 title={`Open ${summary.label} on Warcraft Logs`}
               >
                 <span>WCL</span>
-                <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+                <ExternalLink aria-hidden="true" className="h-3 w-3" />
               </a>
             ) : null}
           </div>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-xs text-muted-foreground">
             {formatFocusedActorDetails(summary)}
           </div>
-          <div className="space-y-2 text-sm">
-            <div>
-              <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                Total threat
-              </div>
-              <div>{formatNumber(summary.totalThreat)}</div>
-            </div>
-            <div>
-              <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                Total TPS
-              </div>
-              <div>{formatTps(summary.totalTps)}</div>
-            </div>
-            <div>
-              <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                Total damage
-              </div>
-              <div>{formatNumber(summary.totalDamage)}</div>
-            </div>
-            <div>
-              <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                Total healing
-              </div>
-              <div>{formatNumber(summary.totalHealing)}</div>
-            </div>
-          </div>
-          <FocusedActorModifiers
-            modifiers={summary.modifiers}
-            wowhead={wowhead}
+        </div>
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
+          <SummaryMetric
+            label="Total threat"
+            value={formatNumber(summary.totalThreat)}
           />
-          <InitialAuras auras={initialAuras} wowhead={wowhead} />
-        </CardContent>
-      </Card>
+          <SummaryMetric
+            label="Total TPS"
+            value={formatTps(summary.totalTps)}
+          />
+          <SummaryMetric
+            label="Total damage"
+            value={formatNumber(summary.totalDamage)}
+          />
+          <SummaryMetric
+            label="Total healing"
+            value={formatNumber(summary.totalHealing)}
+          />
+        </dl>
+        <FocusedActorModifiers
+          modifiers={summary.modifiers}
+          wowhead={wowhead}
+        />
+        <InitialAuras auras={initialAuras} wowhead={wowhead} />
+      </div>
 
-      <Card size="sm">
-        <CardContent>
-          {rows.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No threat-generating abilities for this actor in the current chart
-              window.
-            </p>
-          ) : (
-            <TooltipProvider delayDuration={0}>
-              <Table
-                aria-label="Focused player threat breakdown"
-                className="text-sm"
-              >
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Ability / Debuff</TableHead>
-                    <TableHead className="text-right">
-                      Damage/Heal (Amount)
-                    </TableHead>
-                    <TableHead className="text-right">Threat</TableHead>
-                    <TableHead className="text-right">Modifier</TableHead>
-                    <TableHead className="text-right">TPS</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rows.map((row) => (
-                    <TableRow key={row.key} style={resolveThreatRowStyle(row)}>
-                      <TableCell>
-                        {row.abilityId === null ? (
-                          row.abilityName
-                        ) : (
-                          <WowHeadLink
-                            abilityId={row.abilityId}
-                            wowhead={wowhead}
-                          >
-                            {row.abilityName}
-                          </WowHeadLink>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatNumber(row.amount)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatThreatValue(row.threat)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        <ModifierCell row={row} />
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {row.tps === null ? null : formatTps(row.tps)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  <TableRow>
-                    <TableCell>Total</TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatNumber(totalAmount)}
+      <div className="min-w-0">
+        {rows.length === 0 ? (
+          <p className="p-3 text-xs text-muted-foreground">
+            No threat-generating abilities for this actor in the current chart
+            window.
+          </p>
+        ) : (
+          <TooltipProvider delayDuration={0}>
+            <Table
+              aria-label="Focused player threat breakdown"
+              className="text-xs [&_td:first-child]:pl-3 [&_td:last-child]:pr-3 [&_th:first-child]:pl-3 [&_th:last-child]:pr-3"
+            >
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Ability / Debuff</TableHead>
+                  <TableHead className="text-right">
+                    Damage/Heal (Amount)
+                  </TableHead>
+                  <TableHead className="text-right">Threat</TableHead>
+                  <TableHead className="text-right">Modifier</TableHead>
+                  <TableHead className="text-right">TPS</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((row) => (
+                  <TableRow key={row.key} style={resolveThreatRowStyle(row)}>
+                    <TableCell>
+                      {row.abilityId === null ? (
+                        row.abilityName
+                      ) : (
+                        <WowHeadLink
+                          abilityId={row.abilityId}
+                          wowhead={wowhead}
+                        >
+                          {row.abilityName}
+                        </WowHeadLink>
+                      )}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatThreatValue(summary.totalThreat)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">
-                      -
+                      {formatNumber(row.amount)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatTps(summary.totalTps)}
+                      {formatThreatValue(row.threat)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      <ModifierCell row={row} />
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {row.tps === null ? null : formatTps(row.tps)}
                     </TableCell>
                   </TableRow>
-                </TableBody>
-              </Table>
-            </TooltipProvider>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+                <TableRow className="font-medium">
+                  <TableCell>Total</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatNumber(totalAmount)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatThreatValue(summary.totalThreat)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums text-muted-foreground">
+                    -
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatTps(summary.totalTps)}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TooltipProvider>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function SummaryMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-[11px] text-muted-foreground">{label}</dt>
+      <dd className="text-sm font-medium tabular-nums">{value}</dd>
     </div>
   )
 }
@@ -351,9 +346,7 @@ function FocusedActorModifiers({
 }) {
   return (
     <div>
-      <div className="text-xs uppercase tracking-wide text-muted-foreground">
-        Modifiers
-      </div>
+      <div className="text-[11px] text-muted-foreground">Modifiers</div>
       {modifiers.length === 0 ? (
         <p className="mt-1 text-xs text-muted-foreground">
           No applied modifiers found for this actor in the current fight.
