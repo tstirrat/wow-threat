@@ -1,5 +1,6 @@
 /**
  * Collapsible left rail: "This report" and "Library" tabs on report routes, Library alone elsewhere. Open on every page load.
+ * Footer pinned to the bottom holds the account control and theme toggle.
  * Below 760px it becomes an off-canvas sheet from the left, opened from the app bar's Menu button.
  */
 import { ChevronsLeft, ChevronsRight } from 'lucide-react'
@@ -8,6 +9,7 @@ import { Link } from 'react-router-dom'
 
 import { useIsMobileLayout } from '../hooks/use-is-mobile-layout'
 import { useAppShell } from '../routes/app-shell-context'
+import { RailAccount } from './rail-account'
 import { Button } from './ui/button'
 import { Sheet, SheetContent, SheetTitle } from './ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
@@ -112,6 +114,7 @@ export const AppRail: FC<AppRailProps> = ({
             data-testid="app-rail"
           >
             {body}
+            <RailAccount />
           </aside>
         </SheetContent>
       </Sheet>
@@ -156,7 +159,8 @@ export const AppRail: FC<AppRailProps> = ({
           )}
         </Button>
       </div>
-      {isOpen ? body : null}
+      {isOpen ? body : <div className="min-h-0 flex-1" />}
+      <RailAccount collapsed={!isOpen} />
     </aside>
   )
 }

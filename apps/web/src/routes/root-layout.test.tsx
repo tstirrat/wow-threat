@@ -3,7 +3,7 @@
  */
 import type { AuthContextValue } from '@/auth/auth-provider'
 import type { UseWclRateLimitResult } from '@/hooks/use-wcl-rate-limit'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -168,13 +168,23 @@ describe('RootLayout', () => {
     expect(screen.getByRole('button', { name: /TestUser/i })).toBeTruthy()
   })
 
-  it('shows home link icon and label', () => {
+  it('does not render a home icon link in the app bar', () => {
     useWclRateLimitMock.mockReturnValue(createMockWclRateLimitValue())
     useAuthMock.mockReturnValue(createMockAuthValue({ isBusy: false }))
 
     renderLayout('/')
 
-    expect(screen.getByRole('link', { name: 'Go to home' })).toBeTruthy()
+    expect(screen.queryByRole('link', { name: 'Go to home' })).toBeNull()
+    expect(
+      within(screen.getByTestId('app-bar')).queryByRole('button', {
+        name: 'Sign in with WCL',
+      }),
+    ).toBeNull()
+    expect(
+      within(screen.getByTestId('rail-account')).getByRole('button', {
+        name: 'Sign in with WCL',
+      }),
+    ).toBeTruthy()
   })
 
   it('shows wcl api rate limit details inside the account dropdown', async () => {
@@ -240,11 +250,8 @@ describe('RootLayout', () => {
     const openReportInputButton = screen.getByRole('button', {
       name: 'Open report input',
     })
-    expect(openReportInputButton.parentElement?.parentElement).toHaveClass(
-      'justify-start',
-    )
-    expect(screen.getByLabelText('Report input shortcut')).toBeTruthy()
-    expect(screen.getByText(/Ctrl|⌘/)).toBeTruthy()
+    expect(openReportInputButton).toHaveTextContent('Open report')
+    expect(screen.queryByLabelText('Report input shortcut')).toBeNull()
     await userEvent.click(openReportInputButton)
     expect(screen.getByTestId('report-input-container')).toHaveAttribute(
       'aria-hidden',
@@ -270,11 +277,8 @@ describe('RootLayout', () => {
 
     const bar = screen.getByTestId('app-bar')
     const order = [
-      screen.getByRole('link', { name: 'Go to home' }),
       screen.getByTestId('report-input-container'),
-      screen.getByTestId('app-bar-divider'),
       screen.getByTestId('app-bar-title'),
-      screen.getByRole('button', { name: /Warcraft Logs user|12345/ }),
     ]
     expect(bar).toContainElement(order[0] as HTMLElement)
     order.slice(1).forEach((el, i) => {

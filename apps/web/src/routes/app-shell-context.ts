@@ -6,6 +6,7 @@ import { type ReactNode, createContext, useContext, useEffect } from 'react'
 export interface AppShellSlots {
   setBarTitle: (node: ReactNode) => void
   setBarTitleTrailing: (node: ReactNode) => void
+  setBarExternalLink: (node: ReactNode) => void
   setBarSettings: (node: ReactNode) => void
   setBarRosterToggle: (node: ReactNode) => void
   setRailReportSection: (node: ReactNode) => void
@@ -14,6 +15,7 @@ export interface AppShellSlots {
 export interface AppShellContextValue extends AppShellSlots {
   barTitle: ReactNode
   barTitleTrailing: ReactNode
+  barExternalLink: ReactNode
   barSettings: ReactNode
   barRosterToggle: ReactNode
   railReportSection: ReactNode
@@ -24,11 +26,13 @@ const noop = (): void => undefined
 export const AppShellContext = createContext<AppShellContextValue>({
   barTitle: null,
   barTitleTrailing: null,
+  barExternalLink: null,
   barSettings: null,
   barRosterToggle: null,
   railReportSection: null,
   setBarTitle: noop,
   setBarTitleTrailing: noop,
+  setBarExternalLink: noop,
   setBarSettings: noop,
   setBarRosterToggle: noop,
   setRailReportSection: noop,
@@ -38,6 +42,7 @@ export const AppShellContext = createContext<AppShellContextValue>({
 export const AppShellSettersContext = createContext<AppShellSlots>({
   setBarTitle: noop,
   setBarTitleTrailing: noop,
+  setBarExternalLink: noop,
   setBarSettings: noop,
   setBarRosterToggle: noop,
   setRailReportSection: noop,
@@ -58,7 +63,7 @@ export function useBarTitle(node: ReactNode): void {
   }, [node, setBarTitle])
 }
 
-/** Fills the crumb after the app bar title (e.g. the fight target picker) while mounted. */
+/** Fills the crumb after the app bar title (e.g. the fight target crumb) while mounted. */
 export function useBarTitleTrailing(node: ReactNode): void {
   const { setBarTitleTrailing } = useContext(AppShellSettersContext)
 
@@ -76,6 +81,16 @@ export function useRailReportSection(node: ReactNode): void {
     setRailReportSection(node)
     return () => setRailReportSection(null)
   }, [node, setRailReportSection])
+}
+
+/** Fills the app bar external-link slot (e.g. the Warcraft Logs fight link) while the calling component is mounted. */
+export function useBarExternalLink(node: ReactNode): void {
+  const { setBarExternalLink } = useContext(AppShellSettersContext)
+
+  useEffect(() => {
+    setBarExternalLink(node)
+    return () => setBarExternalLink(null)
+  }, [node, setBarExternalLink])
 }
 
 /** Fills the app bar settings slot while the calling component is mounted. */

@@ -22,6 +22,28 @@ export class FightPageHeaderObject {
     })
   }
 
+  appBar(): Locator {
+    return this.page.getByTestId('app-bar')
+  }
+
+  fightCrumb(): Locator {
+    return this.appBar().getByRole('button', { name: /^Fight:/ })
+  }
+
+  fightCrumbItem(name: string): Locator {
+    return this.page.getByRole('menuitem', { name, exact: true })
+  }
+
+  warcraftLogsFightLink(fightName: string): Locator {
+    return this.appBar().getByRole('link', {
+      name: `Open ${fightName} on Warcraft Logs`,
+    })
+  }
+
+  railAccount(): Locator {
+    return this.page.getByTestId('rail-account')
+  }
+
   threatConfigText(): Locator {
     return this.section().getByText('Threat config:')
   }
