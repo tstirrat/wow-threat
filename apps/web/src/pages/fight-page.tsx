@@ -264,7 +264,12 @@ export const FightPage: FC = () => {
   })
 
   const { closeRoster, isRosterVisible, toggleRoster } = useRosterVisibility()
-  const { isPlayerInfoOpen, togglePlayerInfo } = usePlayerInfoDrawer()
+  const {
+    isPlayerInfoOpen,
+    togglePlayerInfo,
+    playerInfoHeight,
+    setPlayerInfoHeight,
+  } = usePlayerInfoDrawer()
   useBarRosterToggle(
     <RosterToggleButton
       isRosterVisible={isRosterVisible}
@@ -596,9 +601,10 @@ export const FightPage: FC = () => {
             <PlayerInfoDrawer
               isOpen={isPlayerInfoOpen}
               onToggle={togglePlayerInfo}
+              bodyHeight={playerInfoHeight}
+              onBodyHeightChange={setPlayerInfoHeight}
               summary={focusedPlayerSummary}
               initialAuras={initialAuras}
-              wowhead={wowheadLinksConfig}
             >
               <PlayerSummaryTable
                 summary={focusedPlayerSummary}

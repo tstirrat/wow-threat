@@ -29,7 +29,7 @@ const workspaceGridClassName = [
 
 const rosterVisibleGridClassName = [
   'lg:grid-cols-[minmax(0,1fr)_17rem]',
-  "lg:[grid-template-areas:'chart_roster'_'transport_transport'_'drawer_drawer']",
+  "lg:[grid-template-areas:'chart_roster'_'transport_roster'_'drawer_drawer']",
 ].join(' ')
 
 const rosterHiddenGridClassName = [
@@ -129,7 +129,7 @@ export const FightWorkspace: FC<FightWorkspaceProps> = ({
       </div>
       {transport ? (
         <div
-          className={`min-w-0 border-t border-border [grid-area:transport] ${hiddenOnInfoTab}`}
+          className={`min-w-0 surface-canvas [grid-area:transport] max-[760px]:border-t max-[760px]:border-border ${hiddenOnInfoTab}`}
           data-region="transport"
         >
           {transport}

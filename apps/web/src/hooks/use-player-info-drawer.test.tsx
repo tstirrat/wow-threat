@@ -67,3 +67,33 @@ describe('usePlayerInfoDrawer', () => {
     expect(screen.getByText('open')).toBeInTheDocument()
   })
 })
+
+describe('usePlayerInfoDrawer height', () => {
+  beforeEach(() => {
+    const values = new Map<string, string>()
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem: (key: string): string | null => values.get(key) ?? null,
+        setItem: (key: string, value: string): void => {
+          values.set(key, value)
+        },
+      },
+    })
+  })
+
+  it('defaults to no saved height and persists a resized height', () => {
+    const { result, unmount } = renderHook(() => usePlayerInfoDrawer(), {
+      wrapper,
+    })
+    expect(result.current.playerInfoHeight).toBeNull()
+    act(() => result.current.setPlayerInfoHeight(300))
+    expect(result.current.playerInfoHeight).toBe(300)
+    unmount()
+
+    const { result: restored } = renderHook(() => usePlayerInfoDrawer(), {
+      wrapper,
+    })
+    expect(restored.current.playerInfoHeight).toBe(300)
+  })
+})
