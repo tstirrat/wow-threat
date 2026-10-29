@@ -89,6 +89,51 @@ describe('ReportOutline', () => {
     expect(screen.getByText('Threat config: Era v1')).toBeVisible()
   })
 
+  it('lists boss wipes with health percent, hides trash, and nests multiple boss targets', () => {
+    const report = createReport()
+    report.actors.push(
+      { id: 10, name: 'Garr', type: 'NPC', subType: 'Boss' },
+      { id: 11, name: 'Firesworn', type: 'NPC', subType: 'Boss' },
+      { id: 12, name: 'Hound', type: 'NPC', subType: 'NPC' },
+    )
+    report.fights = [
+      createFight({
+        id: 40,
+        name: 'Garr',
+        kill: false,
+        bossPercentage: 23.45,
+        enemyNPCs: [10, 11, 12].map((id) => ({
+          id,
+          gameID: id,
+          instanceCount: 1,
+          groupCount: 1,
+          petOwner: null,
+        })),
+      }),
+      createFight({ id: 41, name: 'Garr' }),
+      createFight({ id: 42, name: 'Trash', encounterID: 0 }),
+    ]
+
+    render(
+      <MemoryRouter>
+        <ReportOutline
+          isStarred={false}
+          onToggleStar={() => {}}
+          report={report}
+          reportHost="fresh.warcraftlogs.com"
+          reportId={report.code}
+          threatConfigLabel="Era v1"
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getAllByRole('link', { name: /^Garr/ })).toHaveLength(2)
+    expect(screen.getByText('Wipe 23.4%')).toBeVisible()
+    expect(screen.queryByRole('link', { name: 'Trash' })).toBeNull()
+    expect(screen.getByText('Firesworn')).toBeVisible()
+    expect(screen.queryByText('Hound')).toBeNull()
+  })
+
   it('shows report-level player count when no fight is selected', () => {
     renderOutline({ selectedFightId: null })
 

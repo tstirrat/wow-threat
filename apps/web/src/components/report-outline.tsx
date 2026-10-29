@@ -1,5 +1,5 @@
 /**
- * Rail "This report" section: report metadata header and boss-kill pull list.
+ * Rail "This report" section: report metadata header and boss pull list (kills and wipes).
  */
 import type { ThreatConfigId } from '@wow-threat/config'
 import { ExternalLink } from 'lucide-react'
@@ -8,7 +8,10 @@ import { Link } from 'react-router-dom'
 
 import {
   buildBossKillNavigationFights,
+  buildBossPullNavigationFights,
   buildFightLinkPath,
+  resolveFightBossTargetNames,
+  resolveWipeBossPercentage,
 } from '../lib/fight-navigation'
 import { formatReportHeaderDate } from '../lib/format'
 import {
@@ -16,7 +19,11 @@ import {
   normalizeGuildFaction,
 } from '../lib/guild-faction'
 import { buildReportUrl } from '../lib/wcl-url'
-import type { ReportFightSummary, ReportResponse } from '../types/api'
+import type {
+  ReportActorSummary,
+  ReportFightSummary,
+  ReportResponse,
+} from '../types/api'
 import type { WarcraftLogsHost } from '../types/app'
 import { ReportStarButton } from './report-star-button'
 import { Skeleton } from './ui/skeleton'
@@ -172,8 +179,14 @@ const ReportOutlineHeader: FC<ReportOutlineHeaderProps> = ({
   )
 }
 
+/** Format boss health remaining for a wipe label. */
+function formatWipePercentage(percentage: number): string {
+  return `${Number(percentage.toFixed(1))}%`
+}
+
 type PullListProps = {
   fights: ReportFightSummary[]
+  actors: ReportActorSummary[]
   reportId: string
   selectedFightId: number | null
   configId: ThreatConfigId | null
@@ -182,9 +195,10 @@ type PullListProps = {
   pinnedPlayerIds: number[]
 }
 
-/** Boss-kill links in report order with the current fight highlighted. */
+/** Boss pull links (kills and wipes) in report order with the current fight highlighted. */
 const PullList: FC<PullListProps> = ({
   fights,
+  actors,
   reportId,
   selectedFightId,
   configId,
@@ -192,14 +206,16 @@ const PullList: FC<PullListProps> = ({
   forceFresh,
   pinnedPlayerIds,
 }) => {
-  const bossKillFights = buildBossKillNavigationFights(fights)
+  const bossPullFights = buildBossPullNavigationFights(fights)
 
   return (
     <nav aria-label="Fight quick switch" className="p-2">
-      {bossKillFights.length > 0 ? (
+      {bossPullFights.length > 0 ? (
         <ul className="flex flex-col gap-0.5">
-          {bossKillFights.map((fight) => {
+          {bossPullFights.map((fight) => {
             const isCurrentFight = fight.id === selectedFightId
+            const wipePercentage = resolveWipeBossPercentage(fight)
+            const bossTargetNames = resolveFightBossTargetNames(fight, actors)
 
             return (
               <li key={fight.id}>
@@ -221,14 +237,33 @@ const PullList: FC<PullListProps> = ({
                   })}
                 >
                   {fight.name}
+                  {fight.kill ? null : (
+                    <span className="ml-1.5 text-xs text-muted-foreground">
+                      {' '}
+                      Wipe
+                      {wipePercentage === null
+                        ? ''
+                        : ` ${formatWipePercentage(wipePercentage)}`}
+                    </span>
+                  )}
                 </Link>
+                {bossTargetNames.length > 0 ? (
+                  <ul
+                    aria-label={`${fight.name} boss targets`}
+                    className="ml-4 list-disc py-0.5 pl-3 text-xs text-muted-foreground"
+                  >
+                    {bossTargetNames.map((name) => (
+                      <li key={name}>{name}</li>
+                    ))}
+                  </ul>
+                ) : null}
               </li>
             )
           })}
         </ul>
       ) : (
         <p className="px-2 py-1.5 text-xs text-muted-foreground">
-          No boss kills found in this report.
+          No boss fights found in this report.
         </p>
       )}
     </nav>
@@ -249,6 +284,7 @@ export const ReportOutline: FC<ReportOutlineProps> = ({
       <PullList
         configId={configId}
         eventsMode={eventsMode}
+        actors={headerProps.report.actors}
         fights={headerProps.report.fights}
         forceFresh={forceFresh}
         pinnedPlayerIds={pinnedPlayerIds}

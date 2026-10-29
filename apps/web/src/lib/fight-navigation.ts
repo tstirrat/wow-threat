@@ -3,7 +3,7 @@
  */
 import type { ThreatConfigId } from '@wow-threat/config'
 
-import type { ReportFightSummary } from '../types/api'
+import type { ReportActorSummary, ReportFightSummary } from '../types/api'
 
 type BossFightSummary = ReportFightSummary
 
@@ -79,6 +79,52 @@ export function buildBossKillNavigationFights(
           isBossFightFromKnownEncounterName(fight)),
     )
     .sort((left, right) => compareByFightOrder(left, right, fightOrder))
+}
+
+/** Return every boss pull (kills and wipes) in report timeline order. */
+export function buildBossPullNavigationFights(
+  fights: ReportFightSummary[],
+): BossFightSummary[] {
+  const knownBossNames = new Set(
+    fights
+      .filter(isBossFightForNavigation)
+      .map((fight) => normalizeEncounterNameForNavigation(fight.name)),
+  )
+
+  return fights.filter(
+    (fight) =>
+      isBossFightForNavigation(fight) ||
+      knownBossNames.has(normalizeEncounterNameForNavigation(fight.name)),
+  )
+}
+
+/** Resolve boss health remaining for a wipe, or null for kills/unknown. */
+export function resolveWipeBossPercentage(
+  fight: ReportFightSummary,
+): number | null {
+  if (fight.kill) {
+    return null
+  }
+
+  return fight.bossPercentage ?? fight.fightPercentage
+}
+
+/** Return unique boss target names in a fight; empty unless several exist. */
+export function resolveFightBossTargetNames(
+  fight: ReportFightSummary,
+  actors: ReportActorSummary[],
+): string[] {
+  const actorsById = new Map(actors.map((actor) => [actor.id, actor]))
+  const names = fight.enemyNPCs
+    .map((npc) => actorsById.get(npc.id))
+    .filter(
+      (actor): actor is ReportActorSummary =>
+        actor !== undefined && actor.subType === 'Boss',
+    )
+    .map((actor) => actor.name)
+  const uniqueNames = Array.from(new Set(names))
+
+  return uniqueNames.length > 1 ? uniqueNames : []
 }
 
 /** Group report fights for boss-first fight navigation rendering. */
