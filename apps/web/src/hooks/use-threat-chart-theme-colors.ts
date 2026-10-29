@@ -30,7 +30,7 @@ function readChartThemeColors(): ThreatChartThemeColors {
     border: resolveThemeColor('--border', '#d1d5db'),
     foreground: resolveThemeColor('--foreground', '#0f172a'),
     muted: resolveThemeColor('--muted-foreground', '#64748b'),
-    panel: resolveThemeColor('--card', '#ffffff'),
+    panel: resolveThemeColor('--popover', '#ffffff'),
     resolveColor: (color) => resolveCssColor(color),
   }
 }

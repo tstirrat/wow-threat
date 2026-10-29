@@ -45,7 +45,7 @@ export const PlayerInfoDrawer: FC<PlayerInfoDrawerProps> = ({
   return (
     <section
       aria-labelledby={titleId}
-      className="flex min-h-0 flex-col bg-card text-card-foreground max-[760px]:flex-1"
+      className="flex min-h-0 flex-col text-card-foreground max-[760px]:flex-1"
     >
       <div className="flex h-9 shrink-0 items-center gap-2 px-2">
         <Button

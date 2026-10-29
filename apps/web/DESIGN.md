@@ -13,6 +13,9 @@ colors:
   paper: 'oklch(1 0 0)'
   bench-zinc: 'oklch(0.97 0.002 286)'
   zinc-mist: 'oklch(0.967 0.001 286.375)'
+  chrome: 'oklch(0.955 0.003 286)'
+  chrome-dark: 'oklch(0.175 0.006 286)'
+  panel: 'oklch(0.977 0.002 286)'
   graticule: 'oklch(0.92 0.004 286.32)'
   graticule-dark: 'oklch(1 0 0 / 10%)'
   field-stroke-dark: 'oklch(1 0 0 / 15%)'
@@ -200,11 +203,13 @@ Near-colorless zinc surfaces, one Arcane Cyan accent, and bright traces for the 
 ### Neutral
 
 - **Scope Black** (`scope-black`): the dark-theme page background and the light-theme text color.
-- **Phosphor Panel** (`phosphor-panel`): dark-theme cards, popovers and the chart's tooltip background; one layer up from Scope Black.
+- **Phosphor Panel** (`phosphor-panel`): dark-theme cards, popovers, workspace panels and the chart's tooltip background; one layer up from Scope Black.
 - **Graphite Well** (`graphite-well`): dark-theme muted and secondary fills, including hover states, key badges and toggled rows.
 - **Trace White** (`trace-white`): dark-theme text.
 - **Bench Zinc** (`bench-zinc`): the light-theme page background. A faint cool grey that lets white cards lift off the page with no border.
-- **Paper** (`paper`): light-theme cards, popovers and the header. The chart always sits on Paper, so class colors are drawn on the lightest possible background.
+- **Paper** (`paper`): light-theme cards, popovers and the chart canvas. The chart always sits on Paper, so class colors are drawn on the lightest possible background.
+- **Chrome** (`chrome` light / `chrome-dark` dark): the rail and app bar. One step below the panels in both themes so the frame recedes.
+- **Panel** (`panel` light / Phosphor Panel dark): the roster, transport and Player info drawer.
 - **Zinc Mist** (`zinc-mist`): light-theme muted and secondary fills.
 - **Graticule** (`graticule` light / `graticule-dark` dark): borders, dividers and chart axis and split lines. The chart draws its split lines at 40% of this value.
 - **Field Stroke** (`field-stroke-dark`): dark-theme input stroke and input tint.
@@ -265,7 +270,7 @@ Each mark has a fixed meaning. The exact values may be tuned for contrast in bot
 
 ## Layout
 
-The app is a full-window workbench, not a page of cards. Regions are flush panels on the panel surface (Phosphor Panel / Paper), divided by 1px Graticule hairlines.
+The app is a full-window workbench, not a page of cards. Regions are flush panels divided by 1px Graticule hairlines, on three surface tiers (see Elevation & Depth).
 
 - **Shell:** a grid of `rail | bar / rail | workspace` filling the window (`h-screen`). The rail and bar meet on one hairline: the bar row and the rail header are both 44px tall.
 - **Rail:** full height, 256px open / 48px collapsed, with its own internal scroll. Header: the app name and collapse button. On report routes it has "This report" and "Library" tabs. The current fight is a Graphite Well / Zinc Mist row, not an accent block.
@@ -284,7 +289,15 @@ The app is a full-window workbench, not a page of cards. Regions are flush panel
 
 Depth comes from **tonal layering**. Each surface is one step away from the surface beneath it. Dark: Scope Black page → Phosphor Panel card → Graphite Well for hover, pressed and well states. Light: Bench Zinc page → Paper card → Zinc Mist for hover and well states. Shadows are reserved for elements that float above the page: popovers, dropdown menus, tooltips and overlays.
 
-Workspace panels all sit on the panel surface and are separated by Graticule hairlines rather than tonal steps or gaps. Where a card does sit on the page (the landing box), light mode relies on the tonal step alone, and dark mode adds a 1px ring at 10% foreground opacity to define the edge against the near-black page.
+The workbench uses three surface tiers, each a `surface-*` utility in `src/index.css`:
+
+| Tier   | Utility          | Surfaces                                             | Light  | Dark           |
+| ------ | ---------------- | ---------------------------------------------------- | ------ | -------------- |
+| Chrome | `surface-chrome` | Rail, app bar, mobile rail sheet                     | Chrome | Chrome (dark)  |
+| Panel  | `surface-panel`  | Roster, transport, Player info drawer, mobile roster | Panel  | Phosphor Panel |
+| Canvas | `surface-canvas` | Chart region, empty report outlet                    | Paper  | Scope Black    |
+
+The canvas sits at the extreme of each theme (the brightest in light, the deepest in dark) so class colors get the most contrast on the surface that carries them. Each utility also re-points `--muted` at a well one step from its own fill, so hover and selected rows stay visible on every tier without per-component overrides. Hairlines still mark the boundaries between regions; the tiers say what kind of surface each region is. Where a card does sit on the page (the landing box), light mode relies on the tonal step alone, and dark mode adds a 1px ring at 10% foreground opacity to define the edge against the near-black page.
 
 ### Shadow Vocabulary
 
@@ -297,6 +310,8 @@ Workspace panels all sit on the panel surface and are separated by Graticule hai
 **The Flat Page Rule.** Anything that belongs to the page (panels, the chart, the roster, the meter) has no shadow. Only elements that float above the page get one.
 
 **The One Step Rule.** A nested surface is exactly one tonal step away from its parent. Don't skip steps and don't stack three tints.
+
+**The Tier Rule.** Paint workspace regions with a `surface-*` utility, never `bg-card`. `bg-card` is for cards and floating content only.
 
 ## Shapes
 

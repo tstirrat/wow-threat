@@ -60,7 +60,7 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
   return (
     <section
       aria-label="Threat legend"
-      className="flex min-h-0 max-h-[560px] flex-col bg-card text-xs/relaxed text-card-foreground lg:h-full lg:max-h-none"
+      className="flex min-h-0 max-h-[560px] flex-col text-xs/relaxed text-card-foreground lg:h-full lg:max-h-none"
     >
       <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-border px-3">
         <h2 className="text-xs font-medium">Roster</h2>
