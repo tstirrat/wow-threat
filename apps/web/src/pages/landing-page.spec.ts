@@ -22,6 +22,12 @@ const repoRoot = path.resolve(
 )
 const screenshotPath = path.join(repoRoot, 'output', 'landing-page.png')
 
+async function expectReportOpened(page: Page, reportId: string): Promise<void> {
+  await expect(page).toHaveURL((url) =>
+    url.pathname.startsWith(`/report/${reportId}`),
+  )
+}
+
 async function expectPathname(page: Page, pathname: string): Promise<void> {
   await expect(page).toHaveURL((url) => url.pathname === pathname)
 }
@@ -64,7 +70,7 @@ test.describe('landing page', () => {
     await fillReportInput(page, e2eValidFreshReportUrl)
     await landingBox(page).getByRole('button', { name: 'Load report' }).click()
 
-    await expectPathname(page, `/report/${e2eReportId}`)
+    await expectReportOpened(page, e2eReportId)
   })
 
   test('pasting an invalid link shows a parse error', async ({ page }) => {
@@ -125,7 +131,7 @@ test.describe('landing page', () => {
     await fillReportInput(page, e2eValidFreshReportUrl)
     await landingBox(page).getByRole('button', { name: 'Load report' }).click()
 
-    await expectPathname(page, `/report/${e2eReportId}`)
+    await expectReportOpened(page, e2eReportId)
     await expect(
       page.getByRole('region', { name: 'Report header' }),
     ).toContainText(e2eReportResponse.title)
@@ -135,7 +141,7 @@ test.describe('landing page', () => {
 
     await expect(recentReports.recentReportsList()).toBeVisible()
     await recentReports.recentReportLink(e2eReportResponse.title).click()
-    await expectPathname(page, `/report/${e2eReportId}`)
+    await expectReportOpened(page, e2eReportId)
   })
 
   test('recent report tiles can be removed manually', async ({ page }) => {
@@ -144,7 +150,7 @@ test.describe('landing page', () => {
     await page.goto('/')
     await fillReportInput(page, e2eValidFreshReportUrl)
     await landingBox(page).getByRole('button', { name: 'Load report' }).click()
-    await expectPathname(page, `/report/${e2eReportId}`)
+    await expectReportOpened(page, e2eReportId)
     await expect(
       page.getByRole('region', { name: 'Report header' }),
     ).toContainText(e2eReportResponse.title)
@@ -165,7 +171,7 @@ test.describe('landing page', () => {
     await page.goto('/')
     await fillReportInput(page, e2eValidFreshReportUrl)
     await landingBox(page).getByRole('button', { name: 'Load report' }).click()
-    await expectPathname(page, `/report/${e2eReportId}`)
+    await expectReportOpened(page, e2eReportId)
 
     await page.getByRole('button', { name: 'Open report input' }).click()
 
@@ -182,6 +188,6 @@ test.describe('landing page', () => {
     await reportInput.fill(e2eValidFreshReportUrl)
     await reportInput.press('Enter')
 
-    await expectPathname(page, `/report/${e2eReportId}`)
+    await expectReportOpened(page, e2eReportId)
   })
 })

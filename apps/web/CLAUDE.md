@@ -96,7 +96,7 @@ Route behavior details:
   - Recent, starred, guild and account report lists live in the rail Library, not on the page
 - `/report/:reportId` includes:
   - Report and fight navigation in the rail "This report" tab (link-driven, not dropdown-only)
-  - Zero state in the outlet; click-through to the fight chart
+  - Redirects to the first boss-kill fight (zero state only when the report has no fights)
 - `/report/:reportId/fight/:fightId` includes:
   - Chart for the selected target with all visible player lines by default; the target selector is the last crumb of the app bar title (a crumb-styled menu button)
   - Player-focused views via `players` query param
