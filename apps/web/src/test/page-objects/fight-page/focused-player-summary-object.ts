@@ -42,7 +42,7 @@ export class FocusedPlayerSummaryObject {
   }
 
   focusedActorText(name: string): Locator {
-    return this.section.getByText(name)
+    return this.section.getByText(name).first()
   }
 
   warcraftLogsLink(playerName: string): Locator {
