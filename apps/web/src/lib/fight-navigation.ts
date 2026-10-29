@@ -3,7 +3,7 @@
  */
 import type { ThreatConfigId } from '@wow-threat/config'
 
-import type { ReportFightSummary } from '../types/api'
+import type { ReportActorSummary, ReportFightSummary } from '../types/api'
 
 type BossFightSummary = ReportFightSummary
 
@@ -14,6 +14,11 @@ export interface BossEncounterNavigationRow {
   primaryKill: BossFightSummary
   extraKills: BossFightSummary[]
   wipes: BossFightSummary[]
+}
+
+export interface FightBossTarget {
+  id: number
+  name: string
 }
 
 export interface FightNavigationGroups {
@@ -79,6 +84,58 @@ export function buildBossKillNavigationFights(
           isBossFightFromKnownEncounterName(fight)),
     )
     .sort((left, right) => compareByFightOrder(left, right, fightOrder))
+}
+
+/** Return every boss pull (kills and wipes) in report timeline order. */
+export function buildBossPullNavigationFights(
+  fights: ReportFightSummary[],
+): BossFightSummary[] {
+  const knownBossNames = new Set(
+    fights
+      .filter(isBossFightForNavigation)
+      .map((fight) => normalizeEncounterNameForNavigation(fight.name)),
+  )
+
+  // Name matching only rescues kills missing encounter data. WCL also names
+  // trash segments after the nearest boss (encounterID 0, kill null), and those
+  // have no boss data to show.
+  return fights.filter(
+    (fight) =>
+      isBossFightForNavigation(fight) ||
+      (fight.kill === true &&
+        knownBossNames.has(normalizeEncounterNameForNavigation(fight.name))),
+  )
+}
+
+/** Resolve boss health remaining for a wipe, or null for kills/unknown. */
+export function resolveWipeBossPercentage(
+  fight: ReportFightSummary,
+): number | null {
+  if (fight.kill) {
+    return null
+  }
+
+  return fight.bossPercentage ?? fight.fightPercentage
+}
+
+/** Return unique boss targets in a fight; empty unless several exist. */
+export function resolveFightBossTargets(
+  fight: ReportFightSummary,
+  actors: ReportActorSummary[],
+): FightBossTarget[] {
+  const actorsById = new Map(actors.map((actor) => [actor.id, actor]))
+  const targets = fight.enemyNPCs
+    .map((npc) => actorsById.get(npc.id))
+    .filter(
+      (actor): actor is ReportActorSummary =>
+        actor !== undefined && actor.subType === 'Boss',
+    )
+    .map((actor) => ({ id: actor.id, name: actor.name }))
+  const uniqueTargets = Array.from(
+    new Map(targets.map((target) => [target.id, target])).values(),
+  )
+
+  return uniqueTargets.length > 1 ? uniqueTargets : []
 }
 
 /** Group report fights for boss-first fight navigation rendering. */
@@ -244,9 +301,10 @@ export interface FightLinkOptions {
   eventsMode?: string | null
   forceFresh?: boolean
   pinnedPlayerIds?: number[]
+  targetId?: number | null
 }
 
-/** Build a fight route path that carries pinned players, config, fresh and eventsMode. */
+/** Build a fight route path that carries pinned players, config, fresh, eventsMode and target. */
 export function buildFightLinkPath({
   reportId,
   fightId,
@@ -254,6 +312,7 @@ export function buildFightLinkPath({
   eventsMode = null,
   forceFresh = false,
   pinnedPlayerIds = [],
+  targetId = null,
 }: FightLinkOptions): string {
   const pinnedPlayers = [...new Set(pinnedPlayerIds)].sort(
     (left, right) => left - right,
@@ -272,6 +331,9 @@ export function buildFightLinkPath({
   }
   if (configId) {
     searchParams.set('config', configId)
+  }
+  if (targetId !== null) {
+    searchParams.set('targetId', String(targetId))
   }
   const search = searchParams.toString()
 

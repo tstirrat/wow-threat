@@ -55,12 +55,13 @@ test.describe('report page', () => {
     await maybeCaptureScreenshot(page)
   })
 
-  test('shows only boss kills in quick switch order', async ({ page }) => {
+  test('shows boss kills and wipes in quick switch order', async ({ page }) => {
     const quickSwitch = new FightQuickSwitcherObject(page)
 
     await page.goto(`/report/${e2eReportId}`)
 
-    await expect(quickSwitch.fightLinks()).toHaveCount(2)
+    await expect(quickSwitch.fightLinks()).toHaveCount(3)
+    await expect(quickSwitch.fightLink('Patchwerk Wipe 12.4%')).toBeVisible()
     await expect(quickSwitch.fightLink('Patchwerk')).toBeVisible()
     await expect(quickSwitch.fightLink('Grobbulus')).toBeVisible()
     await expect(quickSwitch.fightText('Naxxramas Trash')).toHaveCount(0)
