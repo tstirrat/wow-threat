@@ -12,6 +12,10 @@ export class ThreatChartObject {
     this.section = page.getByRole('region', { name: /fight workspace$/i })
   }
 
+  chartRegion(): Locator {
+    return this.section.locator('[data-region="chart"]')
+  }
+
   rosterRegion(): Locator {
     return this.section.locator('[data-region="roster"]')
   }
