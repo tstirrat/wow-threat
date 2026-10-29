@@ -1,21 +1,32 @@
 /**
  * Collapsible left rail: "This report" and "Library" tabs on report routes, Library alone elsewhere. Open on every page load.
+ * Footer pinned to the bottom holds the account control and theme toggle.
  * Below 760px it becomes an off-canvas sheet from the left, opened from the app bar's Menu button.
  */
-import { ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { ChevronsLeft, ChevronsRight, FileText, Library } from 'lucide-react'
 import { type FC, type ReactNode, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { useIsMobileLayout } from '../hooks/use-is-mobile-layout'
 import { useAppShell } from '../routes/app-shell-context'
+import { RailAccount } from './rail-account'
 import { Button } from './ui/button'
 import { Sheet, SheetContent, SheetTitle } from './ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './ui/tooltip'
 
 export interface AppRailProps {
   librarySection?: ReactNode
   isMobileOpen?: boolean
   onMobileOpenChange?: (isOpen: boolean) => void
+  /** Desktop open state; controlled when provided, otherwise internal (open by default). */
+  isOpen?: boolean
+  onOpenChange?: (isOpen: boolean) => void
 }
 
 type RailBodyProps = {
@@ -38,10 +49,18 @@ const RailBody: FC<RailBodyProps> = ({
       value={activeTab}
     >
       <TabsList aria-label="Sidebar sections" className="h-9 shrink-0">
-        <TabsTrigger className="max-[760px]:min-h-10" value="report">
+        <TabsTrigger
+          className="inline-flex items-center gap-1.5 whitespace-nowrap max-[760px]:min-h-10"
+          value="report"
+        >
+          <FileText aria-hidden="true" className="size-3.5" />
           This report
         </TabsTrigger>
-        <TabsTrigger className="max-[760px]:min-h-10" value="library">
+        <TabsTrigger
+          className="inline-flex items-center gap-1.5 whitespace-nowrap max-[760px]:min-h-10"
+          value="library"
+        >
+          <Library aria-hidden="true" className="size-3.5" />
           Library
         </TabsTrigger>
       </TabsList>
@@ -69,19 +88,88 @@ const RailBody: FC<RailBodyProps> = ({
       className="flex min-h-0 flex-1 flex-col overflow-y-auto"
       data-testid="app-rail-library-section"
     >
-      <h2 className="border-b border-border px-4 py-1.5 text-xs font-medium">
+      <h2 className="flex items-center gap-1.5 border-b border-border px-4 py-1.5 text-xs font-medium">
+        <Library aria-hidden="true" className="size-3.5" />
         Library
       </h2>
       {librarySection}
     </div>
   )
 
+type CollapsedRailTabsProps = {
+  hasReport: boolean
+  onSelect: (tab: string) => void
+}
+
+/** Icon-only stand-ins for the rail sections; selecting one expands the rail on that tab. */
+const CollapsedRailTabs: FC<CollapsedRailTabsProps> = ({
+  hasReport,
+  onSelect,
+}) => (
+  <TooltipProvider delayDuration={0}>
+    <div
+      className="flex min-h-0 flex-1 flex-col items-center gap-1 py-2"
+      data-testid="app-rail-collapsed-tabs"
+    >
+      {hasReport ? (
+        <CollapsedRailTab
+          icon={<FileText aria-hidden="true" />}
+          label="This report"
+          onClick={() => onSelect('report')}
+        />
+      ) : null}
+      <CollapsedRailTab
+        icon={<Library aria-hidden="true" />}
+        label="Library"
+        onClick={() => onSelect('library')}
+      />
+    </div>
+  </TooltipProvider>
+)
+
+type CollapsedRailTabProps = {
+  icon: ReactNode
+  label: string
+  onClick: () => void
+}
+
+/** Icon button with a right-hand tooltip naming the section. */
+const CollapsedRailTab: FC<CollapsedRailTabProps> = ({
+  icon,
+  label,
+  onClick,
+}) => (
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <Button
+        aria-label={label}
+        size="icon"
+        type="button"
+        variant="ghost"
+        onClick={onClick}
+      >
+        {icon}
+      </Button>
+    </TooltipTrigger>
+    <TooltipContent side="right" withArrow>
+      {label}
+    </TooltipContent>
+  </Tooltip>
+)
+
 export const AppRail: FC<AppRailProps> = ({
   librarySection = null,
   isMobileOpen = false,
   onMobileOpenChange,
+  isOpen: controlledIsOpen,
+  onOpenChange,
 }) => {
-  const [isOpen, setIsOpen] = useState(true)
+  const [internalIsOpen, setInternalIsOpen] = useState(true)
+  const isOpen = controlledIsOpen ?? internalIsOpen
+  const setIsOpen = (nextOpen: boolean): void => {
+    setInternalIsOpen(nextOpen)
+    onOpenChange?.(nextOpen)
+  }
   const [activeTab, setActiveTab] = useState('report')
   const { railReportSection } = useAppShell()
   const isMobile = useIsMobileLayout()
@@ -112,6 +200,7 @@ export const AppRail: FC<AppRailProps> = ({
             data-testid="app-rail"
           >
             {body}
+            <RailAccount />
           </aside>
         </SheetContent>
       </Sheet>
@@ -147,7 +236,7 @@ export const AppRail: FC<AppRailProps> = ({
           size="icon"
           type="button"
           variant="ghost"
-          onClick={() => setIsOpen((open) => !open)}
+          onClick={() => setIsOpen(!isOpen)}
         >
           {isOpen ? (
             <ChevronsLeft aria-hidden="true" />
@@ -156,7 +245,18 @@ export const AppRail: FC<AppRailProps> = ({
           )}
         </Button>
       </div>
-      {isOpen ? body : null}
+      {isOpen ? (
+        body
+      ) : (
+        <CollapsedRailTabs
+          hasReport={Boolean(railReportSection)}
+          onSelect={(tab) => {
+            setActiveTab(tab)
+            setIsOpen(true)
+          }}
+        />
+      )}
+      <RailAccount collapsed={!isOpen} />
     </aside>
   )
 }

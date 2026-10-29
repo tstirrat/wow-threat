@@ -1,12 +1,13 @@
 /**
  * Shared report route layout: fills the rail outline and bar title, renders the outlet full height.
  */
-import { threatConfigIds } from '@wow-threat/config'
+import { type ThreatConfigId, threatConfigIds } from '@wow-threat/config'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, useEffect, useRef } from 'react'
 import { Outlet, useLocation, useParams } from 'react-router-dom'
 
 import { ErrorState } from '../components/error-state'
+import { FightCrumb, ReportCrumb } from '../components/fight-crumb'
 import {
   ReportOutline,
   ReportOutlineSkeleton,
@@ -22,6 +23,7 @@ import {
   readForcedThreatConfigParam,
   resolveCurrentThreatConfig,
 } from '../lib/threat-config'
+import type { ReportFightSummary } from '../types/api'
 import type { WarcraftLogsHost } from '../types/app'
 import { useBarTitle, useRailReportSection } from './app-shell-context'
 import type { ReportRouteContext } from './report-layout-context'
@@ -31,26 +33,43 @@ interface LocationState {
 }
 
 type ReportBarTitleProps = {
+  reportId: string
   reportTitle: string
-  fightLabel: string | null
+  fights: ReportFightSummary[]
+  selectedFight: ReportFightSummary | null
+  configId: ThreatConfigId | null
+  eventsMode: string | null
+  forceFresh: boolean
+  pinnedPlayerIds: number[]
 }
 
-/** Breadcrumb for the app bar: report title, then the current fight when on one. */
+/** Breadcrumb for the app bar: report crumb, then the fight crumb menu when on a fight. */
 const ReportBarTitle: FC<ReportBarTitleProps> = ({
+  reportId,
   reportTitle,
-  fightLabel,
+  fights,
+  selectedFight,
+  configId,
+  eventsMode,
+  forceFresh,
+  pinnedPlayerIds,
 }) => (
-  <span className="flex min-w-0 items-center gap-2 text-sm">
-    <span className="truncate font-medium">{reportTitle}</span>
-    {fightLabel ? (
-      <>
-        <span aria-hidden="true" className="text-muted-foreground">
-          ›
-        </span>
-        <span className="truncate text-muted-foreground">{fightLabel}</span>
-      </>
+  <>
+    <ReportCrumb reportTitle={reportTitle} />
+    {selectedFight ? (
+      <FightCrumb
+        configId={configId}
+        eventsMode={eventsMode}
+        fightLabel={`${selectedFight.name} · ${selectedFight.kill ? 'Kill' : 'Wipe'} · ${formatClockDuration(selectedFight.endTime - selectedFight.startTime)}`}
+        fightShortLabel={selectedFight.name}
+        fights={fights}
+        forceFresh={forceFresh}
+        pinnedPlayerIds={pinnedPlayerIds}
+        reportId={reportId}
+        selectedFightId={selectedFight.id}
+      />
     ) : null}
-  </span>
+  </>
 )
 
 /** Render report-scoped chrome shared by report landing and fight pages. */
@@ -116,9 +135,6 @@ export const ReportLayout: FC = () => {
   const selectedFightId = Number.isNaN(fightId) ? null : fightId
   const selectedFight =
     data?.fights.find((fight) => fight.id === selectedFightId) ?? null
-  const fightLabel = selectedFight
-    ? `#${selectedFight.id} ${selectedFight.name} · ${selectedFight.kill ? 'Kill' : 'Wipe'} · ${formatClockDuration(selectedFight.endTime - selectedFight.startTime)}`
-    : null
   const threatConfig = data
     ? resolveCurrentThreatConfig(data, forcedThreatConfig.configId)
     : null
@@ -128,7 +144,16 @@ export const ReportLayout: FC = () => {
 
   useBarTitle(
     data && reportId ? (
-      <ReportBarTitle fightLabel={fightLabel} reportTitle={reportTitle} />
+      <ReportBarTitle
+        configId={forcedThreatConfig.configId}
+        eventsMode={eventsMode}
+        fights={data.fights}
+        forceFresh={forceFresh}
+        pinnedPlayerIds={pinnedPlayerIds}
+        reportId={reportId}
+        reportTitle={reportTitle}
+        selectedFight={selectedFight}
+      />
     ) : null,
   )
   useRailReportSection(

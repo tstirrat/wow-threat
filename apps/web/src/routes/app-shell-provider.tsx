@@ -9,6 +9,7 @@ import { AppShellContext, AppShellSettersContext } from './app-shell-context'
 export const AppShellProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [barTitle, setBarTitle] = useState<ReactNode>(null)
   const [barTitleTrailing, setBarTitleTrailing] = useState<ReactNode>(null)
+  const [barExternalLink, setBarExternalLink] = useState<ReactNode>(null)
   const [barSettings, setBarSettings] = useState<ReactNode>(null)
   const [barRosterToggle, setBarRosterToggle] = useState<ReactNode>(null)
   const [railReportSection, setRailReportSection] = useState<ReactNode>(null)
@@ -16,6 +17,7 @@ export const AppShellProvider: FC<{ children: ReactNode }> = ({ children }) => {
     () => ({
       setBarTitle,
       setBarTitleTrailing,
+      setBarExternalLink,
       setBarSettings,
       setBarRosterToggle,
       setRailReportSection,
@@ -26,6 +28,7 @@ export const AppShellProvider: FC<{ children: ReactNode }> = ({ children }) => {
     () => ({
       barTitle,
       barTitleTrailing,
+      barExternalLink,
       barSettings,
       barRosterToggle,
       railReportSection,
@@ -34,6 +37,7 @@ export const AppShellProvider: FC<{ children: ReactNode }> = ({ children }) => {
     [
       barTitle,
       barTitleTrailing,
+      barExternalLink,
       barSettings,
       barRosterToggle,
       railReportSection,

@@ -11,6 +11,27 @@ import { AppShellProvider } from '../routes/app-shell-provider'
 import { stubMatchMedia } from '../test/helpers/match-media'
 import { AppRail } from './app-rail'
 
+vi.mock('@/auth/auth-provider', () => ({
+  useAuth: () => ({
+    authEnabled: false,
+    isBusy: false,
+    isInitializing: false,
+    signOut: vi.fn(),
+    startWclLogin: vi.fn(),
+    wclUserId: null,
+    wclUserName: null,
+  }),
+}))
+vi.mock('@/hooks/use-wcl-rate-limit', () => ({
+  useWclRateLimit: () => ({
+    rateLimit: null,
+    isLoading: false,
+    isRefreshing: false,
+    error: null,
+    refresh: vi.fn(),
+  }),
+}))
+
 const ReportSlotFiller = () => {
   useRailReportSection(<p>Report outline</p>)
   return null
@@ -71,12 +92,36 @@ describe('AppRail', () => {
       'data-state',
       'closed',
     )
+    expect(screen.getByTestId('rail-account')).toBeInTheDocument()
+    expect(screen.queryByText('Auth disabled')).not.toBeInTheDocument()
     expect(
       screen.queryByTestId('app-rail-library-section'),
     ).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Expand sidebar' }))
     expect(screen.getByTestId('app-rail')).toHaveAttribute('data-state', 'open')
+  })
+
+  it('shows section icons when collapsed and expands on the chosen tab', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <AppShellProvider>
+          <AppRail librarySection={<p>Library content</p>} />
+          <ReportSlotFiller />
+        </AppShellProvider>
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Collapse sidebar' }))
+    expect(screen.getByRole('button', { name: 'This report' })).toBeVisible()
+
+    await user.click(screen.getByRole('button', { name: 'Library' }))
+    expect(screen.getByTestId('app-rail')).toHaveAttribute('data-state', 'open')
+    expect(screen.getByRole('tab', { name: 'Library' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
   })
 
   it('renders content set through the report section slot', () => {
@@ -135,6 +180,7 @@ describe('AppRail', () => {
       )
 
       expect(screen.getByRole('dialog', { name: 'Sidebar' })).toBeVisible()
+      expect(screen.getByTestId('rail-account')).toBeVisible()
       expect(screen.getByText('Report outline')).toBeVisible()
 
       await user.keyboard('{Escape}')

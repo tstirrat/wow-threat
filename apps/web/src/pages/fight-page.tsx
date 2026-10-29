@@ -8,7 +8,10 @@ import { useLocation, useParams } from 'react-router-dom'
 
 import { ErrorBoundary } from '../components/error-boundary'
 import { ErrorState } from '../components/error-state'
-import { FightBarTarget } from '../components/fight-bar-target'
+import {
+  FightBarTarget,
+  FightBarWarcraftLogsLink,
+} from '../components/fight-bar-target'
 import {
   FightSettingsButton,
   FightSettingsPanel,
@@ -48,6 +51,7 @@ import {
 } from '../lib/threat-overrides'
 import { buildCharacterUrl, buildFightRankingsUrl } from '../lib/wcl-url'
 import {
+  useBarExternalLink,
   useBarRosterToggle,
   useBarSettings,
   useBarTitleTrailing,
@@ -270,11 +274,17 @@ export const FightPage: FC = () => {
   useBarTitleTrailing(
     fightData ? (
       <FightBarTarget
-        fightName={fightData.name}
         selectedTarget={selectedTarget}
         targets={targetOptions}
-        warcraftLogsUrl={buildFightRankingsUrl(reportHost, reportId, fightId)}
         onTargetChange={handleTargetChange}
+      />
+    ) : null,
+  )
+  useBarExternalLink(
+    fightData ? (
+      <FightBarWarcraftLogsLink
+        fightName={fightData.name}
+        warcraftLogsUrl={buildFightRankingsUrl(reportHost, reportId, fightId)}
       />
     ) : null,
   )

@@ -1,5 +1,5 @@
 /**
- * Explicit target selector control for fight charts.
+ * Explicit target selector for fight charts, styled as the last app bar breadcrumb.
  */
 import { type FC, useId } from 'react'
 
@@ -31,8 +31,10 @@ export const TargetSelector: FC<TargetSelectorProps> = ({
   const nonBossTargets = targets.filter((target) => !target.isBoss)
 
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <Label htmlFor={selectId}>Target</Label>
+    <div className="flex min-w-0 items-center text-sm">
+      <Label className="sr-only" htmlFor={selectId}>
+        Target
+      </Label>
       <Select
         value={selectedValue}
         onValueChange={(value) => {
@@ -43,7 +45,10 @@ export const TargetSelector: FC<TargetSelectorProps> = ({
           })
         }}
       >
-        <SelectTrigger className="w-[240px]" id={selectId}>
+        <SelectTrigger
+          className="h-8 min-w-0 max-w-full border-0 bg-transparent px-1 text-sm font-medium text-foreground shadow-none hover:bg-muted dark:bg-transparent dark:hover:bg-muted"
+          id={selectId}
+        >
           <SelectValue placeholder="Select target" />
         </SelectTrigger>
         <SelectContent>

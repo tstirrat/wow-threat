@@ -1,34 +1,25 @@
 /**
- * Tests for the fight target crumb shown in the app bar.
+ * Tests for the target crumb and Warcraft Logs icon link shown in the app bar.
  */
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
-import { FightBarTarget } from './fight-bar-target'
+import { FightBarTarget, FightBarWarcraftLogsLink } from './fight-bar-target'
+import { TooltipProvider } from './ui/tooltip'
 
 const baseProps = {
-  fightName: 'Patchwerk',
-  warcraftLogsUrl: 'https://classic.warcraftlogs.com/reports/abc#fight=1',
   targets: [],
   onTargetChange: vi.fn(),
 }
 
 describe('FightBarTarget', () => {
-  it('links to the fight on Warcraft Logs', () => {
-    render(<FightBarTarget {...baseProps} selectedTarget={null} />)
-
-    expect(
-      screen.getByRole('link', { name: 'Open Patchwerk on Warcraft Logs' }),
-    ).toHaveAttribute('href', baseProps.warcraftLogsUrl)
-  })
-
   it('shows a message when there are no targets', () => {
     render(<FightBarTarget {...baseProps} selectedTarget={null} />)
 
     expect(screen.getByText('No valid targets available.')).toBeInTheDocument()
   })
 
-  it('renders the target picker when a target is selected', () => {
+  it('renders the target crumb when a target is selected', () => {
     render(
       <FightBarTarget
         {...baseProps}
@@ -46,6 +37,24 @@ describe('FightBarTarget', () => {
       />,
     )
 
-    expect(screen.getByLabelText('Target')).toBeInTheDocument()
+    const trigger = screen.getByRole('combobox', { name: 'Target' })
+    expect(trigger).not.toHaveTextContent('vs')
+    expect(trigger).toHaveTextContent('Patchwerk')
+    expect(trigger.className).not.toContain('w-[240px]')
+  })
+})
+
+describe('FightBarWarcraftLogsLink', () => {
+  it('links to the fight on Warcraft Logs as an icon button', () => {
+    const url = 'https://classic.warcraftlogs.com/reports/abc#fight=1'
+    render(
+      <TooltipProvider>
+        <FightBarWarcraftLogsLink fightName="Patchwerk" warcraftLogsUrl={url} />
+      </TooltipProvider>,
+    )
+
+    expect(
+      screen.getByRole('link', { name: 'Open Patchwerk on Warcraft Logs' }),
+    ).toHaveAttribute('href', url)
   })
 })

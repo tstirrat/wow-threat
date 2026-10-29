@@ -139,6 +139,20 @@ test.describe('fight page', () => {
     ).toBeChecked()
   })
 
+  test('switches fights from the app bar fight crumb', async ({ page }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(svgFightUrl)
+    await expect(fightPage.header.railAccount()).toBeVisible()
+    await expect(fightPage.header.fightCrumb()).toBeVisible()
+
+    await fightPage.header.fightCrumb().click()
+    await fightPage.header.fightCrumbItem('Grobbulus').click()
+
+    await expectPathname(page, `/report/${e2eReportId}/fight/30`)
+    await expect(fightPage.header.fightCrumb()).toContainText('Grobbulus')
+  })
+
   test('defaults to the main boss and shows expected players in the legend', async ({
     page,
   }) => {
@@ -152,7 +166,7 @@ test.describe('fight page', () => {
     await expect(fightPage.header.threatConfigText()).toBeVisible()
     await expect(fightPage.header.warcraftLogsReportLink()).toBeVisible()
     await expect(
-      page.getByRole('link', { name: 'Open Patchwerk on Warcraft Logs' }),
+      fightPage.header.warcraftLogsFightLink('Patchwerk'),
     ).toBeVisible()
 
     await expect(fightPage.quickSwitch.fightLink('Patchwerk')).toBeVisible()
