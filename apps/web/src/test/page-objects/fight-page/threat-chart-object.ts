@@ -5,11 +5,6 @@ import { type Locator, type Page } from '@playwright/test'
 
 type ChartRenderer = 'canvas' | 'missing' | 'none' | 'svg'
 
-type Point = {
-  x: number
-  y: number
-}
-
 export class ThreatChartObject {
   readonly section: Locator
 
@@ -171,62 +166,5 @@ export class ThreatChartObject {
 
   async clearIsolate(): Promise<void> {
     await this.clearIsolateButton().click()
-  }
-
-  async seriesClickPointByStroke(strokeColor: string): Promise<Point | null> {
-    return this.page.evaluate(
-      ({ lineStrokeColor }: { lineStrokeColor: string }) => {
-        const normalizeColor = (value: string): string =>
-          value.toLowerCase().replaceAll(/\s+/g, '')
-
-        const chartContainer = document.querySelector('.echarts-for-react')
-        const svg = chartContainer?.querySelector('svg')
-        if (!svg) {
-          return null
-        }
-
-        const expectedStroke = normalizeColor(lineStrokeColor)
-        const matchingPaths = [...svg.querySelectorAll<SVGPathElement>('path')]
-          .filter((path) => {
-            const computedStyle = window.getComputedStyle(path)
-            if (computedStyle.fill !== 'none') {
-              return false
-            }
-
-            const currentStroke = normalizeColor(computedStyle.stroke)
-            return currentStroke === expectedStroke
-          })
-          .filter((path) => path.getTotalLength() > 120)
-
-        const targetPath = matchingPaths.sort(
-          (left, right) => right.getTotalLength() - left.getTotalLength(),
-        )[0]
-        if (!targetPath) {
-          return null
-        }
-
-        const point = targetPath.getPointAtLength(
-          targetPath.getTotalLength() * 0.7,
-        )
-        const rect = svg.getBoundingClientRect()
-        return {
-          x: rect.left + point.x,
-          y: rect.top + point.y,
-        }
-      },
-      {
-        lineStrokeColor: strokeColor,
-      },
-    )
-  }
-
-  async clickSeriesLineByStroke(strokeColor: string): Promise<boolean> {
-    const clickPoint = await this.seriesClickPointByStroke(strokeColor)
-    if (!clickPoint) {
-      return false
-    }
-
-    await this.page.mouse.click(clickPoint.x, clickPoint.y)
-    return true
   }
 }

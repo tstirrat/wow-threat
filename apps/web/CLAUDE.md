@@ -2,17 +2,20 @@
 
 ## Task Routing (Open These Files First)
 
-| Task                                   | Open these files first                                                                                                                                                                                                               |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Add/change routes or page flow         | `apps/web/src/routes/router.tsx`, `apps/web/src/routes/root-layout.tsx`, `apps/web/src/routes/report-layout.tsx`, `apps/web/src/pages/*.tsx`                                                                                         |
-| Report/fight data loading              | `apps/web/src/api/client.ts`, `apps/web/src/api/reports.ts`, `apps/web/src/hooks/use-report-data.ts`, `apps/web/src/hooks/use-fight-data.ts`, `apps/web/src/hooks/use-fight-events.ts`                                               |
-| Threat engine processing (frontend)    | `apps/web/src/lib/client-threat-engine.ts`, `apps/web/src/workers/threat-engine.worker.ts`, `apps/web/src/workers/threat-engine-worker-types.ts`, `apps/web/src/hooks/use-fight-events.ts`                                           |
-| Query-param/deep-link behavior         | `apps/web/src/hooks/use-fight-query-state.ts`, `apps/web/src/lib/search-params.ts`, `apps/web/src/lib/fight-navigation.ts`                                                                                                           |
-| Threat chart, legend, tooltip behavior | `apps/web/src/components/threat-chart.tsx`, `apps/web/src/components/threat-chart-legend.tsx`, `apps/web/src/components/fight-settings-panel.tsx`, `apps/web/src/lib/threat-chart-*.ts*`, `apps/web/src/hooks/use-threat-chart-*.ts` |
-| Auth and WCL popup flow                | `apps/web/src/auth/auth-provider.tsx`, `apps/web/src/auth/wcl-popup-bridge.ts`, `apps/web/src/pages/auth-complete-page.tsx`                                                                                                          |
-| Recent reports/account persistence     | `apps/web/src/hooks/use-recent-reports.ts`, `apps/web/src/hooks/use-user-recent-reports.ts`, `apps/web/src/lib/recent-reports.ts`, `apps/web/src/lib/account-recent-reports-cache.ts`                                                |
-| UI component updates                   | `apps/web/src/components/*.tsx`, `apps/web/src/components/ui/*.tsx`, `apps/web/src/index.css`                                                                                                                                        |
-| E2E test updates after UX changes      | `apps/web/src/pages/*.spec.ts`, `apps/web/src/test/page-objects/**`, `apps/web/src/test/helpers/**`                                                                                                                                  |
+| Task                                   | Open these files first                                                                                                                                                                                                                                                               |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Add/change routes or page flow         | `apps/web/src/routes/router.tsx`, `apps/web/src/routes/root-layout.tsx`, `apps/web/src/routes/report-layout.tsx`, `apps/web/src/pages/*.tsx`                                                                                                                                         |
+| App shell (bar, rail, slots)           | `apps/web/src/routes/root-layout.tsx`, `apps/web/src/routes/app-shell-context.ts`, `apps/web/src/routes/app-shell-provider.tsx`, `apps/web/src/components/app-bar.tsx`, `apps/web/src/components/app-rail.tsx`                                                                       |
+| Rail contents (library, report)        | `apps/web/src/components/rail-library.tsx`, `apps/web/src/components/report-outline.tsx`, `apps/web/src/components/*-reports-list.tsx`                                                                                                                                               |
+| Fight workspace layout                 | `apps/web/src/components/fight-workspace.tsx`, `apps/web/src/pages/fight-page.tsx`, `apps/web/src/components/player-info-drawer.tsx`, `apps/web/src/components/playback-controls.tsx`, `apps/web/src/hooks/use-roster-visibility.ts`                                                 |
+| Report/fight data loading              | `apps/web/src/api/client.ts`, `apps/web/src/api/reports.ts`, `apps/web/src/hooks/use-report-data.ts`, `apps/web/src/hooks/use-fight-data.ts`, `apps/web/src/hooks/use-fight-events.ts`                                                                                               |
+| Threat engine processing (frontend)    | `apps/web/src/lib/client-threat-engine.ts`, `apps/web/src/workers/threat-engine.worker.ts`, `apps/web/src/workers/threat-engine-worker-types.ts`, `apps/web/src/hooks/use-fight-events.ts`                                                                                           |
+| Query-param/deep-link behavior         | `apps/web/src/hooks/use-fight-query-state.ts`, `apps/web/src/lib/search-params.ts`, `apps/web/src/lib/fight-navigation.ts`                                                                                                                                                           |
+| Threat chart, legend, tooltip behavior | `apps/web/src/components/threat-chart.tsx`, `apps/web/src/components/threat-chart-legend.tsx`, `apps/web/src/components/fight-settings-panel.tsx`, `apps/web/src/components/fight-bar-target.tsx`, `apps/web/src/lib/threat-chart-*.ts*`, `apps/web/src/hooks/use-threat-chart-*.ts` |
+| Auth and WCL popup flow                | `apps/web/src/auth/auth-provider.tsx`, `apps/web/src/auth/wcl-popup-bridge.ts`, `apps/web/src/pages/auth-complete-page.tsx`                                                                                                                                                          |
+| Recent reports/account persistence     | `apps/web/src/hooks/use-recent-reports.ts`, `apps/web/src/hooks/use-user-recent-reports.ts`, `apps/web/src/lib/recent-reports.ts`, `apps/web/src/lib/account-recent-reports-cache.ts`                                                                                                |
+| UI component updates                   | `apps/web/src/components/*.tsx`, `apps/web/src/components/ui/*.tsx`, `apps/web/src/index.css`                                                                                                                                                                                        |
+| E2E test updates after UX changes      | `apps/web/src/pages/*.spec.ts`, `apps/web/src/test/page-objects/**`, `apps/web/src/test/helpers/**`                                                                                                                                                                                  |
 
 ## Change Checklist
 
@@ -87,17 +90,28 @@ URL behavior rules:
 
 Route behavior details:
 
-- `/` landing page includes:
+- `/` landing page is a centred box:
   - Input for Warcraft Logs report URL
-  - Last 5 loaded reports from local storage
   - Example report links when no history exists
+  - Recent, starred, guild and account report lists live in the rail Library, not on the page
 - `/report/:reportId` includes:
-  - Link-driven navigation for players and fights (not dropdown-only)
-  - Click-through to fight chart and player-focused views
+  - Report and fight navigation in the rail "This report" tab (link-driven, not dropdown-only)
+  - Zero state in the outlet; click-through to the fight chart
 - `/report/:reportId/fight/:fightId` includes:
-  - Chart for selected target with all visible player lines by default
+  - Chart for the selected target with all visible player lines by default; the target selector is the last crumb of the app bar title
   - Player-focused views via `players` query param
-  - Link to Warcraft Logs report and direct fight link
+  - Link to Warcraft Logs report and direct fight link (rail report header)
+
+### App Layout
+
+The app is a full-window, chart-first shell (design: `design/wireframes/v1-chart-first/`, migration notes: `design/layout-migration-plan.md`).
+
+- Shell: `RootLayout` is a grid `rail | bar / rail | outlet` (`h-screen`). The landing page keeps a centred box; report routes fill the outlet.
+- Rail (`app-rail.tsx`): collapsible, open on every page load. Library only off-report (`rail-library.tsx`); on report routes a "This report" tab (`report-outline.tsx`: report header, star, boss-kill list) plus a Library tab.
+- App bar (`app-bar.tsx`): Open report (⌘O) on the left, then the title slot, then account menu, theme toggle, settings (gear) and roster toggle. Routed pages fill slots via `routes/app-shell-context.ts` (`setBarTitle`, `setBarTitleTrailing`, `setBarSettings`, `setBarRosterToggle`, `setRailReportSection`); `ReportLayout` fills the title and rail section, `FightPage` the target selector, gear and roster toggle.
+- Fight workspace (`fight-workspace.tsx`): regions `chart | roster`, `transport`, `drawer` (each has `data-region`). The chart fills its region (min height 240px); the roster is the legend, replaced by `ThreatMeter` during replay and hideable (persisted). Transport (`playback-controls.tsx`) sits under the chart. The Player info drawer (`player-info-drawer.tsx`) is the bottom region; settings live in a side panel (`fight-settings-panel.tsx`).
+- Mobile (< 760px, `useIsMobileLayout`): rail becomes a left sheet opened from the bar, roster becomes an off-canvas panel with a scrim, and the workspace shows Chart / Player info tabs.
+- Hotkeys (registered in `fight-page.tsx`, listed in the `?` overlay): <kbd>R</kbd> roster, <kbd>I</kbd> player info drawer, <kbd>,</kbd> settings, <kbd>Shift+I</kbd> isolate focused player, <kbd>P</kbd> pin, <kbd>H</kbd> hide, <kbd>O</kbd> overrides, <kbd>0</kbd> reset zoom, <kbd>Space</kbd> play/pause (enters replay mode if needed). <kbd>E</kbd> is reserved.
 
 ### Frontend Data & Caching
 
@@ -153,11 +167,11 @@ Interaction requirements:
 
 - Avoid dropdown-only navigation for core report/fight discovery.
 - For fights with multiple bosses/adds, auto-select default target as enemy with highest accumulated threat.
-- Provide explicit target selector control.
-- Chart supports selecting partial time window and one-click reset to full range.
-- Chart legend is rendered on the right side.
+- Provide explicit target selector control (app bar title).
+- Chart supports selecting partial time window and one-click reset to full range (floating Reset zoom button, or <kbd>0</kbd>).
+- Chart legend is rendered on the right side as the roster panel.
 - Double-clicking a legend actor isolates that actor; repeating restores normal visibility behavior.
-- Focused-player view renders summary table below chart with total threat, total damage done, total healing done.
+- Focused-player summary (total threat, total damage done, total healing done) is shown in the Player info drawer under the chart.
 - Pet labels include owner attribution in legend/tooltip: `<Pet Name> (<Owner Name>)`.
 
 ### Frontend UI Libraries

@@ -1,5 +1,20 @@
 # Layout migration plan: adopt v1 chart-first layout in `apps/web`
 
+**Status: complete.** Shipped PRs: #258 (this plan), #259 B1, #260 A1, #261 A4, #262 A3,
+#263 K1, #264 A2, #265 B2, #266 B5, #267 B3, #268 B4, #269 chart overflow fix, #270 C1,
+and C2 (this cleanup, #271). The sections below are the original plan, kept for context.
+
+Deviations from the plan:
+
+- A2 also made the report route full-height and filled the bar title.
+- The target picker moved into the bar in B2, not A4.
+- The Starred dropdown was removed in A4, after A3 added the rail library (the plan had A3 do it).
+- #269 lowered the chart min height to 240px after the chart overlapped the drawer on short windows.
+- The tank/healer icon in the player info drawer was skipped (no role data).
+- C2 found `FightQuickSwitcher`, `ReportSummaryHeader`, `ThreatChartControls` and
+  `FightWorkspaceHeader` already deleted by earlier PRs; `SectionCard` is still used by the
+  report and entity-reports pages, so it stays.
+
 Goal: move the real app to the layout in `design/wireframes/v1-chart-first/` without
 changing what it does. Every PR here is layout only: existing controls, data, hotkeys,
 URL params and analytics keep working; they just move. New behaviour from the
