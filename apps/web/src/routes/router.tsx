@@ -42,9 +42,13 @@ const NotFoundPage = lazy(() =>
 )
 
 const pageFallback: ReactElement = (
-  <p aria-live="polite" className="text-sm text-muted-foreground" role="status">
+  <div
+    aria-live="polite"
+    className="flex h-full min-h-[240px] items-center justify-center px-4 text-center text-sm text-muted-foreground"
+    role="status"
+  >
     Loading page...
-  </p>
+  </div>
 )
 
 const withPageSuspense = (element: ReactElement): ReactElement => (
