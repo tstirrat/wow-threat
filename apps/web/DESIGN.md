@@ -14,8 +14,8 @@ colors:
   bench-zinc: 'oklch(0.97 0.002 286)'
   zinc-mist: 'oklch(0.967 0.001 286.375)'
   chrome: 'oklch(0.955 0.003 286)'
-  chrome-dark: 'oklch(0.175 0.006 286)'
   panel: 'oklch(0.977 0.002 286)'
+  panel-dark: 'oklch(0.175 0.006 286)'
   graticule: 'oklch(0.92 0.004 286.32)'
   graticule-dark: 'oklch(1 0 0 / 10%)'
   field-stroke-dark: 'oklch(1 0 0 / 15%)'
@@ -203,13 +203,13 @@ Near-colorless zinc surfaces, one Arcane Cyan accent, and bright traces for the 
 ### Neutral
 
 - **Scope Black** (`scope-black`): the dark-theme page background and the light-theme text color.
-- **Phosphor Panel** (`phosphor-panel`): dark-theme cards, popovers, workspace panels and the chart's tooltip background; one layer up from Scope Black.
+- **Phosphor Panel** (`phosphor-panel`): dark-theme cards, popovers, the rail and bar, and the chart's tooltip background; one layer up from Scope Black.
 - **Graphite Well** (`graphite-well`): dark-theme muted and secondary fills, including hover states, key badges and toggled rows.
 - **Trace White** (`trace-white`): dark-theme text.
 - **Bench Zinc** (`bench-zinc`): the light-theme page background. A faint cool grey that lets white cards lift off the page with no border.
 - **Paper** (`paper`): light-theme cards, popovers and the chart canvas. The chart always sits on Paper, so class colors are drawn on the lightest possible background.
-- **Chrome** (`chrome` light / `chrome-dark` dark): the rail and app bar. One step below the panels in both themes so the frame recedes.
-- **Panel** (`panel` light / Phosphor Panel dark): the roster, transport and Player info drawer.
+- **Chrome** (`chrome` light / Phosphor Panel dark): the rail and app bar. Two steps from the canvas in both themes, so the frame sits furthest from the chart.
+- **Panel** (`panel` light / `panel-dark` dark): the roster, transport and Player info drawer. One step from the canvas.
 - **Zinc Mist** (`zinc-mist`): light-theme muted and secondary fills.
 - **Graticule** (`graticule` light / `graticule-dark` dark): borders, dividers and chart axis and split lines. The chart draws its split lines at 40% of this value.
 - **Field Stroke** (`field-stroke-dark`): dark-theme input stroke and input tint.
@@ -293,11 +293,11 @@ The workbench uses three surface tiers, each a `surface-*` utility in `src/index
 
 | Tier   | Utility          | Surfaces                                             | Light  | Dark           |
 | ------ | ---------------- | ---------------------------------------------------- | ------ | -------------- |
-| Chrome | `surface-chrome` | Rail, app bar, mobile rail sheet                     | Chrome | Chrome (dark)  |
-| Panel  | `surface-panel`  | Roster, transport, Player info drawer, mobile roster | Panel  | Phosphor Panel |
+| Chrome | `surface-chrome` | Rail, app bar, mobile rail sheet                     | Chrome | Phosphor Panel |
+| Panel  | `surface-panel`  | Roster, transport, Player info drawer, mobile roster | Panel  | Panel (dark)   |
 | Canvas | `surface-canvas` | Chart region, empty report outlet                    | Paper  | Scope Black    |
 
-The canvas sits at the extreme of each theme (the brightest in light, the deepest in dark) so class colors get the most contrast on the surface that carries them. Each utility also re-points `--muted` at a well one step from its own fill, so hover and selected rows stay visible on every tier without per-component overrides. Hairlines still mark the boundaries between regions; the tiers say what kind of surface each region is. Where a card does sit on the page (the landing box), light mode relies on the tonal step alone, and dark mode adds a 1px ring at 10% foreground opacity to define the edge against the near-black page.
+The canvas sits at the extreme of each theme (the brightest in light, the deepest in dark) so class colors get the most contrast on the surface that carries them. Dark mirrors light: canvas, then panels one step away, then chrome two steps away, so the panels read as part of the chart's workspace and the chrome as the frame around it. Each utility also re-points `--muted` at a well one step from its own fill, so hover and selected rows stay visible on every tier without per-component overrides. Hairlines still mark the boundaries between regions; the tiers say what kind of surface each region is. Where a card does sit on the page (the landing box), light mode relies on the tonal step alone, and dark mode adds a 1px ring at 10% foreground opacity to define the edge against the near-black page.
 
 ### Shadow Vocabulary
 
