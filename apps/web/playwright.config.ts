@@ -7,6 +7,7 @@ export default defineConfig({
   testDir: './src/pages',
   testMatch: '**/*.spec.ts',
   outputDir: 'test-results',
+  fullyParallel: true,
   reporter: [['html', { outputFolder: 'playwright-report', open: 'never' }]],
   use: {
     baseURL: 'http://127.0.0.1:9090',
