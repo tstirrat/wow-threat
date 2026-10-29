@@ -10,7 +10,7 @@ import {
   buildBossKillNavigationFights,
   buildBossPullNavigationFights,
   buildFightLinkPath,
-  resolveFightBossTargetNames,
+  resolveFightBossTargets,
   resolveWipeBossPercentage,
 } from '../lib/fight-navigation'
 import { formatReportHeaderDate } from '../lib/format'
@@ -215,7 +215,7 @@ const PullList: FC<PullListProps> = ({
           {bossPullFights.map((fight) => {
             const isCurrentFight = fight.id === selectedFightId
             const wipePercentage = resolveWipeBossPercentage(fight)
-            const bossTargetNames = resolveFightBossTargetNames(fight, actors)
+            const bossTargets = resolveFightBossTargets(fight, actors)
 
             return (
               <li key={fight.id}>
@@ -247,13 +247,28 @@ const PullList: FC<PullListProps> = ({
                     </span>
                   )}
                 </Link>
-                {bossTargetNames.length > 0 ? (
+                {bossTargets.length > 0 ? (
                   <ul
                     aria-label={`${fight.name} boss targets`}
-                    className="ml-4 list-disc py-0.5 pl-3 text-xs text-muted-foreground"
+                    className="ml-4 list-disc py-0.5 pl-3 text-xs"
                   >
-                    {bossTargetNames.map((name) => (
-                      <li key={name}>{name}</li>
+                    {bossTargets.map((target) => (
+                      <li key={target.id}>
+                        <Link
+                          className="text-muted-foreground transition-colors hover:text-foreground"
+                          to={buildFightLinkPath({
+                            reportId,
+                            fightId: fight.id,
+                            configId,
+                            eventsMode,
+                            forceFresh,
+                            pinnedPlayerIds,
+                            targetId: target.id,
+                          })}
+                        >
+                          {target.name}
+                        </Link>
+                      </li>
                     ))}
                   </ul>
                 ) : null}

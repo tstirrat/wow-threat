@@ -127,10 +127,13 @@ describe('ReportOutline', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getAllByRole('link', { name: /^Garr/ })).toHaveLength(2)
+    expect(screen.getAllByRole('link', { name: /^Garr/ })).toHaveLength(3)
     expect(screen.getByText('Wipe 23.4%')).toBeVisible()
     expect(screen.queryByRole('link', { name: 'Trash' })).toBeNull()
-    expect(screen.getByText('Firesworn')).toBeVisible()
+    expect(screen.getByRole('link', { name: 'Firesworn' })).toHaveAttribute(
+      'href',
+      '/report/ABC123xyz/fight/40?targetId=11',
+    )
     expect(screen.queryByText('Hound')).toBeNull()
   })
 

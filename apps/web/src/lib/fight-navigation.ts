@@ -16,6 +16,11 @@ export interface BossEncounterNavigationRow {
   wipes: BossFightSummary[]
 }
 
+export interface FightBossTarget {
+  id: number
+  name: string
+}
+
 export interface FightNavigationGroups {
   bossEncounters: BossEncounterNavigationRow[]
   trashFights: ReportFightSummary[]
@@ -109,22 +114,24 @@ export function resolveWipeBossPercentage(
   return fight.bossPercentage ?? fight.fightPercentage
 }
 
-/** Return unique boss target names in a fight; empty unless several exist. */
-export function resolveFightBossTargetNames(
+/** Return unique boss targets in a fight; empty unless several exist. */
+export function resolveFightBossTargets(
   fight: ReportFightSummary,
   actors: ReportActorSummary[],
-): string[] {
+): FightBossTarget[] {
   const actorsById = new Map(actors.map((actor) => [actor.id, actor]))
-  const names = fight.enemyNPCs
+  const targets = fight.enemyNPCs
     .map((npc) => actorsById.get(npc.id))
     .filter(
       (actor): actor is ReportActorSummary =>
         actor !== undefined && actor.subType === 'Boss',
     )
-    .map((actor) => actor.name)
-  const uniqueNames = Array.from(new Set(names))
+    .map((actor) => ({ id: actor.id, name: actor.name }))
+  const uniqueTargets = Array.from(
+    new Map(targets.map((target) => [target.id, target])).values(),
+  )
 
-  return uniqueNames.length > 1 ? uniqueNames : []
+  return uniqueTargets.length > 1 ? uniqueTargets : []
 }
 
 /** Group report fights for boss-first fight navigation rendering. */
@@ -290,9 +297,10 @@ export interface FightLinkOptions {
   eventsMode?: string | null
   forceFresh?: boolean
   pinnedPlayerIds?: number[]
+  targetId?: number | null
 }
 
-/** Build a fight route path that carries pinned players, config, fresh and eventsMode. */
+/** Build a fight route path that carries pinned players, config, fresh, eventsMode and target. */
 export function buildFightLinkPath({
   reportId,
   fightId,
@@ -300,6 +308,7 @@ export function buildFightLinkPath({
   eventsMode = null,
   forceFresh = false,
   pinnedPlayerIds = [],
+  targetId = null,
 }: FightLinkOptions): string {
   const pinnedPlayers = [...new Set(pinnedPlayerIds)].sort(
     (left, right) => left - right,
@@ -318,6 +327,9 @@ export function buildFightLinkPath({
   }
   if (configId) {
     searchParams.set('config', configId)
+  }
+  if (targetId !== null) {
+    searchParams.set('targetId', String(targetId))
   }
   const search = searchParams.toString()
 
