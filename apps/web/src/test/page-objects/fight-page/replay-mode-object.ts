@@ -22,13 +22,6 @@ export class ReplayModeObject {
     return this.page.getByRole('button', { name: 'Replay', exact: true })
   }
 
-  resumeReplayButton(): Locator {
-    return this.page.getByRole('button', {
-      name: 'Resume Replay',
-      exact: true,
-    })
-  }
-
   exitReplayButton(): Locator {
     return this.page.getByRole('button', {
       name: 'Exit Replay',
