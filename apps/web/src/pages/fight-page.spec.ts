@@ -76,6 +76,28 @@ test.describe('fight page', () => {
     )
   })
 
+  test('opens threat overrides only from the roster overrides button', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(`${svgFightUrl}&config=forever`)
+    await expect(fightPage.chart.legendToggle('Aegistank')).toBeVisible()
+
+    await fightPage.chart.focusLegend('Aegistank')
+    await expect(page).toHaveURL(
+      (url) => url.searchParams.get('focusId') !== null,
+    )
+    await fightPage.chart.toggleLegend('Bladefury')
+    await expect(fightPage.overrides.root('Aegistank')).toHaveCount(0)
+
+    await fightPage.chart.openLegendThreatOverrides('Aegistank')
+    await expect(fightPage.overrides.root('Aegistank')).toBeVisible()
+
+    await page.keyboard.press('Escape')
+    await expect(fightPage.overrides.root('Aegistank')).toHaveCount(0)
+  })
+
   test('shares Paladin aura and talent overrides in the url', async ({
     page,
   }) => {

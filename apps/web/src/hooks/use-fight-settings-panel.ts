@@ -11,8 +11,16 @@ export interface FightSettingsPanelState {
 }
 
 /** Tracks whether the settings panel is open and opens it on the comma key. */
-export function useFightSettingsPanel(): FightSettingsPanelState {
-  const [isOpen, setOpen] = useState(false)
+export function useFightSettingsPanel(
+  onOpen?: () => void,
+): FightSettingsPanelState {
+  const [isOpen, setIsOpen] = useState(false)
+  const setOpen = (nextIsOpen: boolean): void => {
+    if (nextIsOpen) {
+      onOpen?.()
+    }
+    setIsOpen(nextIsOpen)
+  }
   const triggerRef = useRef<HTMLButtonElement | null>(null)
 
   useHotkeys(
