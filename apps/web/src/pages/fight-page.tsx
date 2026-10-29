@@ -164,7 +164,13 @@ export const FightPage: FC = () => {
       : 'melee'
     : 'off'
   const { disableScope, enableScope } = useHotkeysContext()
-  const settingsPanel = useFightSettingsPanel()
+  const [overridePanelActorId, setOverridePanelActorId] = useState<
+    number | null
+  >(null)
+  // Settings and overrides share the right edge, so opening settings closes overrides.
+  const settingsPanel = useFightSettingsPanel(() => {
+    setOverridePanelActorId(null)
+  })
   useBarSettings(
     <FightSettingsButton
       triggerRef={settingsPanel.triggerRef}
@@ -205,21 +211,20 @@ export const FightPage: FC = () => {
   const [legendContainer, setLegendContainer] = useState<HTMLDivElement | null>(
     null,
   )
-  const [overridePanelActorId, setOverridePanelActorId] = useState<
-    number | null
-  >(null)
 
-  const handlePlayerClick = useCallback(
+  // Only the roster's overrides button and the O hotkey open the panel; plain player clicks just focus.
+  const handleOpenPlayerOverrides = useCallback(
     (actorId: number): void => {
       handleSeriesClick(actorId)
       const actor = fightData?.actors.find(
         (candidate) => candidate.id === actorId && candidate.type === 'Player',
       )
       if (actor) {
+        settingsPanel.setOpen(false)
         setOverridePanelActorId(actorId)
       }
     },
-    [fightData, handleSeriesClick],
+    [fightData, handleSeriesClick, settingsPanel],
   )
 
   const overridePanelActor =
@@ -470,8 +475,8 @@ export const FightPage: FC = () => {
     onClearSelections: handleClearSelections,
     windowEndMs: queryState.state.endMs,
     windowStartMs: queryState.state.startMs,
-    onSeriesClick: handlePlayerClick,
-    onOpenPlayerOverrides: handlePlayerClick,
+    onSeriesClick: handleSeriesClick,
+    onOpenPlayerOverrides: handleOpenPlayerOverrides,
     actorIdsWithThreatOverrides,
     onFocusAndAddPlayer: handleFocusAndAddPlayer,
     onFocusAndIsolatePlayer: handleFocusAndIsolatePlayer,
@@ -621,7 +626,6 @@ export const FightPage: FC = () => {
               String(overridePanelActor.id)
             ]
           }
-          avoidRoster={isRosterVisible}
           isRecalculating={eventsQuery.isFetching}
           options={overridePanelOptions}
           onAuraOverrideChange={(option, state) => {

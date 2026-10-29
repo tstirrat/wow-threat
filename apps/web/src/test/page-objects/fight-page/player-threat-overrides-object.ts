@@ -1,5 +1,5 @@
 /**
- * Page object for the floating per-player threat overrides panel.
+ * Page object for the per-player threat overrides side panel.
  */
 import { type Locator, type Page } from '@playwright/test'
 
@@ -7,7 +7,7 @@ export class PlayerThreatOverridesObject {
   constructor(private readonly page: Page) {}
 
   root(playerName: string): Locator {
-    return this.page.getByRole('complementary', {
+    return this.page.getByRole('dialog', {
       name: `Threat overrides for ${playerName}`,
     })
   }

@@ -1,8 +1,8 @@
 /**
- * Floating panel for shareable, per-player threat calculation overrides.
+ * Side panel for shareable, per-player threat calculation overrides.
  */
-import { RotateCcw, SlidersHorizontal, X } from 'lucide-react'
-import { type FC, type ReactNode, useEffect, useRef } from 'react'
+import { RotateCcw, SlidersHorizontal } from 'lucide-react'
+import { type FC, type ReactNode } from 'react'
 
 import {
   type ActorThreatOverrides,
@@ -15,7 +15,6 @@ import {
 import type { ReportActorSummary } from '../types/api'
 import { PlayerName } from './player-name'
 import { Button } from './ui/button'
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from './ui/card'
 import {
   Select,
   SelectContent,
@@ -23,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet'
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group'
 
 export interface PlayerThreatOverridesPanelProps {
@@ -35,8 +35,6 @@ export interface PlayerThreatOverridesPanelProps {
     state: AuraOverrideState,
   ) => void
   onClose: () => void
-  /** Offset left of the fight roster panel so it is not covered. */
-  avoidRoster?: boolean
   onReset: () => void
   onTalentRankOverrideChange: (
     option: TalentThreatOverrideOption,
@@ -144,6 +142,7 @@ function OverrideRow({
   )
 }
 
+/** Right-side sheet for one player's threat overrides; stays open while the chart is used. */
 export const PlayerThreatOverridesPanel: FC<
   PlayerThreatOverridesPanelProps
 > = ({
@@ -153,62 +152,53 @@ export const PlayerThreatOverridesPanel: FC<
   isRecalculating,
   onAuraOverrideChange,
   onClose,
-  avoidRoster = false,
   onReset,
   onTalentRankOverrideChange,
   options,
 }) => {
-  const panelRef = useRef<HTMLElement>(null)
   const hasOverrides = Boolean(
     actorOverrides &&
     (Object.keys(actorOverrides.auras).length > 0 ||
       Object.keys(actorOverrides.talents).length > 0),
   )
 
-  useEffect(() => {
-    const handlePointerDown = (event: PointerEvent): void => {
-      const target = event.target
-      if (
-        !(target instanceof Node) ||
-        panelRef.current?.contains(target) ||
-        (target instanceof Element &&
-          target.closest('[data-slot="select-content"]'))
-      ) {
-        return
-      }
-
-      onClose()
-    }
-
-    document.addEventListener('pointerdown', handlePointerDown)
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown)
-    }
-  }, [onClose])
-
   return (
-    <aside
-      aria-label={`Threat overrides for ${actor.name}`}
-      className={`fixed top-20 z-50 w-[min(21rem,calc(100vw-2rem))] max-[760px]:inset-0 max-[760px]:w-full ${avoidRoster ? 'right-4 lg:right-[calc(17rem+1.5rem)]' : 'right-4'}`}
-      ref={panelRef}
+    <Sheet
+      modal={false}
+      open
+      onOpenChange={(isOpen) => {
+        if (!isOpen) {
+          onClose()
+        }
+      }}
     >
-      <Card
-        className="max-h-[calc(100vh-6rem)] border border-border py-0 shadow-2xl max-[760px]:h-full max-[760px]:max-h-none max-[760px]:rounded-none max-[760px]:border-0"
-        size="sm"
+      <SheetContent
+        aria-describedby={undefined}
+        className="max-[760px]:w-full max-[760px]:border-l-0"
+        closeLabel="Close threat overrides"
+        onInteractOutside={(event) => {
+          event.preventDefault()
+        }}
       >
-        <CardHeader className="border-b border-border py-2!">
-          <div className="flex min-w-0 items-center gap-2">
+        <SheetHeader>
+          {/* The sheet takes its accessible name from this title, so it names the player. */}
+          <SheetTitle
+            aria-label={`Threat overrides for ${actor.name}`}
+            className="flex items-center gap-2"
+          >
             <SlidersHorizontal
               aria-hidden="true"
               className="h-4 w-4 text-muted-foreground"
             />
-            <CardTitle className="flex min-w-0 items-baseline gap-1.5">
-              <span className="shrink-0">Threat overrides</span>
-              <span className="truncate text-xs font-normal text-muted-foreground">
-                <PlayerName color={actorColor} label={actor.name} />
-                {actor.subType ? ` · ${actor.subType}` : ''}
-              </span>
-            </CardTitle>
+            Threat overrides
+          </SheetTitle>
+          <div className="flex min-h-6 items-center gap-2 text-xs">
+            <span className="min-w-0 truncate">
+              <PlayerName color={actorColor} label={actor.name} />
+              {actor.subType ? (
+                <span className="text-muted-foreground">{` · ${actor.subType}`}</span>
+              ) : null}
+            </span>
             {isRecalculating ? (
               <span
                 aria-live="polite"
@@ -217,65 +207,51 @@ export const PlayerThreatOverridesPanel: FC<
                 Updating…
               </span>
             ) : null}
-          </div>
-          <CardAction className="flex items-center gap-1">
             {hasOverrides ? (
               <Button
                 aria-label={`Reset threat overrides for ${actor.name}`}
-                className="max-[760px]:size-10"
-                size="icon-sm"
-                title="Reset overrides"
+                className="ml-auto max-[760px]:h-10"
+                size="xs"
                 type="button"
                 variant="ghost"
                 onClick={onReset}
               >
                 <RotateCcw />
+                Reset
               </Button>
             ) : null}
-            <Button
-              aria-label="Close threat overrides"
-              className="max-[760px]:size-10"
-              size="icon-sm"
-              type="button"
-              variant="ghost"
-              onClick={onClose}
-            >
-              <X />
-            </Button>
-          </CardAction>
-        </CardHeader>
-        <CardContent className="overflow-y-auto px-0!">
+          </div>
+        </SheetHeader>
+        <div className="min-h-0 flex-1 overflow-y-auto">
           {options.length === 0 ? (
             <p className="px-3 py-2 text-xs text-muted-foreground">
               No overrides available.
             </p>
           ) : (
-            <div>
-              {options.map((option) =>
-                option.kind === 'aura' ? (
-                  <AuraOverrideControl
-                    actorOverrides={actorOverrides}
-                    key={option.key}
-                    option={option}
-                    onChange={(state) => {
-                      onAuraOverrideChange(option, state)
-                    }}
-                  />
-                ) : (
-                  <TalentOverrideControl
-                    actorOverrides={actorOverrides}
-                    key={option.key}
-                    option={option}
-                    onChange={(rank) => {
-                      onTalentRankOverrideChange(option, rank)
-                    }}
-                  />
-                ),
-              )}
-            </div>
+            options.map((option) =>
+              option.kind === 'aura' ? (
+                <AuraOverrideControl
+                  actorOverrides={actorOverrides}
+                  key={option.key}
+                  option={option}
+                  onChange={(state) => {
+                    onAuraOverrideChange(option, state)
+                  }}
+                />
+              ) : (
+                <TalentOverrideControl
+                  actorOverrides={actorOverrides}
+                  key={option.key}
+                  option={option}
+                  onChange={(rank) => {
+                    onTalentRankOverrideChange(option, rank)
+                  }}
+                />
+              ),
+            )
           )}
-        </CardContent>
-      </Card>
-    </aside>
+        </div>
+      </SheetContent>
+    </Sheet>
   )
 }

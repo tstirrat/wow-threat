@@ -1,5 +1,5 @@
 /**
- * Interaction tests for the floating player threat overrides panel.
+ * Interaction tests for the player threat overrides side panel.
  */
 import { fireEvent, render, screen } from '@testing-library/react'
 import { foreverConfig } from '@wow-threat/config'
@@ -34,7 +34,7 @@ describe('PlayerThreatOverridesPanel', () => {
     )
 
     expect(
-      screen.getByRole('complementary', {
+      screen.getByRole('dialog', {
         name: 'Threat overrides for Aegis',
       }),
     ).toBeVisible()
@@ -82,7 +82,7 @@ describe('PlayerThreatOverridesPanel', () => {
     ).toBeVisible()
   })
 
-  it('closes when clicking outside the panel', () => {
+  it('stays open when clicking outside and closes on Escape', () => {
     const onClose = vi.fn()
 
     render(
@@ -104,10 +104,10 @@ describe('PlayerThreatOverridesPanel', () => {
       />,
     )
 
-    fireEvent.pointerDown(screen.getByText('Righteous Fury'))
+    fireEvent.pointerDown(document.body)
     expect(onClose).not.toHaveBeenCalled()
 
-    fireEvent.pointerDown(document.body)
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
     expect(onClose).toHaveBeenCalledOnce()
   })
 })
