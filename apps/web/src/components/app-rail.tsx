@@ -3,7 +3,7 @@
  * Footer pinned to the bottom holds the account control and theme toggle.
  * Below 760px it becomes an off-canvas sheet from the left, opened from the app bar's Menu button.
  */
-import { ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { ChevronsLeft, ChevronsRight, FileText, Library } from 'lucide-react'
 import { type FC, type ReactNode, useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -40,10 +40,12 @@ const RailBody: FC<RailBodyProps> = ({
       value={activeTab}
     >
       <TabsList aria-label="Sidebar sections" className="h-9 shrink-0">
-        <TabsTrigger className="max-[760px]:min-h-10" value="report">
+        <TabsTrigger className="gap-1.5 max-[760px]:min-h-10" value="report">
+          <FileText aria-hidden="true" className="size-3.5" />
           This report
         </TabsTrigger>
-        <TabsTrigger className="max-[760px]:min-h-10" value="library">
+        <TabsTrigger className="gap-1.5 max-[760px]:min-h-10" value="library">
+          <Library aria-hidden="true" className="size-3.5" />
           Library
         </TabsTrigger>
       </TabsList>
@@ -71,12 +73,52 @@ const RailBody: FC<RailBodyProps> = ({
       className="flex min-h-0 flex-1 flex-col overflow-y-auto"
       data-testid="app-rail-library-section"
     >
-      <h2 className="border-b border-border px-4 py-1.5 text-xs font-medium">
+      <h2 className="flex items-center gap-1.5 border-b border-border px-4 py-1.5 text-xs font-medium">
+        <Library aria-hidden="true" className="size-3.5" />
         Library
       </h2>
       {librarySection}
     </div>
   )
+
+type CollapsedRailTabsProps = {
+  hasReport: boolean
+  onSelect: (tab: string) => void
+}
+
+/** Icon-only stand-ins for the rail sections; selecting one expands the rail on that tab. */
+const CollapsedRailTabs: FC<CollapsedRailTabsProps> = ({
+  hasReport,
+  onSelect,
+}) => (
+  <div
+    className="flex min-h-0 flex-1 flex-col items-center gap-1 py-2"
+    data-testid="app-rail-collapsed-tabs"
+  >
+    {hasReport ? (
+      <Button
+        aria-label="This report"
+        size="icon"
+        title="This report"
+        type="button"
+        variant="ghost"
+        onClick={() => onSelect('report')}
+      >
+        <FileText aria-hidden="true" />
+      </Button>
+    ) : null}
+    <Button
+      aria-label="Library"
+      size="icon"
+      title="Library"
+      type="button"
+      variant="ghost"
+      onClick={() => onSelect('library')}
+    >
+      <Library aria-hidden="true" />
+    </Button>
+  </div>
+)
 
 export const AppRail: FC<AppRailProps> = ({
   librarySection = null,
@@ -159,7 +201,17 @@ export const AppRail: FC<AppRailProps> = ({
           )}
         </Button>
       </div>
-      {isOpen ? body : <div className="min-h-0 flex-1" />}
+      {isOpen ? (
+        body
+      ) : (
+        <CollapsedRailTabs
+          hasReport={Boolean(railReportSection)}
+          onSelect={(tab) => {
+            setActiveTab(tab)
+            setIsOpen(true)
+          }}
+        />
+      )}
       <RailAccount collapsed={!isOpen} />
     </aside>
   )

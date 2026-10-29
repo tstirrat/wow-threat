@@ -102,6 +102,28 @@ describe('AppRail', () => {
     expect(screen.getByTestId('app-rail')).toHaveAttribute('data-state', 'open')
   })
 
+  it('shows section icons when collapsed and expands on the chosen tab', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <AppShellProvider>
+          <AppRail librarySection={<p>Library content</p>} />
+          <ReportSlotFiller />
+        </AppShellProvider>
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Collapse sidebar' }))
+    expect(screen.getByRole('button', { name: 'This report' })).toBeVisible()
+
+    await user.click(screen.getByRole('button', { name: 'Library' }))
+    expect(screen.getByTestId('app-rail')).toHaveAttribute('data-state', 'open')
+    expect(screen.getByRole('tab', { name: 'Library' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+  })
+
   it('renders content set through the report section slot', () => {
     render(
       <MemoryRouter>
