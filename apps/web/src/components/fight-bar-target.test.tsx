@@ -38,7 +38,7 @@ describe('FightBarTarget', () => {
     )
 
     const trigger = screen.getByRole('combobox', { name: 'Target' })
-    expect(trigger).toHaveTextContent('vs')
+    expect(trigger).not.toHaveTextContent('vs')
     expect(trigger).toHaveTextContent('Patchwerk')
     expect(trigger.className).not.toContain('w-[240px]')
   })

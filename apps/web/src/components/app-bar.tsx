@@ -260,6 +260,11 @@ export const AppBar: FC<AppBarProps> = ({
             data-testid="app-bar-title"
           >
             {barTitle}
+            {barExternalLink ? (
+              <div className="flex shrink-0 items-center max-[760px]:order-8">
+                {barExternalLink}
+              </div>
+            ) : null}
             {barTitle && barTitleTrailing ? (
               <span className="flex min-w-0 shrink items-center gap-1 max-[760px]:order-7 max-[760px]:flex-1">
                 <span aria-hidden="true" className="max-[760px]:hidden">
@@ -279,11 +284,6 @@ export const AppBar: FC<AppBarProps> = ({
           ) : null}
 
           <div className="flex shrink-0 items-center justify-end gap-1 max-[760px]:contents">
-            {barExternalLink ? (
-              <div className="flex items-center max-[760px]:order-8">
-                {barExternalLink}
-              </div>
-            ) : null}
             <div className="flex items-center max-[760px]:order-4">
               {barSettings}
             </div>
