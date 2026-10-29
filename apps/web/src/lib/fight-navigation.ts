@@ -96,10 +96,14 @@ export function buildBossPullNavigationFights(
       .map((fight) => normalizeEncounterNameForNavigation(fight.name)),
   )
 
+  // Name matching only rescues kills missing encounter data. WCL also names
+  // trash segments after the nearest boss (encounterID 0, kill null), and those
+  // have no boss data to show.
   return fights.filter(
     (fight) =>
       isBossFightForNavigation(fight) ||
-      knownBossNames.has(normalizeEncounterNameForNavigation(fight.name)),
+      (fight.kill === true &&
+        knownBossNames.has(normalizeEncounterNameForNavigation(fight.name))),
   )
 }
 

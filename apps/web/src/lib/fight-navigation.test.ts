@@ -4,6 +4,7 @@
 import type { ReportFightSummary } from '../types/api'
 import {
   buildBossKillNavigationFights,
+  buildBossPullNavigationFights,
   buildFightNavigationGroups,
 } from './fight-navigation'
 
@@ -227,5 +228,36 @@ describe('buildBossKillNavigationFights', () => {
     const bossKills = buildBossKillNavigationFights(fights)
 
     expect(bossKills.map((fight) => fight.id)).toEqual([81])
+  })
+})
+
+describe('buildBossPullNavigationFights', () => {
+  it('returns boss kills and wipes in report order', () => {
+    const fights = [
+      createFight({ id: 90, encounterID: 9001, name: 'Boss A', kill: false }),
+      createFight({ id: 91, encounterID: 9001, name: 'Boss A', kill: true }),
+      createFight({ id: 92, name: 'Trash', kill: true }),
+    ]
+
+    expect(buildBossPullNavigationFights(fights).map((f) => f.id)).toEqual([
+      90, 91,
+    ])
+  })
+
+  it('excludes trash segments that only share a boss name', () => {
+    const fights = [
+      createFight({ id: 93, encounterID: 9002, name: 'Gruul', kill: false }),
+      createFight({
+        id: 94,
+        encounterID: 0,
+        name: 'Gruul',
+        kill: false,
+      }),
+      createFight({ id: 95, encounterID: null, name: 'Gruul', kill: true }),
+    ]
+
+    expect(buildBossPullNavigationFights(fights).map((f) => f.id)).toEqual([
+      93, 95,
+    ])
   })
 })
