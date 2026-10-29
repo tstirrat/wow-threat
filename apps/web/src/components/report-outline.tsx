@@ -4,7 +4,7 @@
 import type { ThreatConfigId } from '@wow-threat/config'
 import { ExternalLink } from 'lucide-react'
 import type { FC } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import {
   buildBossKillNavigationFights,
@@ -207,6 +207,8 @@ const PullList: FC<PullListProps> = ({
   pinnedPlayerIds,
 }) => {
   const bossPullFights = buildBossPullNavigationFights(fights)
+  const [searchParams] = useSearchParams()
+  const selectedTargetId = Number(searchParams.get('targetId'))
 
   return (
     <nav aria-label="Fight quick switch" className="p-2">
@@ -257,7 +259,15 @@ const PullList: FC<PullListProps> = ({
                     {bossTargets.map((target) => (
                       <li key={target.id}>
                         <Link
-                          className="text-muted-foreground transition-colors hover:text-foreground"
+                          aria-current={
+                            target.id === selectedTargetId ? 'true' : undefined
+                          }
+                          className={[
+                            'transition-colors hover:text-foreground',
+                            target.id === selectedTargetId
+                              ? 'font-medium text-foreground'
+                              : 'text-muted-foreground',
+                          ].join(' ')}
                           to={buildFightLinkPath({
                             reportId,
                             fightId: fight.id,
