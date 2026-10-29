@@ -732,12 +732,12 @@ test.describe('fight page', () => {
 
     await expect(fightPage.chart.targetControl()).toBeVisible()
     await expect(fightPage.settings.gearButton()).toBeVisible()
-    await expect(page.getByTestId('fight-chart-skeleton')).toBeVisible()
+    await expect(page.getByTestId('fight-chart-loading')).toBeVisible()
     await expect(
       page.getByRole('status', { name: 'Loading fight data' }),
     ).toHaveCount(0)
     await expect.poll(() => fightPage.chart.renderer()).toBe('svg')
-    await expect(page.getByTestId('fight-chart-skeleton')).toHaveCount(0)
+    await expect(page.getByTestId('fight-chart-loading')).toHaveCount(0)
   })
 
   test('shows floating reset zoom only while zoomed and clears the window', async ({

@@ -535,7 +535,6 @@ export const FightPage: FC = () => {
                 loadingMessage={
                   eventsQuery.loadingMessage || 'Loading fight events'
                 }
-                showControlsSkeleton={false}
               />
             ) : chartProps.series.length === 0 ? (
               <p className="text-sm text-muted-foreground">
