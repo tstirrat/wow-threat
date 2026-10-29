@@ -55,7 +55,7 @@ const ReportBarTitle: FC<ReportBarTitleProps> = ({
   pinnedPlayerIds,
 }) => (
   <>
-    <ReportCrumb reportId={reportId} reportTitle={reportTitle} />
+    <ReportCrumb reportTitle={reportTitle} />
     {selectedFight ? (
       <FightCrumb
         configId={configId}

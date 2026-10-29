@@ -1,5 +1,5 @@
 /**
- * Report and fight crumbs for the app bar title: the report links to its page, the fight opens a boss-kill menu.
+ * Report and fight crumbs for the app bar title: the report is plain text, the fight opens a boss-kill menu.
  */
 import type { ThreatConfigId } from '@wow-threat/config'
 import { ChevronDown } from 'lucide-react'
@@ -26,25 +26,18 @@ const crumbSeparator = (
 )
 
 export type ReportCrumbProps = {
-  reportId: string
   reportTitle: string
 }
 
 /** First crumb to truncate (and hidden below 1100px): the rail already shows the report. Carries its trailing separator. */
-export const ReportCrumb: FC<ReportCrumbProps> = ({
-  reportId,
-  reportTitle,
-}) => (
+export const ReportCrumb: FC<ReportCrumbProps> = ({ reportTitle }) => (
   <span
     className="flex min-w-0 shrink-[100] items-center gap-2 overflow-hidden max-[1100px]:hidden"
     data-testid="report-crumb"
   >
-    <Link
-      className="min-w-0 truncate text-muted-foreground hover:text-foreground hover:underline"
-      to={`/report/${reportId}`}
-    >
+    <span className="min-w-0 truncate text-muted-foreground">
       {reportTitle}
-    </Link>
+    </span>
     {crumbSeparator}
   </span>
 )

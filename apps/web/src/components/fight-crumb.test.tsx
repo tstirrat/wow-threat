@@ -65,16 +65,10 @@ describe('FightCrumb', () => {
 })
 
 describe('ReportCrumb', () => {
-  it('links to the report page', () => {
-    render(
-      <MemoryRouter>
-        <ReportCrumb reportId="abc" reportTitle="Naxx Night" />
-      </MemoryRouter>,
-    )
+  it('renders the report title as plain text, not a link', () => {
+    render(<ReportCrumb reportTitle="Naxx Night" />)
 
-    expect(screen.getByRole('link', { name: 'Naxx Night' })).toHaveAttribute(
-      'href',
-      '/report/abc',
-    )
+    expect(screen.getByText('Naxx Night')).toBeInTheDocument()
+    expect(screen.queryByRole('link')).toBeNull()
   })
 })
