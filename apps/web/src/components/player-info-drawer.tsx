@@ -90,7 +90,7 @@ export const PlayerInfoDrawer: FC<PlayerInfoDrawerProps> = ({
       </div>
       {isExpanded ? (
         <div
-          className="max-h-[40vh] min-h-0 overflow-y-auto border-t border-border p-3 max-[760px]:max-h-none max-[760px]:flex-1 max-[760px]:p-2"
+          className="max-h-[40vh] min-h-0 overflow-y-auto border-t border-border max-[760px]:max-h-none max-[760px]:flex-1"
           id={bodyId}
         >
           {children}
