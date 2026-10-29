@@ -3,6 +3,7 @@
  */
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useRailReportSection } from '../routes/app-shell-context'
@@ -18,9 +19,11 @@ const ReportSlotFiller = () => {
 describe('AppRail', () => {
   it('shows only the library outside report routes', () => {
     render(
-      <AppShellProvider>
-        <AppRail librarySection={<p>Library content</p>} />
-      </AppShellProvider>,
+      <MemoryRouter>
+        <AppShellProvider>
+          <AppRail librarySection={<p>Library content</p>} />
+        </AppShellProvider>
+      </MemoryRouter>,
     )
 
     expect(screen.queryByRole('tab')).not.toBeInTheDocument()
@@ -30,10 +33,12 @@ describe('AppRail', () => {
   it('shows This report and Library tabs on report routes, defaulting to This report', async () => {
     const user = userEvent.setup()
     render(
-      <AppShellProvider>
-        <AppRail librarySection={<p>Library content</p>} />
-        <ReportSlotFiller />
-      </AppShellProvider>,
+      <MemoryRouter>
+        <AppShellProvider>
+          <AppRail librarySection={<p>Library content</p>} />
+          <ReportSlotFiller />
+        </AppShellProvider>
+      </MemoryRouter>,
     )
 
     expect(screen.getByRole('tab', { name: 'This report' })).toHaveAttribute(
@@ -51,9 +56,11 @@ describe('AppRail', () => {
   it('is open by default and toggles collapsed state', async () => {
     const user = userEvent.setup()
     render(
-      <AppShellProvider>
-        <AppRail librarySection={<p>Library content</p>} />
-      </AppShellProvider>,
+      <MemoryRouter>
+        <AppShellProvider>
+          <AppRail librarySection={<p>Library content</p>} />
+        </AppShellProvider>
+      </MemoryRouter>,
     )
 
     expect(screen.getByTestId('app-rail')).toHaveAttribute('data-state', 'open')
@@ -74,10 +81,12 @@ describe('AppRail', () => {
 
   it('renders content set through the report section slot', () => {
     render(
-      <AppShellProvider>
-        <AppRail />
-        <ReportSlotFiller />
-      </AppShellProvider>,
+      <MemoryRouter>
+        <AppShellProvider>
+          <AppRail />
+          <ReportSlotFiller />
+        </AppShellProvider>
+      </MemoryRouter>,
     )
 
     expect(screen.getByText('Report outline')).toBeInTheDocument()
@@ -96,9 +105,11 @@ describe('AppRail', () => {
 
     it('stays off-canvas until opened', () => {
       render(
-        <AppShellProvider>
-          <AppRail librarySection={<p>Library content</p>} />
-        </AppShellProvider>,
+        <MemoryRouter>
+          <AppShellProvider>
+            <AppRail librarySection={<p>Library content</p>} />
+          </AppShellProvider>
+        </MemoryRouter>,
       )
 
       expect(screen.queryByTestId('app-rail')).not.toBeInTheDocument()
@@ -111,14 +122,16 @@ describe('AppRail', () => {
       const user = userEvent.setup()
       const onMobileOpenChange = vi.fn()
       render(
-        <AppShellProvider>
-          <AppRail
-            isMobileOpen
-            librarySection={<p>Library content</p>}
-            onMobileOpenChange={onMobileOpenChange}
-          />
-          <ReportSlotFiller />
-        </AppShellProvider>,
+        <MemoryRouter>
+          <AppShellProvider>
+            <AppRail
+              isMobileOpen
+              librarySection={<p>Library content</p>}
+              onMobileOpenChange={onMobileOpenChange}
+            />
+            <ReportSlotFiller />
+          </AppShellProvider>
+        </MemoryRouter>,
       )
 
       expect(screen.getByRole('dialog', { name: 'Sidebar' })).toBeVisible()

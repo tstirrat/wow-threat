@@ -112,7 +112,10 @@ const ReportOutlineHeader: FC<ReportOutlineHeaderProps> = ({
   const playersLabel = `${playerCount} ${playerCount === 1 ? 'player' : 'players'}`
 
   return (
-    <section aria-label="Report header" className="space-y-1 text-sm">
+    <section
+      aria-label="Report header"
+      className="space-y-1 border-b border-border p-3 text-sm"
+    >
       <div className="flex items-start justify-between gap-2">
         <h2 className="min-w-0 text-sm font-semibold break-words">
           {report.title}
@@ -127,7 +130,7 @@ const ReportOutlineHeader: FC<ReportOutlineHeaderProps> = ({
       {guildName ? (
         guildEntityPath ? (
           <Link
-            className={`block font-medium underline ${guildTextClass}`}
+            className={`block font-medium hover:underline ${guildTextClass}`}
             state={{ host: reportHost }}
             to={guildEntityPath}
           >
@@ -142,13 +145,14 @@ const ReportOutlineHeader: FC<ReportOutlineHeaderProps> = ({
       {report.zone?.name ? (
         <p className="text-muted-foreground">{report.zone.name}</p>
       ) : null}
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-        <span>{formatReportHeaderDate(report.startTime)}</span>
-        <span>|</span>
+      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
+        <span className="basis-full">
+          {formatReportHeaderDate(report.startTime)}
+        </span>
         <span>{bossLabel}</span>
-        <span>|</span>
+        <span aria-hidden="true">·</span>
         <span>{playersLabel}</span>
-        <span>|</span>
+        <span aria-hidden="true">·</span>
         <a
           aria-label="Open report on Warcraft Logs"
           className="inline-flex items-center gap-1 leading-none hover:opacity-80"
@@ -191,7 +195,7 @@ const PullList: FC<PullListProps> = ({
   const bossKillFights = buildBossKillNavigationFights(fights)
 
   return (
-    <nav aria-label="Fight quick switch">
+    <nav aria-label="Fight quick switch" className="p-2">
       {bossKillFights.length > 0 ? (
         <ul className="flex flex-col gap-0.5">
           {bossKillFights.map((fight) => {
@@ -204,8 +208,8 @@ const PullList: FC<PullListProps> = ({
                   className={[
                     'block rounded-md px-2 py-1.5 text-sm transition-colors',
                     isCurrentFight
-                      ? 'bg-accent font-medium text-accent-foreground'
-                      : 'text-foreground/70 hover:bg-accent/50 hover:text-foreground',
+                      ? 'bg-muted font-medium text-foreground'
+                      : 'text-foreground/70 hover:bg-muted/60 hover:text-foreground',
                   ].join(' ')}
                   to={buildFightLinkPath({
                     reportId,
@@ -223,7 +227,7 @@ const PullList: FC<PullListProps> = ({
           })}
         </ul>
       ) : (
-        <p className="text-sm text-muted-foreground">
+        <p className="px-2 py-1.5 text-xs text-muted-foreground">
           No boss kills found in this report.
         </p>
       )}
@@ -240,7 +244,7 @@ export const ReportOutline: FC<ReportOutlineProps> = ({
   ...headerProps
 }) => {
   return (
-    <div className="space-y-3 border-b border-border p-3">
+    <div>
       <ReportOutlineHeader {...headerProps} />
       <PullList
         configId={configId}

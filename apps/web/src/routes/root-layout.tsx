@@ -25,6 +25,8 @@ export const RootLayout: FC = () => {
   const { hotkeys } = useHotkeysContext()
   const location = useLocation()
   const isLandingPage = location.pathname === '/'
+  // Report routes draw their own flush panels, so the shell adds no padding around them.
+  const isReportRoute = location.pathname.startsWith('/report/')
   // The off-canvas rail stays open only on the route it was opened on, so it closes after picking a fight.
   const [railOpenPathname, setRailOpenPathname] = useState<string | null>(null)
   const isMobileRailOpen = railOpenPathname === location.pathname
@@ -78,7 +80,7 @@ export const RootLayout: FC = () => {
             isOpen={isKeyboardOverlayOpen}
             onClose={closeKeyboardOverlay}
           />
-          <div className="row-span-2 max-[760px]:hidden">
+          <div className="row-span-2 flex min-h-0 max-[760px]:hidden">
             <AppRail
               isMobileOpen={isMobileRailOpen}
               librarySection={<RailLibrary />}
@@ -95,7 +97,9 @@ export const RootLayout: FC = () => {
             className={`min-h-0 overflow-y-auto ${
               isLandingPage
                 ? 'mx-auto w-full max-w-7xl px-4 py-6'
-                : 'p-4 max-[760px]:p-2'
+                : isReportRoute
+                  ? ''
+                  : 'p-4 max-[760px]:p-2'
             }`}
           >
             {reportErrorMessage ? (

@@ -45,9 +45,9 @@ export const PlayerInfoDrawer: FC<PlayerInfoDrawerProps> = ({
   return (
     <section
       aria-labelledby={titleId}
-      className="flex min-h-0 flex-col rounded-lg bg-card text-card-foreground ring-foreground/10 max-[760px]:flex-1 dark:ring-1"
+      className="flex min-h-0 flex-col bg-card text-card-foreground max-[760px]:flex-1"
     >
-      <div className="flex items-center gap-2 px-3 py-1.5">
+      <div className="flex h-9 shrink-0 items-center gap-2 px-2">
         <Button
           aria-controls={bodyId}
           className="max-[760px]:hidden"
@@ -62,7 +62,7 @@ export const PlayerInfoDrawer: FC<PlayerInfoDrawerProps> = ({
         >
           <ChevronIcon aria-hidden="true" className="h-4 w-4" />
         </Button>
-        <h2 className="text-sm font-medium" id={titleId}>
+        <h2 className="text-xs font-medium" id={titleId}>
           Player info
         </h2>
         {!isExpanded && summary ? (

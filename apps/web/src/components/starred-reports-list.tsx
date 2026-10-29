@@ -12,7 +12,6 @@ import {
 import { cn } from '../lib/utils'
 import type { StarredReportEntry } from '../types/app'
 import { ReportStarButton } from './report-star-button'
-import { Card, CardContent } from './ui/card'
 
 export interface StarredReportsListProps {
   reports: StarredReportEntry[]
@@ -30,21 +29,19 @@ export const StarredReportsList: FC<StarredReportsListProps> = ({
 }) => {
   if (reports.length === 0) {
     return (
-      <Card size="sm">
-        <CardContent className="space-y-1">
-          <p className="font-medium text-muted-foreground">
-            No starred reports
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Star reports to keep them pinned here and in the header menu.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="space-y-0.5 py-1">
+        <p className="text-xs font-medium text-muted-foreground">
+          No starred reports
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Star a report to keep it here.
+        </p>
+      </div>
     )
   }
 
   return (
-    <ul aria-label="Starred reports" className="space-y-2">
+    <ul aria-label="Starred reports" className="-mx-2 space-y-0.5">
       {reports.map((report) => {
         const guildName = report.guildName ? `<${report.guildName}>` : null
         const sourceLabel = resolveHostPrefixLabel(report.sourceHost)
@@ -67,32 +64,30 @@ export const StarredReportsList: FC<StarredReportsListProps> = ({
 
         return (
           <li key={report.reportId}>
-            <Card size="sm">
-              <CardContent className="space-y-1">
-                <div className="flex items-start justify-between gap-3">
-                  <Link
-                    className={cn(
-                      'min-w-0 truncate font-medium underline',
-                      titleRowClass,
-                    )}
-                    state={{ host: report.sourceHost }}
-                    to={`/report/${report.reportId}`}
-                  >
-                    {firstLine}
-                  </Link>
-                  <ReportStarButton
-                    ariaLabel={`Unstar report ${report.title || report.reportId}`}
-                    isStarred
-                    onToggle={() => {
-                      onToggleStarReport(report.reportId)
-                    }}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {zoneLabel} - {startLabel} - {bossesLabel}
-                </p>
-              </CardContent>
-            </Card>
+            <div className="space-y-0.5 rounded-md px-2 py-1.5 transition-colors hover:bg-muted">
+              <div className="flex items-start justify-between gap-3">
+                <Link
+                  className={cn(
+                    'min-w-0 truncate font-medium hover:underline',
+                    titleRowClass,
+                  )}
+                  state={{ host: report.sourceHost }}
+                  to={`/report/${report.reportId}`}
+                >
+                  {firstLine}
+                </Link>
+                <ReportStarButton
+                  ariaLabel={`Unstar report ${report.title || report.reportId}`}
+                  isStarred
+                  onToggle={() => {
+                    onToggleStarReport(report.reportId)
+                  }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {zoneLabel} - {startLabel} - {bossesLabel}
+              </p>
+            </div>
           </li>
         )
       })}

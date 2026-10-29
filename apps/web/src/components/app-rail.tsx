@@ -4,6 +4,7 @@
  */
 import { ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { type FC, type ReactNode, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import { useIsMobileLayout } from '../hooks/use-is-mobile-layout'
 import { useAppShell } from '../routes/app-shell-context'
@@ -36,7 +37,7 @@ const RailBody: FC<RailBodyProps> = ({
       onValueChange={onActiveTabChange}
       value={activeTab}
     >
-      <TabsList aria-label="Sidebar sections">
+      <TabsList aria-label="Sidebar sections" className="h-9 shrink-0">
         <TabsTrigger className="max-[760px]:min-h-10" value="report">
           This report
         </TabsTrigger>
@@ -45,6 +46,7 @@ const RailBody: FC<RailBodyProps> = ({
         </TabsTrigger>
       </TabsList>
       <TabsContent
+        className="min-h-0 flex-1 overflow-y-auto"
         data-testid="app-rail-report-section"
         forceMount
         hidden={activeTab !== 'report'}
@@ -53,6 +55,7 @@ const RailBody: FC<RailBodyProps> = ({
         {railReportSection}
       </TabsContent>
       <TabsContent
+        className="min-h-0 flex-1 overflow-y-auto"
         data-testid="app-rail-library-section"
         forceMount
         hidden={activeTab !== 'library'}
@@ -118,13 +121,26 @@ export const AppRail: FC<AppRailProps> = ({
   return (
     <aside
       aria-label="Sidebar"
-      className={`flex shrink-0 flex-col border-r border-border bg-card transition-[width] duration-200 ${
+      className={`flex h-full min-h-0 shrink-0 flex-col border-r border-border bg-card transition-[width] duration-200 ${
         isOpen ? 'w-64' : 'w-12'
       }`}
       data-state={isOpen ? 'open' : 'closed'}
       data-testid="app-rail"
     >
-      <div className={`flex p-2 ${isOpen ? 'justify-end' : 'justify-center'}`}>
+      {/* box-content + h-11 + border-b matches the app bar's 44px row and hairline. */}
+      <div
+        className={`box-content flex h-11 shrink-0 items-center border-b border-border px-2 ${
+          isOpen ? 'justify-between' : 'justify-center'
+        }`}
+      >
+        {isOpen ? (
+          <Link
+            className="truncate px-1 text-sm font-semibold tracking-tight"
+            to="/"
+          >
+            WOW Threat
+          </Link>
+        ) : null}
         <Button
           aria-expanded={isOpen}
           aria-label={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}

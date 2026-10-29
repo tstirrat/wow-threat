@@ -11,7 +11,6 @@ import {
 } from '../lib/guild-faction'
 import { cn } from '../lib/utils'
 import type { StarredGuildReportEntry } from '../types/app'
-import { Card, CardContent } from './ui/card'
 
 export interface StarredGuildReportsListProps {
   reports: StarredGuildReportEntry[]
@@ -23,21 +22,19 @@ export const StarredGuildReportsList: FC<StarredGuildReportsListProps> = ({
 }) => {
   if (reports.length === 0) {
     return (
-      <Card size="sm">
-        <CardContent className="space-y-1">
-          <p className="font-medium text-muted-foreground">
-            No guild reports yet
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Star a guild from a report header to populate this feed.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="space-y-0.5 py-1">
+        <p className="text-xs font-medium text-muted-foreground">
+          No guild reports yet
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Star a guild from a report header to populate this feed.
+        </p>
+      </div>
     )
   }
 
   return (
-    <ul aria-label="Starred guild reports" className="space-y-2">
+    <ul aria-label="Starred guild reports" className="-mx-2 space-y-0.5">
       {reports.map((report) => {
         const guildName = report.guildName ? `<${report.guildName}>` : null
         const titleParts = [report.title || report.reportId, guildName]
@@ -51,23 +48,18 @@ export const StarredGuildReportsList: FC<StarredGuildReportsListProps> = ({
 
         return (
           <li key={report.reportId}>
-            <Card size="sm">
-              <CardContent className="space-y-1">
-                <Link
-                  className={cn(
-                    'truncate font-medium underline',
-                    titleRowClass,
-                  )}
-                  state={{ host: report.sourceHost }}
-                  to={`/report/${report.reportId}`}
-                >
-                  {titleParts}
-                </Link>
-                <p className="text-xs text-muted-foreground">
-                  {zoneLabel} - {startLabel}
-                </p>
-              </CardContent>
-            </Card>
+            <div className="space-y-0.5 rounded-md px-2 py-1.5 transition-colors hover:bg-muted">
+              <Link
+                className={cn('truncate font-medium underline', titleRowClass)}
+                state={{ host: report.sourceHost }}
+                to={`/report/${report.reportId}`}
+              >
+                {titleParts}
+              </Link>
+              <p className="text-xs text-muted-foreground">
+                {zoneLabel} - {startLabel}
+              </p>
+            </div>
           </li>
         )
       })}

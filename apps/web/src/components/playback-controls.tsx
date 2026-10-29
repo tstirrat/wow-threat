@@ -44,7 +44,7 @@ export const PlaybackControls: FC<PlaybackControlsProps> = ({
     <TooltipProvider>
       <div
         aria-label="Playback controls"
-        className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg bg-card px-3 py-2 text-xs text-card-foreground ring-foreground/10 dark:ring-1"
+        className="flex min-h-9 flex-wrap items-center justify-between gap-x-4 gap-y-1 bg-card px-3 py-1 text-xs text-card-foreground"
         role="group"
       >
         <div className="flex flex-wrap items-center gap-1">
