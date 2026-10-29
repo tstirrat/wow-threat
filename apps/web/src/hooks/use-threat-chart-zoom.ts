@@ -286,7 +286,8 @@ export function useThreatChartZoom({
           chart.convertFromPixel({ yAxisIndex: 0 }, clampedEndY),
         )
         if (Number.isFinite(startYValue) && Number.isFinite(endYValue)) {
-          const min = Math.min(startYValue, endYValue)
+          // Threat never goes below zero, so dragging past the axis caps at 0.
+          const min = Math.max(0, Math.min(startYValue, endYValue))
           const max = Math.max(startYValue, endYValue)
           if (max > min) {
             nextYAxisWindow = {
