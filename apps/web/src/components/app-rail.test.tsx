@@ -3,10 +3,11 @@
  */
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useRailReportSection } from '../routes/app-shell-context'
 import { AppShellProvider } from '../routes/app-shell-provider'
+import { stubMatchMedia } from '../test/helpers/match-media'
 import { AppRail } from './app-rail'
 
 const ReportSlotFiller = () => {
@@ -80,5 +81,55 @@ describe('AppRail', () => {
     )
 
     expect(screen.getByText('Report outline')).toBeInTheDocument()
+  })
+
+  describe('below 760px', () => {
+    let restoreMatchMedia: () => void
+
+    beforeEach(() => {
+      restoreMatchMedia = stubMatchMedia(true)
+    })
+
+    afterEach(() => {
+      restoreMatchMedia()
+    })
+
+    it('stays off-canvas until opened', () => {
+      render(
+        <AppShellProvider>
+          <AppRail librarySection={<p>Library content</p>} />
+        </AppShellProvider>,
+      )
+
+      expect(screen.queryByTestId('app-rail')).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole('button', { name: 'Collapse sidebar' }),
+      ).not.toBeInTheDocument()
+    })
+
+    it('opens as a sheet and closes with Escape and the close button', async () => {
+      const user = userEvent.setup()
+      const onMobileOpenChange = vi.fn()
+      render(
+        <AppShellProvider>
+          <AppRail
+            isMobileOpen
+            librarySection={<p>Library content</p>}
+            onMobileOpenChange={onMobileOpenChange}
+          />
+          <ReportSlotFiller />
+        </AppShellProvider>,
+      )
+
+      expect(screen.getByRole('dialog', { name: 'Sidebar' })).toBeVisible()
+      expect(screen.getByText('Report outline')).toBeVisible()
+
+      await user.keyboard('{Escape}')
+      expect(onMobileOpenChange).toHaveBeenLastCalledWith(false)
+
+      onMobileOpenChange.mockClear()
+      await user.click(screen.getByRole('button', { name: 'Close sidebar' }))
+      expect(onMobileOpenChange).toHaveBeenLastCalledWith(false)
+    })
   })
 })

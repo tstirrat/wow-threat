@@ -1,21 +1,119 @@
 /**
  * Collapsible left rail: "This report" and "Library" tabs on report routes, Library alone elsewhere. Open on every page load.
+ * Below 760px it becomes an off-canvas sheet from the left, opened from the app bar's Menu button.
  */
 import { ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { type FC, type ReactNode, useState } from 'react'
 
+import { useIsMobileLayout } from '../hooks/use-is-mobile-layout'
 import { useAppShell } from '../routes/app-shell-context'
 import { Button } from './ui/button'
+import { Sheet, SheetContent, SheetTitle } from './ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
 
 export interface AppRailProps {
   librarySection?: ReactNode
+  isMobileOpen?: boolean
+  onMobileOpenChange?: (isOpen: boolean) => void
 }
 
-export const AppRail: FC<AppRailProps> = ({ librarySection = null }) => {
+type RailBodyProps = {
+  activeTab: string
+  librarySection: ReactNode
+  onActiveTabChange: (tab: string) => void
+  railReportSection: ReactNode
+}
+
+const RailBody: FC<RailBodyProps> = ({
+  activeTab,
+  librarySection,
+  onActiveTabChange,
+  railReportSection,
+}) =>
+  railReportSection ? (
+    <Tabs
+      className="flex min-h-0 flex-1 flex-col"
+      onValueChange={onActiveTabChange}
+      value={activeTab}
+    >
+      <TabsList aria-label="Sidebar sections">
+        <TabsTrigger className="max-[760px]:min-h-10" value="report">
+          This report
+        </TabsTrigger>
+        <TabsTrigger className="max-[760px]:min-h-10" value="library">
+          Library
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent
+        data-testid="app-rail-report-section"
+        forceMount
+        hidden={activeTab !== 'report'}
+        value="report"
+      >
+        {railReportSection}
+      </TabsContent>
+      <TabsContent
+        data-testid="app-rail-library-section"
+        forceMount
+        hidden={activeTab !== 'library'}
+        value="library"
+      >
+        {librarySection}
+      </TabsContent>
+    </Tabs>
+  ) : (
+    <div
+      className="flex min-h-0 flex-1 flex-col overflow-y-auto"
+      data-testid="app-rail-library-section"
+    >
+      <h2 className="border-b border-border px-4 py-1.5 text-xs font-medium">
+        Library
+      </h2>
+      {librarySection}
+    </div>
+  )
+
+export const AppRail: FC<AppRailProps> = ({
+  librarySection = null,
+  isMobileOpen = false,
+  onMobileOpenChange,
+}) => {
   const [isOpen, setIsOpen] = useState(true)
   const [activeTab, setActiveTab] = useState('report')
   const { railReportSection } = useAppShell()
+  const isMobile = useIsMobileLayout()
+  const body = (
+    <RailBody
+      activeTab={activeTab}
+      librarySection={librarySection}
+      onActiveTabChange={setActiveTab}
+      railReportSection={railReportSection}
+    />
+  )
+
+  if (isMobile) {
+    return (
+      <Sheet open={isMobileOpen} onOpenChange={onMobileOpenChange}>
+        <SheetContent
+          aria-describedby={undefined}
+          className="w-[min(320px,88vw)] bg-card"
+          closeLabel="Close sidebar"
+          side="left"
+          withOverlay
+        >
+          <SheetTitle className="sr-only">Sidebar</SheetTitle>
+          <aside
+            aria-label="Sidebar"
+            className="flex min-h-0 flex-1 flex-col pt-12"
+            data-state="open"
+            data-testid="app-rail"
+          >
+            {body}
+          </aside>
+        </SheetContent>
+      </Sheet>
+    )
+  }
 
   return (
     <aside
@@ -42,46 +140,7 @@ export const AppRail: FC<AppRailProps> = ({ librarySection = null }) => {
           )}
         </Button>
       </div>
-      {isOpen ? (
-        railReportSection ? (
-          <Tabs
-            className="flex min-h-0 flex-1 flex-col"
-            onValueChange={setActiveTab}
-            value={activeTab}
-          >
-            <TabsList aria-label="Sidebar sections">
-              <TabsTrigger value="report">This report</TabsTrigger>
-              <TabsTrigger value="library">Library</TabsTrigger>
-            </TabsList>
-            <TabsContent
-              data-testid="app-rail-report-section"
-              forceMount
-              hidden={activeTab !== 'report'}
-              value="report"
-            >
-              {railReportSection}
-            </TabsContent>
-            <TabsContent
-              data-testid="app-rail-library-section"
-              forceMount
-              hidden={activeTab !== 'library'}
-              value="library"
-            >
-              {librarySection}
-            </TabsContent>
-          </Tabs>
-        ) : (
-          <div
-            className="flex min-h-0 flex-1 flex-col overflow-y-auto"
-            data-testid="app-rail-library-section"
-          >
-            <h2 className="border-b border-border px-4 py-1.5 text-xs font-medium">
-              Library
-            </h2>
-            {librarySection}
-          </div>
-        )
-      ) : null}
+      {isOpen ? body : null}
     </aside>
   )
 }

@@ -25,6 +25,22 @@ export class ThreatChartObject {
     return this.section.locator('[data-region="roster"]')
   }
 
+  rosterScrim(): Locator {
+    return this.page.getByTestId('roster-scrim')
+  }
+
+  /** Chart / Player info switcher shown below 760px. */
+  viewTab(name: 'Chart' | 'Player info'): Locator {
+    return this.section
+      .getByRole('tablist', { name: 'Fight views' })
+      .getByRole('tab', { name, exact: true })
+  }
+
+  /** Tap the scrim to the left of the off-canvas roster. */
+  async closeRosterWithScrim(): Promise<void> {
+    await this.rosterScrim().click({ position: { x: 8, y: 400 } })
+  }
+
   targetControl(): Locator {
     return this.page.getByTestId('app-bar-title').getByLabel('Target')
   }

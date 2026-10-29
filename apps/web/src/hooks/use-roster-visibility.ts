@@ -1,14 +1,17 @@
 /**
- * Roster panel visibility state persisted in local storage, with the R hotkey.
+ * Roster panel visibility state with the R hotkey: persisted in local storage on desktop,
+ * an off-canvas panel that starts closed (and closes on Esc) below 760px.
  */
 import { useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 
 import { rosterHiddenStorageKey } from '../lib/constants'
+import { useIsMobileLayout } from './use-is-mobile-layout'
 
 export type RosterVisibility = {
   isRosterVisible: boolean
   toggleRoster: () => void
+  closeRoster: () => void
 }
 
 function loadRosterVisible(): boolean {
@@ -27,14 +30,28 @@ function saveRosterVisible(isVisible: boolean): void {
   }
 }
 
-/** Track whether the roster panel is shown; persists the choice and binds R. */
+/** Track whether the roster panel is shown; persists the desktop choice and binds R (and Esc on mobile). */
 export function useRosterVisibility(): RosterVisibility {
-  const [isRosterVisible, setIsRosterVisible] = useState(loadRosterVisible)
+  const isMobile = useIsMobileLayout()
+  const [isDesktopRosterVisible, setIsDesktopRosterVisible] =
+    useState(loadRosterVisible)
+  const [isMobileRosterOpen, setIsMobileRosterOpen] = useState(false)
+  const isRosterVisible = isMobile ? isMobileRosterOpen : isDesktopRosterVisible
 
   const toggleRoster = (): void => {
-    const next = !isRosterVisible
+    if (isMobile) {
+      setIsMobileRosterOpen(!isMobileRosterOpen)
+      return
+    }
+    const next = !isDesktopRosterVisible
     saveRosterVisible(next)
-    setIsRosterVisible(next)
+    setIsDesktopRosterVisible(next)
+  }
+
+  const closeRoster = (): void => {
+    if (isMobile) {
+      setIsMobileRosterOpen(false)
+    }
   }
 
   useHotkeys(
@@ -51,8 +68,21 @@ export function useRosterVisibility(): RosterVisibility {
       metadata: { order: 20, showInFightOverlay: true },
       scopes: ['fight-page'],
     },
-    [isRosterVisible],
+    [isMobile, isDesktopRosterVisible, isMobileRosterOpen],
   )
 
-  return { isRosterVisible, toggleRoster }
+  useHotkeys(
+    'escape',
+    () => {
+      setIsMobileRosterOpen(false)
+    },
+    {
+      enabled: isMobile && isMobileRosterOpen,
+      enableOnFormTags: true,
+      scopes: ['fight-page'],
+    },
+    [isMobile, isMobileRosterOpen],
+  )
+
+  return { isRosterVisible, toggleRoster, closeRoster }
 }

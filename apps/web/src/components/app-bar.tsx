@@ -28,7 +28,7 @@ import { defaultHost } from '@/lib/constants'
 import { buildBossKillNavigationFights } from '@/lib/fight-navigation'
 import { superKey } from '@/lib/keyboard-shortcut'
 import { parseReportInput } from '@/lib/wcl-url'
-import { ChevronDown, Home, RefreshCw, Search } from 'lucide-react'
+import { ChevronDown, Home, Menu, RefreshCw, Search } from 'lucide-react'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, useEffect, useMemo, useRef, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
@@ -37,7 +37,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAppShell } from '../routes/app-shell-context'
 
 const warcraftLogsHomeUrl = 'https://www.warcraftlogs.com'
-const authControlWidthClass = 'w-40'
+const authControlWidthClass = 'w-40 max-[760px]:w-auto max-[760px]:max-w-32'
 const authControlHeightClass = 'h-[30px]'
 
 function formatResetDuration(totalSeconds: number): string {
@@ -62,11 +62,22 @@ function formatSpentPoints(pointsSpentThisHour: number): string {
 
 interface AppBarProps {
   isLandingPage: boolean
+  isRailOpen?: boolean
+  onOpenRail?: () => void
   onReportError: (message: string | null) => void
 }
 
-/** Top bar: home icon, open report, divider, title slot, account menu, theme toggle and settings/roster slots. */
-export const AppBar: FC<AppBarProps> = ({ isLandingPage, onReportError }) => {
+// Below 760px every bar control gets a 40px touch target.
+const mobileHitTargetClassName =
+  'max-[760px]:[&_button]:min-h-10 max-[760px]:[&_button]:min-w-10'
+
+/** Top bar: home icon, open report, divider, title slot, account menu, theme toggle and settings/roster slots. Wraps below 760px. */
+export const AppBar: FC<AppBarProps> = ({
+  isLandingPage,
+  isRailOpen = false,
+  onOpenRail,
+  onReportError,
+}) => {
   const { barRosterToggle, barSettings, barTitle, barTitleTrailing } =
     useAppShell()
   const posthog = usePostHog()
@@ -192,11 +203,27 @@ export const AppBar: FC<AppBarProps> = ({ isLandingPage, onReportError }) => {
   }
 
   return (
-    <header className="border-b border-border bg-card" data-testid="app-bar">
-      <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2 min-[760px]:flex-nowrap">
+    <header
+      className={`border-b border-border bg-card ${mobileHitTargetClassName}`}
+      data-testid="app-bar"
+    >
+      <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2 max-[760px]:gap-x-1 max-[760px]:px-2 max-[760px]:py-1 min-[760px]:flex-nowrap">
+        {onOpenRail ? (
+          <Button
+            aria-expanded={isRailOpen}
+            aria-label="Open sidebar"
+            className="min-[760px]:hidden"
+            size="icon"
+            type="button"
+            variant="ghost"
+            onClick={onOpenRail}
+          >
+            <Menu aria-hidden="true" className="size-4" />
+          </Button>
+        ) : null}
         <Link
           aria-label="Go to home"
-          className="inline-flex shrink-0 items-center text-foreground"
+          className="inline-flex shrink-0 items-center justify-center text-foreground max-[760px]:size-10"
           to="/"
         >
           <Home aria-hidden="true" className="size-4" />
@@ -289,7 +316,7 @@ export const AppBar: FC<AppBarProps> = ({ isLandingPage, onReportError }) => {
                 </Tooltip>
                 <div
                   aria-label="Report input shortcut"
-                  className="flex items-center gap-1 text-xs text-muted-foreground"
+                  className="flex items-center gap-1 text-xs text-muted-foreground max-[760px]:hidden"
                 >
                   <KbdGroup>
                     <Kbd>{superKey()}</Kbd>
@@ -309,21 +336,29 @@ export const AppBar: FC<AppBarProps> = ({ isLandingPage, onReportError }) => {
         />
 
         <div
-          className="order-last flex min-w-0 basis-full items-center gap-2 text-sm text-muted-foreground min-[760px]:order-none min-[760px]:basis-0 min-[760px]:flex-1"
+          className="order-last flex min-w-0 basis-full items-center gap-2 text-sm text-muted-foreground max-[760px]:flex-wrap max-[760px]:gap-y-1 min-[760px]:order-none min-[760px]:basis-0 min-[760px]:flex-1"
           data-testid="app-bar-title"
         >
-          <div className="min-w-0 truncate">{barTitle}</div>
+          <div className="min-w-0 truncate max-[760px]:basis-full">
+            {barTitle}
+          </div>
           {barTitle && barTitleTrailing ? (
             <>
-              <span aria-hidden="true">›</span>
-              <div className="shrink-0">{barTitleTrailing}</div>
+              <span aria-hidden="true" className="max-[760px]:hidden">
+                ›
+              </span>
+              <div className="shrink-0 max-[760px]:min-w-0 max-[760px]:shrink">
+                {barTitleTrailing}
+              </div>
             </>
           ) : null}
         </div>
 
-        <div className="ml-auto flex shrink-0 items-center justify-end gap-2 min-[760px]:ml-0">
+        <div className="ml-auto flex shrink-0 items-center justify-end gap-2 max-[760px]:gap-1 min-[760px]:ml-0">
           {!authEnabled ? (
-            <span className="text-sm text-muted-foreground">Auth disabled</span>
+            <span className="text-sm text-muted-foreground max-[760px]:text-xs">
+              Auth disabled
+            </span>
           ) : isInitializing ? (
             <Skeleton
               aria-hidden="true"
@@ -431,6 +466,7 @@ export const AppBar: FC<AppBarProps> = ({ isLandingPage, onReportError }) => {
             </Skeleton>
           ) : (
             <Button
+              aria-label="Sign in with WCL"
               className={`${authControlHeightClass} ${authControlWidthClass}`}
               disabled={isBusy}
               size="sm"
@@ -438,7 +474,8 @@ export const AppBar: FC<AppBarProps> = ({ isLandingPage, onReportError }) => {
               variant="outline"
               onClick={startWclLogin}
             >
-              Sign in with WCL
+              <span className="max-[760px]:hidden">Sign in with WCL</span>
+              <span className="min-[760px]:hidden">Sign in</span>
             </Button>
           )}
           <ModeToggle />

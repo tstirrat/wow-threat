@@ -4,9 +4,10 @@
 import { act, render, renderHook, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { HotkeysProvider } from 'react-hotkeys-hook'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { rosterHiddenStorageKey } from '../lib/constants'
+import { stubMatchMedia } from '../test/helpers/match-media'
 import { useRosterVisibility } from './use-roster-visibility'
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -64,5 +65,40 @@ describe('useRosterVisibility', () => {
     expect(screen.getByText('hidden')).toBeInTheDocument()
     await user.keyboard('r')
     expect(screen.getByText('visible')).toBeInTheDocument()
+  })
+
+  describe('below 760px', () => {
+    let restoreMatchMedia: () => void
+
+    beforeEach(() => {
+      restoreMatchMedia = stubMatchMedia(true)
+    })
+
+    afterEach(() => {
+      restoreMatchMedia()
+    })
+
+    it('starts closed and opens without touching the desktop preference', () => {
+      const { result } = renderHook(() => useRosterVisibility(), { wrapper })
+      expect(result.current.isRosterVisible).toBe(false)
+
+      act(() => result.current.toggleRoster())
+      expect(result.current.isRosterVisible).toBe(true)
+      expect(window.localStorage.getItem(rosterHiddenStorageKey)).toBeNull()
+
+      act(() => result.current.closeRoster())
+      expect(result.current.isRosterVisible).toBe(false)
+    })
+
+    it('opens with r and closes with Escape', async () => {
+      const user = userEvent.setup()
+      render(<Probe />, { wrapper })
+      expect(screen.getByText('hidden')).toBeInTheDocument()
+
+      await user.keyboard('r')
+      expect(screen.getByText('visible')).toBeInTheDocument()
+      await user.keyboard('{Escape}')
+      expect(screen.getByText('hidden')).toBeInTheDocument()
+    })
   })
 })

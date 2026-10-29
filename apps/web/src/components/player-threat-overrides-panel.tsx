@@ -189,11 +189,11 @@ export const PlayerThreatOverridesPanel: FC<
   return (
     <aside
       aria-label={`Threat overrides for ${actor.name}`}
-      className={`fixed top-20 z-50 w-[min(21rem,calc(100vw-2rem))] ${avoidRoster ? 'right-4 lg:right-[calc(17rem+1.5rem)]' : 'right-4'}`}
+      className={`fixed top-20 z-50 w-[min(21rem,calc(100vw-2rem))] max-[760px]:inset-0 max-[760px]:w-full ${avoidRoster ? 'right-4 lg:right-[calc(17rem+1.5rem)]' : 'right-4'}`}
       ref={panelRef}
     >
       <Card
-        className="max-h-[calc(100vh-6rem)] border border-border py-0 shadow-2xl"
+        className="max-h-[calc(100vh-6rem)] border border-border py-0 shadow-2xl max-[760px]:h-full max-[760px]:max-h-none max-[760px]:rounded-none max-[760px]:border-0"
         size="sm"
       >
         <CardHeader className="border-b border-border py-2!">
@@ -222,6 +222,7 @@ export const PlayerThreatOverridesPanel: FC<
             {hasOverrides ? (
               <Button
                 aria-label={`Reset threat overrides for ${actor.name}`}
+                className="max-[760px]:size-10"
                 size="icon-sm"
                 title="Reset overrides"
                 type="button"
@@ -233,6 +234,7 @@ export const PlayerThreatOverridesPanel: FC<
             ) : null}
             <Button
               aria-label="Close threat overrides"
+              className="max-[760px]:size-10"
               size="icon-sm"
               type="button"
               variant="ghost"

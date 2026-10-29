@@ -2,7 +2,8 @@
  * Region placement tests for the fight workspace grid.
  */
 import { render, screen, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi } from 'vitest'
 
 import { FightWorkspace } from './fight-workspace'
 
@@ -81,5 +82,62 @@ describe('FightWorkspace', () => {
 
     expect(rosterContainer).not.toBeNull()
     expect(getRegion('roster').contains(rosterContainer)).toBe(true)
+  })
+
+  it('switches the chart and player info tabs, hiding the other region below 760px', async () => {
+    const user = userEvent.setup()
+    render(
+      <FightWorkspace
+        chart={<p>chart content</p>}
+        transport={<p>transport content</p>}
+        drawer={<p>drawer content</p>}
+      />,
+    )
+
+    const chartTab = screen.getByRole('tab', { name: 'Chart' })
+    const infoTab = screen.getByRole('tab', { name: 'Player info' })
+    expect(screen.getByRole('tablist', { name: 'Fight views' })).toBeVisible()
+    expect(chartTab).toHaveAttribute('aria-selected', 'true')
+    expect(getRegion('drawer').className).toContain('max-[760px]:hidden')
+    expect(getRegion('chart').className).not.toContain('max-[760px]:hidden')
+
+    await user.click(infoTab)
+    expect(infoTab).toHaveAttribute('aria-selected', 'true')
+    expect(getRegion('drawer').className).not.toContain('max-[760px]:hidden')
+    expect(getRegion('chart').className).toContain('max-[760px]:hidden')
+    expect(getRegion('transport').className).toContain('max-[760px]:hidden')
+  })
+
+  it('omits the tabs when there is no drawer', () => {
+    render(<FightWorkspace chart={<p>chart content</p>} />)
+
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
+  })
+
+  it('renders a roster scrim that closes the off-canvas roster', async () => {
+    const user = userEvent.setup()
+    const onCloseRoster = vi.fn()
+    const { rerender } = render(
+      <FightWorkspace
+        chart={null}
+        isRosterVisible
+        onCloseRoster={onCloseRoster}
+        roster={<p>roster content</p>}
+      />,
+    )
+
+    await user.click(screen.getByTestId('roster-scrim'))
+    expect(onCloseRoster).toHaveBeenCalledTimes(1)
+    expect(getRegion('roster').className).toContain('max-[760px]:fixed')
+
+    rerender(
+      <FightWorkspace
+        chart={null}
+        isRosterVisible={false}
+        onCloseRoster={onCloseRoster}
+        roster={<p>roster content</p>}
+      />,
+    )
+    expect(screen.queryByTestId('roster-scrim')).not.toBeInTheDocument()
   })
 })
