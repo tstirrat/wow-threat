@@ -19,7 +19,6 @@ import type {
 import { ExampleReportList } from './example-report-list'
 import { ReportStarButton } from './report-star-button'
 import { Badge } from './ui/badge'
-import { Card, CardContent } from './ui/card'
 
 export type RecentReportsListProps = {
   reports: RecentReportEntry[]
@@ -48,8 +47,8 @@ export const RecentReportsList: FC<RecentReportsListProps> = ({
   if (reports.length === 0) {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Load a report to populate zone - date and time - boss count.
+        <p className="text-xs text-muted-foreground">
+          Reports you open appear here.
         </p>
         {exampleReports && exampleReports.length > 0 ? (
           <div className="space-y-2">
@@ -64,7 +63,7 @@ export const RecentReportsList: FC<RecentReportsListProps> = ({
   }
 
   return (
-    <ul aria-label="Recent reports" className="space-y-2">
+    <ul aria-label="Recent reports" className="-mx-2 space-y-0.5">
       {reports.map((report) => {
         const isArchived = report.isArchived === true
         const isInaccessible = report.isAccessible === false
@@ -91,78 +90,76 @@ export const RecentReportsList: FC<RecentReportsListProps> = ({
 
         return (
           <li key={report.reportId}>
-            <Card size="sm">
-              <CardContent className="space-y-1">
-                <div className="flex items-start justify-between gap-3">
-                  {isDisabled ? (
-                    <span
-                      className={cn(
-                        'min-w-0 truncate font-medium text-muted-foreground',
-                      )}
-                    >
-                      {firstLine}
-                    </span>
-                  ) : (
-                    <Link
-                      className={cn(
-                        'min-w-0 truncate font-medium underline',
-                        titleRowClass,
-                      )}
-                      state={{ host: report.sourceHost }}
-                      to={`/report/${report.reportId}`}
-                      onClick={() => {
-                        posthog?.capture('recents_opened', {
-                          report_id: report.reportId,
+            <div className="space-y-0.5 rounded-md px-2 py-1.5 transition-colors hover:bg-muted">
+              <div className="flex items-start justify-between gap-3">
+                {isDisabled ? (
+                  <span
+                    className={cn(
+                      'min-w-0 truncate font-medium text-muted-foreground',
+                    )}
+                  >
+                    {firstLine}
+                  </span>
+                ) : (
+                  <Link
+                    className={cn(
+                      'min-w-0 truncate font-medium hover:underline',
+                      titleRowClass,
+                    )}
+                    state={{ host: report.sourceHost }}
+                    to={`/report/${report.reportId}`}
+                    onClick={() => {
+                      posthog?.capture('recents_opened', {
+                        report_id: report.reportId,
+                      })
+                    }}
+                  >
+                    {firstLine}
+                  </Link>
+                )}
+                <div className="flex items-center gap-1">
+                  {onToggleStarReport ? (
+                    <ReportStarButton
+                      ariaLabel={`${starredReportIds?.has(report.reportId) ? 'Unstar' : 'Star'} report ${report.title || report.reportId}`}
+                      isDisabled={isDisabled}
+                      isStarred={
+                        starredReportIds?.has(report.reportId) ?? false
+                      }
+                      onToggle={() => {
+                        onToggleStarReport({
+                          reportId: report.reportId,
+                          title: report.title,
+                          sourceHost: report.sourceHost,
+                          zoneName: report.zoneName ?? null,
+                          startTime: report.startTime ?? null,
+                          bossKillCount: report.bossKillCount ?? null,
+                          guildName: report.guildName ?? null,
+                          guildFaction: report.guildFaction ?? null,
                         })
                       }}
-                    >
-                      {firstLine}
-                    </Link>
-                  )}
-                  <div className="flex items-center gap-1">
-                    {onToggleStarReport ? (
-                      <ReportStarButton
-                        ariaLabel={`${starredReportIds?.has(report.reportId) ? 'Unstar' : 'Star'} report ${report.title || report.reportId}`}
-                        isDisabled={isDisabled}
-                        isStarred={
-                          starredReportIds?.has(report.reportId) ?? false
-                        }
-                        onToggle={() => {
-                          onToggleStarReport({
-                            reportId: report.reportId,
-                            title: report.title,
-                            sourceHost: report.sourceHost,
-                            zoneName: report.zoneName ?? null,
-                            startTime: report.startTime ?? null,
-                            bossKillCount: report.bossKillCount ?? null,
-                            guildName: report.guildName ?? null,
-                            guildFaction: report.guildFaction ?? null,
-                          })
-                        }}
-                      />
-                    ) : null}
-                    <button
-                      aria-label={`Remove recent report ${report.title || report.reportId}`}
-                      className="cursor-pointer text-xs leading-none text-muted-foreground hover:text-foreground"
-                      onClick={() => {
-                        onRemoveReport(report.reportId)
-                      }}
-                      type="button"
-                    >
-                      ✕
-                    </button>
-                  </div>
+                    />
+                  ) : null}
+                  <button
+                    aria-label={`Remove recent report ${report.title || report.reportId}`}
+                    className="cursor-pointer text-xs leading-none text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      onRemoveReport(report.reportId)
+                    }}
+                    type="button"
+                  >
+                    ✕
+                  </button>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {zoneLabel} - {startLabel} - {bossesLabel}
-                </p>
-                {isDisabled ? (
-                  <Badge className="mt-1" variant="secondary">
-                    {statusLabel}
-                  </Badge>
-                ) : null}
-              </CardContent>
-            </Card>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {zoneLabel} - {startLabel} - {bossesLabel}
+              </p>
+              {isDisabled ? (
+                <Badge className="mt-1" variant="secondary">
+                  {statusLabel}
+                </Badge>
+              ) : null}
+            </div>
           </li>
         )
       })}

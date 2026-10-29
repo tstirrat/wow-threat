@@ -172,7 +172,7 @@ export const RailLibrary: FC = () => {
           {trackedGuildCount === 1 ? 'guild' : 'guilds'} (cached 1 hour).
         </p>
         {isLoadingGuildReports ? (
-          <p aria-live="polite" className="text-sm text-muted-foreground">
+          <p aria-live="polite" className="text-xs text-muted-foreground">
             Loading starred guild reports...
           </p>
         ) : guildReportsError ? (
@@ -198,7 +198,7 @@ export const RailLibrary: FC = () => {
       >
         {isPersonalLogsEnabled ? (
           isLoadingPersonalReports ? (
-            <p aria-live="polite" className="text-sm text-muted-foreground">
+            <p aria-live="polite" className="text-xs text-muted-foreground">
               Loading recent Warcraft Logs...
             </p>
           ) : personalReportsError ? (
@@ -211,7 +211,7 @@ export const RailLibrary: FC = () => {
             <AccountRecentReportsList reports={personalReports} />
           )
         ) : (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Sign in for personal logs.
           </p>
         )}

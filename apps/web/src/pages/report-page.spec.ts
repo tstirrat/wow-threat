@@ -49,7 +49,7 @@ test.describe('report page', () => {
     ).toBeVisible()
     await expect(
       page.getByText(
-        'Choose a fight from the sidebar to view the chart and legend.',
+        'Select a boss kill in the sidebar to load its threat chart.',
       ),
     ).toBeVisible()
     await maybeCaptureScreenshot(page)

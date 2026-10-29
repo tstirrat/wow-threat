@@ -177,7 +177,7 @@ components:
 
 WOW Threat is a measuring instrument, not a dashboard. The screen behaves like a scope: a dark, neutral field; a grid of faint lines; and bright traces running across it. Those traces are player threat lines drawn in WoW class colors, plus event markers for death, fixate, aggro loss and the playhead. All the chrome around them (header, selectors, legend, meter, controls) is zinc-grey and small, so the signal always comes first. The screen is judged by one thing: whether a tank, officer or theorycrafter can read "who had threat, when, and why" at a glance, then zoom in and trust the number.
 
-The layout is dense on purpose. Controls are 28px tall, running text is 12px, and the meter and legend drop to 10px tabular labels so a 40-player raid fits beside a 560px chart without scrolling the page. Dark is the default theme because the product is often open next to WCL during a raid night and screen-shared over voice. Light mode must stay just as readable, especially for class colors.
+The layout is dense on purpose. Controls are 28px tall, running text is 12px, and the meter and legend drop to 10px tabular labels so a 40-player raid fits beside the chart without scrolling the page. Dark is the default theme because the product is often open next to WCL during a raid night and screen-shared over voice. Light mode must stay just as readable, especially for class colors.
 
 Arcane Cyan is the single interface accent. It marks action and focus: the primary button, links, the focus ring and the landing-page hint. It never stands in for data. Data color belongs only to the class palette and the chart-mark set.
 
@@ -265,18 +265,26 @@ Each mark has a fixed meaning. The exact values may be tuned for contrast in bot
 
 ## Layout
 
-- **Container:** a single centered column with a 1280px maximum width, 16px side padding and 24px vertical padding. A sticky header sits above it with the report search, recent-report menu, theme toggle and account control.
-- **Rhythm:** a 4px base grid. 8px (`gap-2`) is the default gap between controls, 4px (`gap-1`) inside groups, 12–20px between cards, and 16px inside cards.
-- **Landing:** a dismissible hint above a three-column card grid from the `md` breakpoint up (recent logs, guild logs, personal logs); a single stack below it.
-- **Fight page:** a 560px-tall chart next to the legend and threat meter panels, which are capped at 560px and scroll internally, so the page itself doesn't grow with raid size. The controls sit directly above the chart.
-- **Breakpoints:** Tailwind defaults: `sm` 640px (card headers go from stacked to side-by-side), `md` 768px (grid columns; input text shrinks to 12px), `lg` 1024px.
+The app is a full-window workbench, not a page of cards. Regions are flush panels on the panel surface (Phosphor Panel / Paper), divided by 1px Graticule hairlines.
+
+- **Shell:** a grid of `rail | bar / rail | workspace` filling the window (`h-screen`). The rail and bar meet on one hairline: the bar row and the rail header are both 44px tall.
+- **Rail:** full height, 256px open / 48px collapsed, with its own internal scroll. Header: the app name and collapse button. On report routes it has "This report" and "Library" tabs. The current fight is a Graphite Well / Zinc Mist row, not an accent block.
+- **Fight workspace:** chart and roster side by side, then the transport strip, then the Player info drawer, all flush with no outer padding or gaps. Panel headers (roster, drawer, rail tabs) are 36px rows.
+- **Rhythm:** a 4px base grid. 8px (`gap-2`) between controls, 4px (`gap-1`) inside groups, 12px panel side padding. Space separates groups inside a panel; hairlines separate panels.
+- **Landing:** the one place a card remains: a centred box holding the report input and example logs, with the Library in the rail.
+- **Mobile (< 760px):** the rail and roster become off-canvas sheets, and the chart and Player info become tabs.
+- **Breakpoints:** Tailwind defaults plus the 760px mobile switch; the roster sits beside the chart from `lg` (1024px).
 - **Keyboard overlays:** the fight and target selectors, player search and shortcut help open as centered overlays, not new pages, so the URL state and chart stay in place underneath.
+
+### Named Rules
+
+**The Panels Not Cards Rule.** Anything that is part of the workspace (chart, roster, transport, drawer, rail, list rows) is a flush panel or row separated by hairlines. No rounded, ringed or padded card around it, and never a card inside a panel. Cards are for content that floats on the page background, which today is only the landing box.
 
 ## Elevation & Depth
 
 Depth comes from **tonal layering**. Each surface is one step away from the surface beneath it. Dark: Scope Black page → Phosphor Panel card → Graphite Well for hover, pressed and well states. Light: Bench Zinc page → Paper card → Zinc Mist for hover and well states. Shadows are reserved for elements that float above the page: popovers, dropdown menus, tooltips and overlays.
 
-In light mode the step alone separates top-level cards from the page, with no ring. Two cases keep a 1px ring at 10% foreground opacity: cards in dark mode, where it defines the edge against the near-black page, and cards nested inside another card (the legend panel, empty-state boxes) in either theme, because Paper on Paper has no tonal step.
+Workspace panels all sit on the panel surface and are separated by Graticule hairlines rather than tonal steps or gaps. Where a card does sit on the page (the landing box), light mode relies on the tonal step alone, and dark mode adds a 1px ring at 10% foreground opacity to define the edge against the near-black page.
 
 ### Shadow Vocabulary
 
@@ -286,7 +294,7 @@ In light mode the step alone separates top-level cards from the page, with no ri
 
 ### Named Rules
 
-**The Flat Page Rule.** Anything that belongs to the page (cards, the chart, the legend, the meter) has no shadow. Only elements that float above the page get one.
+**The Flat Page Rule.** Anything that belongs to the page (panels, the chart, the roster, the meter) has no shadow. Only elements that float above the page get one.
 
 **The One Step Rule.** A nested surface is exactly one tonal step away from its parent. Don't skip steps and don't stack three tints.
 

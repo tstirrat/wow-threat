@@ -13,7 +13,6 @@ import { type FC, useId } from 'react'
 
 import type { ThreatSeries } from '../types/app'
 import { Button } from './ui/button'
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Checkbox } from './ui/checkbox'
 import { Label } from './ui/label'
 import { ScrollArea } from './ui/scroll-area'
@@ -59,53 +58,45 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
   const pinnedPlayerIdSet = new Set(pinnedPlayerIds)
 
   return (
-    <Card
+    <section
       aria-label="Threat legend"
-      className="min-h-0 max-h-[560px] lg:h-full lg:max-h-none"
-      size="sm"
+      className="flex min-h-0 max-h-[560px] flex-col bg-card text-xs/relaxed text-card-foreground lg:h-full lg:max-h-none"
     >
-      <CardHeader className="border-b border-border">
-        <CardTitle className="text-xs font-medium text-muted-foreground">
-          Legend
-        </CardTitle>
-        <CardAction>
-          <div className="flex items-center gap-2">
-            {showClearSelections ? (
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      aria-label="Clear selections"
-                      className="h-6 w-6 cursor-pointer"
-                      size="icon-xs"
-                      type="button"
-                      variant="ghost"
-                      onClick={onClearSelections}
-                    >
-                      <RotateCcw />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">Clear selections</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            ) : null}
-            <Checkbox
-              checked={showPets}
-              id={showPetsId}
-              onCheckedChange={(checked) => {
-                onShowPetsChange(checked === true)
-              }}
-            />
-            <Label
-              className="text-xs text-muted-foreground"
-              htmlFor={showPetsId}
-            >
-              Show pets
-            </Label>
-          </div>
-        </CardAction>
-      </CardHeader>
-      <CardContent className="min-h-0 flex flex-1 flex-col p-0">
+      <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-border px-3">
+        <h2 className="text-xs font-medium">Roster</h2>
+        <div className="flex items-center gap-2">
+          {showClearSelections ? (
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    aria-label="Clear selections"
+                    className="h-6 w-6 cursor-pointer"
+                    size="icon-xs"
+                    type="button"
+                    variant="ghost"
+                    onClick={onClearSelections}
+                  >
+                    <RotateCcw />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Clear selections</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : null}
+          <Checkbox
+            checked={showPets}
+            id={showPetsId}
+            onCheckedChange={(checked) => {
+              onShowPetsChange(checked === true)
+            }}
+          />
+          <Label className="text-xs text-muted-foreground" htmlFor={showPetsId}>
+            Show pets
+          </Label>
+        </div>
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col">
         <TooltipProvider delayDuration={0} disableHoverableContent>
           <ScrollArea className="min-h-0 flex-1">
             <ul className="py-1">
@@ -285,7 +276,7 @@ export const ThreatChartLegend: FC<ThreatChartLegendProps> = ({
             <span>Fixate/Taunt</span>
           </span>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   )
 }

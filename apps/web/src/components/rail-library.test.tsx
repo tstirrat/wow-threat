@@ -61,7 +61,7 @@ describe('RailLibrary', () => {
     expect(screen.getByRole('region', { name: 'Starred' })).toBeVisible()
     expect(screen.getByText('No starred reports')).toBeVisible()
     expect(screen.getByRole('region', { name: 'Recent logs' })).toBeVisible()
-    expect(screen.getByText(/Load a report to populate/)).toBeVisible()
+    expect(screen.getByText(/Reports you open appear here/)).toBeVisible()
     expect(screen.getByText('No guild reports yet')).toBeVisible()
     expect(screen.getByText('Sign in for personal logs.')).toBeVisible()
   })

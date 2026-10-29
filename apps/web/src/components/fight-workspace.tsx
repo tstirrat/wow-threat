@@ -20,10 +20,9 @@ export type FightWorkspaceProps = {
 }
 
 const workspaceGridClassName = [
-  'grid h-full min-h-0 grid-cols-1 gap-3',
+  'grid h-full min-h-0 grid-cols-1 bg-card',
   "[grid-template-areas:'chart'_'roster'_'transport'_'drawer']",
   'lg:grid-rows-[minmax(0,1fr)_auto_auto]',
-  'max-[760px]:gap-2',
   "max-[760px]:[grid-template-areas:'tabs'_'chart'_'transport']",
   'max-[760px]:grid-rows-[auto_minmax(0,1fr)_auto]',
 ].join(' ')
@@ -42,7 +41,7 @@ const rosterHiddenGridClassName = [
 const mobileRosterClassName = [
   'max-[760px]:fixed max-[760px]:inset-y-0 max-[760px]:right-0 max-[760px]:z-50',
   'max-[760px]:w-[min(320px,88vw)] max-[760px]:border-l max-[760px]:border-border',
-  'max-[760px]:bg-card max-[760px]:p-2 max-[760px]:shadow-2xl',
+  'max-[760px]:border-t-0 max-[760px]:bg-card max-[760px]:shadow-2xl',
 ].join(' ')
 
 type MobileTabsProps = {
@@ -56,7 +55,7 @@ const isFightWorkspaceTab = (value: string): value is FightWorkspaceTab =>
 /** Chart / Player info switcher, shown only below 760px. */
 const MobileTabs: FC<MobileTabsProps> = ({ activeTab, onActiveTabChange }) => (
   <Tabs
-    className="[grid-area:tabs] min-[760px]:hidden"
+    className="border-b border-border [grid-area:tabs] min-[760px]:hidden"
     data-region="tabs"
     value={activeTab}
     onValueChange={(value) => {
@@ -104,7 +103,7 @@ export const FightWorkspace: FC<FightWorkspaceProps> = ({
         <MobileTabs activeTab={activeTab} onActiveTabChange={setActiveTab} />
       ) : null}
       <div
-        className={`flex min-h-0 min-w-0 flex-col gap-3 overflow-hidden rounded-lg bg-card p-4 text-xs/relaxed text-card-foreground ring-foreground/10 [grid-area:chart] max-[760px]:p-2 dark:ring-1 ${hiddenOnInfoTab}`}
+        className={`flex min-h-0 min-w-0 flex-col gap-2 overflow-hidden px-3 pt-2 pb-1 text-xs/relaxed text-card-foreground [grid-area:chart] max-[760px]:px-1 ${hiddenOnInfoTab}`}
         data-region="chart"
       >
         {chart}
@@ -118,7 +117,7 @@ export const FightWorkspace: FC<FightWorkspaceProps> = ({
         />
       ) : null}
       <div
-        className={`relative min-h-0 min-w-0 [grid-area:roster] ${mobileRosterClassName} ${isRosterVisible ? '' : 'hidden'}`}
+        className={`relative min-h-0 min-w-0 border-t border-border [grid-area:roster] lg:border-t-0 lg:border-l ${mobileRosterClassName} ${isRosterVisible ? '' : 'hidden'}`}
         data-region="roster"
       >
         <div
@@ -130,7 +129,7 @@ export const FightWorkspace: FC<FightWorkspaceProps> = ({
       </div>
       {transport ? (
         <div
-          className={`min-w-0 [grid-area:transport] ${hiddenOnInfoTab}`}
+          className={`min-w-0 border-t border-border [grid-area:transport] ${hiddenOnInfoTab}`}
           data-region="transport"
         >
           {transport}
@@ -138,7 +137,7 @@ export const FightWorkspace: FC<FightWorkspaceProps> = ({
       ) : null}
       {drawer ? (
         <div
-          className={`min-w-0 [grid-area:drawer] max-[760px]:flex max-[760px]:min-h-0 max-[760px]:flex-col max-[760px]:[grid-area:chart] ${hiddenOnChartTab}`}
+          className={`min-w-0 border-t border-border [grid-area:drawer] max-[760px]:border-t-0 max-[760px]:flex max-[760px]:min-h-0 max-[760px]:flex-col max-[760px]:[grid-area:chart] ${hiddenOnChartTab}`}
           data-region="drawer"
         >
           {drawer}

@@ -189,11 +189,7 @@ describe('RecentReportsList', () => {
       </MemoryRouter>,
     )
 
-    expect(
-      screen.getByText(
-        'Load a report to populate zone - date and time - boss count.',
-      ),
-    ).toBeVisible()
+    expect(screen.getByText('Reports you open appear here.')).toBeVisible()
     expect(screen.getByText('Example logs')).toBeVisible()
     expect(screen.getByRole('link', { name: /Fresh Example/ })).toBeVisible()
   })

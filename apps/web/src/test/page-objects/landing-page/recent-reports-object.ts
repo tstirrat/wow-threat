@@ -18,7 +18,7 @@ export class RecentReportsObject {
 
   noRecentReportsText(): Locator {
     return this.recentReportsSection().getByText(
-      /Load a report to populate zone/i,
+      /Reports you open appear here/i,
     )
   }
 
