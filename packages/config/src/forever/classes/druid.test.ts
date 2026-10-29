@@ -425,5 +425,4 @@ describe('WoW Forever Druid config', () => {
       )
     })
   })
-
 })
