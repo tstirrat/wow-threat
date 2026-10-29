@@ -31,8 +31,7 @@ jobs:
               - 'turbo.json'
               - '.nvmrc'
 
-  build_and_test:
-    needs: detect_changes
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,22 +41,72 @@ jobs:
           cache: pnpm
           node-version-file: .nvmrc
       - run: pnpm install --frozen-lockfile
-      - run: pnpm typecheck && pnpm lint
+      - run: pnpm lint
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          cache: pnpm
+          node-version-file: .nvmrc
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          cache: pnpm
+          node-version-file: .nvmrc
+      - run: pnpm install --frozen-lockfile
       - run: pnpm test
+
+  e2e:
+    needs: detect_changes
+    if: ${{ needs.detect_changes.outputs.frontend == 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          cache: pnpm
+          node-version-file: .nvmrc
+      - run: pnpm install --frozen-lockfile
       - name: Install Playwright Browsers
-        if: ${{ needs.detect_changes.outputs.frontend == 'true' }}
         run: npx playwright install --with-deps chromium
         working-directory: ./apps/web
       - name: Run Playwright tests
-        if: ${{ needs.detect_changes.outputs.frontend == 'true' }}
-        run: npx playwright test
+        run: npx playwright test --shard=${{ matrix.shard }}/2
         working-directory: ./apps/web
       - uses: actions/upload-artifact@v4
-        if: ${{ needs.detect_changes.outputs.frontend == 'true' && !cancelled() }}
+        if: ${{ !cancelled() }}
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: apps/web/playwright-report/
           retention-days: 7
+
+  build_and_test:
+    needs: [lint, typecheck, test, e2e]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check required jobs
+        run: |
+          echo '${{ toJSON(needs) }}'
+          # e2e is legitimately skipped when no frontend files changed
+          test "${{ contains(needs.*.result, 'failure') }}" = "false"
+          test "${{ contains(needs.*.result, 'cancelled') }}" = "false"
 
   deploy_preview:
     needs: detect_changes
