@@ -99,7 +99,7 @@ export const AppRail: FC<AppRailProps> = ({
       <Sheet open={isMobileOpen} onOpenChange={onMobileOpenChange}>
         <SheetContent
           aria-describedby={undefined}
-          className="w-[min(320px,88vw)] bg-card"
+          className="w-[min(320px,88vw)] surface-chrome"
           closeLabel="Close sidebar"
           side="left"
           withOverlay
@@ -121,7 +121,7 @@ export const AppRail: FC<AppRailProps> = ({
   return (
     <aside
       aria-label="Sidebar"
-      className={`flex h-full min-h-0 shrink-0 flex-col border-r border-border bg-card transition-[width] duration-200 ${
+      className={`flex h-full min-h-0 shrink-0 flex-col border-r border-border surface-chrome transition-[width] duration-200 ${
         isOpen ? 'w-64' : 'w-12'
       }`}
       data-state={isOpen ? 'open' : 'closed'}

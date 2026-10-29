@@ -15,7 +15,7 @@ export const ReportPage: FC = () => {
       <title>{`${reportTitle} | WOW Threat`}</title>
       <section
         aria-labelledby="report-zero-state-title"
-        className="flex h-full min-h-60 flex-col items-center justify-center gap-1 px-4 text-center"
+        className="flex h-full min-h-60 flex-col items-center justify-center gap-1 surface-canvas px-4 text-center"
       >
         <h2 className="text-sm font-medium" id="report-zero-state-title">
           Choose a fight

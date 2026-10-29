@@ -204,7 +204,7 @@ export const AppBar: FC<AppBarProps> = ({
 
   return (
     <header
-      className={`border-b border-border bg-card ${mobileHitTargetClassName}`}
+      className={`border-b border-border surface-chrome ${mobileHitTargetClassName}`}
       data-testid="app-bar"
     >
       <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2 max-[760px]:gap-x-1 max-[760px]:px-2 max-[760px]:py-1 min-[760px]:h-11 min-[760px]:flex-nowrap min-[760px]:py-0">

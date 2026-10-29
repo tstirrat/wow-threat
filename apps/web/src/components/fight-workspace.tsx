@@ -20,7 +20,7 @@ export type FightWorkspaceProps = {
 }
 
 const workspaceGridClassName = [
-  'grid h-full min-h-0 grid-cols-1 bg-card',
+  'grid h-full min-h-0 grid-cols-1 surface-panel',
   "[grid-template-areas:'chart'_'roster'_'transport'_'drawer']",
   'lg:grid-rows-[minmax(0,1fr)_auto_auto]',
   "max-[760px]:[grid-template-areas:'tabs'_'chart'_'transport']",
@@ -41,7 +41,7 @@ const rosterHiddenGridClassName = [
 const mobileRosterClassName = [
   'max-[760px]:fixed max-[760px]:inset-y-0 max-[760px]:right-0 max-[760px]:z-50',
   'max-[760px]:w-[min(320px,88vw)] max-[760px]:border-l max-[760px]:border-border',
-  'max-[760px]:border-t-0 max-[760px]:bg-card max-[760px]:shadow-2xl',
+  'max-[760px]:border-t-0 max-[760px]:surface-panel max-[760px]:shadow-2xl',
 ].join(' ')
 
 type MobileTabsProps = {
@@ -103,7 +103,7 @@ export const FightWorkspace: FC<FightWorkspaceProps> = ({
         <MobileTabs activeTab={activeTab} onActiveTabChange={setActiveTab} />
       ) : null}
       <div
-        className={`flex min-h-0 min-w-0 flex-col gap-2 overflow-hidden px-3 pt-2 pb-1 text-xs/relaxed text-card-foreground [grid-area:chart] max-[760px]:px-1 ${hiddenOnInfoTab}`}
+        className={`flex min-h-0 min-w-0 flex-col gap-2 overflow-hidden surface-canvas px-3 pt-2 pb-1 text-xs/relaxed text-card-foreground [grid-area:chart] max-[760px]:px-1 ${hiddenOnInfoTab}`}
         data-region="chart"
       >
         {chart}
