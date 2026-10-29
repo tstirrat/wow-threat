@@ -104,7 +104,7 @@ Route behavior details:
 
 ### App Layout
 
-The app is a full-window, chart-first shell (design: `design/wireframes/v1-chart-first/`, migration notes: `design/layout-migration-plan.md`).
+The app is a full-window, chart-first shell (design: `design/wireframes/v1-chart-first/`).
 
 - Shell: `RootLayout` is a grid `rail | bar / rail | outlet` (`h-screen`). The landing page keeps a centred box; report routes fill the outlet.
 - Rail (`app-rail.tsx`): collapsible, open on every page load. Library only off-report (`rail-library.tsx`); on report routes a "This report" tab (`report-outline.tsx`: report header, star, boss-kill list) plus a Library tab.
