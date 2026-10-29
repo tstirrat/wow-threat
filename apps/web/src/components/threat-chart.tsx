@@ -498,7 +498,6 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         },
         emphasis: {
           disabled: isReplayMode,
-          focus: 'series',
           scale: true,
           itemStyle: {
             color: item.color,
