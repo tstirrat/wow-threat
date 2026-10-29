@@ -46,10 +46,10 @@ export const TargetSelector: FC<TargetSelectorProps> = ({
         }}
       >
         <SelectTrigger
-          className="h-8 min-w-0 max-w-full border-0 bg-transparent px-2 text-sm shadow-none hover:bg-muted dark:bg-transparent dark:hover:bg-muted"
+          className="h-8 min-w-0 max-w-full border-0 bg-transparent px-1 text-sm font-medium text-foreground shadow-none hover:bg-muted dark:bg-transparent dark:hover:bg-muted"
           id={selectId}
         >
-          <span className="text-muted-foreground">vs</span>
+          <span className="font-normal text-muted-foreground">vs</span>
           <SelectValue placeholder="Select target" />
         </SelectTrigger>
         <SelectContent>

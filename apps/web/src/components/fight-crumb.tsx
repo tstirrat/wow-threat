@@ -40,7 +40,7 @@ export const ReportCrumb: FC<ReportCrumbProps> = ({
     data-testid="report-crumb"
   >
     <Link
-      className="min-w-0 truncate font-medium text-foreground hover:underline"
+      className="min-w-0 truncate text-muted-foreground hover:text-foreground hover:underline"
       to={`/report/${reportId}`}
     >
       {reportTitle}
@@ -82,7 +82,7 @@ export const FightCrumb: FC<FightCrumbProps> = ({
       <DropdownMenuTrigger asChild>
         <Button
           aria-label={`Fight: ${fightLabel}`}
-          className="h-8 min-w-0 shrink-[3] justify-start max-[760px]:order-3 max-[760px]:flex-1 gap-1 px-2 text-sm text-muted-foreground"
+          className="h-8 min-w-0 shrink-[3] justify-start max-[760px]:order-3 max-[760px]:flex-1 gap-1 px-1 text-sm font-medium text-foreground"
           type="button"
           variant="ghost"
         >

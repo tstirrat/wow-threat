@@ -256,12 +256,12 @@ export const AppBar: FC<AppBarProps> = ({
           </div>
 
           <div
-            className="flex min-w-0 flex-1 items-center gap-2 text-sm text-muted-foreground max-[760px]:contents"
+            className="flex min-w-0 flex-1 items-center gap-1 text-sm text-muted-foreground max-[760px]:contents"
             data-testid="app-bar-title"
           >
             {barTitle}
             {barTitle && barTitleTrailing ? (
-              <span className="flex min-w-0 shrink items-center gap-2 max-[760px]:order-7 max-[760px]:flex-1">
+              <span className="flex min-w-0 shrink items-center gap-1 max-[760px]:order-7 max-[760px]:flex-1">
                 <span aria-hidden="true" className="max-[760px]:hidden">
                   ›
                 </span>
