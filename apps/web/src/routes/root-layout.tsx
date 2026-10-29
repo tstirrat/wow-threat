@@ -33,6 +33,7 @@ export const RootLayout: FC = () => {
   const setIsMobileRailOpen = (isOpen: boolean): void => {
     setRailOpenPathname(isOpen ? location.pathname : null)
   }
+  const [isRailExpanded, setIsRailExpanded] = useState(true)
   const { authEnabled, authError } = useAuth()
 
   useHotkeys(
@@ -82,6 +83,8 @@ export const RootLayout: FC = () => {
           />
           <div className="row-span-2 flex min-h-0 max-[760px]:hidden">
             <AppRail
+              isOpen={isRailExpanded}
+              onOpenChange={setIsRailExpanded}
               isMobileOpen={isMobileRailOpen}
               librarySection={<RailLibrary />}
               onMobileOpenChange={setIsMobileRailOpen}
@@ -89,6 +92,7 @@ export const RootLayout: FC = () => {
           </div>
           <AppBar
             isLandingPage={isLandingPage}
+            isRailCollapsed={!isRailExpanded}
             isRailOpen={isMobileRailOpen}
             onOpenRail={() => setIsMobileRailOpen(true)}
             onReportError={setReportErrorMessage}

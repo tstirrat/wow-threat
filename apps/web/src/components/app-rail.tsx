@@ -24,6 +24,9 @@ export interface AppRailProps {
   librarySection?: ReactNode
   isMobileOpen?: boolean
   onMobileOpenChange?: (isOpen: boolean) => void
+  /** Desktop open state; controlled when provided, otherwise internal (open by default). */
+  isOpen?: boolean
+  onOpenChange?: (isOpen: boolean) => void
 }
 
 type RailBodyProps = {
@@ -158,8 +161,15 @@ export const AppRail: FC<AppRailProps> = ({
   librarySection = null,
   isMobileOpen = false,
   onMobileOpenChange,
+  isOpen: controlledIsOpen,
+  onOpenChange,
 }) => {
-  const [isOpen, setIsOpen] = useState(true)
+  const [internalIsOpen, setInternalIsOpen] = useState(true)
+  const isOpen = controlledIsOpen ?? internalIsOpen
+  const setIsOpen = (nextOpen: boolean): void => {
+    setInternalIsOpen(nextOpen)
+    onOpenChange?.(nextOpen)
+  }
   const [activeTab, setActiveTab] = useState('report')
   const { railReportSection } = useAppShell()
   const isMobile = useIsMobileLayout()
@@ -226,7 +236,7 @@ export const AppRail: FC<AppRailProps> = ({
           size="icon"
           type="button"
           variant="ghost"
-          onClick={() => setIsOpen((open) => !open)}
+          onClick={() => setIsOpen(!isOpen)}
         >
           {isOpen ? (
             <ChevronsLeft aria-hidden="true" />

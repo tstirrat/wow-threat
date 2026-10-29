@@ -225,6 +225,25 @@ describe('RootLayout', () => {
     expect(refreshMock).toHaveBeenCalledTimes(2)
   })
 
+  it('shows the WOW Threat link in the bar only while the rail is collapsed', async () => {
+    useWclRateLimitMock.mockReturnValue(createMockWclRateLimitValue())
+    useAuthMock.mockReturnValue(createMockAuthValue({ isBusy: false }))
+
+    renderLayout('/')
+
+    expect(screen.queryByTestId('app-bar-brand')).toBeNull()
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Collapse sidebar' }),
+    )
+    expect(screen.getByTestId('app-bar-brand')).toHaveAttribute('href', '/')
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Expand sidebar' }),
+    )
+    expect(screen.queryByTestId('app-bar-brand')).toBeNull()
+  })
+
   it('shows report input by default on the landing page', () => {
     useWclRateLimitMock.mockReturnValue(createMockWclRateLimitValue())
     useAuthMock.mockReturnValue(createMockAuthValue({ isBusy: false }))

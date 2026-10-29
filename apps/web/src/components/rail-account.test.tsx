@@ -101,6 +101,21 @@ describe('RailAccount', () => {
     )
   })
 
+  it('shows tooltips on the collapsed sign in and theme buttons', async () => {
+    useAuthMock.mockReturnValue(auth({}))
+    render(<RailAccount collapsed />)
+
+    await userEvent.hover(
+      screen.getByRole('button', { name: 'Sign in with WCL' }),
+    )
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(
+      'Sign in with WCL',
+    )
+
+    await userEvent.hover(screen.getByRole('button', { name: 'Toggle theme' }))
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Toggle theme')
+  })
+
   it('renders icon-only controls when collapsed', async () => {
     const startWclLogin = vi.fn()
     useAuthMock.mockReturnValue(auth({ startWclLogin }))

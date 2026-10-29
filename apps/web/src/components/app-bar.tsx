@@ -19,12 +19,13 @@ import { Menu, Search } from 'lucide-react'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, useEffect, useMemo, useRef, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 import { useAppShell } from '../routes/app-shell-context'
 
 interface AppBarProps {
   isLandingPage: boolean
+  isRailCollapsed?: boolean
   isRailOpen?: boolean
   onOpenRail?: () => void
   onReportError: (message: string | null) => void
@@ -37,6 +38,7 @@ const mobileHitTargetClassName =
 /** Top bar: open report, report › fight › target breadcrumb, WCL link, settings and roster slots. Wraps to two rows below 760px. */
 export const AppBar: FC<AppBarProps> = ({
   isLandingPage,
+  isRailCollapsed = false,
   isRailOpen = false,
   onOpenRail,
   onReportError,
@@ -163,6 +165,16 @@ export const AppBar: FC<AppBarProps> = ({
             >
               <Menu aria-hidden="true" className="size-4" />
             </Button>
+          ) : null}
+
+          {isRailCollapsed ? (
+            <Link
+              className="shrink-0 truncate px-1 text-sm font-semibold tracking-tight max-[760px]:hidden"
+              data-testid="app-bar-brand"
+              to="/"
+            >
+              WOW Threat
+            </Link>
           ) : null}
 
           <div className="flex shrink-0 items-center justify-start max-[760px]:order-2">

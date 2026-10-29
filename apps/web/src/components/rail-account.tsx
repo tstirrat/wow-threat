@@ -13,9 +13,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { useWclRateLimit } from '@/hooks/use-wcl-rate-limit'
 import { ChevronDown, LogIn, RefreshCw, User } from 'lucide-react'
-import { type FC, useState } from 'react'
+import { type FC, type ReactNode, useState } from 'react'
 
 const warcraftLogsHomeUrl = 'https://www.warcraftlogs.com'
 
@@ -48,6 +54,21 @@ type AccountMenuProps = {
   collapsed: boolean
 }
 
+type CollapsedTooltipProps = {
+  label: string
+  children: ReactNode
+}
+
+/** Right-hand tooltip for the icon-only footer buttons. */
+const CollapsedTooltip: FC<CollapsedTooltipProps> = ({ label, children }) => (
+  <Tooltip>
+    <TooltipTrigger asChild>{children}</TooltipTrigger>
+    <TooltipContent side="right" withArrow>
+      {label}
+    </TooltipContent>
+  </Tooltip>
+)
+
 /** Signed-in dropdown: user name, WCL ID, rate limit, Warcraft Logs link and sign out. */
 const AccountMenu: FC<AccountMenuProps> = ({ collapsed }) => {
   const [isOpen, setIsOpen] = useState(false)
@@ -70,17 +91,26 @@ const AccountMenu: FC<AccountMenuProps> = ({ collapsed }) => {
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={handleOpenChange}>
-      <DropdownMenuTrigger asChild>
-        {collapsed ? (
-          <Button
-            aria-label={displayUserName}
-            size="icon"
-            type="button"
-            variant="ghost"
-          >
-            <User aria-hidden="true" />
-          </Button>
-        ) : (
+      {collapsed ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <Button
+                aria-label={displayUserName}
+                size="icon"
+                type="button"
+                variant="ghost"
+              >
+                <User aria-hidden="true" />
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="right" withArrow>
+            {displayUserName}
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <DropdownMenuTrigger asChild>
           <Button
             className="h-[30px] min-w-0 flex-1 justify-between gap-2"
             size="sm"
@@ -90,8 +120,8 @@ const AccountMenu: FC<AccountMenuProps> = ({ collapsed }) => {
             <span className="truncate">{displayUserName}</span>
             <ChevronDown aria-hidden="true" className="size-4" />
           </Button>
-        )}
-      </DropdownMenuTrigger>
+        </DropdownMenuTrigger>
+      )}
       <DropdownMenuContent align="start" className="w-64" side="top">
         <DropdownMenuLabel>{displayUserName}</DropdownMenuLabel>
         {wclUserId ? (
@@ -200,15 +230,17 @@ const AccountSignedOut: FC<AccountMenuProps> = ({ collapsed }) => {
   }
 
   return collapsed ? (
-    <Button
-      aria-label="Sign in with WCL"
-      size="icon"
-      type="button"
-      variant="ghost"
-      onClick={startWclLogin}
-    >
-      <LogIn aria-hidden="true" />
-    </Button>
+    <CollapsedTooltip label="Sign in with WCL">
+      <Button
+        aria-label="Sign in with WCL"
+        size="icon"
+        type="button"
+        variant="ghost"
+        onClick={startWclLogin}
+      >
+        <LogIn aria-hidden="true" />
+      </Button>
+    </CollapsedTooltip>
   ) : (
     <Button
       aria-label="Sign in with WCL"
@@ -229,18 +261,20 @@ export const RailAccount: FC<RailAccountProps> = ({ collapsed = false }) => {
   const isSignedIn = authEnabled && !isInitializing && Boolean(wclUserId)
 
   return (
-    <div
-      className={`flex shrink-0 items-center gap-2 border-t border-border p-2 ${
-        collapsed ? 'flex-col' : ''
-      }`}
-      data-testid="rail-account"
-    >
-      {isSignedIn ? (
-        <AccountMenu collapsed={collapsed} />
-      ) : (
-        <AccountSignedOut collapsed={collapsed} />
-      )}
-      <ModeToggle />
-    </div>
+    <TooltipProvider delayDuration={0}>
+      <div
+        className={`flex shrink-0 items-center gap-2 border-t border-border p-2 ${
+          collapsed ? 'flex-col' : ''
+        }`}
+        data-testid="rail-account"
+      >
+        {isSignedIn ? (
+          <AccountMenu collapsed={collapsed} />
+        ) : (
+          <AccountSignedOut collapsed={collapsed} />
+        )}
+        <ModeToggle />
+      </div>
+    </TooltipProvider>
   )
 }
