@@ -65,10 +65,41 @@ describe('FightCrumb', () => {
 })
 
 describe('ReportCrumb', () => {
-  it('renders the report title as plain text, not a link', () => {
-    render(<ReportCrumb reportTitle="Naxx Night" />)
+  const renderCrumb = (guildName: string | null) =>
+    render(
+      <MemoryRouter>
+        <ReportCrumb
+          guildName={guildName}
+          guildPath="/reports/guild/7?name=Threat"
+          isStarred={false}
+          reportHost="fresh.warcraftlogs.com"
+          reportId="abc"
+          reportTitle="Naxx Night"
+          warcraftLogsUrl="https://fresh.warcraftlogs.com/reports/abc"
+          onToggleStar={() => {}}
+        />
+      </MemoryRouter>,
+    )
+
+  it('shows guild link, title, WCL link and star', () => {
+    renderCrumb('Threat')
 
     expect(screen.getByText('Naxx Night')).toBeInTheDocument()
-    expect(screen.queryByRole('link')).toBeNull()
+    expect(screen.getByRole('link', { name: '<Threat>' })).toHaveAttribute(
+      'href',
+      '/reports/guild/7?name=Threat',
+    )
+    expect(
+      screen.getByRole('link', { name: 'Open report on Warcraft Logs' }),
+    ).toHaveAttribute('href', 'https://fresh.warcraftlogs.com/reports/abc')
+    expect(
+      screen.getByRole('button', { name: 'Star report Naxx Night' }),
+    ).toBeInTheDocument()
+  })
+
+  it('omits the guild when the report has none', () => {
+    renderCrumb(null)
+
+    expect(screen.queryByText(/</)).toBeNull()
   })
 })

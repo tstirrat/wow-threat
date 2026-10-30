@@ -279,7 +279,7 @@ export const AppBar: FC<AppBarProps> = ({
             ) : null}
             {barTitle && barTitleTrailing ? (
               <span className="flex min-w-0 shrink items-center gap-1 max-[760px]:order-7 max-[760px]:flex-1">
-                <span aria-hidden="true" className="max-[760px]:hidden">
+                <span aria-hidden="true" className="px-1 max-[760px]:hidden">
                   ›
                 </span>
                 <span className="min-w-0 max-[760px]:flex-1">

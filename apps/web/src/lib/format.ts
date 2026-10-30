@@ -80,6 +80,32 @@ export function formatReportHeaderDate(valueMs: number): string {
   return `${weekday} ${formatOrdinal(date.getDate())} ${timeLabel}`
 }
 
+/** Format a report start as "9th Jun 2026 @ 6am PST" in the viewer's local time zone. */
+export function formatReportSummaryDate(valueMs: number): string {
+  const date = new Date(valueMs)
+  if (Number.isNaN(date.getTime())) {
+    return 'Unknown'
+  }
+
+  const month = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(
+    date,
+  )
+  const hour24 = date.getHours()
+  const minutes = date.getMinutes()
+  const meridiem = hour24 >= 12 ? 'pm' : 'am'
+  const hour12 = hour24 % 12 || 12
+  const timeLabel =
+    minutes === 0
+      ? `${hour12}${meridiem}`
+      : `${hour12}:${String(minutes).padStart(2, '0')}${meridiem}`
+  const zone =
+    new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' })
+      .formatToParts(date)
+      .find((part) => part.type === 'timeZoneName')?.value ?? ''
+
+  return `${formatOrdinal(date.getDate())} ${month} ${date.getFullYear()} @ ${timeLabel} ${zone}`.trim()
+}
+
 /** Format a Unix-milliseconds timestamp as a readable local date/time. */
 export function formatDateTime(valueMs: number): string {
   const date = new Date(valueMs)

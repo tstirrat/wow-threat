@@ -74,7 +74,6 @@ function renderOutline(
         reportHost="fresh.warcraftlogs.com"
         reportId={report.code}
         selectedFightId={26}
-        threatConfigLabel="Era v1"
         {...options}
       />
     </MemoryRouter>,
@@ -86,7 +85,6 @@ describe('ReportOutline', () => {
     renderOutline()
 
     expect(screen.getByText('2 players')).toBeVisible()
-    expect(screen.getByText('Threat config: Era v1')).toBeVisible()
   })
 
   it('lists boss wipes with health percent, hides trash, and nests multiple boss targets', () => {
@@ -123,7 +121,6 @@ describe('ReportOutline', () => {
           reportHost="fresh.warcraftlogs.com"
           reportId={report.code}
           selectedFightId={40}
-          threatConfigLabel="Era v1"
         />
       </MemoryRouter>,
     )
@@ -167,7 +164,6 @@ describe('ReportOutline', () => {
           reportHost="fresh.warcraftlogs.com"
           reportId={report.code}
           selectedFightId={40}
-          threatConfigLabel="Era v1"
         />
       </MemoryRouter>,
     )
@@ -210,7 +206,6 @@ describe('ReportOutline', () => {
           reportHost="fresh.warcraftlogs.com"
           reportId={report.code}
           selectedFightId={null}
-          threatConfigLabel="Era v1"
         />
       </MemoryRouter>,
     )
@@ -222,17 +217,6 @@ describe('ReportOutline', () => {
     renderOutline({ selectedFightId: null })
 
     expect(screen.getByText('4 players')).toBeVisible()
-  })
-
-  it('links guild name to guild reports page', () => {
-    renderOutline()
-
-    expect(
-      screen.getByRole('link', { name: '<Threat Guild>' }),
-    ).toHaveAttribute(
-      'href',
-      '/reports/guild/777?name=Threat+Guild&serverSlug=benediction&serverRegion=US',
-    )
   })
 
   it('highlights only the current fight', () => {

@@ -17,13 +17,13 @@ import { useReportIndex } from '../hooks/use-report-index'
 import { useUserSettings } from '../hooks/use-user-settings'
 import { buildBossKillNavigationFights } from '../lib/fight-navigation'
 import { formatClockDuration } from '../lib/format'
+import { normalizeGuildFaction } from '../lib/guild-faction'
+import { buildGuildEntityPath } from '../lib/guild-path'
 import { parseBooleanQueryParam } from '../lib/query-params'
 import { parsePlayersParam } from '../lib/search-params'
-import {
-  readForcedThreatConfigParam,
-  resolveCurrentThreatConfig,
-} from '../lib/threat-config'
-import type { ReportFightSummary } from '../types/api'
+import { readForcedThreatConfigParam } from '../lib/threat-config'
+import { buildReportUrl } from '../lib/wcl-url'
+import type { ReportFightSummary, ReportResponse } from '../types/api'
 import type { WarcraftLogsHost } from '../types/app'
 import { useBarTitle, useRailReportSection } from './app-shell-context'
 import type { ReportRouteContext } from './report-layout-context'
@@ -35,6 +35,11 @@ interface LocationState {
 type ReportBarTitleProps = {
   reportId: string
   reportTitle: string
+  report: ReportResponse
+  reportHost: WarcraftLogsHost
+  isStarred: boolean
+  isStarToggleDisabled: boolean
+  onToggleStar: () => void
   fights: ReportFightSummary[]
   selectedFight: ReportFightSummary | null
   configId: ThreatConfigId | null
@@ -43,10 +48,15 @@ type ReportBarTitleProps = {
   pinnedPlayerIds: number[]
 }
 
-/** Breadcrumb for the app bar: report crumb, then the fight crumb menu when on a fight. */
+/** Breadcrumb for the app bar: guild and report crumb, then the fight crumb menu when on a fight. */
 const ReportBarTitle: FC<ReportBarTitleProps> = ({
   reportId,
   reportTitle,
+  report,
+  reportHost,
+  isStarred,
+  isStarToggleDisabled,
+  onToggleStar,
   fights,
   selectedFight,
   configId,
@@ -55,7 +65,18 @@ const ReportBarTitle: FC<ReportBarTitleProps> = ({
   pinnedPlayerIds,
 }) => (
   <>
-    <ReportCrumb reportTitle={reportTitle} />
+    <ReportCrumb
+      guildFaction={normalizeGuildFaction(report.guild?.faction)}
+      guildName={report.guild?.name ?? null}
+      guildPath={buildGuildEntityPath(report)}
+      isStarToggleDisabled={isStarToggleDisabled}
+      isStarred={isStarred}
+      reportHost={reportHost}
+      reportId={reportId}
+      reportTitle={reportTitle}
+      warcraftLogsUrl={buildReportUrl(reportHost, reportId)}
+      onToggleStar={onToggleStar}
+    />
     {selectedFight ? (
       <FightCrumb
         configId={configId}
@@ -135,12 +156,20 @@ export const ReportLayout: FC = () => {
   const selectedFightId = Number.isNaN(fightId) ? null : fightId
   const selectedFight =
     data?.fights.find((fight) => fight.id === selectedFightId) ?? null
-  const threatConfig = data
-    ? resolveCurrentThreatConfig(data, forcedThreatConfig.configId)
-    : null
-  const threatConfigLabel = threatConfig
-    ? `${threatConfig.displayName} v${threatConfig.version}`
-    : 'No supported config'
+  const handleToggleStar = (): void => {
+    if (!data) return
+    void toggleStarredReport({
+      reportId,
+      title: data.title || reportId,
+      sourceHost: reportHost,
+      zoneName: data.zone?.name ?? null,
+      startTime: data.startTime,
+      bossKillCount: buildBossKillNavigationFights(data.fights).length,
+      guildName: data.guild?.name ?? null,
+      guildFaction: data.guild?.faction ?? null,
+    })
+  }
+  const isStarToggleDisabled = isUserSettingsLoading || isSavingUserSettings
 
   useBarTitle(
     data && reportId ? (
@@ -149,10 +178,15 @@ export const ReportLayout: FC = () => {
         eventsMode={eventsMode}
         fights={data.fights}
         forceFresh={forceFresh}
+        isStarToggleDisabled={isStarToggleDisabled}
+        isStarred={isReportStarred(reportId)}
         pinnedPlayerIds={pinnedPlayerIds}
+        report={data}
+        reportHost={reportHost}
         reportId={reportId}
         reportTitle={reportTitle}
         selectedFight={selectedFight}
+        onToggleStar={handleToggleStar}
       />
     ) : null,
   )
@@ -162,26 +196,14 @@ export const ReportLayout: FC = () => {
         configId={forcedThreatConfig.configId}
         eventsMode={eventsMode}
         forceFresh={forceFresh}
-        isStarToggleDisabled={isUserSettingsLoading || isSavingUserSettings}
+        isStarToggleDisabled={isStarToggleDisabled}
         isStarred={isReportStarred(reportId)}
-        onToggleStar={() => {
-          void toggleStarredReport({
-            reportId,
-            title: data.title || reportId,
-            sourceHost: reportHost,
-            zoneName: data.zone?.name ?? null,
-            startTime: data.startTime,
-            bossKillCount: buildBossKillNavigationFights(data.fights).length,
-            guildName: data.guild?.name ?? null,
-            guildFaction: data.guild?.faction ?? null,
-          })
-        }}
+        onToggleStar={handleToggleStar}
         pinnedPlayerIds={pinnedPlayerIds}
         report={data}
         reportHost={reportHost}
         reportId={reportId}
         selectedFightId={selectedFightId}
-        threatConfigLabel={threatConfigLabel}
       />
     ) : isLoading && reportId ? (
       <ReportOutlineSkeleton />

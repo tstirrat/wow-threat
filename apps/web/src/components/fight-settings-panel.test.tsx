@@ -31,6 +31,7 @@ function createProps(
     onBossDamageModeChange: vi.fn(),
     inferThreatReduction: false,
     onInferThreatReductionChange: vi.fn(),
+    threatConfigLabel: 'Era v1',
     ...overrides,
   }
 }
@@ -86,6 +87,14 @@ describe('FightSettingsPanel', () => {
     await userEvent.click(screen.getByRole('checkbox', { name }))
 
     expect(props[handler]).toHaveBeenCalledWith(expected)
+  })
+
+  it('shows the active threat config', () => {
+    render(<FightSettingsPanel {...createProps()} />)
+
+    expect(screen.getByTestId('settings-threat-config')).toHaveTextContent(
+      'Era v1',
+    )
   })
 
   it('emits boss damage mode changes', async () => {

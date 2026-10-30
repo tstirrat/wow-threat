@@ -8,6 +8,7 @@ import {
   formatClockDuration,
   formatNumber,
   formatReportHeaderDate,
+  formatReportSummaryDate,
   formatSeconds,
   formatTimelineTime,
 } from './format'
@@ -143,5 +144,13 @@ describe('formatAxisTime', () => {
 
   it('includes milliseconds when zoomed to a short span', () => {
     expect(formatAxisTime(65500, 4000)).toBe('1:05.500')
+  })
+})
+
+describe('formatReportSummaryDate', () => {
+  it('formats day, month, year, time and local zone', () => {
+    const label = formatReportSummaryDate(new Date(2026, 5, 9, 6, 0).getTime())
+
+    expect(label).toMatch(/^9th Jun 2026 @ 6am \S+/)
   })
 })

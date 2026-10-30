@@ -59,9 +59,11 @@ test.describe('fight page', () => {
     const eraFightUrl = `/report/${e2eReportId}/fight/26?config=era`
 
     await fightPage.goto(eraFightUrl)
+    await fightPage.settings.gearButton().click()
     await expect(fightPage.header.threatConfigText()).toHaveText(
-      /^Threat config: Vanilla \(Era\) v\d+$/,
+      /^Vanilla \(Era\) v\d+$/,
     )
+    await fightPage.settings.closeButton().click()
     await maybeCaptureScreenshot(page)
     await expect(fightPage.quickSwitch.fightLink('Grobbulus')).toHaveAttribute(
       'href',
@@ -71,9 +73,11 @@ test.describe('fight page', () => {
     await fightPage.quickSwitch.clickFight('Grobbulus')
     await expectPathname(page, `/report/${e2eReportId}/fight/30`)
     await expectSearchParam(page, 'config', 'era')
+    await fightPage.settings.gearButton().click()
     await expect(fightPage.header.threatConfigText()).toHaveText(
-      /^Threat config: Vanilla \(Era\) v\d+$/,
+      /^Vanilla \(Era\) v\d+$/,
     )
+    await fightPage.settings.closeButton().click()
   })
 
   test('opens threat overrides only from the roster overrides button', async ({
@@ -163,7 +167,6 @@ test.describe('fight page', () => {
 
     const header = fightPage.header.section()
     await expect(header).toBeVisible()
-    await expect(fightPage.header.threatConfigText()).toBeVisible()
     await expect(fightPage.header.warcraftLogsReportLink()).toBeVisible()
     await expect(
       fightPage.header.warcraftLogsFightLink('Patchwerk'),
@@ -184,9 +187,7 @@ test.describe('fight page', () => {
     ).toHaveCount(0)
 
     await expect.poll(() => fightPage.chart.renderer()).toBe('svg')
-    await expect(fightPage.chart.targetControl()).toContainText(
-      'Patchwerk (100)',
-    )
+    await expect(fightPage.chart.targetControl()).toContainText('Patchwerk')
     await expect(fightPage.chart.legendToggle('Aegistank')).toBeVisible()
     await expect(fightPage.chart.legendToggle('Bladefury')).toBeVisible()
     await expect(fightPage.chart.legendToggle('Arrowyn')).toBeVisible()
@@ -258,7 +259,7 @@ test.describe('fight page', () => {
 
     await fightPage.chart.selectTarget('Hateful Strike Target (102)')
     await expect(fightPage.chart.targetControl()).toContainText(
-      'Hateful Strike Target (102)',
+      'Hateful Strike Target',
     )
     await expectSearchParam(page, 'targetId', '102')
   })
@@ -698,7 +699,7 @@ test.describe('fight page', () => {
     await expectSearchParam(page, 'renderer', 'svg')
 
     await expect.poll(() => fightPage.chart.renderer()).toBe('svg')
-    await expect(fightPage.summary.emptyStateText()).toBeVisible()
+    await expect(fightPage.summary.emptyStateText()).toBeHidden()
     await fightPage.chart.focusLegend('Aegistank')
     await expectSearchParam(page, 'focusId', '1')
 

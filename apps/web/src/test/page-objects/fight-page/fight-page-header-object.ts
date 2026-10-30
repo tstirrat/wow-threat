@@ -45,6 +45,6 @@ export class FightPageHeaderObject {
   }
 
   threatConfigText(): Locator {
-    return this.section().getByText('Threat config:')
+    return this.page.getByTestId('settings-threat-config')
   }
 }
