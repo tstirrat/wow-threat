@@ -2,13 +2,28 @@
  * Report landing route content under the shared report layout.
  */
 import type { FC } from 'react'
+import { Navigate, useLocation } from 'react-router-dom'
 
+import { buildBossKillNavigationFights } from '../lib/fight-navigation'
 import { useReportRouteContext } from '../routes/report-layout-context'
 
-/** Render a zero state prompt in the empty fight workspace area. */
+/** Redirect to the report's first fight; fall back to a zero state prompt when it has none. */
 export const ReportPage: FC = () => {
   const { reportData, reportId } = useReportRouteContext()
+  const { search, state } = useLocation()
   const reportTitle = reportData.title.trim() || reportId
+  const firstFight =
+    buildBossKillNavigationFights(reportData.fights)[0] ?? reportData.fights[0]
+
+  if (firstFight) {
+    return (
+      <Navigate
+        replace
+        state={state}
+        to={`/report/${reportId}/fight/${firstFight.id}${search}`}
+      />
+    )
+  }
 
   return (
     <>

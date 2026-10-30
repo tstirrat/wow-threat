@@ -30,6 +30,8 @@ test.describe('mobile layout', () => {
     const fightPage = new FightPageObject(page)
 
     await page.goto(`/report/${e2eReportId}`)
+    // The report route redirects to its first fight; wait so the rail isn't opened mid-redirect.
+    await expectPathname(page, `/report/${e2eReportId}/fight/26`)
     await expect(shell.rail).toBeHidden()
 
     await shell.openRail()
@@ -43,8 +45,8 @@ test.describe('mobile layout', () => {
     await expect(shell.rail).toBeHidden()
 
     await shell.openRail()
-    await fightPage.quickSwitch.clickFight('Patchwerk')
-    await expectPathname(page, `/report/${e2eReportId}/fight/26`)
+    await fightPage.quickSwitch.clickFight('Grobbulus')
+    await expectPathname(page, `/report/${e2eReportId}/fight/30`)
     await expect(shell.rail).toBeHidden()
     await expect(fightPage.chart.section).toBeVisible()
   })

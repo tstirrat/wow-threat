@@ -5,7 +5,7 @@
  */
 import { ChevronsLeft, ChevronsRight, FileText, Library } from 'lucide-react'
 import { type FC, type ReactNode, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 import { useIsMobileLayout } from '../hooks/use-is-mobile-layout'
 import { useAppShell } from '../routes/app-shell-context'
@@ -171,6 +171,13 @@ export const AppRail: FC<AppRailProps> = ({
     onOpenChange?.(nextOpen)
   }
   const [activeTab, setActiveTab] = useState('report')
+  // Picking something from the library navigates; land back on "This report".
+  const { pathname } = useLocation()
+  const [lastPathname, setLastPathname] = useState(pathname)
+  if (pathname !== lastPathname) {
+    setLastPathname(pathname)
+    setActiveTab('report')
+  }
   const { railReportSection } = useAppShell()
   const isMobile = useIsMobileLayout()
   const body = (

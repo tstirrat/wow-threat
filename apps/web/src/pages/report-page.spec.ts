@@ -39,19 +39,13 @@ test.describe('report page', () => {
     await setupThreatApiMocks(page)
   })
 
-  test('shows a zero state prompt before a fight is selected', async ({
-    page,
-  }) => {
+  test('opens the first fight when a report is opened', async ({ page }) => {
     await page.goto(`/report/${e2eReportId}`)
 
-    await expect(
-      page.getByRole('region', { name: 'Choose a fight' }),
-    ).toBeVisible()
-    await expect(
-      page.getByText(
-        'Select a boss kill in the sidebar to load its threat chart.',
-      ),
-    ).toBeVisible()
+    await expect(page).toHaveURL((url) =>
+      url.pathname.startsWith(`/report/${e2eReportId}/fight/`),
+    )
+    await expect(page.getByRole('region', { name: /Patchwerk/ })).toBeVisible()
     await maybeCaptureScreenshot(page)
   })
 
