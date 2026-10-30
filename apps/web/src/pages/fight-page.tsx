@@ -599,8 +599,10 @@ export const FightPage: FC = () => {
         drawer={
           !isUserSettingsLoading && eventsData ? (
             <PlayerInfoDrawer
-              isOpen={isPlayerInfoOpen}
-              onToggle={togglePlayerInfo}
+              isOpen={isPlayerInfoOpen && focusedPlayerSummary !== null}
+              onToggle={
+                focusedPlayerSummary ? togglePlayerInfo : () => undefined
+              }
               bodyHeight={playerInfoHeight}
               onBodyHeightChange={setPlayerInfoHeight}
               summary={focusedPlayerSummary}
@@ -624,6 +626,11 @@ export const FightPage: FC = () => {
         showEnergizeEvents={userSettings.showEnergizeEvents}
         showFixateBands={userSettings.showFixateBands}
         showPets={userSettings.showPets}
+        threatConfigLabel={
+          threatConfig
+            ? `${threatConfig.displayName} v${threatConfig.version}`
+            : 'No supported config'
+        }
         triggerRef={settingsPanel.triggerRef}
         onBossDamageModeChange={handleBossDamageModeChange}
         onInferThreatReductionChange={handleInferThreatReductionChange}

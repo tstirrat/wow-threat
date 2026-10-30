@@ -454,7 +454,6 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     },
     yAxis: {
       type: 'value',
-      name: 'Threat',
       min: yAxisWindow?.min,
       max: yAxisWindow?.max,
       nameTextStyle: {

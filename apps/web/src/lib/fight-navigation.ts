@@ -107,6 +107,11 @@ export function buildBossPullNavigationFights(
   )
 }
 
+/** Format boss health remaining for a wipe label. */
+export function formatWipePercentage(percentage: number): string {
+  return `${Number(percentage.toFixed(1))}%`
+}
+
 /** Resolve boss health remaining for a wipe, or null for kills/unknown. */
 export function resolveWipeBossPercentage(
   fight: ReportFightSummary,

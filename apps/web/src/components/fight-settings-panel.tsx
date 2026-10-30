@@ -38,6 +38,7 @@ export interface FightSettingsPanelProps {
   onBossDamageModeChange: (bossDamageMode: BossDamageMode) => void
   inferThreatReduction: boolean
   onInferThreatReductionChange: (inferThreatReduction: boolean) => void
+  threatConfigLabel: string
 }
 
 export interface FightSettingsButtonProps {
@@ -180,6 +181,7 @@ export const FightSettingsPanel: FC<FightSettingsPanelProps> = ({
   showEnergizeEvents,
   showFixateBands,
   showPets,
+  threatConfigLabel,
   triggerRef,
 }) => (
   <Sheet modal={false} open={isOpen} onOpenChange={onOpenChange}>
@@ -229,6 +231,14 @@ export const FightSettingsPanel: FC<FightSettingsPanelProps> = ({
           >
             <InferThreatReductionHelp />
           </CheckboxRow>
+        </SettingsGroup>
+        <SettingsGroup
+          hint="Detected from the report, or set with the config URL parameter."
+          title="Threat config"
+        >
+          <p className="text-sm" data-testid="settings-threat-config">
+            {threatConfigLabel}
+          </p>
         </SettingsGroup>
       </div>
     </SheetContent>

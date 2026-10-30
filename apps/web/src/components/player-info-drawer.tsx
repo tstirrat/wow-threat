@@ -2,7 +2,7 @@
  * Bottom drawer for the focused player's summary, with a title bar that stays visible when collapsed.
  * Below 760px it is shown as its own tab, always expanded.
  */
-import { Info, Keyboard } from 'lucide-react'
+import { CircleHelp, Info } from 'lucide-react'
 import {
   type FC,
   type KeyboardEvent,
@@ -216,7 +216,7 @@ export const PlayerInfoDrawer: FC<PlayerInfoDrawerProps> = ({
                   openShortcuts()
                 }}
               >
-                <Keyboard aria-hidden="true" className="h-4 w-4" />
+                <CircleHelp aria-hidden="true" className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>

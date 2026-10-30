@@ -1,16 +1,24 @@
 /**
- * Report and fight crumbs for the app bar title: the report is plain text, the fight opens a boss-kill menu.
+ * Report and fight crumbs for the app bar title: guild, report name with WCL link and star, then a fight pull menu.
  */
 import type { ThreatConfigId } from '@wow-threat/config'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, ExternalLink } from 'lucide-react'
 import type { FC } from 'react'
 import { Link } from 'react-router-dom'
 
 import {
-  buildBossKillNavigationFights,
+  buildBossPullNavigationFights,
   buildFightLinkPath,
+  formatWipePercentage,
+  resolveWipeBossPercentage,
 } from '../lib/fight-navigation'
+import {
+  type ReportGuildFaction,
+  resolveTitleRowClass,
+} from '../lib/guild-faction'
 import type { ReportFightSummary } from '../types/api'
+import type { WarcraftLogsHost } from '../types/app'
+import { ReportStarButton } from './report-star-button'
 import { Button } from './ui/button'
 import {
   DropdownMenu,
@@ -20,27 +28,84 @@ import {
 } from './ui/dropdown-menu'
 
 const crumbSeparator = (
-  <span aria-hidden="true" className="shrink-0 text-muted-foreground">
+  <span aria-hidden="true" className="shrink-0 px-1 text-muted-foreground">
     ›
   </span>
 )
 
 export type ReportCrumbProps = {
+  reportId: string
   reportTitle: string
+  warcraftLogsUrl: string
+  reportHost: WarcraftLogsHost
+  guildName?: string | null
+  guildFaction?: ReportGuildFaction
+  guildPath?: string | null
+  isStarred: boolean
+  isStarToggleDisabled?: boolean
+  onToggleStar: () => void
 }
 
 /** First crumb to truncate (and hidden below 1100px): the rail already shows the report. Carries its trailing separator. */
-export const ReportCrumb: FC<ReportCrumbProps> = ({ reportTitle }) => (
-  <span
-    className="flex min-w-0 shrink-[100] items-center gap-2 overflow-hidden max-[1100px]:hidden"
-    data-testid="report-crumb"
-  >
-    <span className="min-w-0 truncate text-muted-foreground">
-      {reportTitle}
+export const ReportCrumb: FC<ReportCrumbProps> = ({
+  reportId,
+  reportTitle,
+  warcraftLogsUrl,
+  reportHost,
+  guildName = null,
+  guildFaction = null,
+  guildPath = null,
+  isStarred,
+  isStarToggleDisabled = false,
+  onToggleStar,
+}) => {
+  const guildClassName = `shrink-0 font-medium ${resolveTitleRowClass(guildFaction)}`
+  const guildLabel = guildName ? `<${guildName}>` : null
+
+  return (
+    <span
+      className="flex min-w-0 shrink-[100] items-center gap-2 overflow-hidden max-[1100px]:hidden"
+      data-testid="report-crumb"
+    >
+      {guildLabel ? (
+        guildPath ? (
+          <Link
+            className={`${guildClassName} hover:underline`}
+            state={{ host: reportHost }}
+            to={guildPath}
+          >
+            {guildLabel}
+          </Link>
+        ) : (
+          <span className={guildClassName}>{guildLabel}</span>
+        )
+      ) : null}
+      <span className="min-w-0 truncate text-muted-foreground">
+        {reportTitle}
+      </span>
+      <ReportStarButton
+        ariaLabel={`${isStarred ? 'Unstar' : 'Star'} report ${reportTitle || reportId}`}
+        className="-mr-1 -ml-1 shrink-0"
+        isDisabled={isStarToggleDisabled}
+        isStarred={isStarred}
+        size="icon-xs"
+        onToggle={onToggleStar}
+      />
+      <a
+        aria-label="Open report on Warcraft Logs"
+        className="inline-flex shrink-0 items-center gap-1 text-[10px] leading-none font-medium tracking-wide hover:opacity-80"
+        href={warcraftLogsUrl}
+        rel="noreferrer"
+        target="_blank"
+        title="Open report on Warcraft Logs"
+      >
+        WCL
+        <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+      </a>
+      {crumbSeparator}
     </span>
-    {crumbSeparator}
-  </span>
-)
+  )
+}
 
 export type FightCrumbProps = {
   reportId: string
@@ -68,7 +133,7 @@ export const FightCrumb: FC<FightCrumbProps> = ({
   forceFresh = false,
   pinnedPlayerIds = [],
 }) => {
-  const bossKills = buildBossKillNavigationFights(fights)
+  const bossPulls = buildBossPullNavigationFights(fights)
 
   return (
     <DropdownMenu>
@@ -87,27 +152,39 @@ export const FightCrumb: FC<FightCrumbProps> = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="max-h-80 min-w-48">
-        {bossKills.map((fight) => (
-          <DropdownMenuItem asChild key={fight.id}>
-            <Link
-              aria-current={fight.id === selectedFightId ? 'page' : undefined}
-              className={fight.id === selectedFightId ? 'font-medium' : ''}
-              to={buildFightLinkPath({
-                reportId,
-                fightId: fight.id,
-                configId,
-                eventsMode,
-                forceFresh,
-                pinnedPlayerIds,
-              })}
-            >
-              {fight.name}
-            </Link>
-          </DropdownMenuItem>
-        ))}
-        {bossKills.length === 0 ? (
+        {bossPulls.map((fight) => {
+          const wipePercentage = resolveWipeBossPercentage(fight)
+
+          return (
+            <DropdownMenuItem asChild key={fight.id}>
+              <Link
+                aria-current={fight.id === selectedFightId ? 'page' : undefined}
+                className={fight.id === selectedFightId ? 'font-medium' : ''}
+                to={buildFightLinkPath({
+                  reportId,
+                  fightId: fight.id,
+                  configId,
+                  eventsMode,
+                  forceFresh,
+                  pinnedPlayerIds,
+                })}
+              >
+                {fight.name}
+                {fight.kill ? null : (
+                  <span className="ml-1.5 text-xs text-muted-foreground">
+                    Wipe
+                    {wipePercentage === null
+                      ? ''
+                      : ` ${formatWipePercentage(wipePercentage)}`}
+                  </span>
+                )}
+              </Link>
+            </DropdownMenuItem>
+          )
+        })}
+        {bossPulls.length === 0 ? (
           <DropdownMenuItem disabled>
-            No boss kills in this report
+            No boss fights in this report
           </DropdownMenuItem>
         ) : null}
       </DropdownMenuContent>

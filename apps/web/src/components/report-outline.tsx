@@ -10,14 +10,11 @@ import {
   buildBossKillNavigationFights,
   buildBossPullNavigationFights,
   buildFightLinkPath,
+  formatWipePercentage,
   resolveFightBossTargets,
   resolveWipeBossPercentage,
 } from '../lib/fight-navigation'
-import { formatReportHeaderDate } from '../lib/format'
-import {
-  type ReportGuildFaction,
-  normalizeGuildFaction,
-} from '../lib/guild-faction'
+import { formatReportSummaryDate } from '../lib/format'
 import { buildReportUrl } from '../lib/wcl-url'
 import type {
   ReportActorSummary,
@@ -32,7 +29,6 @@ export type ReportOutlineProps = {
   report: ReportResponse
   reportId: string
   reportHost: WarcraftLogsHost
-  threatConfigLabel: string
   selectedFightId?: number | null
   configId?: ThreatConfigId | null
   eventsMode?: string | null
@@ -43,54 +39,16 @@ export type ReportOutlineProps = {
   isStarToggleDisabled?: boolean
 }
 
-function resolveGuildTextClass(faction: ReportGuildFaction): string {
-  if (faction === 'alliance') {
-    return 'text-sky-600 dark:text-sky-400'
-  }
-  if (faction === 'horde') {
-    return 'text-red-600 dark:text-red-400'
-  }
-
-  return 'text-muted-foreground'
-}
-
-function buildGuildEntityPath(report: ReportResponse): string | null {
-  const guild = report.guild
-  if (!guild) {
-    return null
-  }
-
-  const hasGuildId = typeof guild.id === 'number' && Number.isFinite(guild.id)
-  const hasLookupFallback = Boolean(guild.serverSlug && guild.serverRegion)
-  if (!hasGuildId && !hasLookupFallback) {
-    return null
-  }
-
-  const guildPathId = hasGuildId ? String(guild.id) : 'lookup'
-  const searchParams = new URLSearchParams()
-  searchParams.set('name', guild.name)
-  if (guild.serverSlug) {
-    searchParams.set('serverSlug', guild.serverSlug)
-  }
-  if (guild.serverRegion) {
-    searchParams.set('serverRegion', guild.serverRegion)
-  }
-  const search = searchParams.toString()
-
-  return `/reports/guild/${guildPathId}${search.length > 0 ? `?${search}` : ''}`
-}
-
 type ReportOutlineHeaderProps = Omit<
   ReportOutlineProps,
   'configId' | 'eventsMode' | 'forceFresh' | 'pinnedPlayerIds'
 >
 
-/** Report title, star, guild, zone, date, counts, WCL link and threat config. */
+/** Report title, WCL link, star, zone, date and counts. */
 const ReportOutlineHeader: FC<ReportOutlineHeaderProps> = ({
   report,
   reportId,
   reportHost,
-  threatConfigLabel,
   selectedFightId = null,
   isStarred,
   onToggleStar,
@@ -110,11 +68,6 @@ const ReportOutlineHeader: FC<ReportOutlineHeaderProps> = ({
       ).size
     : reportPlayers.length
   const bossKillCount = buildBossKillNavigationFights(report.fights).length
-  const guildName = report.guild?.name ?? null
-  const guildTextClass = resolveGuildTextClass(
-    normalizeGuildFaction(report.guild?.faction),
-  )
-  const guildEntityPath = buildGuildEntityPath(report)
   const bossLabel = `${bossKillCount} ${bossKillCount === 1 ? 'boss' : 'bosses'}`
   const playersLabel = `${playerCount} ${playerCount === 1 ? 'player' : 'players'}`
 
@@ -126,6 +79,17 @@ const ReportOutlineHeader: FC<ReportOutlineHeaderProps> = ({
       <div className="flex items-start justify-between gap-2">
         <h2 className="min-w-0 text-sm font-semibold break-words">
           {report.title}
+          <a
+            aria-label="Open report on Warcraft Logs"
+            className="ml-1.5 inline-flex items-center gap-1 align-middle text-xs leading-none font-normal text-muted-foreground hover:opacity-80"
+            href={buildReportUrl(reportHost, reportId)}
+            rel="noreferrer"
+            target="_blank"
+            title="Open report on Warcraft Logs"
+          >
+            <span className="text-[10px] font-medium tracking-wide">WCL</span>
+            <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+          </a>
         </h2>
         <ReportStarButton
           ariaLabel={`${isStarred ? 'Unstar' : 'Star'} report ${report.title || reportId}`}
@@ -134,54 +98,19 @@ const ReportOutlineHeader: FC<ReportOutlineHeaderProps> = ({
           onToggle={onToggleStar}
         />
       </div>
-      {guildName ? (
-        guildEntityPath ? (
-          <Link
-            className={`block font-medium hover:underline ${guildTextClass}`}
-            state={{ host: reportHost }}
-            to={guildEntityPath}
-          >
-            {`<${guildName}>`}
-          </Link>
-        ) : (
-          <span className={`block font-medium ${guildTextClass}`}>
-            {`<${guildName}>`}
-          </span>
-        )
-      ) : null}
       {report.zone?.name ? (
         <p className="text-muted-foreground">{report.zone.name}</p>
       ) : null}
       <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
         <span className="basis-full">
-          {formatReportHeaderDate(report.startTime)}
+          {formatReportSummaryDate(report.startTime)}
         </span>
         <span>{bossLabel}</span>
         <span aria-hidden="true">·</span>
         <span>{playersLabel}</span>
-        <span aria-hidden="true">·</span>
-        <a
-          aria-label="Open report on Warcraft Logs"
-          className="inline-flex items-center gap-1 leading-none hover:opacity-80"
-          href={buildReportUrl(reportHost, reportId)}
-          rel="noreferrer"
-          target="_blank"
-          title="Open report on Warcraft Logs"
-        >
-          <span className="text-[10px] font-medium tracking-wide">WCL</span>
-          <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
-        </a>
       </div>
-      <p className="text-xs text-muted-foreground">
-        Threat config: {threatConfigLabel}
-      </p>
     </section>
   )
-}
-
-/** Format boss health remaining for a wipe label. */
-function formatWipePercentage(percentage: number): string {
-  return `${Number(percentage.toFixed(1))}%`
 }
 
 type PullListProps = {
