@@ -106,6 +106,22 @@ export function formatReportSummaryDate(valueMs: number): string {
   return `${formatOrdinal(date.getDate())} ${month} ${date.getFullYear()} @ ${timeLabel} ${zone}`.trim()
 }
 
+/** Format a report start timestamp with year and time, e.g. "Oct 28, 2026, 7:30 PM". */
+export function formatReportListDate(valueMs: number): string {
+  const date = new Date(valueMs)
+  if (Number.isNaN(date.getTime())) {
+    return 'Unknown'
+  }
+
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date)
+}
+
 /** Format a Unix-milliseconds timestamp as a readable local date/time. */
 export function formatDateTime(valueMs: number): string {
   const date = new Date(valueMs)

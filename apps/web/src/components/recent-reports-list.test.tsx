@@ -45,10 +45,12 @@ describe('RecentReportsList', () => {
     })
 
     expect(reportLink).toHaveTextContent(
-      'Threat Regression Raid <Threat Officer Guild> (fresh)',
+      'Threat Regression Raid <Threat Officer Guild>',
     )
-    expect(reportLink).toHaveClass('text-sky-600')
-    expect(screen.getByText(/Naxxramas - .* - 2 bosses/)).toBeVisible()
+    expect(screen.getByText('<Threat Officer Guild>')).toHaveClass(
+      'text-sky-600',
+    )
+    expect(screen.getByText(/Naxxramas · \w{3} \d+, \d{4}, /)).toBeVisible()
   })
 
   it('renders horde color class when faction is horde', () => {
@@ -73,7 +75,10 @@ describe('RecentReportsList', () => {
     const reportLink = screen.getByRole('link', {
       name: /Threat Regression Raid/,
     })
-    expect(reportLink).toHaveClass('text-red-600')
+    expect(reportLink).toBeVisible()
+    expect(screen.getByText('<Threat Officer Guild>')).toHaveClass(
+      'text-red-600',
+    )
   })
 
   it('calls onRemoveReport when delete button is clicked', async () => {

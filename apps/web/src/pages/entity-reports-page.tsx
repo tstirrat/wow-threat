@@ -183,7 +183,7 @@ function GuildReportsPage({ entityId }: GuildReportsPageProps): JSX.Element {
           </div>
         }
       >
-        <StarredGuildReportsList reports={guildReports} />
+        <StarredGuildReportsList reports={guildReports} showGuild={false} />
       </SectionCard>
     </>
   )

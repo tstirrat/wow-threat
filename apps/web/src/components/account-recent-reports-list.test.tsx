@@ -44,11 +44,11 @@ describe('AccountRecentReportsList', () => {
     expect(
       screen.getByRole('link', { name: /Personal Log/ }),
     ).toHaveTextContent('Personal Log <Threat Guild>')
-    expect(screen.getByRole('link', { name: /Guild Log/ })).toHaveClass(
-      'text-red-600',
-    )
-    expect(screen.getByText(/Naxxramas - .* - personal log/)).toBeVisible()
-    expect(screen.getByText(/Blackwing Lair - .* - guild log/)).toBeVisible()
+    expect(screen.getAllByText('<Threat Guild>')[1]).toHaveClass('text-red-600')
+    expect(screen.getByText(/Naxxramas · \w{3} \d+, \d{4}, /)).toBeVisible()
+    expect(
+      screen.getByText(/Blackwing Lair · \w{3} \d+, \d{4}, /),
+    ).toBeVisible()
   })
 
   it('renders empty state when there are no account reports', () => {

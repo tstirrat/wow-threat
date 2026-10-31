@@ -3,22 +3,14 @@
  */
 import { usePostHog } from 'posthog-js/react'
 import type { FC } from 'react'
-import { Link } from 'react-router-dom'
 
-import { formatReportHeaderDate } from '../lib/format'
-import {
-  normalizeGuildFaction,
-  resolveTitleRowClass,
-} from '../lib/guild-faction'
-import { cn } from '../lib/utils'
 import type {
   ExampleReportLink,
   RecentReportEntry,
   StarredReportEntry,
 } from '../types/app'
 import { ExampleReportList } from './example-report-list'
-import { ReportStarButton } from './report-star-button'
-import { Badge } from './ui/badge'
+import { ReportRow } from './report-row'
 
 export type RecentReportsListProps = {
   reports: RecentReportEntry[]
@@ -28,12 +20,6 @@ export type RecentReportsListProps = {
   onToggleStarReport?: (
     report: Omit<StarredReportEntry, 'starredAt'> & { starredAt?: number },
   ) => void
-}
-
-function resolveHostPrefixLabel(report: RecentReportEntry): string {
-  const hostPrefix = report.sourceHost.split('.')[0]?.toLowerCase()
-
-  return hostPrefix ?? 'unknown'
 }
 
 export const RecentReportsList: FC<RecentReportsListProps> = ({
@@ -66,101 +52,50 @@ export const RecentReportsList: FC<RecentReportsListProps> = ({
     <ul aria-label="Recent reports" className="-mx-2 space-y-0.5">
       {reports.map((report) => {
         const isArchived = report.isArchived === true
-        const isInaccessible = report.isAccessible === false
-        const isDisabled = isArchived || isInaccessible
-        const guildName = report.guildName ? `<${report.guildName}>` : null
-        const sourceLabel = resolveHostPrefixLabel(report)
-        const titleParts = [report.title || report.reportId, guildName]
-          .filter((value): value is string => Boolean(value))
-          .join(' ')
-        const firstLine = `${titleParts} (${sourceLabel})`
-        const zoneLabel = report.zoneName ?? 'Unknown zone'
-        const startLabel =
-          typeof report.startTime === 'number'
-            ? formatReportHeaderDate(report.startTime)
-            : new Date(report.lastOpenedAt).toLocaleString()
-        const bossesLabel =
-          typeof report.bossKillCount === 'number'
-            ? `${report.bossKillCount} ${report.bossKillCount === 1 ? 'boss' : 'bosses'}`
-            : 'unknown bosses'
-        const statusLabel = isArchived ? 'archived' : 'inaccessible'
-        const titleRowClass = resolveTitleRowClass(
-          normalizeGuildFaction(report.guildFaction),
-        )
+        const isDisabled = isArchived || report.isAccessible === false
 
         return (
-          <li key={report.reportId}>
-            <div className="space-y-0.5 rounded-md px-2 py-1.5 transition-colors hover:bg-muted">
-              <div className="flex items-start justify-between gap-3">
-                {isDisabled ? (
-                  <span
-                    className={cn(
-                      'min-w-0 truncate font-medium text-muted-foreground',
-                    )}
-                  >
-                    {firstLine}
-                  </span>
-                ) : (
-                  <Link
-                    className={cn(
-                      'min-w-0 truncate font-medium hover:underline',
-                      titleRowClass,
-                    )}
-                    state={{ host: report.sourceHost }}
-                    to={`/report/${report.reportId}`}
-                    onClick={() => {
-                      posthog?.capture('recents_opened', {
-                        report_id: report.reportId,
-                      })
-                    }}
-                  >
-                    {firstLine}
-                  </Link>
-                )}
-                <div className="flex items-center gap-1">
-                  {onToggleStarReport ? (
-                    <ReportStarButton
-                      ariaLabel={`${starredReportIds?.has(report.reportId) ? 'Unstar' : 'Star'} report ${report.title || report.reportId}`}
-                      isDisabled={isDisabled}
-                      isStarred={
-                        starredReportIds?.has(report.reportId) ?? false
-                      }
-                      onToggle={() => {
-                        onToggleStarReport({
-                          reportId: report.reportId,
-                          title: report.title,
-                          sourceHost: report.sourceHost,
-                          zoneName: report.zoneName ?? null,
-                          startTime: report.startTime ?? null,
-                          bossKillCount: report.bossKillCount ?? null,
-                          guildName: report.guildName ?? null,
-                          guildFaction: report.guildFaction ?? null,
-                        })
-                      }}
-                    />
-                  ) : null}
-                  <button
-                    aria-label={`Remove recent report ${report.title || report.reportId}`}
-                    className="cursor-pointer text-xs leading-none text-muted-foreground hover:text-foreground"
-                    onClick={() => {
-                      onRemoveReport(report.reportId)
-                    }}
-                    type="button"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {zoneLabel} - {startLabel} - {bossesLabel}
-              </p>
-              {isDisabled ? (
-                <Badge className="mt-1" variant="secondary">
-                  {statusLabel}
-                </Badge>
-              ) : null}
-            </div>
-          </li>
+          <ReportRow
+            key={report.reportId}
+            guildFaction={report.guildFaction}
+            guildName={report.guildName}
+            isDisabled={isDisabled}
+            isStarred={starredReportIds?.has(report.reportId) ?? false}
+            reportId={report.reportId}
+            statusLabel={
+              isDisabled
+                ? isArchived
+                  ? 'archived'
+                  : 'inaccessible'
+                : undefined
+            }
+            sourceHost={report.sourceHost}
+            startTime={report.startTime ?? report.lastOpenedAt}
+            title={report.title}
+            zoneName={report.zoneName}
+            onOpen={() => {
+              posthog?.capture('recents_opened', { report_id: report.reportId })
+            }}
+            onRemove={() => {
+              onRemoveReport(report.reportId)
+            }}
+            onToggleStar={
+              onToggleStarReport
+                ? () => {
+                    onToggleStarReport({
+                      reportId: report.reportId,
+                      title: report.title,
+                      sourceHost: report.sourceHost,
+                      zoneName: report.zoneName ?? null,
+                      startTime: report.startTime ?? null,
+                      bossKillCount: report.bossKillCount ?? null,
+                      guildName: report.guildName ?? null,
+                      guildFaction: report.guildFaction ?? null,
+                    })
+                  }
+                : undefined
+            }
+          />
         )
       })}
     </ul>
