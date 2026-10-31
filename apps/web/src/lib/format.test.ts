@@ -8,6 +8,7 @@ import {
   formatClockDuration,
   formatNumber,
   formatReportHeaderDate,
+  formatReportListDate,
   formatReportSummaryDate,
   formatSeconds,
   formatTimelineTime,
@@ -152,5 +153,17 @@ describe('formatReportSummaryDate', () => {
     const label = formatReportSummaryDate(new Date(2026, 5, 9, 6, 0).getTime())
 
     expect(label).toMatch(/^9th Jun 2026 @ 6am \S+/)
+  })
+})
+
+describe('formatReportListDate', () => {
+  it('includes month, day, year, and time', () => {
+    expect(formatReportListDate(new Date(2026, 9, 28, 19, 30).getTime())).toBe(
+      'Oct 28, 2026, 7:30 PM',
+    )
+  })
+
+  it('returns Unknown for invalid timestamps', () => {
+    expect(formatReportListDate(Number.NaN)).toBe('Unknown')
   })
 })

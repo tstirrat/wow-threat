@@ -2,29 +2,24 @@
  * Render merged personal and guild recent reports from Warcraft Logs.
  */
 import type { FC } from 'react'
-import { Link } from 'react-router-dom'
 
 import { defaultHost } from '../lib/constants'
-import { formatReportHeaderDate } from '../lib/format'
-import {
-  normalizeGuildFaction,
-  resolveTitleRowClass,
-} from '../lib/guild-faction'
-import { cn } from '../lib/utils'
 import type { RecentReportSummary } from '../types/api'
+import type { StarredReportEntry } from '../types/app'
+import { ReportRow } from './report-row'
 
 export type AccountRecentReportsListProps = {
   reports: RecentReportSummary[]
-}
-
-function resolveAccountSourceLabel(
-  source: RecentReportSummary['source'],
-): string {
-  return source === 'guild' ? 'guild log' : 'personal log'
+  starredReportIds?: Set<string>
+  onToggleStarReport?: (
+    report: Omit<StarredReportEntry, 'starredAt'> & { starredAt?: number },
+  ) => void
 }
 
 export const AccountRecentReportsList: FC<AccountRecentReportsListProps> = ({
   reports,
+  starredReportIds,
+  onToggleStarReport,
 }) => {
   if (reports.length === 0) {
     return (
@@ -41,40 +36,35 @@ export const AccountRecentReportsList: FC<AccountRecentReportsListProps> = ({
 
   return (
     <ul aria-label="Recent Warcraft Logs" className="-mx-2 space-y-0.5">
-      {reports.map((report) => {
-        const guildName = report.guildName ? `<${report.guildName}>` : null
-        const titleParts = [report.title || report.code, guildName]
-          .filter((value): value is string => Boolean(value))
-          .join(' ')
-        const zoneLabel = report.zoneName ?? 'Unknown zone'
-        const startLabel = formatReportHeaderDate(report.startTime)
-        const sourceLabel = resolveAccountSourceLabel(report.source)
-        const titleRowClass = resolveTitleRowClass(
-          normalizeGuildFaction(report.guildFaction),
-        )
-
-        return (
-          <li key={report.code}>
-            <div className="space-y-0.5 rounded-md px-2 py-1.5 transition-colors hover:bg-muted">
-              <div className="flex items-start justify-between gap-3">
-                <Link
-                  className={cn(
-                    'min-w-0 truncate font-medium hover:underline',
-                    titleRowClass,
-                  )}
-                  state={{ host: defaultHost }}
-                  to={`/report/${report.code}`}
-                >
-                  {titleParts}
-                </Link>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {zoneLabel} - {startLabel} - {sourceLabel}
-              </p>
-            </div>
-          </li>
-        )
-      })}
+      {reports.map((report) => (
+        <ReportRow
+          key={report.code}
+          guildFaction={report.guildFaction}
+          guildName={report.guildName}
+          isStarred={starredReportIds?.has(report.code) ?? false}
+          reportId={report.code}
+          sourceHost={defaultHost}
+          startTime={report.startTime}
+          title={report.title}
+          zoneName={report.zoneName}
+          onToggleStar={
+            onToggleStarReport
+              ? () => {
+                  onToggleStarReport({
+                    reportId: report.code,
+                    title: report.title,
+                    sourceHost: defaultHost,
+                    zoneName: report.zoneName,
+                    startTime: report.startTime,
+                    bossKillCount: null,
+                    guildName: report.guildName,
+                    guildFaction: report.guildFaction,
+                  })
+                }
+              : undefined
+          }
+        />
+      ))}
     </ul>
   )
 }

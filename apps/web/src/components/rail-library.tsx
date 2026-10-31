@@ -2,8 +2,10 @@
  * Compact library for the app rail: starred, recent, guild and personal logs.
  */
 import { useAuth } from '@/auth/auth-provider'
+import { ChevronRight } from 'lucide-react'
 import type { PostHog } from 'posthog-js'
 import { usePostHog } from 'posthog-js/react'
+import { Collapsible } from 'radix-ui'
 import {
   type FC,
   type PropsWithChildren,
@@ -11,11 +13,18 @@ import {
   useCallback,
   useEffect,
   useId,
+  useMemo,
   useRef,
 } from 'react'
 
 import { useReportIndex } from '../hooks/use-report-index'
 import { useUserSettings } from '../hooks/use-user-settings'
+import {
+  normalizeGuildFaction,
+  resolveTitleRowClass,
+} from '../lib/guild-faction'
+import { cn } from '../lib/utils'
+import type { StarredGuildReportEntry, StarredReportEntry } from '../types/app'
 import { AccountRecentReportsList } from './account-recent-reports-list'
 import { RecentReportsList } from './recent-reports-list'
 import { StarredGuildReportsList } from './starred-guild-reports-list'
@@ -69,9 +78,9 @@ const RailLibrarySection: FC<RailLibrarySectionProps> = ({
 
   return (
     <section aria-labelledby={titleId} className="space-y-1.5">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 border-b border-border pb-1">
         <h3
-          className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+          className="text-xs font-semibold uppercase tracking-wide text-foreground"
           id={titleId}
         >
           {title}
@@ -99,6 +108,81 @@ const RefreshButton: FC<{
     {isRefreshing ? 'Refreshing...' : 'Refresh'}
   </Button>
 )
+
+type GuildGroup = {
+  guildId: string
+  guildName: string | null
+  guildFaction: string | null
+  reports: StarredGuildReportEntry[]
+}
+
+/** Group guild reports by guild, preserving first-seen guild order. */
+function groupReportsByGuild(reports: StarredGuildReportEntry[]): GuildGroup[] {
+  const groups = new Map<string, GuildGroup>()
+  reports.forEach((report) => {
+    const group = groups.get(report.guildId)
+    if (group) {
+      group.reports.push(report)
+      return
+    }
+    groups.set(report.guildId, {
+      guildId: report.guildId,
+      guildName: report.guildName,
+      guildFaction: report.guildFaction,
+      reports: [report],
+    })
+  })
+
+  return [...groups.values()]
+}
+
+const StarredGuildGroups: FC<{
+  reports: StarredGuildReportEntry[]
+  starredReportIds: Set<string>
+  onToggleStarReport: (
+    report: Omit<StarredReportEntry, 'starredAt'> & { starredAt?: number },
+  ) => void
+}> = ({ reports, starredReportIds, onToggleStarReport }) => {
+  const groups = useMemo(() => groupReportsByGuild(reports), [reports])
+
+  if (groups.length === 0) {
+    return <StarredGuildReportsList reports={[]} />
+  }
+
+  return (
+    <div className="space-y-0.5">
+      {groups.map((group) => (
+        <Collapsible.Root key={group.guildId} className="group/guild">
+          <Collapsible.Trigger className="flex w-full cursor-pointer items-center gap-1 rounded-md px-1 py-1 text-left text-sm font-medium hover:bg-muted">
+            <ChevronRight
+              aria-hidden="true"
+              className="size-3.5 shrink-0 text-muted-foreground transition-transform group-data-[state=open]/guild:rotate-90"
+            />
+            <span
+              className={cn(
+                'min-w-0 flex-1 truncate',
+                resolveTitleRowClass(normalizeGuildFaction(group.guildFaction)),
+              )}
+            >
+              {group.guildName ? `<${group.guildName}>` : 'Unknown guild'}
+            </span>
+            <span className="text-xs font-normal text-muted-foreground">
+              {group.reports.length}
+            </span>
+          </Collapsible.Trigger>
+          <Collapsible.Content className="pl-3">
+            <StarredGuildReportsList
+              reports={group.reports}
+              showGuild={false}
+              starredReportIds={starredReportIds}
+              onToggleStarReport={onToggleStarReport}
+            />
+          </Collapsible.Content>
+        </Collapsible.Root>
+      ))}
+    </div>
+  )
+}
 
 export const RailLibrary: FC = () => {
   const { authEnabled, wclUserId } = useAuth()
@@ -134,9 +218,15 @@ export const RailLibrary: FC = () => {
     (report) => !starredReportIds.has(report.reportId),
   )
 
+  const toggleStar = (
+    report: Omit<StarredReportEntry, 'starredAt'> & { starredAt?: number },
+  ): void => {
+    void toggleStarredReport(report)
+  }
+
   return (
-    <div className="space-y-4 p-3" data-testid="rail-library">
-      <RailLibrarySection title="Starred">
+    <div className="space-y-5 p-3" data-testid="rail-library">
+      <RailLibrarySection title="Starred logs">
         <StarredReportsList
           reports={settings.starredReports}
           onToggleStarReport={(reportId) => {
@@ -149,39 +239,8 @@ export const RailLibrary: FC = () => {
           reports={unstarredRecentReports}
           starredReportIds={starredReportIds}
           onRemoveReport={removeRecentReport}
-          onToggleStarReport={(report) => {
-            void toggleStarredReport(report)
-          }}
+          onToggleStarReport={toggleStar}
         />
-      </RailLibrarySection>
-      <RailLibrarySection
-        headerRight={
-          <RefreshButton
-            isDisabled={trackedGuildCount === 0}
-            isRefreshing={isRefreshingGuildReports}
-            onRefresh={() => {
-              trackGuildLogOpened()
-              void refreshGuildReports()
-            }}
-          />
-        }
-        title="Guild logs"
-      >
-        <p className="text-xs text-muted-foreground">
-          Reports from {trackedGuildCount} starred{' '}
-          {trackedGuildCount === 1 ? 'guild' : 'guilds'} (cached 1 hour).
-        </p>
-        {isLoadingGuildReports ? (
-          <p aria-live="polite" className="text-xs text-muted-foreground">
-            Loading starred guild reports...
-          </p>
-        ) : guildReportsError ? (
-          <Alert variant="destructive">
-            <AlertDescription>{guildReportsError.message}</AlertDescription>
-          </Alert>
-        ) : (
-          <StarredGuildReportsList reports={guildReports} />
-        )}
       </RailLibrarySection>
       <RailLibrarySection
         headerRight={
@@ -208,12 +267,49 @@ export const RailLibrary: FC = () => {
               </AlertDescription>
             </Alert>
           ) : (
-            <AccountRecentReportsList reports={personalReports} />
+            <AccountRecentReportsList
+              reports={personalReports}
+              starredReportIds={starredReportIds}
+              onToggleStarReport={toggleStar}
+            />
           )
         ) : (
           <p className="text-xs text-muted-foreground">
             Sign in for personal logs.
           </p>
+        )}
+      </RailLibrarySection>
+      <RailLibrarySection
+        headerRight={
+          <RefreshButton
+            isDisabled={trackedGuildCount === 0}
+            isRefreshing={isRefreshingGuildReports}
+            onRefresh={() => {
+              trackGuildLogOpened()
+              void refreshGuildReports()
+            }}
+          />
+        }
+        title="Starred guild logs"
+      >
+        <p className="text-xs text-muted-foreground">
+          Reports from {trackedGuildCount} starred{' '}
+          {trackedGuildCount === 1 ? 'guild' : 'guilds'} (cached 1 hour).
+        </p>
+        {isLoadingGuildReports ? (
+          <p aria-live="polite" className="text-xs text-muted-foreground">
+            Loading starred guild reports...
+          </p>
+        ) : guildReportsError ? (
+          <Alert variant="destructive">
+            <AlertDescription>{guildReportsError.message}</AlertDescription>
+          </Alert>
+        ) : (
+          <StarredGuildGroups
+            reports={guildReports}
+            starredReportIds={starredReportIds}
+            onToggleStarReport={toggleStar}
+          />
         )}
       </RailLibrarySection>
     </div>
