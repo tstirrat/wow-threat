@@ -2,7 +2,7 @@
  * App bar: open report, report/fight/target breadcrumb, and WCL link, settings and roster slots.
  */
 import { getReport } from '@/api/reports'
-import { ReportUrlForm } from '@/components/report-url-form'
+import { OpenReportDialog } from '@/components/open-report-dialog'
 import { Button } from '@/components/ui/button'
 import {
   Tooltip,
@@ -17,19 +17,20 @@ import { superKey } from '@/lib/keyboard-shortcut'
 import { parseReportInput } from '@/lib/wcl-url'
 import { Menu, Search } from 'lucide-react'
 import { usePostHog } from 'posthog-js/react'
-import { type FC, useEffect, useMemo, useRef, useState } from 'react'
+import { type FC, useRef, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { useAppShell } from '../routes/app-shell-context'
 
 interface AppBarProps {
-  isLandingPage: boolean
   isRailCollapsed?: boolean
   isRailOpen?: boolean
   onOpenRail?: () => void
-  onReportError: (message: string | null) => void
 }
+
+const INVALID_REPORT_MESSAGE =
+  "That doesn't look like a Warcraft Logs report. Paste a link like https://fresh.warcraftlogs.com/reports/aB3dK9xQ2mN7pL4r"
 
 // Below 760px every bar control gets a 40px touch target.
 const mobileHitTargetClassName =
@@ -37,11 +38,9 @@ const mobileHitTargetClassName =
 
 /** Top bar: open report, report › fight › target breadcrumb, WCL link, settings and roster slots. Wraps to two rows below 760px. */
 export const AppBar: FC<AppBarProps> = ({
-  isLandingPage,
   isRailCollapsed = false,
   isRailOpen = false,
   onOpenRail,
-  onReportError,
 }) => {
   const {
     barExternalLink,
@@ -51,29 +50,16 @@ export const AppBar: FC<AppBarProps> = ({
     barTitleTrailing,
   } = useAppShell()
   const posthog = usePostHog()
-  const [isSubmittingReport, setIsSubmittingReport] = useState(false)
-  const [isReportInputOpen, setIsReportInputOpen] = useState(false)
-  const [reportInputValue, setReportInputValue] = useState('')
-  const reportInputRef = useRef<HTMLInputElement>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const openButtonRef = useRef<HTMLButtonElement>(null)
   const navigate = useNavigate()
-  const { addRecentReport, searchReports } = useReportIndex()
-  useEffect(() => {
-    if (isLandingPage) {
-      setIsReportInputOpen(true)
-      return
-    }
-
-    setIsReportInputOpen(false)
-  }, [isLandingPage])
+  const { addRecentReport } = useReportIndex()
 
   useHotkeys(
     'mod+o',
     (event) => {
       event.preventDefault()
-      setIsReportInputOpen(true)
-      requestAnimationFrame(() => {
-        reportInputRef.current?.focus()
-      })
+      setIsDialogOpen(true)
     },
     {
       description: 'Open report input',
@@ -85,22 +71,12 @@ export const AppBar: FC<AppBarProps> = ({
     },
   )
 
-  const isReportInputVisible = isLandingPage || isReportInputOpen
-  const reportSuggestions = useMemo(
-    () => (isReportInputVisible ? searchReports(reportInputValue, 20) : []),
-    [isReportInputVisible, reportInputValue, searchReports],
-  )
-  const handleReportSubmit = async (input: string): Promise<void> => {
+  const handleReportSubmit = async (input: string): Promise<string | null> => {
     const parsed = parseReportInput(input, defaultHost)
     if (!parsed) {
-      onReportError(
-        'Unable to parse report input. Use a fresh/sod/vanilla report URL or a report code.',
-      )
-      return
+      return INVALID_REPORT_MESSAGE
     }
 
-    setReportInputValue('')
-    setIsSubmittingReport(true)
     try {
       const report = await getReport(parsed.reportId)
       const isArchived = report.archiveStatus?.isArchived ?? false
@@ -122,27 +98,20 @@ export const AppBar: FC<AppBarProps> = ({
       })
 
       if (isArchived || !isAccessible) {
-        onReportError(
-          'This report is archived or inaccessible, so it cannot be opened here.',
-        )
-        return
+        return 'This report is archived or inaccessible, so it cannot be opened here.'
       }
 
-      onReportError(null)
       posthog?.capture('search_used', { search_type: 'report' })
       navigate(`/report/${parsed.reportId}`, {
         state: {
           host: parsed.host,
         },
       })
+      return null
     } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Unable to load report metadata.'
-      onReportError(message)
-    } finally {
-      setIsSubmittingReport(false)
+      return error instanceof Error
+        ? error.message
+        : 'Unable to load report metadata.'
     }
   }
 
@@ -178,93 +147,27 @@ export const AppBar: FC<AppBarProps> = ({
           ) : null}
 
           <div className="flex shrink-0 items-center justify-start max-[760px]:order-2">
-            <div
-              aria-hidden={!isReportInputVisible}
-              data-testid="report-input-container"
-              className={`overflow-hidden transition-all duration-200 ${
-                isReportInputVisible
-                  ? 'max-w-[500px] opacity-100'
-                  : 'max-w-0 opacity-0 pointer-events-none'
-              }`}
-            >
-              <div
-                className={`w-full transition-all duration-200 ${
-                  isReportInputVisible ? 'translate-x-0' : '-translate-x-1'
-                }`}
-              >
-                <ReportUrlForm
-                  className="flex w-[460px] max-w-[calc(100vw-7rem)] items-end gap-2"
-                  inputRef={reportInputRef}
-                  isSubmitting={isSubmittingReport}
-                  inputAriaLabel="Open report"
-                  onSelectSuggestion={(suggestion) => {
-                    onReportError(null)
-                    setReportInputValue('')
-                    navigate(`/report/${suggestion.reportId}`, {
-                      state: {
-                        host: suggestion.sourceHost,
-                      },
-                    })
-                    if (!isLandingPage) {
-                      setIsReportInputOpen(false)
-                    }
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  ref={openButtonRef}
+                  aria-label="Open report"
+                  className="gap-1.5 max-[760px]:px-0"
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setIsDialogOpen(true)
                   }}
-                  onInputBlur={() => {
-                    if (!isLandingPage) {
-                      setIsReportInputOpen(false)
-                    }
-                  }}
-                  onInputEscape={() => {
-                    if (!isLandingPage) {
-                      setIsReportInputOpen(false)
-                    }
-                  }}
-                  placeholder={`Paste Warcraft Logs report URL or report ID (${superKey()}+O)`}
-                  suggestions={reportSuggestions}
-                  submitIconOnly={!isLandingPage}
-                  value={reportInputValue}
-                  onValueChange={setReportInputValue}
-                  onSubmit={(input) => {
-                    void handleReportSubmit(input)
-                  }}
-                />
-              </div>
-            </div>
-            {!isLandingPage ? (
-              <div
-                aria-hidden={isReportInputOpen}
-                data-testid="report-input-minimized"
-                className={`flex items-center transition-all duration-200 ${
-                  isReportInputOpen
-                    ? 'max-w-0 opacity-0 pointer-events-none -translate-x-1'
-                    : 'max-w-xs opacity-100 translate-x-0'
-                }`}
-              >
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      aria-label="Open report input"
-                      className="gap-1.5 max-[760px]:px-0"
-                      size="sm"
-                      type="button"
-                      variant="ghost"
-                      onClick={() => {
-                        setIsReportInputOpen(true)
-                        requestAnimationFrame(() => {
-                          reportInputRef.current?.focus()
-                        })
-                      }}
-                    >
-                      <Search aria-hidden="true" className="size-4" />
-                      <span className="max-[760px]:hidden">Open report</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" withArrow>
-                    Open a report ({superKey()}+O)
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            ) : null}
+                >
+                  <Search aria-hidden="true" className="size-4" />
+                  <span className="max-[760px]:hidden">Open report</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" withArrow>
+                Open a report ({superKey()}+O)
+              </TooltipContent>
+            </Tooltip>
           </div>
 
           <div
@@ -305,6 +208,15 @@ export const AppBar: FC<AppBarProps> = ({
           </div>
         </div>
       </header>
+      <OpenReportDialog
+        open={isDialogOpen}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault()
+          openButtonRef.current?.focus()
+        }}
+        onOpenChange={setIsDialogOpen}
+        onSubmit={handleReportSubmit}
+      />
     </TooltipProvider>
   )
 }

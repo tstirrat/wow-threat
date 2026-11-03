@@ -18,9 +18,6 @@ import { AppShellProvider } from './app-shell-provider'
 
 export const RootLayout: FC = () => {
   usePageViewTracking()
-  const [reportErrorMessage, setReportErrorMessage] = useState<string | null>(
-    null,
-  )
   const [isKeyboardOverlayOpen, setIsKeyboardOverlayOpen] = useState(false)
   const { hotkeys } = useHotkeysContext()
   const location = useLocation()
@@ -91,11 +88,9 @@ export const RootLayout: FC = () => {
             />
           </div>
           <AppBar
-            isLandingPage={isLandingPage}
             isRailCollapsed={!isRailExpanded}
             isRailOpen={isMobileRailOpen}
             onOpenRail={() => setIsMobileRailOpen(true)}
-            onReportError={setReportErrorMessage}
           />
           <main
             className={`min-h-0 overflow-y-auto ${
@@ -106,11 +101,6 @@ export const RootLayout: FC = () => {
                   : 'p-4 max-[760px]:p-2'
             }`}
           >
-            {reportErrorMessage ? (
-              <Alert aria-live="polite" className="mb-4" variant="destructive">
-                <AlertDescription>{reportErrorMessage}</AlertDescription>
-              </Alert>
-            ) : null}
             {authEnabled && authError ? (
               <Alert
                 aria-live="assertive"

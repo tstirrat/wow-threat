@@ -14,6 +14,7 @@ import {
   setupThreatApiMocks,
 } from '../test/helpers/e2e-threat-mocks'
 import { KeyboardShortcutsOverlayObject } from '../test/page-objects/components/keyboard-shortcuts-overlay-object'
+import { OpenReportDialogObject } from '../test/page-objects/components/open-report-dialog-object'
 import { RecentReportsObject } from '../test/page-objects/landing-page/recent-reports-object'
 
 const repoRoot = path.resolve(
@@ -165,18 +166,52 @@ test.describe('landing page', () => {
     await expect(recentReports.noRecentReportsText()).toBeVisible()
   })
 
-  test('clears report input value after submitting from landing and reopening on report route', async ({
+  test('clears report dialog input after submitting from landing and reopening on report route', async ({
     page,
   }) => {
+    const openDialog = new OpenReportDialogObject(page)
+
     await page.goto('/')
     await fillReportInput(page, e2eValidFreshReportUrl)
     await landingBox(page).getByRole('button', { name: 'Load report' }).click()
     await expectReportOpened(page, e2eReportId)
 
-    await page.getByRole('button', { name: 'Open report input' }).click()
+    await openDialog.open()
 
-    const reportInput = page.getByRole('combobox', { name: 'Open report' })
-    await expect(reportInput).toHaveValue('')
+    await expect(openDialog.input()).toBeFocused()
+    await expect(openDialog.input()).toHaveValue('')
+  })
+
+  test('opens a report from the app bar dialog and shows errors inline', async ({
+    page,
+  }) => {
+    const openDialog = new OpenReportDialogObject(page)
+
+    await page.goto('/')
+    await openDialog.open()
+    await openDialog.submit('not a report!!')
+    await expect(openDialog.error()).toContainText(
+      "That doesn't look like a Warcraft Logs report",
+    )
+    await expectPathname(page, '/')
+
+    await openDialog.submit(e2eValidFreshReportUrl)
+    await expectReportOpened(page, e2eReportId)
+    await expect(openDialog.dialog()).toHaveCount(0)
+  })
+
+  test('closes the app bar dialog with Escape and restores focus', async ({
+    page,
+  }) => {
+    const openDialog = new OpenReportDialogObject(page)
+
+    await page.goto('/')
+    await openDialog.open()
+    await expect(openDialog.dialog()).toBeVisible()
+    await page.keyboard.press('Escape')
+
+    await expect(openDialog.dialog()).toHaveCount(0)
+    await expect(openDialog.triggerButton()).toBeFocused()
   })
 
   test('submits a fully qualified report url when pressing Enter', async ({
