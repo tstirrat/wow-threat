@@ -16,8 +16,8 @@ import { type FC, type FormEvent, useState } from 'react'
 interface OpenReportDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** Resolves to an error message to show in the dialog, or null once the report opened. */
-  onSubmit: (input: string) => Promise<string | null>
+  /** Returns an error message to show in the dialog, or null once the report opened. */
+  onSubmit: (input: string) => string | null
   /** Called after close so focus can return to the trigger button. */
   onCloseAutoFocus?: (event: Event) => void
 }
@@ -25,7 +25,7 @@ interface OpenReportDialogProps {
 interface OpenReportFormProps {
   onCancel: () => void
   onOpened: () => void
-  onSubmit: (input: string) => Promise<string | null>
+  onSubmit: (input: string) => string | null
 }
 
 /** Form body; it mounts with the dialog content, so its state starts empty on each open. */
@@ -36,16 +36,10 @@ const OpenReportForm: FC<OpenReportFormProps> = ({
 }) => {
   const [value, setValue] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = async (event: FormEvent): Promise<void> => {
+  const handleSubmit = (event: FormEvent): void => {
     event.preventDefault()
-    if (isSubmitting) {
-      return
-    }
-    setIsSubmitting(true)
-    const message = await onSubmit(value)
-    setIsSubmitting(false)
+    const message = onSubmit(value)
     setError(message)
     if (!message) {
       onOpened()
@@ -56,9 +50,7 @@ const OpenReportForm: FC<OpenReportFormProps> = ({
     <form
       className="grid grid-cols-[minmax(0,1fr)] gap-3"
       data-testid="open-report-form"
-      onSubmit={(event) => {
-        void handleSubmit(event)
-      }}
+      onSubmit={handleSubmit}
     >
       <DialogHeader>
         <DialogTitle>Open a report</DialogTitle>
@@ -99,12 +91,8 @@ const OpenReportForm: FC<OpenReportFormProps> = ({
         >
           Cancel
         </Button>
-        <Button
-          className="max-[760px]:h-10 max-[760px]:px-4"
-          disabled={isSubmitting}
-          type="submit"
-        >
-          {isSubmitting ? 'Opening…' : 'Open'}
+        <Button className="max-[760px]:h-10 max-[760px]:px-4" type="submit">
+          Open
         </Button>
       </DialogFooter>
     </form>

@@ -1,7 +1,6 @@
 /**
  * App bar: open report, report/fight/target breadcrumb, and WCL link, settings and roster slots.
  */
-import { getReport } from '@/api/reports'
 import { OpenReportDialog } from '@/components/open-report-dialog'
 import { Button } from '@/components/ui/button'
 import {
@@ -10,9 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { useReportIndex } from '@/hooks/use-report-index'
 import { defaultHost } from '@/lib/constants'
-import { buildBossKillNavigationFights } from '@/lib/fight-navigation'
 import { superKey } from '@/lib/keyboard-shortcut'
 import { parseReportInput } from '@/lib/wcl-url'
 import { Menu, Search } from 'lucide-react'
@@ -53,7 +50,6 @@ export const AppBar: FC<AppBarProps> = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const openButtonRef = useRef<HTMLButtonElement>(null)
   const navigate = useNavigate()
-  const { addRecentReport } = useReportIndex()
 
   useHotkeys(
     'mod+o',
@@ -71,48 +67,15 @@ export const AppBar: FC<AppBarProps> = ({
     },
   )
 
-  const handleReportSubmit = async (input: string): Promise<string | null> => {
+  const handleReportSubmit = (input: string): string | null => {
     const parsed = parseReportInput(input, defaultHost)
     if (!parsed) {
       return INVALID_REPORT_MESSAGE
     }
 
-    try {
-      const report = await getReport(parsed.reportId)
-      const isArchived = report.archiveStatus?.isArchived ?? false
-      const isAccessible = report.archiveStatus?.isAccessible ?? true
-
-      addRecentReport({
-        reportId: parsed.reportId,
-        title: report.title,
-        sourceHost: parsed.host,
-        lastOpenedAt: Date.now(),
-        zoneName: report.zone?.name,
-        startTime: report.startTime,
-        bossKillCount: buildBossKillNavigationFights(report.fights).length,
-        guildName: report.guild?.name ?? null,
-        guildFaction: report.guild?.faction ?? null,
-        isArchived,
-        isAccessible,
-        archiveDate: report.archiveStatus?.archiveDate ?? null,
-      })
-
-      if (isArchived || !isAccessible) {
-        return 'This report is archived or inaccessible, so it cannot be opened here.'
-      }
-
-      posthog?.capture('search_used', { search_type: 'report' })
-      navigate(`/report/${parsed.reportId}`, {
-        state: {
-          host: parsed.host,
-        },
-      })
-      return null
-    } catch (error: unknown) {
-      return error instanceof Error
-        ? error.message
-        : 'Unable to load report metadata.'
-    }
+    posthog?.capture('search_used', { search_type: 'report' })
+    navigate(`/report/${parsed.reportId}`, { state: { host: parsed.host } })
+    return null
   }
 
   return (

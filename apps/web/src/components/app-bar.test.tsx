@@ -8,15 +8,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppBar } from './app-bar'
 
-const getReportMock = vi.fn()
-const addRecentReportMock = vi.fn()
-
-vi.mock('@/api/reports', () => ({
-  getReport: (...args: unknown[]) => getReportMock(...args),
-}))
-vi.mock('@/hooks/use-report-index', () => ({
-  useReportIndex: () => ({ addRecentReport: addRecentReportMock }),
-}))
 vi.mock('posthog-js/react', () => ({
   usePostHog: () => null,
 }))
@@ -46,16 +37,7 @@ const openButton = () => screen.getByRole('button', { name: 'Open report' })
 const input = () => screen.getByLabelText('Warcraft Logs report URL or code')
 
 describe('AppBar open report dialog', () => {
-  beforeEach(() => {
-    getReportMock.mockReset()
-    addRecentReportMock.mockReset()
-    getReportMock.mockResolvedValue({
-      title: 'Report',
-      startTime: 0,
-      fights: [],
-      archiveStatus: { isArchived: false, isAccessible: true },
-    })
-  })
+  beforeEach(() => {})
 
   it('opens from the button with an empty, focused input', async () => {
     renderBar()
@@ -87,7 +69,7 @@ describe('AppBar open report dialog', () => {
     const error = await screen.findByText(/doesn't look like a Warcraft Logs/)
     expect(input()).toHaveAttribute('aria-describedby', error.id)
     expect(screen.getByRole('dialog')).toBeTruthy()
-    expect(getReportMock).not.toHaveBeenCalled()
+    expect(screen.getByTestId('pathname')).toHaveTextContent('/report/abc123')
   })
 
   it('navigates to the report and closes on a successful submit', async () => {
@@ -101,25 +83,23 @@ describe('AppBar open report dialog', () => {
         '/report/aB3dK9xQ2mN7pL4r',
       ),
     )
-    expect(addRecentReportMock).toHaveBeenCalled()
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
-  it('keeps archived report errors inside the dialog', async () => {
-    getReportMock.mockResolvedValue({
-      title: 'Report',
-      startTime: 0,
-      fights: [],
-      archiveStatus: { isArchived: true, isAccessible: false },
-    })
+  it('opens retail www links without fetching the report first', async () => {
     renderBar()
     await userEvent.click(openButton())
 
-    await userEvent.type(input(), `${reportUrl}{Enter}`)
+    await userEvent.type(
+      input(),
+      'https://www.warcraftlogs.com/reports/yWKFrfb3npagBvV8?fight=2&type=threat{Enter}',
+    )
 
-    expect(await screen.findByText(/archived or inaccessible/)).toBeTruthy()
-    expect(screen.getByRole('dialog')).toBeTruthy()
-    expect(screen.getByTestId('pathname')).toHaveTextContent('/report/abc123')
+    await waitFor(() =>
+      expect(screen.getByTestId('pathname')).toHaveTextContent(
+        '/report/yWKFrfb3npagBvV8',
+      ),
+    )
   })
 
   it('closes with Cancel and returns focus to the button', async () => {
