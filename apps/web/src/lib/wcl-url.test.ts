@@ -32,9 +32,20 @@ describe('wcl-url', () => {
     })
   })
 
+  it('parses retail report urls with a query string', () => {
+    expect(
+      parseWarcraftLogsReportUrl(
+        'https://www.warcraftlogs.com/reports/yWKFrfb3npagBvV8?fight=2&type=threat',
+      ),
+    ).toEqual({
+      reportId: 'yWKFrfb3npagBvV8',
+      host: 'www.warcraftlogs.com',
+    })
+  })
+
   it('returns null for unsupported hosts', () => {
     expect(
-      parseWarcraftLogsReportUrl('https://www.warcraftlogs.com/reports/ABC123'),
+      parseWarcraftLogsReportUrl('https://example.com/reports/ABC123'),
     ).toBeNull()
   })
 

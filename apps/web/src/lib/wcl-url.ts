@@ -12,6 +12,7 @@ const supportedHosts = new Set<WarcraftLogsHost>([
   'fresh.warcraftlogs.com',
   'sod.warcraftlogs.com',
   'vanilla.warcraftlogs.com',
+  'www.warcraftlogs.com',
 ])
 
 /** Parse a report URL into host + report ID when possible. */

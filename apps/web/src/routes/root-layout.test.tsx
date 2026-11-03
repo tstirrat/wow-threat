@@ -13,7 +13,6 @@ import { RootLayout } from './root-layout'
 const useAuthMock = vi.fn()
 const useWclRateLimitMock = vi.fn()
 const addRecentReportMock = vi.fn()
-const searchReportsMock = vi.fn()
 const useReportIndexMock = vi.fn()
 const getReportMock = vi.fn()
 const useUserSettingsMock = vi.fn()
@@ -92,10 +91,8 @@ function renderLayout(pathname = '/'): void {
 
 describe('RootLayout', () => {
   beforeEach(() => {
-    searchReportsMock.mockReturnValue([])
     useReportIndexMock.mockReturnValue({
       addRecentReport: addRecentReportMock,
-      searchReports: searchReportsMock,
     })
     useUserSettingsMock.mockReturnValue({
       settings: {
@@ -244,39 +241,15 @@ describe('RootLayout', () => {
     expect(screen.queryByTestId('app-bar-brand')).toBeNull()
   })
 
-  it('shows report input by default on the landing page', () => {
+  it('shows the same open report button on the landing page and report routes', () => {
     useWclRateLimitMock.mockReturnValue(createMockWclRateLimitValue())
     useAuthMock.mockReturnValue(createMockAuthValue({ isBusy: false }))
 
     renderLayout('/')
 
-    expect(screen.getByLabelText('Open report')).toBeTruthy()
-    expect(
-      screen.queryByRole('button', { name: 'Open report input' }),
-    ).toBeNull()
-  })
-
-  it('opens hidden report input from icon outside the landing page', async () => {
-    useWclRateLimitMock.mockReturnValue(createMockWclRateLimitValue())
-    useAuthMock.mockReturnValue(createMockAuthValue({ isBusy: false }))
-
-    renderLayout('/report/abc123')
-
-    expect(screen.getByTestId('report-input-container')).toHaveAttribute(
-      'aria-hidden',
-      'true',
-    )
-    const openReportInputButton = screen.getByRole('button', {
-      name: 'Open report input',
-    })
-    expect(openReportInputButton).toHaveTextContent('Open report')
-    expect(screen.queryByLabelText('Report input shortcut')).toBeNull()
-    await userEvent.click(openReportInputButton)
-    expect(screen.getByTestId('report-input-container')).toHaveAttribute(
-      'aria-hidden',
-      'false',
-    )
-    expect(screen.getByLabelText('Open report')).toBeTruthy()
+    const button = screen.getByRole('button', { name: 'Open report' })
+    expect(button).toHaveTextContent('Open report')
+    expect(screen.queryByRole('dialog')).toBeNull()
   })
 
   it('does not render a starred dropdown and orders bar sections', () => {
@@ -296,7 +269,7 @@ describe('RootLayout', () => {
 
     const bar = screen.getByTestId('app-bar')
     const order = [
-      screen.getByTestId('report-input-container'),
+      screen.getByRole('button', { name: 'Open report' }),
       screen.getByTestId('app-bar-title'),
     ]
     expect(bar).toContainElement(order[0] as HTMLElement)
@@ -308,53 +281,19 @@ describe('RootLayout', () => {
     })
   })
 
-  it('opens report input with cmd/ctrl+o shortcut', async () => {
+  it('opens the report dialog with cmd/ctrl+o shortcut', async () => {
     useWclRateLimitMock.mockReturnValue(createMockWclRateLimitValue())
     useAuthMock.mockReturnValue(createMockAuthValue({ isBusy: false }))
 
     renderLayout('/report/abc123')
 
-    await userEvent.keyboard('{Meta>}o{/Meta}')
+    await userEvent.keyboard('{Control>}o{/Control}')
 
-    const reportInput = screen.getByLabelText('Open report')
-    expect(reportInput).toBeTruthy()
-    reportInput.focus()
-    expect(reportInput).toHaveFocus()
-    await userEvent.keyboard('{Escape}')
-    expect(screen.getByTestId('report-input-container')).toHaveAttribute(
-      'aria-hidden',
-      'true',
-    )
     expect(
-      screen.getByRole('button', { name: 'Open report input' }),
+      await screen.findByRole('dialog', { name: 'Open a report' }),
     ).toBeTruthy()
-  })
-
-  it('collapses report input when it blurs outside the form on non-landing pages', async () => {
-    useWclRateLimitMock.mockReturnValue(createMockWclRateLimitValue())
-    useAuthMock.mockReturnValue(createMockAuthValue({ isBusy: false }))
-
-    renderLayout('/report/abc123')
-
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Open report input' }),
-    )
-
-    const reportInput = screen.getByLabelText('Open report')
-    expect(reportInput).toBeTruthy()
-    reportInput.focus()
-    expect(reportInput).toHaveFocus()
-
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Sign in with WCL' }),
-    )
-
-    expect(screen.getByTestId('report-input-container')).toHaveAttribute(
-      'aria-hidden',
-      'true',
-    )
     expect(
-      screen.getByRole('button', { name: 'Open report input' }),
-    ).toBeTruthy()
+      screen.getByLabelText('Warcraft Logs report URL or code'),
+    ).toHaveFocus()
   })
 })
