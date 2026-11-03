@@ -78,7 +78,7 @@ test.describe('landing page', () => {
     await page.goto('/')
     await fillReportInput(
       page,
-      'https://www.warcraftlogs.com/reports/not-supported-host',
+      'https://example.com/reports/not-supported-host',
     )
     await landingBox(page).getByRole('button', { name: 'Load report' }).click()
 

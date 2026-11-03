@@ -10,6 +10,7 @@ export type WarcraftLogsHost =
   | 'fresh.warcraftlogs.com'
   | 'sod.warcraftlogs.com'
   | 'vanilla.warcraftlogs.com'
+  | 'www.warcraftlogs.com'
 
 export interface RecentReportEntry {
   reportId: string
