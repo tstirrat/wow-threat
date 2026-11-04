@@ -196,15 +196,17 @@ describe('RosterThreatMeter', () => {
     expect(onClearPlayerOverrides).toHaveBeenCalledWith(1)
   })
 
-  it('shows the overrides indicator button only for players with overrides', () => {
+  it('shows a non-clickable overrides indicator after the name only for players with overrides', () => {
     renderRoster({ actorIdsWithThreatOverrides: new Set([1]) })
 
+    const indicator = screen.getByLabelText('Threat overrides for Aegistank')
+    expect(indicator.tagName).not.toBe('BUTTON')
     expect(
-      screen.getByRole('button', { name: 'Threat overrides for Aegistank' }),
-    ).toBeTruthy()
-    expect(
-      screen.queryByRole('button', { name: 'Threat overrides for Arrowyn' }),
-    ).toBeNull()
+      screen
+        .getByRole('button', { name: 'Focus Aegistank' })
+        .contains(indicator),
+    ).toBe(true)
+    expect(screen.queryByLabelText('Threat overrides for Arrowyn')).toBeNull()
   })
 
   it('filters rows by player name', async () => {

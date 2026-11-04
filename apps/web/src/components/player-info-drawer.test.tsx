@@ -145,4 +145,38 @@ describe('PlayerInfoDrawer', () => {
       restoreMatchMedia()
     }
   })
+
+  it('opens threat overrides from the bar button without toggling the drawer', async () => {
+    const user = userEvent.setup()
+    const onToggle = vi.fn()
+    const onOpenOverrides = vi.fn()
+    render(
+      <ShortcutsOverlayContext.Provider value={{ openShortcuts: vi.fn() }}>
+        <PlayerInfoDrawer
+          initialAuras={auras}
+          isOpen={false}
+          summary={summary}
+          onOpenOverrides={onOpenOverrides}
+          onToggle={onToggle}
+        >
+          <p>drawer body</p>
+        </PlayerInfoDrawer>
+      </ShortcutsOverlayContext.Provider>,
+    )
+
+    await user.click(
+      screen.getByRole('button', { name: 'Threat overrides for Aegistank' }),
+    )
+
+    expect(onOpenOverrides).toHaveBeenCalledTimes(1)
+    expect(onToggle).not.toHaveBeenCalled()
+  })
+
+  it('hides the overrides button when no handler is provided', () => {
+    renderDrawer(false)
+
+    expect(
+      screen.queryByRole('button', { name: /Threat overrides for/ }),
+    ).toBeNull()
+  })
 })

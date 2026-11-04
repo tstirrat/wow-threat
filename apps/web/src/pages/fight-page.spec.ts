@@ -102,6 +102,19 @@ test.describe('fight page', () => {
     await expect(fightPage.overrides.root('Aegistank')).toHaveCount(0)
   })
 
+  test('opens threat overrides from the player info bar for the focused player', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(`${svgFightUrl}&config=forever`)
+    await fightPage.chart.focusLegend('Aegistank')
+    await expect(fightPage.summary.focusedActorText('Aegistank')).toBeVisible()
+
+    await fightPage.summary.overridesButton('Aegistank').click()
+    await expect(fightPage.overrides.root('Aegistank')).toBeVisible()
+  })
+
   test('shares Paladin aura and talent overrides in the url', async ({
     page,
   }) => {

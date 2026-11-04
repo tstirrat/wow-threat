@@ -2,7 +2,7 @@
  * Bottom drawer for the focused player's summary, with a title bar that stays visible when collapsed.
  * Below 760px it is shown as its own tab, always expanded.
  */
-import { CircleHelp, Info } from 'lucide-react'
+import { CircleHelp, Info, SlidersHorizontal } from 'lucide-react'
 import {
   type FC,
   type KeyboardEvent,
@@ -47,6 +47,8 @@ export type PlayerInfoDrawerProps = {
   /** Saved body height in px; null falls back to one third of the viewport. */
   bodyHeight?: number | null
   onBodyHeightChange?: (height: number) => void
+  /** Opens threat overrides for the focused player; the button is hidden without it. */
+  onOpenOverrides?: () => void
   summary: FocusedPlayerSummary | null
   initialAuras: InitialAuraDisplay[]
   children: ReactNode
@@ -86,6 +88,7 @@ export const PlayerInfoDrawer: FC<PlayerInfoDrawerProps> = ({
   onToggle,
   bodyHeight = null,
   onBodyHeightChange,
+  onOpenOverrides,
   summary,
   initialAuras,
   children,
@@ -203,26 +206,49 @@ export const PlayerInfoDrawer: FC<PlayerInfoDrawerProps> = ({
               <CollapsedAuraSquares auras={initialAuras} />
             </>
           ) : null}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                aria-label="Show keyboard shortcuts"
-                className="ml-auto max-[760px]:hidden"
-                size="icon"
-                type="button"
-                variant="ghost"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  openShortcuts()
-                }}
-              >
-                <CircleHelp aria-hidden="true" className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              Keyboard shortcuts <Kbd>?</Kbd>
-            </TooltipContent>
-          </Tooltip>
+          <div className="ml-auto flex items-center gap-1">
+            {summary && onOpenOverrides ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    aria-label={`Threat overrides for ${summary.label}`}
+                    size="icon"
+                    type="button"
+                    variant="ghost"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      onOpenOverrides()
+                    }}
+                  >
+                    <SlidersHorizontal aria-hidden="true" className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Threat overrides <Kbd>O</Kbd>
+                </TooltipContent>
+              </Tooltip>
+            ) : null}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  aria-label="Show keyboard shortcuts"
+                  className="max-[760px]:hidden"
+                  size="icon"
+                  type="button"
+                  variant="ghost"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    openShortcuts()
+                  }}
+                >
+                  <CircleHelp aria-hidden="true" className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Keyboard shortcuts <Kbd>?</Kbd>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </div>
         <div
           aria-hidden={!isExpanded}

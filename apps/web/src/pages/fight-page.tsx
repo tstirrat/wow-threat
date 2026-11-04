@@ -590,6 +590,13 @@ export const FightPage: FC = () => {
               }
               bodyHeight={playerInfoHeight}
               onBodyHeightChange={setPlayerInfoHeight}
+              onOpenOverrides={
+                focusedPlayerActor
+                  ? () => {
+                      handleOpenPlayerOverrides(focusedPlayerActor.id)
+                    }
+                  : undefined
+              }
               summary={focusedPlayerSummary}
               initialAuras={initialAuras}
             >

@@ -77,9 +77,9 @@ export class ThreatChartObject {
     })
   }
 
+  /** Non-interactive indicator shown after the name when a player has overrides. */
   legendThreatOverrides(name: string): Locator {
-    return this.legendRoot().getByRole('button', {
-      name: `Threat overrides for ${name}`,
+    return this.legendRoot().getByLabel(`Threat overrides for ${name}`, {
       exact: true,
     })
   }

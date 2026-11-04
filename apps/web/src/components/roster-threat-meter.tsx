@@ -212,6 +212,25 @@ const RosterRow: FC<RosterRowProps> = ({
                     className="ml-1 inline h-3 w-3"
                   />
                 ) : null}
+                {hasThreatOverrides ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span
+                        aria-label={`Threat overrides for ${label}`}
+                        className="ml-1 inline-flex align-middle text-muted-foreground"
+                        role="img"
+                      >
+                        <SlidersHorizontal
+                          aria-hidden="true"
+                          className="h-3 w-3"
+                        />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent className="pointer-events-none" side="top">
+                      {`Threat overrides for ${label}`}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : null}
               </span>
               <span
                 className="relative w-14 shrink-0 text-right text-[11px] text-muted-foreground tabular-nums"
@@ -228,15 +247,6 @@ const RosterRow: FC<RosterRowProps> = ({
                   : formatCompactNumber(threat)}
               </span>
             </button>
-            {hasThreatOverrides ? (
-              <RosterIconButton
-                label={`Threat overrides for ${label}`}
-                tooltip={`Threat overrides for ${label}`}
-                onClick={onOpenOverrides}
-              >
-                <SlidersHorizontal />
-              </RosterIconButton>
-            ) : null}
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent>

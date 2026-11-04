@@ -24,6 +24,12 @@ export class FocusedPlayerSummaryObject {
     return this.drawer.getByRole('button', { name: 'Show keyboard shortcuts' })
   }
 
+  overridesButton(name: string): Locator {
+    return this.drawer.getByRole('button', {
+      name: `Threat overrides for ${name}`,
+    })
+  }
+
   breakdownTable(): Locator {
     return this.section.getByRole('table', {
       name: 'Focused player threat breakdown',
