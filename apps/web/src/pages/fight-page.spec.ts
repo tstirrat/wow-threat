@@ -255,6 +255,19 @@ test.describe('fight page', () => {
     ).toHaveAttribute('aria-pressed', 'true')
   })
 
+  test('escape in the roster filter releases focus so page shortcuts work', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(svgFightUrl)
+    await fightPage.chart.filterInput().click()
+    await page.keyboard.press('Escape')
+    await page.keyboard.press('Space')
+
+    await expectSearchParam(page, 'replay', '1')
+  })
+
   test('supports legend toggling, isolate on double click, and target switching', async ({
     page,
   }) => {

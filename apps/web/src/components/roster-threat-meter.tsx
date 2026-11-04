@@ -306,6 +306,13 @@ const RosterControls: FC<RosterControlsProps> = ({
       onChange={(event) => {
         onFilterChange(event.target.value)
       }}
+      onKeyDown={(event) => {
+        // Release focus so page shortcuts (Space, H, P…) work again.
+        if (event.key === 'Escape') {
+          event.preventDefault()
+          event.currentTarget.blur()
+        }
+      }}
     />
     <div
       aria-label="Show players"

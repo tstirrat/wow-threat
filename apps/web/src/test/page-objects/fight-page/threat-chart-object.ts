@@ -96,6 +96,10 @@ export class ThreatChartObject {
     return this.legendThreatOverrides(name)
   }
 
+  filterInput(): Locator {
+    return this.legendRoot().getByLabel('Filter players')
+  }
+
   showTanksButton(): Locator {
     return this.legendRoot().getByRole('button', {
       name: 'Tanks',

@@ -273,4 +273,18 @@ describe('RosterThreatMeter', () => {
     renderRoster({ series: big, showRawThreat: true })
     expect(screen.getByTestId('roster-threat').textContent).toBe('1,234,567')
   })
+
+  it('blurs the filter box on escape and keeps the filter text', async () => {
+    const user = userEvent.setup()
+    renderRoster()
+    const input = screen.getByLabelText('Filter players')
+
+    await user.type(input, 'blade')
+    expect(document.activeElement).toBe(input)
+
+    await user.keyboard('{Escape}')
+
+    expect(document.activeElement).not.toBe(input)
+    expect((input as HTMLInputElement).value).toBe('blade')
+  })
 })
