@@ -32,12 +32,12 @@ function resolveDefaultHiddenActorIds(
 
   return new Set(
     series
-      .filter((item) => {
-        const playerId =
-          item.actorType === 'Player' ? item.actorId : item.ownerId
-
-        return playerId === null || !selectedPlayers.has(playerId)
-      })
+      // Pets are only in the series when "Show pets" is on, so they stay visible
+      // regardless of which players are selected.
+      .filter(
+        (item) =>
+          item.actorType === 'Player' && !selectedPlayers.has(item.actorId),
+      )
       .map((item) => item.actorId),
   )
 }

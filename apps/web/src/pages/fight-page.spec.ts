@@ -233,6 +233,28 @@ test.describe('fight page', () => {
     await expect(fightPage.chart.legendToggle('Searing Totem')).toHaveCount(0)
   })
 
+  test('shows pets from the roster footer even after narrowing to tanks', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(svgFightUrl)
+    const showPets = fightPage.chart.legendRoot().getByLabel('Show pets')
+
+    await showPets.click()
+    await expect(fightPage.chart.legendToggle('Wolfie (Arrowyn)')).toBeVisible()
+    await showPets.click()
+    await expect(fightPage.chart.legendToggle('Wolfie (Arrowyn)')).toHaveCount(
+      0,
+    )
+
+    await fightPage.chart.showTanksButton().click()
+    await showPets.click()
+    await expect(
+      fightPage.chart.legendToggle('Wolfie (Arrowyn)'),
+    ).toHaveAttribute('aria-pressed', 'true')
+  })
+
   test('supports legend toggling, isolate on double click, and target switching', async ({
     page,
   }) => {

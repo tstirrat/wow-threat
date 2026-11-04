@@ -96,6 +96,13 @@ export class ThreatChartObject {
     return this.legendThreatOverrides(name)
   }
 
+  showTanksButton(): Locator {
+    return this.legendRoot().getByRole('button', {
+      name: 'Tanks',
+      exact: true,
+    })
+  }
+
   /** "All" preset button; from a partial set it shows everyone again. */
   showAllButton(): Locator {
     return this.legendRoot().getByRole('button', { name: 'All', exact: true })
