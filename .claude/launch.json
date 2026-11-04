@@ -4,8 +4,34 @@
     {
       "name": "wireframes",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "4870", "--directory", "design/wireframes"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4870",
+        "--directory",
+        "design/wireframes"
+      ],
       "port": 4870
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@wow-threat/api",
+        "dev"
+      ],
+      "port": 8787
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@wow-threat/web",
+        "dev"
+      ],
+      "port": 5173
     }
   ]
 }

@@ -30,6 +30,8 @@ export interface FightSettingsPanelProps {
   triggerRef: RefObject<HTMLButtonElement | null>
   showFixateBands: boolean
   onShowFixateBandsChange: (showFixateBands: boolean) => void
+  showRawThreat: boolean
+  onShowRawThreatChange: (showRawThreat: boolean) => void
   showEnergizeEvents: boolean
   onShowEnergizeEventsChange: (showEnergizeEvents: boolean) => void
   showPets: boolean
@@ -178,9 +180,11 @@ export const FightSettingsPanel: FC<FightSettingsPanelProps> = ({
   onShowEnergizeEventsChange,
   onShowFixateBandsChange,
   onShowPetsChange,
+  onShowRawThreatChange,
   showEnergizeEvents,
   showFixateBands,
   showPets,
+  showRawThreat,
   threatConfigLabel,
   triggerRef,
 }) => (
@@ -221,6 +225,11 @@ export const FightSettingsPanel: FC<FightSettingsPanelProps> = ({
             checked={showPets}
             label="Show pets"
             onCheckedChange={onShowPetsChange}
+          />
+          <CheckboxRow
+            checked={showRawThreat}
+            label="Show raw threat values"
+            onCheckedChange={onShowRawThreatChange}
           />
         </SettingsGroup>
         <SettingsGroup hint="Changes the threat numbers." title="This analysis">

@@ -31,6 +31,7 @@ import type {
 export interface UserSettings {
   showPets: boolean
   showFixateBands: boolean
+  showRawThreat: boolean
   showEnergizeEvents: boolean
   showBossMelee: boolean
   showAllBossDamageEvents: boolean
@@ -42,6 +43,7 @@ export interface UserSettings {
 const defaultUserSettings: UserSettings = {
   showPets: false,
   showFixateBands: true,
+  showRawThreat: false,
   showEnergizeEvents: false,
   showBossMelee: true,
   showAllBossDamageEvents: false,
@@ -53,6 +55,7 @@ const defaultUserSettings: UserSettings = {
 interface StoredUserSettings {
   showPets?: boolean
   showFixateBands?: boolean
+  showRawThreat?: boolean
   showEnergizeEvents?: boolean
   showBossMelee?: boolean
   showAllBossDamageEvents?: boolean
@@ -283,6 +286,7 @@ const userSettingsConverter: FirestoreDataConverter<UserSettings> = {
     return {
       showPets: settings.showPets,
       showFixateBands: settings.showFixateBands,
+      showRawThreat: settings.showRawThreat,
       showEnergizeEvents: settings.showEnergizeEvents,
       showBossMelee: settings.showBossMelee,
       showAllBossDamageEvents: settings.showAllBossDamageEvents,
@@ -322,6 +326,10 @@ const userSettingsConverter: FirestoreDataConverter<UserSettings> = {
         typeof data.showFixateBands === 'boolean'
           ? data.showFixateBands
           : defaultUserSettings.showFixateBands,
+      showRawThreat:
+        typeof data.showRawThreat === 'boolean'
+          ? data.showRawThreat
+          : defaultUserSettings.showRawThreat,
       showEnergizeEvents:
         typeof data.showEnergizeEvents === 'boolean'
           ? data.showEnergizeEvents
@@ -341,6 +349,7 @@ const userSettingsConverter: FirestoreDataConverter<UserSettings> = {
 export interface UpdateUserSettingsRequest {
   showPets?: boolean
   showFixateBands?: boolean
+  showRawThreat?: boolean
   showEnergizeEvents?: boolean
   showBossMelee?: boolean
   showAllBossDamageEvents?: boolean

@@ -7,6 +7,14 @@ export function formatNumber(value: number): string {
   return new Intl.NumberFormat('en-US').format(Math.round(value))
 }
 
+/** Format a number compactly (950, 1.2K, 3.4M). */
+export function formatCompactNumber(value: number): string {
+  return new Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(Math.round(value))
+}
+
 /** Format milliseconds into a compact seconds label. */
 export function formatSeconds(valueMs: number): string {
   return `${(valueMs / 1000).toFixed(1)}s`

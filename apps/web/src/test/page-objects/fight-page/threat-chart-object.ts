@@ -49,7 +49,7 @@ export class ThreatChartObject {
   }
 
   legendRoot(): Locator {
-    return this.rosterRegion().locator('[aria-label="Threat legend"]')
+    return this.rosterRegion().locator('[aria-label="Roster"]')
   }
 
   chartContainer(): Locator {
@@ -89,15 +89,16 @@ export class ThreatChartObject {
   }
 
   legendRoleIndicator(name: string, role: 'Healer' | 'Tank'): Locator {
-    return this.legendToggle(name).getByLabel(`${role} role`)
+    return this.legendFocus(name).getByLabel(`${role} role`)
   }
 
   legendOverrideIndicator(name: string): Locator {
-    return this.legendToggle(name).getByLabel('Threat overrides active')
+    return this.legendThreatOverrides(name)
   }
 
-  clearIsolateButton(): Locator {
-    return this.legendRoot().getByRole('button', { name: 'Clear selections' })
+  /** "All" preset button; from a partial set it shows everyone again. */
+  showAllButton(): Locator {
+    return this.legendRoot().getByRole('button', { name: 'All', exact: true })
   }
 
   async renderer(): Promise<ChartRenderer> {
@@ -134,7 +135,7 @@ export class ThreatChartObject {
   }
 
   async isolateLegend(name: string): Promise<void> {
-    await this.legendToggle(name).dblclick()
+    await this.legendFocus(name).dblclick()
   }
 
   async focusLegend(name: string): Promise<void> {
@@ -146,8 +147,10 @@ export class ThreatChartObject {
   }
 
   async openLegendThreatOverrides(name: string): Promise<void> {
-    await this.legendListItem(name).hover()
-    await this.legendThreatOverrides(name).click()
+    await this.legendFocus(name).click({ button: 'right' })
+    await this.page
+      .getByRole('menuitem', { name: 'Override buffs and talents…' })
+      .click()
   }
 
   async legendToggleLabels(): Promise<string[]> {
@@ -165,6 +168,6 @@ export class ThreatChartObject {
   }
 
   async clearIsolate(): Promise<void> {
-    await this.clearIsolateButton().click()
+    await this.showAllButton().click()
   }
 }

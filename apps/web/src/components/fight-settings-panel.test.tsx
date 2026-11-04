@@ -23,6 +23,8 @@ function createProps(
     triggerRef: createRef<HTMLButtonElement>(),
     showFixateBands: true,
     onShowFixateBandsChange: vi.fn(),
+    showRawThreat: false,
+    onShowRawThreatChange: vi.fn(),
     showEnergizeEvents: false,
     onShowEnergizeEventsChange: vi.fn(),
     showPets: false,
@@ -79,6 +81,7 @@ describe('FightSettingsPanel', () => {
     ['Show fixate areas', 'onShowFixateBandsChange', false],
     ['Show energize events', 'onShowEnergizeEventsChange', true],
     ['Show pets', 'onShowPetsChange', true],
+    ['Show raw threat values', 'onShowRawThreatChange', true],
     ['Infer common threat buffs', 'onInferThreatReductionChange', true],
   ] as const)('emits changes for %s', async (name, handler, expected) => {
     const props = createProps()

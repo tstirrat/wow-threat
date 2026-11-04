@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest'
 import {
   formatAxisTime,
   formatClockDuration,
+  formatCompactNumber,
   formatNumber,
   formatReportHeaderDate,
   formatReportListDate,
@@ -165,5 +166,13 @@ describe('formatReportListDate', () => {
 
   it('returns Unknown for invalid timestamps', () => {
     expect(formatReportListDate(Number.NaN)).toBe('Unknown')
+  })
+})
+
+describe('formatCompactNumber', () => {
+  it('shortens large values and leaves small ones whole', () => {
+    expect(formatCompactNumber(950)).toBe('950')
+    expect(formatCompactNumber(1234)).toBe('1.2K')
+    expect(formatCompactNumber(1_234_567)).toBe('1.2M')
   })
 })

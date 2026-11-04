@@ -26,6 +26,12 @@ export class FightSettingsObject {
     return this.panel().getByRole('checkbox', { name: 'Show energize events' })
   }
 
+  showRawThreatCheckbox(): Locator {
+    return this.panel().getByRole('checkbox', {
+      name: 'Show raw threat values',
+    })
+  }
+
   showFixateBandsCheckbox(): Locator {
     return this.panel().getByRole('checkbox', { name: 'Show fixate areas' })
   }
