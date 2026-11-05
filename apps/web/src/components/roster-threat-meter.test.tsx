@@ -104,7 +104,9 @@ describe('RosterThreatMeter', () => {
     renderRoster({ playheadMs: 5_000 })
 
     expect(rowNames()).toEqual(['Bladefury', 'Aegistank', 'Arrowyn'])
-    const bladefury = screen.getByRole('button', { name: 'Focus Bladefury' })
+    const bladefury = screen
+      .getByRole('button', { name: 'Focus Bladefury' })
+      .closest('li') as HTMLElement
     expect(within(bladefury).getByTestId('roster-threat').textContent).toBe(
       '300',
     )
@@ -196,17 +198,22 @@ describe('RosterThreatMeter', () => {
     expect(onClearPlayerOverrides).toHaveBeenCalledWith(1)
   })
 
-  it('shows a non-clickable overrides indicator after the name only for players with overrides', () => {
-    renderRoster({ actorIdsWithThreatOverrides: new Set([1]) })
+  it('shows a clickable overrides icon only for players with overrides', async () => {
+    const user = userEvent.setup()
+    const onOpenPlayerOverrides = vi.fn()
+    renderRoster({
+      actorIdsWithThreatOverrides: new Set([1]),
+      onOpenPlayerOverrides,
+    })
 
-    const indicator = screen.getByLabelText('Threat overrides for Aegistank')
-    expect(indicator.tagName).not.toBe('BUTTON')
+    await user.click(
+      screen.getByRole('button', { name: 'Threat overrides for Aegistank' }),
+    )
+
+    expect(onOpenPlayerOverrides).toHaveBeenCalledWith(1)
     expect(
-      screen
-        .getByRole('button', { name: 'Focus Aegistank' })
-        .contains(indicator),
-    ).toBe(true)
-    expect(screen.queryByLabelText('Threat overrides for Arrowyn')).toBeNull()
+      screen.queryByRole('button', { name: 'Threat overrides for Arrowyn' }),
+    ).toBeNull()
   })
 
   it('filters rows by player name', async () => {

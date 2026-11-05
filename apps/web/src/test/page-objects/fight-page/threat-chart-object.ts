@@ -77,9 +77,10 @@ export class ThreatChartObject {
     })
   }
 
-  /** Non-interactive indicator shown after the name when a player has overrides. */
+  /** Overrides icon after the name; only rendered when the player has overrides. */
   legendThreatOverrides(name: string): Locator {
-    return this.legendRoot().getByLabel(`Threat overrides for ${name}`, {
+    return this.legendRoot().getByRole('button', {
+      name: `Threat overrides for ${name}`,
       exact: true,
     })
   }
@@ -89,7 +90,7 @@ export class ThreatChartObject {
   }
 
   legendRoleIndicator(name: string, role: 'Healer' | 'Tank'): Locator {
-    return this.legendFocus(name).getByLabel(`${role} role`)
+    return this.legendListItem(name).getByLabel(`${role} role`)
   }
 
   legendOverrideIndicator(name: string): Locator {

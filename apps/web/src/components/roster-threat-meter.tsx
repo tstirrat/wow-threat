@@ -157,32 +157,10 @@ const RosterRow: FC<RosterRowProps> = ({
             >
               {isVisible ? <Eye /> : <EyeOff />}
             </RosterIconButton>
-            {isPlayer ? (
-              <RosterIconButton
-                className={
-                  isPinned
-                    ? 'text-amber-500'
-                    : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'
-                }
-                label={`Toggle pin ${label}`}
-                pressed={isPinned}
-                tooltip={isPinned ? 'Unpin (P)' : 'Pin across fights (P)'}
-                onClick={onTogglePin}
-              >
-                <Pin />
-              </RosterIconButton>
-            ) : (
-              <span className="h-6 w-6 shrink-0" />
-            )}
-            <button
-              aria-label={`Focus ${label}`}
-              className={`relative flex h-6 min-w-0 flex-1 cursor-pointer items-center gap-1 overflow-hidden rounded-sm border px-1 text-left ${
+            <div
+              className={`relative flex h-6 min-w-0 flex-1 items-center overflow-hidden rounded-sm border ${
                 isFocused ? 'border-foreground/70' : 'border-transparent'
               }`}
-              title="Click to focus. Double-click to show only this player."
-              type="button"
-              onClick={onFocus}
-              onDoubleClick={onIsolate}
             >
               <span
                 aria-hidden="true"
@@ -194,59 +172,74 @@ const RosterRow: FC<RosterRowProps> = ({
                   opacity: 0.3,
                 }}
               />
-              <span
-                className="relative min-w-0 flex-1 truncate text-xs font-medium"
-                data-testid="roster-name"
-                style={{ color: item.color }}
-              >
-                {label}
+              {/* Full-row click target; the content layer above lets clicks fall through to it. */}
+              <button
+                aria-label={`Focus ${label}`}
+                className="absolute inset-0 cursor-pointer rounded-sm"
+                title="Click to focus. Double-click to show only this player."
+                type="button"
+                onClick={onFocus}
+                onDoubleClick={onIsolate}
+              />
+              <div className="pointer-events-none relative flex min-w-0 flex-1 items-center gap-1 px-1">
+                <span
+                  className="min-w-0 truncate text-xs font-medium"
+                  data-testid="roster-name"
+                  style={{ color: item.color }}
+                >
+                  {label}
+                </span>
                 {isTank ? (
                   <Shield
                     aria-label="Tank role"
-                    className="ml-1 inline h-3 w-3 text-amber-500"
+                    className="h-3 w-3 shrink-0 text-amber-500"
                   />
                 ) : null}
                 {isHealer ? (
-                  <Plus
-                    aria-label="Healer role"
-                    className="ml-1 inline h-3 w-3"
-                  />
+                  <Plus aria-label="Healer role" className="h-3 w-3 shrink-0" />
                 ) : null}
                 {hasThreatOverrides ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span
-                        aria-label={`Threat overrides for ${label}`}
-                        className="ml-1 inline-flex align-middle text-muted-foreground"
-                        role="img"
-                      >
-                        <SlidersHorizontal
-                          aria-hidden="true"
-                          className="h-3 w-3"
-                        />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent className="pointer-events-none" side="top">
-                      {`Threat overrides for ${label}`}
-                    </TooltipContent>
-                  </Tooltip>
+                  <RosterIconButton
+                    className="pointer-events-auto h-5 w-5 text-muted-foreground"
+                    label={`Threat overrides for ${label}`}
+                    tooltip={`Threat overrides for ${label}`}
+                    onClick={onOpenOverrides}
+                  >
+                    <SlidersHorizontal />
+                  </RosterIconButton>
                 ) : null}
-              </span>
-              <span
-                className="relative w-14 shrink-0 text-right text-[11px] text-muted-foreground tabular-nums"
-                data-testid="roster-tps"
-              >
-                {formatNumber(tps)}
-              </span>
-              <span
-                className="relative w-14 shrink-0 text-right text-[11px] tabular-nums"
-                data-testid="roster-threat"
-              >
-                {showRawThreat
-                  ? formatNumber(threat)
-                  : formatCompactNumber(threat)}
-              </span>
-            </button>
+                {isPlayer ? (
+                  <RosterIconButton
+                    className={`pointer-events-auto h-5 w-5 ${
+                      isPinned
+                        ? 'text-amber-500'
+                        : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'
+                    }`}
+                    label={`Toggle pin ${label}`}
+                    pressed={isPinned}
+                    tooltip={isPinned ? 'Unpin (P)' : 'Pin across fights (P)'}
+                    onClick={onTogglePin}
+                  >
+                    <Pin />
+                  </RosterIconButton>
+                ) : null}
+                <span className="min-w-0 flex-1" />
+                <span
+                  className="w-14 shrink-0 text-right text-[11px] text-muted-foreground tabular-nums"
+                  data-testid="roster-tps"
+                >
+                  {formatNumber(tps)}
+                </span>
+                <span
+                  className="w-14 shrink-0 text-right text-[11px] tabular-nums"
+                  data-testid="roster-threat"
+                >
+                  {showRawThreat
+                    ? formatNumber(threat)
+                    : formatCompactNumber(threat)}
+                </span>
+              </div>
+            </div>
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent>
@@ -421,7 +414,7 @@ export const RosterThreatMeter: FC<RosterThreatMeterProps> = ({
         aria-hidden="true"
         className="flex shrink-0 items-center gap-0.5 border-b border-border py-1 pr-[calc(0.5rem+0.25rem+1px)] pl-1 text-[11px] [scrollbar-gutter:stable] text-muted-foreground"
       >
-        <span className="w-[3.25rem] shrink-0" />
+        <span className="w-6 shrink-0" />
         <span className="min-w-0 flex-1 px-1">Player</span>
         <span className="w-14 shrink-0 text-right">TPS ({tpsSeconds}s)</span>
         <span className="w-14 shrink-0 text-right">Threat</span>
