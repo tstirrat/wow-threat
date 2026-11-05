@@ -29,7 +29,7 @@ import {
 import type { SeriesChartPoint } from '../lib/threat-chart-types'
 import { buildAuraMarkArea } from '../lib/threat-chart-visuals'
 import type { BossDamageMode, ThreatSeries } from '../types/app'
-import { ThreatChartLegend } from './threat-chart-legend'
+import { RosterThreatMeter } from './roster-threat-meter'
 import { ThreatChartPlayerSearch } from './threat-chart-player-search'
 import { createThreatChartTooltipFormatter } from './threat-chart-tooltip'
 import { Button } from './ui/button'
@@ -49,6 +49,7 @@ export type ThreatChartProps = {
   onToggleFocusedPlayerIsolation: (playerId: number) => void
   onTogglePinnedPlayer: (playerId: number) => void
   onOpenPlayerOverrides: (playerId: number) => void
+  onClearPlayerOverrides: (playerId: number) => void
   actorIdsWithThreatOverrides?: ReadonlySet<number>
   onSeriesClick: (actorId: number) => void
   onVisiblePlayerIdsChange?: (playerIds: number[]) => void
@@ -58,6 +59,7 @@ export type ThreatChartProps = {
   showEnergizeEvents: boolean
   bossDamageMode: BossDamageMode
   showFixateBands: boolean
+  showRawThreat?: boolean
   targetDeathTimeMs?: number | null
   onChartReadyChange?: (isReady: boolean) => void
   onRegisterResetZoom?: (resetZoom: (() => void) | null) => void
@@ -84,6 +86,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   onToggleFocusedPlayerIsolation,
   onTogglePinnedPlayer,
   onOpenPlayerOverrides,
+  onClearPlayerOverrides,
   actorIdsWithThreatOverrides,
   onSeriesClick,
   onVisiblePlayerIdsChange,
@@ -93,6 +96,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   showEnergizeEvents,
   bossDamageMode,
   showFixateBands,
+  showRawThreat = false,
   targetDeathTimeMs = null,
   onChartReadyChange,
   onRegisterResetZoom,
@@ -113,7 +117,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     isActorVisible,
     clearIsolate,
     toggleActorVisibility,
-    handleLegendItemClick,
+    isolateActor,
+    setVisibleActors,
   } = useThreatChartLegendState(series, selectedPlayerIds)
 
   const bounds = resolveSeriesWindowBounds(series)
@@ -616,17 +621,27 @@ export const ThreatChart: FC<ThreatChartProps> = ({
       </div>
       {legendContainer
         ? createPortal(
-            <ThreatChartLegend
+            <RosterThreatMeter
               series={series}
+              playheadMs={isReplayMode ? playheadMs : null}
+              focusedActorId={focusedActorId}
               isActorVisible={isActorVisible}
-              onActorClick={handleLegendItemClick}
-              onActorFocus={onSeriesClick}
+              onActorFocus={(actorId) => {
+                // Selecting a hidden player reveals their line.
+                if (!isActorVisible(actorId)) {
+                  toggleActorVisibility(actorId)
+                }
+                onSeriesClick(actorId)
+              }}
+              onActorIsolate={isolateActor}
+              onSetVisibleActors={setVisibleActors}
+              onToggleActorVisibility={toggleActorVisibility}
               onOpenPlayerOverrides={onOpenPlayerOverrides}
+              onClearPlayerOverrides={onClearPlayerOverrides}
               actorIdsWithThreatOverrides={actorIdsWithThreatOverrides}
               pinnedPlayerIds={pinnedPlayerIds}
               onTogglePinnedPlayer={onTogglePinnedPlayer}
-              showClearSelections={canClearIsolate}
-              onClearSelections={handleClearSelections}
+              showRawThreat={showRawThreat}
               showPets={showPets}
               onShowPetsChange={onShowPetsChange}
             />,

@@ -33,6 +33,7 @@ export class ReplayModeObject {
     return this.page.getByRole('button', { name: /^(Play|Pause)$/ }).first()
   }
 
+  /** Roster panel; its header shows the playhead time or "End of fight". */
   threatMeter(): Locator {
     return this.page.getByTestId('threat-meter')
   }

@@ -69,6 +69,7 @@ function renderChart(overrides: Partial<ThreatChartProps> = {}) {
         bossDamageMode="off"
         onFocusAndAddPlayer={vi.fn()}
         onFocusAndIsolatePlayer={vi.fn()}
+        onClearPlayerOverrides={vi.fn()}
         onOpenPlayerOverrides={vi.fn()}
         onSeriesClick={vi.fn()}
         onShowPetsChange={vi.fn()}
@@ -106,7 +107,7 @@ describe('ThreatChart', () => {
 
     const { container } = renderChart({ legendContainer })
 
-    const legend = screen.getByLabelText('Threat legend')
+    const legend = screen.getByLabelText('Roster')
     expect(legendContainer.contains(legend)).toBe(true)
     expect(container.contains(legend)).toBe(false)
 
@@ -116,7 +117,7 @@ describe('ThreatChart', () => {
   it('renders no legend without a legend container', () => {
     renderChart()
 
-    expect(screen.queryByLabelText('Threat legend')).toBeNull()
+    expect(screen.queryByLabelText('Roster')).toBeNull()
   })
 
   describe('hotkeys', () => {
@@ -158,11 +159,28 @@ describe('ThreatChart', () => {
       expect(onOpenPlayerOverrides).toHaveBeenCalledWith(1)
     })
 
+    it('focusing a hidden player from the roster shows their line', async () => {
+      const user = userEvent.setup()
+      const onSeriesClick = vi.fn()
+      const legendContainer = document.createElement('div')
+      document.body.append(legendContainer)
+      renderChart({ focusedActorId: null, legendContainer, onSeriesClick })
+      const toggle = screen.getByRole('button', { name: 'Toggle Tanky' })
+
+      await user.click(toggle)
+      expect(toggle.getAttribute('aria-pressed')).toBe('false')
+
+      await user.click(screen.getByRole('button', { name: 'Focus Tanky' }))
+      expect(toggle.getAttribute('aria-pressed')).toBe('true')
+      expect(onSeriesClick).toHaveBeenCalledWith(1)
+      legendContainer.remove()
+    })
+
     it('h hides and shows the focused player line', async () => {
       const legendContainer = document.createElement('div')
       document.body.append(legendContainer)
       renderChart({ focusedActorId: 1, legendContainer })
-      const toggle = screen.getByTitle(/Click to toggle visibility/)
+      const toggle = screen.getByRole('button', { name: 'Toggle Tanky' })
       expect(toggle.getAttribute('aria-pressed')).toBe('true')
 
       await userEvent.keyboard('h')

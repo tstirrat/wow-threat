@@ -1,11 +1,9 @@
 /**
  * Legend visibility and isolate state for the threat chart.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import type { ThreatSeries } from '../types/app'
-
-const doubleClickThresholdMs = 320
 
 export interface UseThreatChartLegendStateResult {
   visibleSeries: ThreatSeries[]
@@ -13,7 +11,8 @@ export interface UseThreatChartLegendStateResult {
   isActorVisible: (actorId: number) => boolean
   clearIsolate: () => void
   toggleActorVisibility: (actorId: number) => void
-  handleLegendItemClick: (actorId: number) => void
+  isolateActor: (actorId: number) => void
+  setVisibleActors: (actorIds: number[]) => void
 }
 
 interface LegendVisibilityOverrides {
@@ -33,12 +32,12 @@ function resolveDefaultHiddenActorIds(
 
   return new Set(
     series
-      .filter((item) => {
-        const playerId =
-          item.actorType === 'Player' ? item.actorId : item.ownerId
-
-        return playerId === null || !selectedPlayers.has(playerId)
-      })
+      // Pets are only in the series when "Show pets" is on, so they stay visible
+      // regardless of which players are selected.
+      .filter(
+        (item) =>
+          item.actorType === 'Player' && !selectedPlayers.has(item.actorId),
+      )
       .map((item) => item.actorId),
   )
 }
@@ -78,15 +77,11 @@ function isActorVisibleWithOverrides({
   return !defaultHiddenActorIds.has(actorId)
 }
 
-/** Manage single-click toggle and double-click isolate behavior for chart legend items. */
+/** Manage per-actor visibility toggles and isolate state for the chart roster. */
 export function useThreatChartLegendState(
   series: ThreatSeries[],
   selectedPlayerIds: number[] = [],
 ): UseThreatChartLegendStateResult {
-  const pendingLegendClickRef = useRef<{
-    actorId: number
-    timeoutId: ReturnType<typeof setTimeout>
-  } | null>(null)
   const [isolatedActorId, setIsolatedActorId] = useState<number | null>(null)
   const [visibilityOverrides, setVisibilityOverrides] =
     useState<LegendVisibilityOverrides>(() => createEmptyVisibilityOverrides())
@@ -118,15 +113,6 @@ export function useThreatChartLegendState(
     () => series.filter((item) => isActorVisible(item.actorId)),
     [isActorVisible, series],
   )
-
-  const clearPendingLegendClick = useCallback((): void => {
-    if (!pendingLegendClickRef.current) {
-      return
-    }
-
-    clearTimeout(pendingLegendClickRef.current.timeoutId)
-    pendingLegendClickRef.current = null
-  }, [])
 
   const toggleActorVisibility = useCallback(
     (actorId: number): void => {
@@ -163,50 +149,31 @@ export function useThreatChartLegendState(
     [defaultHiddenActorIds],
   )
 
-  const isolateActorVisibility = useCallback((actorId: number): void => {
+  const isolateActor = useCallback((actorId: number): void => {
     setVisibilityOverrides(createEmptyVisibilityOverrides())
     setIsolatedActorId((previous) => (previous === actorId ? null : actorId))
   }, [])
 
-  const handleLegendItemClick = useCallback(
-    (actorId: number): void => {
-      const pending = pendingLegendClickRef.current
-      if (pending && pending.actorId === actorId) {
-        clearPendingLegendClick()
-        isolateActorVisibility(actorId)
-        return
-      }
-
-      if (pending) {
-        clearPendingLegendClick()
-        toggleActorVisibility(pending.actorId)
-      }
-
-      const timeoutId = setTimeout(() => {
-        toggleActorVisibility(actorId)
-        pendingLegendClickRef.current = null
-      }, doubleClickThresholdMs)
-
-      pendingLegendClickRef.current = {
-        actorId,
-        timeoutId,
-      }
+  const setVisibleActors = useCallback(
+    (actorIds: number[]): void => {
+      const wanted = new Set(actorIds)
+      setIsolatedActorId(null)
+      setVisibilityOverrides({
+        hiddenActorIds: new Set(
+          series
+            .map((item) => item.actorId)
+            .filter((actorId) => !wanted.has(actorId)),
+        ),
+        shownActorIds: new Set(actorIds),
+      })
     },
-    [clearPendingLegendClick, isolateActorVisibility, toggleActorVisibility],
+    [series],
   )
 
   const clearIsolate = useCallback((): void => {
-    clearPendingLegendClick()
     setVisibilityOverrides(createEmptyVisibilityOverrides())
     setIsolatedActorId(null)
-  }, [clearPendingLegendClick])
-
-  useEffect(
-    () => () => {
-      clearPendingLegendClick()
-    },
-    [clearPendingLegendClick],
-  )
+  }, [])
 
   return {
     visibleSeries,
@@ -214,6 +181,7 @@ export function useThreatChartLegendState(
     isActorVisible,
     clearIsolate,
     toggleActorVisibility,
-    handleLegendItemClick,
+    isolateActor,
+    setVisibleActors,
   }
 }

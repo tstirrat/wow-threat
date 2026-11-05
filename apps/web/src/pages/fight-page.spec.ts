@@ -80,7 +80,7 @@ test.describe('fight page', () => {
     await fightPage.settings.closeButton().click()
   })
 
-  test('opens threat overrides only from the roster overrides button', async ({
+  test('opens threat overrides from the roster context menu, not plain clicks', async ({
     page,
   }) => {
     const fightPage = new FightPageObject(page)
@@ -100,6 +100,19 @@ test.describe('fight page', () => {
 
     await page.keyboard.press('Escape')
     await expect(fightPage.overrides.root('Aegistank')).toHaveCount(0)
+  })
+
+  test('opens threat overrides from the player info bar for the focused player', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(`${svgFightUrl}&config=forever`)
+    await fightPage.chart.focusLegend('Aegistank')
+    await expect(fightPage.summary.focusedActorText('Aegistank')).toBeVisible()
+
+    await fightPage.summary.overridesButton('Aegistank').click()
+    await expect(fightPage.overrides.root('Aegistank')).toBeVisible()
   })
 
   test('shares Paladin aura and talent overrides in the url', async ({
@@ -125,7 +138,7 @@ test.describe('fight page', () => {
     await fightPage.overrides.setAuraState('Aegistank', 'Righteous Fury', 'off')
     await expect(
       fightPage.chart.legendOverrideIndicator('Aegistank'),
-    ).toHaveText('*')
+    ).toBeVisible()
     await expectSearchParam(page, 'forceRf', null)
     await expectSearchParam(page, 'threatOverrides', '1:a25780=0')
 
@@ -136,7 +149,7 @@ test.describe('fight page', () => {
     await expect(fightPage.chart.legendToggle('Aegistank')).toBeVisible()
     await expect(
       fightPage.chart.legendOverrideIndicator('Aegistank'),
-    ).toHaveText('*')
+    ).toBeVisible()
     await fightPage.chart.openLegendThreatOverrides('Aegistank')
     await expect(
       fightPage.overrides.auraState('Aegistank', 'Righteous Fury', 'off'),
@@ -196,7 +209,9 @@ test.describe('fight page', () => {
     ).toBeVisible()
     await expect(fightPage.chart.legendFocus('Aegistank')).toBeVisible()
     await expect(page.getByText('Fixate/Taunt')).toBeVisible()
-    await expect(fightPage.chart.legendToggle('Wolfie')).toHaveCount(0)
+    await expect(fightPage.chart.legendToggle('Wolfie (Arrowyn)')).toHaveCount(
+      0,
+    )
     await maybeCaptureScreenshot(page)
 
     await fightPage.settings.open()
@@ -211,13 +226,46 @@ test.describe('fight page', () => {
     await expect(fightPage.settings.showPetsCheckbox()).not.toBeChecked()
     await fightPage.settings.setShowPets(true)
     await fightPage.settings.close()
-    await expect(fightPage.chart.legendToggle('Wolfie')).toBeVisible()
+    await expect(fightPage.chart.legendToggle('Wolfie (Arrowyn)')).toBeVisible()
     const labels = await fightPage.chart.legendToggleLabels()
-    const ownerIndex = labels.indexOf('Arrowyn')
-    const petIndex = labels.indexOf('Wolfie')
-    expect(ownerIndex).toBeGreaterThanOrEqual(0)
-    expect(petIndex).toBe(ownerIndex + 1)
+    expect(labels).toContain('Arrowyn')
+    expect(labels).toContain('Wolfie (Arrowyn)')
     await expect(fightPage.chart.legendToggle('Searing Totem')).toHaveCount(0)
+  })
+
+  test('shows pets from the roster footer even after narrowing to tanks', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(svgFightUrl)
+    const showPets = fightPage.chart.legendRoot().getByLabel('Show pets')
+
+    await showPets.click()
+    await expect(fightPage.chart.legendToggle('Wolfie (Arrowyn)')).toBeVisible()
+    await showPets.click()
+    await expect(fightPage.chart.legendToggle('Wolfie (Arrowyn)')).toHaveCount(
+      0,
+    )
+
+    await fightPage.chart.showTanksButton().click()
+    await showPets.click()
+    await expect(
+      fightPage.chart.legendToggle('Wolfie (Arrowyn)'),
+    ).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  test('escape in the roster filter releases focus so page shortcuts work', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(svgFightUrl)
+    await fightPage.chart.filterInput().click()
+    await page.keyboard.press('Escape')
+    await page.keyboard.press('Space')
+
+    await expectSearchParam(page, 'replay', '1')
   })
 
   test('supports legend toggling, isolate on double click, and target switching', async ({
@@ -331,7 +379,6 @@ test.describe('fight page', () => {
       'aria-pressed',
       'false',
     )
-    await expect(fightPage.chart.clearIsolateButton()).toBeVisible()
 
     await fightPage.chart.toggleLegend('Bladefury')
     await expect(fightPage.chart.legendToggle('Bladefury')).toHaveAttribute(
@@ -421,6 +468,30 @@ test.describe('fight page', () => {
     )
   })
 
+  test('does not carry roster selections to another fight unless pinned', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(svgFightUrl)
+    // Visit the other fight first so its events are cached (no loading gap on return).
+    await fightPage.quickSwitch.clickFight('Grobbulus')
+    await expectPathname(page, `/report/${e2eReportId}/fight/30`)
+    await fightPage.quickSwitch.clickFight('Patchwerk')
+    await expect(fightPage.chart.legendToggle('Bladefury')).toBeVisible()
+    await fightPage.chart.toggleLegend('Bladefury')
+    await expectSearchParam(page, 'players', '1,3')
+
+    await fightPage.quickSwitch.clickFight('Grobbulus')
+    await expectPathname(page, `/report/${e2eReportId}/fight/30`)
+    await expect(fightPage.chart.legendToggle('Bladefury')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    await expectSearchParam(page, 'players', null)
+    await expectSearchParam(page, 'pinnedPlayers', null)
+  })
+
   test('clearing selections resets players while keeping pinned players', async ({
     page,
   }) => {
@@ -434,7 +505,6 @@ test.describe('fight page', () => {
 
     await expectSearchParam(page, 'pinnedPlayers', '1')
     await expectSearchParam(page, 'players', '1')
-    await expect(fightPage.chart.clearIsolateButton()).toBeVisible()
 
     await fightPage.chart.clearIsolate()
 
@@ -523,9 +593,7 @@ test.describe('fight page', () => {
     await fightPage.settings.close()
 
     await fightPage.chart.isolateLegend('Aegistank')
-    await expect(fightPage.chart.clearIsolateButton()).toBeVisible()
     await page.keyboard.press('c')
-    await expect(fightPage.chart.clearIsolateButton()).toHaveCount(0)
     await expect(fightPage.chart.legendToggle('Bladefury')).toHaveAttribute(
       'aria-pressed',
       'true',
@@ -800,10 +868,13 @@ test.describe('fight page', () => {
     await expect.poll(() => fightPage.chart.renderer()).toBe('svg')
 
     await expect(fightPage.replay.replayButton()).toBeVisible()
-    await expect(fightPage.replay.threatMeter()).toHaveCount(0)
+    await expect(fightPage.replay.threatMeter()).toContainText('End of fight')
 
     await fightPage.replay.togglePlayPauseWithKey()
     await expect(fightPage.replay.threatMeter()).toBeVisible()
+    await expect(fightPage.replay.threatMeter()).not.toContainText(
+      'End of fight',
+    )
     await expect(fightPage.replay.exitReplayButton()).toBeVisible()
     await expect(fightPage.replay.replayButton()).toHaveCount(0)
     await expectSearchParam(page, 'replay', '1')
@@ -817,7 +888,7 @@ test.describe('fight page', () => {
     )
 
     await fightPage.replay.exitWithEscape()
-    await expect(fightPage.replay.threatMeter()).toHaveCount(0)
+    await expect(fightPage.replay.threatMeter()).toContainText('End of fight')
     await expect(fightPage.chart.legendRoot()).toBeVisible()
     await expectSearchParam(page, 'replay', '0')
   })

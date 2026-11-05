@@ -35,6 +35,7 @@ export interface UseFightPageInteractionsResult {
   }) => void
   handleSeriesClick: (playerId: number) => void
   handleShowFixateBandsChange: (showFixateBands: boolean) => void
+  handleShowRawThreatChange: (showRawThreat: boolean) => void
   handleShowEnergizeEventsChange: (showEnergizeEvents: boolean) => void
   handleShowPetsChange: (showPets: boolean) => void
   handleTogglePinnedPlayer: (playerId: number) => void
@@ -253,6 +254,13 @@ export function useFightPageInteractions({
     [updateUserSettings],
   )
 
+  const handleShowRawThreatChange = useCallback(
+    (showRawThreat: boolean): void => {
+      void updateUserSettings({ showRawThreat })
+    },
+    [updateUserSettings],
+  )
+
   const handleBossDamageModeChange = useCallback(
     (bossDamageMode: BossDamageMode): void => {
       posthog?.capture('boss_damage_mode_changed', {
@@ -297,6 +305,7 @@ export function useFightPageInteractions({
     handleReplayStateChange,
     handleSeriesClick,
     handleShowFixateBandsChange,
+    handleShowRawThreatChange,
     handleShowEnergizeEventsChange,
     handleShowPetsChange,
     handleTogglePinnedPlayer,

@@ -28,7 +28,6 @@ import { PlayerSummaryTable } from '../components/player-summary-table'
 import { PlayerThreatOverridesPanel } from '../components/player-threat-overrides-panel'
 import { RosterToggleButton } from '../components/roster-toggle-button'
 import { ThreatChart, type ThreatChartProps } from '../components/threat-chart'
-import { ThreatMeter } from '../components/threat-meter'
 import { useFightData } from '../hooks/use-fight-data'
 import { useFightEvents } from '../hooks/use-fight-events'
 import { useFightSettingsPanel } from '../hooks/use-fight-settings-panel'
@@ -38,7 +37,6 @@ import { useReplayMode } from '../hooks/use-replay-mode'
 import { useRosterVisibility } from '../hooks/use-roster-visibility'
 import { useUserSettings } from '../hooks/use-user-settings'
 import { parseBooleanQueryParam } from '../lib/query-params'
-import { getThreatAtTime } from '../lib/threat-at-time'
 import {
   readForcedThreatConfigParam,
   resolveCurrentThreatConfig,
@@ -148,6 +146,7 @@ export const FightPage: FC = () => {
     handleReplayStateChange,
     handleSeriesClick,
     handleShowFixateBandsChange,
+    handleShowRawThreatChange,
     handleShowEnergizeEventsChange,
     handleShowPetsChange,
     handleTogglePinnedPlayer,
@@ -206,12 +205,6 @@ export const FightPage: FC = () => {
     posthog,
   })
 
-  const threatAtPlayhead =
-    replayMode.effectivePlayheadMs !== null
-      ? getThreatAtTime(allSeries, replayMode.effectivePlayheadMs)
-      : null
-
-  const [isThreatMeterExpanded, setIsThreatMeterExpanded] = useState(false)
   const [legendContainer, setLegendContainer] = useState<HTMLDivElement | null>(
     null,
   )
@@ -476,7 +469,6 @@ export const FightPage: FC = () => {
     )
   }
 
-  const showThreatMeter = replayMode.isReplayMode && threatAtPlayhead !== null
   const chartProps: ThreatChartProps = {
     renderer: chartRenderer,
     series: visibleSeries,
@@ -492,6 +484,7 @@ export const FightPage: FC = () => {
     windowStartMs: queryState.state.startMs,
     onSeriesClick: handleSeriesClick,
     onOpenPlayerOverrides: handleOpenPlayerOverrides,
+    onClearPlayerOverrides: playerThreatOverrides.resetActorOverrides,
     actorIdsWithThreatOverrides,
     onFocusAndAddPlayer: handleFocusAndAddPlayer,
     onFocusAndIsolatePlayer: handleFocusAndIsolatePlayer,
@@ -503,13 +496,14 @@ export const FightPage: FC = () => {
     showEnergizeEvents: userSettings.showEnergizeEvents,
     bossDamageMode,
     showFixateBands: userSettings.showFixateBands,
+    showRawThreat: userSettings.showRawThreat,
     onChartReadyChange: setIsChartReady,
     onRegisterResetZoom: handleRegisterResetZoom,
     targetDeathTimeMs,
     isReplayMode: replayMode.isReplayMode,
     playheadMs: replayMode.effectivePlayheadMs,
     onPlayheadChange: replayMode.setPlayheadMs,
-    legendContainer: showThreatMeter ? null : legendContainer,
+    legendContainer,
   }
 
   const focusedPlayerActor = focusedPlayerSummary
@@ -569,15 +563,6 @@ export const FightPage: FC = () => {
           isUserSettingsLoading ||
           (selectedTarget !== null && eventsQuery.isLoading) ? (
             <FightRosterLoadingSkeleton />
-          ) : showThreatMeter && chartProps.series.length > 0 ? (
-            <ThreatMeter
-              entries={threatAtPlayhead}
-              focusedActorId={queryState.state.focusId}
-              selectedPlayerIds={queryState.state.players}
-              playheadMs={replayMode.effectivePlayheadMs ?? 0}
-              isExpanded={isThreatMeterExpanded}
-              onExpandedChange={setIsThreatMeterExpanded}
-            />
           ) : null
         }
         transport={
@@ -605,6 +590,13 @@ export const FightPage: FC = () => {
               }
               bodyHeight={playerInfoHeight}
               onBodyHeightChange={setPlayerInfoHeight}
+              onOpenOverrides={
+                focusedPlayerActor
+                  ? () => {
+                      handleOpenPlayerOverrides(focusedPlayerActor.id)
+                    }
+                  : undefined
+              }
               summary={focusedPlayerSummary}
               initialAuras={initialAuras}
             >
@@ -625,6 +617,7 @@ export const FightPage: FC = () => {
         isOpen={settingsPanel.isOpen}
         showEnergizeEvents={userSettings.showEnergizeEvents}
         showFixateBands={userSettings.showFixateBands}
+        showRawThreat={userSettings.showRawThreat}
         showPets={userSettings.showPets}
         threatConfigLabel={
           threatConfig
@@ -637,6 +630,7 @@ export const FightPage: FC = () => {
         onOpenChange={settingsPanel.setOpen}
         onShowEnergizeEventsChange={handleShowEnergizeEventsChange}
         onShowFixateBandsChange={handleShowFixateBandsChange}
+        onShowRawThreatChange={handleShowRawThreatChange}
         onShowPetsChange={handleShowPetsChange}
       />
       {overridePanelActor ? (
