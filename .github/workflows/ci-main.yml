@@ -41,7 +41,8 @@ jobs:
       - run: pnpm test
 
   e2e:
-    runs-on: ubuntu-latest
+    # Playwright doesn't support ubuntu-latest (26.04) yet, so pin the e2e runner.
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
