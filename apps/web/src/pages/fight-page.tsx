@@ -2,14 +2,7 @@
  * Fight-level page with target filter and player-focused chart interactions.
  */
 import { usePostHog } from 'posthog-js/react'
-import {
-  type FC,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { type FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { useHotkeys, useHotkeysContext } from 'react-hotkeys-hook'
 import { useLocation, useParams } from 'react-router-dom'
 
@@ -66,6 +59,9 @@ import type { BossDamageMode } from '../types/app'
 import { useFightPageDerivedState } from './hooks/use-fight-page-derived-state'
 import { useFightPageInteractions } from './hooks/use-fight-page-interactions'
 import { useFightPageLoadTracking } from './hooks/use-fight-page-load-tracking'
+
+/** Fight that already got its one-time default focus; module-level so a remount can't refocus after Esc. */
+let lastAutoFocusedFightKey: string | null = null
 
 export const FightPage: FC = () => {
   const params = useParams<{ fightId: string }>()
@@ -298,17 +294,13 @@ export const FightPage: FC = () => {
 
   // Focus the top-threat player once per fight load when the URL has no focus;
   // after that, clearing focus (Esc) sticks.
-  const initialFocusFightKeyRef = useRef<string | null>(null)
   useEffect(() => {
     const fightKey = `${reportId}:${fightId}`
-    if (
-      visibleSeries.length === 0 ||
-      initialFocusFightKeyRef.current === fightKey
-    ) {
+    if (visibleSeries.length === 0 || lastAutoFocusedFightKey === fightKey) {
       return
     }
 
-    initialFocusFightKeyRef.current = fightKey
+    lastAutoFocusedFightKey = fightKey
     if (queryState.state.focusId !== null) {
       return
     }
