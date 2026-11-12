@@ -265,7 +265,7 @@ test.describe('fight page', () => {
     await page.keyboard.press('Escape')
     await page.keyboard.press('Space')
 
-    await expectSearchParam(page, 'replay', '1')
+    await expect(fightPage.replay.cursorReadout()).not.toContainText('—')
   })
 
   test('supports legend toggling, isolate on double click, and target switching', async ({
@@ -859,7 +859,7 @@ test.describe('fight page', () => {
     await expect(fightPage.settings.gearButton()).toBeFocused()
   })
 
-  test('enters replay mode and plays via Space, then exits with Escape', async ({
+  test('plays from the start via Space, pauses, and Escape clears T', async ({
     page,
   }) => {
     const fightPage = new FightPageObject(page)
@@ -867,17 +867,16 @@ test.describe('fight page', () => {
     await fightPage.goto(svgFightUrl)
     await expect.poll(() => fightPage.chart.renderer()).toBe('svg')
 
-    await expect(fightPage.replay.replayButton()).toBeVisible()
+    await expect(fightPage.replay.cursorReadout()).toContainText('—')
     await expect(fightPage.replay.threatMeter()).toContainText('End of fight')
+    await expect(fightPage.replay.playPauseButton()).toHaveAccessibleName(
+      'Play',
+    )
 
     await fightPage.replay.togglePlayPauseWithKey()
-    await expect(fightPage.replay.threatMeter()).toBeVisible()
     await expect(fightPage.replay.threatMeter()).not.toContainText(
       'End of fight',
     )
-    await expect(fightPage.replay.exitReplayButton()).toBeVisible()
-    await expect(fightPage.replay.replayButton()).toHaveCount(0)
-    await expectSearchParam(page, 'replay', '1')
     await expect(fightPage.replay.playPauseButton()).toHaveAccessibleName(
       'Pause',
     )
@@ -886,23 +885,94 @@ test.describe('fight page', () => {
     await expect(fightPage.replay.playPauseButton()).toHaveAccessibleName(
       'Play',
     )
+    await expect(page).toHaveURL((url) => url.searchParams.has('playheadMs'))
 
-    await fightPage.replay.exitWithEscape()
+    await fightPage.replay.pressEscape()
+    await expect(fightPage.replay.cursorReadout()).toContainText('—')
     await expect(fightPage.replay.threatMeter()).toContainText('End of fight')
-    await expect(fightPage.chart.legendRoot()).toBeVisible()
-    await expectSearchParam(page, 'replay', '0')
+    await expectSearchParam(page, 'playheadMs', null)
   })
 
-  test('deep-links into replay mode with playheadMs and replay params', async ({
+  test('focuses the top player on load, and escape clears focus without refocusing', async ({
     page,
   }) => {
     const fightPage = new FightPageObject(page)
 
-    await fightPage.goto(`${svgFightUrl}&playheadMs=5000&replay=1`)
+    await fightPage.goto(svgFightUrl)
+    await expect(page).toHaveURL((url) => url.searchParams.has('focusId'))
+    await expect(fightPage.summary.emptyStateText()).toBeHidden()
+
+    await page.keyboard.press('Escape')
+
+    await expectSearchParam(page, 'focusId', null)
+    await expect(fightPage.summary.emptyStateText()).toBeVisible()
+  })
+
+  test('escape clears focus but keeps the visible players', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(`${svgFightUrl}&players=1&focusId=1`)
+    await expect(fightPage.chart.legendToggle('Aegistank')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+
+    await page.keyboard.press('Escape')
+
+    await expectSearchParam(page, 'focusId', null)
+    await expectSearchParam(page, 'players', '1')
+    await expect(fightPage.chart.legendToggle('Bladefury')).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
+  })
+
+  test('leaves players out of the URL while everyone is visible', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(svgFightUrl)
+    await fightPage.chart.showTanksButton().click()
+    await expectSearchParam(page, 'players', '1')
+    await fightPage.chart.showAllButton().click()
+
+    await expectSearchParam(page, 'players', null)
+  })
+
+  test('sets T by clicking empty chart space and Escape clears it', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(svgFightUrl)
     await expect.poll(() => fightPage.chart.renderer()).toBe('svg')
 
-    await expect(fightPage.replay.threatMeter()).toBeVisible()
-    await expect(fightPage.replay.exitReplayButton()).toBeVisible()
+    await fightPage.chart.clickEmptyChartSpace()
+    await expect(fightPage.replay.cursorReadout()).not.toContainText('—')
+    await expect(fightPage.replay.threatMeter()).not.toContainText(
+      'End of fight',
+    )
+    await expect(page).toHaveURL((url) => url.searchParams.has('playheadMs'))
+
+    await fightPage.replay.pressEscape()
+    await expect(fightPage.replay.cursorReadout()).toContainText('—')
+    await expectSearchParam(page, 'playheadMs', null)
+  })
+
+  test('deep-links to a playhead with the playheadMs param', async ({
+    page,
+  }) => {
+    const fightPage = new FightPageObject(page)
+
+    await fightPage.goto(`${svgFightUrl}&playheadMs=5000`)
+    await expect.poll(() => fightPage.chart.renderer()).toBe('svg')
+
+    await expect(fightPage.replay.threatMeter()).not.toContainText(
+      'End of fight',
+    )
     await expect(fightPage.replay.cursorReadout()).toContainText('0:05.000')
     await expect(fightPage.replay.clearButton()).toBeVisible()
   })
@@ -927,7 +997,9 @@ test.describe('fight page', () => {
       fightPage.shortcuts.shortcutListItem('Toggle replay mode'),
     ).toHaveCount(0)
     await expect(
-      fightPage.shortcuts.shortcutListItem('Play / Pause (enters replay mode)'),
+      fightPage.shortcuts.shortcutListItem(
+        'Play / Pause (from T, or the start)',
+      ),
     ).toBeVisible()
     await expect(
       fightPage.shortcuts.shortcutListItem('Increase playback speed'),

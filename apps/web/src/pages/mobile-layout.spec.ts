@@ -83,7 +83,8 @@ test.describe('mobile layout', () => {
     await expect(fightPage.summary.drawer).toBeHidden()
 
     await fightPage.chart.viewTab('Player info').click()
-    await expect(fightPage.summary.emptyStateText()).toBeVisible()
+    await expect(fightPage.summary.drawer).toBeVisible()
+    await expect(fightPage.summary.emptyStateText()).toBeHidden()
     await expect(fightPage.chart.chartRegion()).toBeHidden()
 
     await fightPage.chart.viewTab('Chart').click()

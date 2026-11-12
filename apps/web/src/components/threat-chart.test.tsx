@@ -236,20 +236,4 @@ describe('ThreatChart', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Reset zoom' }))
     expect(onWindowChange).toHaveBeenCalledWith(null, null)
   })
-
-  it('hides the floating reset zoom button in replay mode', () => {
-    renderChart({
-      isReplayMode: true,
-      windowStartMs: 2000,
-      windowEndMs: 5000,
-      series: [
-        createSeries({
-          actorId: 1,
-          label: 'Tanky',
-          points: createZoomablePoints(),
-        }),
-      ],
-    })
-    expect(screen.queryByRole('button', { name: 'Reset zoom' })).toBeNull()
-  })
 })

@@ -133,8 +133,6 @@ export function resolveFightQueryState({
       ? parsedPlayheadMs
       : null
 
-  const replay = searchParams.get('replay') === '1'
-
   return {
     players,
     pinnedPlayers,
@@ -144,7 +142,6 @@ export function resolveFightQueryState({
     startMs,
     endMs,
     playheadMs,
-    replay,
   }
 }
 
@@ -221,14 +218,6 @@ export function applyFightQueryState(
       next.delete('playheadMs')
     } else {
       next.set('playheadMs', String(state.playheadMs))
-    }
-  }
-
-  if (state.replay !== undefined) {
-    if (state.replay) {
-      next.set('replay', '1')
-    } else {
-      next.set('replay', '0')
     }
   }
 

@@ -27,7 +27,6 @@ function createQueryState(
       startMs: null,
       endMs: null,
       playheadMs: null,
-      replay: false,
       ...overrides,
     },
     setPlayers: vi.fn(),
@@ -36,8 +35,6 @@ function createQueryState(
     setTarget: vi.fn(),
     setWindowBounds: vi.fn(),
     setPlayheadMs: vi.fn(),
-    setReplay: vi.fn(),
-    setReplayState: vi.fn(),
   }
 }
 
