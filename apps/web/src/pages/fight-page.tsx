@@ -60,6 +60,9 @@ import { useFightPageDerivedState } from './hooks/use-fight-page-derived-state'
 import { useFightPageInteractions } from './hooks/use-fight-page-interactions'
 import { useFightPageLoadTracking } from './hooks/use-fight-page-load-tracking'
 
+/** Fight that already got its one-time default focus; module-level so a remount can't refocus after Esc. */
+let lastAutoFocusedFightKey: string | null = null
+
 export const FightPage: FC = () => {
   const params = useParams<{ fightId: string }>()
   const location = useLocation()
@@ -143,7 +146,7 @@ export const FightPage: FC = () => {
     handleToggleFocusedPlayerIsolation,
     handleBossDamageModeChange,
     handleInferThreatReductionChange,
-    handleReplayStateChange,
+    handlePlayheadCommit,
     handleSeriesClick,
     handleShowFixateBandsChange,
     handleShowRawThreatChange,
@@ -157,6 +160,11 @@ export const FightPage: FC = () => {
     queryState,
     updateUserSettings,
     validPlayerIds,
+    chartPlayerIds: new Set(
+      visibleSeries
+        .filter((item) => item.actorType === 'Player')
+        .map((item) => item.actorId),
+    ),
     fightId,
     reportId,
     posthog,
@@ -183,27 +191,16 @@ export const FightPage: FC = () => {
     />,
   )
   const [isChartReady, setIsChartReady] = useState(false)
-  const [registeredResetZoom, setRegisteredResetZoom] = useState<
-    (() => void) | null
-  >(null)
-
-  const handleRegisterResetZoom = useCallback(
-    (resetZoom: (() => void) | null): void => {
-      setRegisteredResetZoom(() => resetZoom)
-    },
-    [],
-  )
-
   const replayMode = useReplayMode({
     committedPlayheadMs: queryState.state.playheadMs,
-    committedReplay: queryState.state.replay,
-    onCommitState: handleReplayStateChange,
-    resetZoom: () => {
-      registeredResetZoom?.()
-    },
+    onCommitState: handlePlayheadCommit,
     maxMs: fightDurationMs,
+    playbackStartMs: queryState.state.startMs ?? 0,
+    playbackEndMs: queryState.state.endMs ?? fightDurationMs,
     posthog,
   })
+
+  const hasPlayhead = replayMode.effectivePlayheadMs !== null
 
   const [legendContainer, setLegendContainer] = useState<HTMLDivElement | null>(
     null,
@@ -295,6 +292,35 @@ export const FightPage: FC = () => {
     }
   }, [disableScope, enableScope])
 
+  // Focus the top-threat player once per fight load when the URL has no focus;
+  // after that, clearing focus (Esc) sticks.
+  useEffect(() => {
+    const fightKey = `${reportId}:${fightId}`
+    if (visibleSeries.length === 0 || lastAutoFocusedFightKey === fightKey) {
+      return
+    }
+
+    lastAutoFocusedFightKey = fightKey
+    if (queryState.state.focusId !== null) {
+      return
+    }
+
+    const selectedPlayers = new Set(queryState.state.players)
+    const candidates = visibleSeries.filter(
+      (item) =>
+        item.actorType === 'Player' &&
+        (selectedPlayers.size === 0 || selectedPlayers.has(item.actorId)),
+    )
+    const topPlayer = candidates.reduce<(typeof candidates)[number] | null>(
+      (top, item) =>
+        top === null || item.totalThreat > top.totalThreat ? item : top,
+      null,
+    )
+    if (topPlayer) {
+      queryState.setFocusId(topPlayer.actorId, { replace: true })
+    }
+  }, [fightId, queryState, reportId, visibleSeries])
+
   useHotkeys(
     'b',
     (event) => {
@@ -325,7 +351,7 @@ export const FightPage: FC = () => {
       replayMode.togglePlayPause()
     },
     {
-      description: 'Play / Pause (enters replay mode)',
+      description: 'Play / Pause (from T, or the start)',
       metadata: { group: 'Replay', order: 70, showInFightOverlay: true },
       scopes: ['fight-page'],
     },
@@ -335,22 +361,26 @@ export const FightPage: FC = () => {
   useHotkeys(
     'escape',
     (event) => {
-      if (!replayMode.isReplayMode) return
+      if (!hasPlayhead && queryState.state.focusId === null) return
       event.preventDefault()
-      replayMode.exitReplayMode()
+      if (hasPlayhead) {
+        replayMode.clearPlayhead()
+      } else {
+        queryState.setFocusId(null)
+      }
     },
     {
-      description: 'Exit replay mode',
+      description: 'Clear T and stop playback, then clear focus',
       metadata: { group: 'Replay', order: 72, showInFightOverlay: true },
       scopes: ['fight-page'],
     },
-    [replayMode.isReplayMode, replayMode.exitReplayMode],
+    [hasPlayhead, queryState, replayMode.clearPlayhead],
   )
 
   useHotkeys(
     'shift+period',
     (event) => {
-      if (!replayMode.isReplayMode) return
+      if (!hasPlayhead) return
       event.preventDefault()
       replayMode.increaseSpeed()
     },
@@ -359,13 +389,13 @@ export const FightPage: FC = () => {
       metadata: { group: 'Replay', order: 73, showInFightOverlay: true },
       scopes: ['fight-page'],
     },
-    [replayMode.isReplayMode, replayMode.increaseSpeed],
+    [hasPlayhead, replayMode.increaseSpeed],
   )
 
   useHotkeys(
     'shift+comma',
     (event) => {
-      if (!replayMode.isReplayMode) return
+      if (!hasPlayhead) return
       event.preventDefault()
       replayMode.decreaseSpeed()
     },
@@ -374,13 +404,13 @@ export const FightPage: FC = () => {
       metadata: { group: 'Replay', order: 74, showInFightOverlay: true },
       scopes: ['fight-page'],
     },
-    [replayMode.isReplayMode, replayMode.decreaseSpeed],
+    [hasPlayhead, replayMode.decreaseSpeed],
   )
 
   useHotkeys(
     'right',
     (event) => {
-      if (!replayMode.isReplayMode) return
+      if (!hasPlayhead) return
       event.preventDefault()
       replayMode.stepForward(event.shiftKey)
     },
@@ -389,13 +419,13 @@ export const FightPage: FC = () => {
       metadata: { group: 'Replay', order: 75, showInFightOverlay: true },
       scopes: ['fight-page'],
     },
-    [replayMode.isReplayMode, replayMode.stepForward],
+    [hasPlayhead, replayMode.stepForward],
   )
 
   useHotkeys(
     'left',
     (event) => {
-      if (!replayMode.isReplayMode) return
+      if (!hasPlayhead) return
       event.preventDefault()
       replayMode.stepBackward(event.shiftKey)
     },
@@ -404,7 +434,7 @@ export const FightPage: FC = () => {
       metadata: { group: 'Replay', order: 76, showInFightOverlay: true },
       scopes: ['fight-page'],
     },
-    [replayMode.isReplayMode, replayMode.stepBackward],
+    [hasPlayhead, replayMode.stepBackward],
   )
 
   if (!reportId || Number.isNaN(fightId)) {
@@ -498,9 +528,7 @@ export const FightPage: FC = () => {
     showFixateBands: userSettings.showFixateBands,
     showRawThreat: userSettings.showRawThreat,
     onChartReadyChange: setIsChartReady,
-    onRegisterResetZoom: handleRegisterResetZoom,
     targetDeathTimeMs,
-    isReplayMode: replayMode.isReplayMode,
     playheadMs: replayMode.effectivePlayheadMs,
     onPlayheadChange: replayMode.setPlayheadMs,
     legendContainer,
@@ -569,14 +597,12 @@ export const FightPage: FC = () => {
           isUserSettingsLoading ? null : (
             <PlaybackControls
               isPlaying={replayMode.isPlaying}
-              isReplayMode={replayMode.isReplayMode}
               playbackSpeed={replayMode.playbackSpeed}
-              hasPlayhead={replayMode.effectivePlayheadMs !== null}
+              hasPlayhead={hasPlayhead}
               playheadMs={replayMode.effectivePlayheadMs}
               onTogglePlayPause={replayMode.togglePlayPause}
               onIncreaseSpeed={replayMode.increaseSpeed}
               onDecreaseSpeed={replayMode.decreaseSpeed}
-              onToggleReplayMode={replayMode.toggleReplayMode}
               onClearPlayhead={replayMode.clearPlayhead}
             />
           )

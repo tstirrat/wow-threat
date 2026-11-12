@@ -65,14 +65,12 @@ function resolveSelectedTarget({
 
 function resolveFocusedPlayerId({
   focusId,
-  players,
   visibleSeries,
 }: {
   focusId: number | null
-  players: number[]
   visibleSeries: ThreatSeries[]
 }): number | null {
-  const candidatePlayerId = focusId ?? players[0] ?? null
+  const candidatePlayerId = focusId
   if (candidatePlayerId === null) {
     return null
   }
@@ -249,10 +247,9 @@ export function useFightPageDerivedState({
     () =>
       resolveFocusedPlayerId({
         focusId: queryState.state.focusId,
-        players: queryState.state.players,
         visibleSeries,
       }),
-    [queryState.state.focusId, queryState.state.players, visibleSeries],
+    [queryState.state.focusId, visibleSeries],
   )
 
   const focusedPlayerAggregation = useMemo(() => {

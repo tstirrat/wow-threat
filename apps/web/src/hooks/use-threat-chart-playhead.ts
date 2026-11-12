@@ -1,37 +1,67 @@
 /**
- * Click-to-place and drag-to-scrub playhead interaction for replay mode.
+ * Click-on-empty-space interaction that sets the chart playhead (T), snapped to the nearest visible event.
  */
 import type ReactEChartsCore from 'echarts-for-react/esm/core'
 import type { RefObject } from 'react'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
+
+import type { ThreatSeries } from '../types/app'
+
+/** Pointer travel (px) above which a press counts as a drag-zoom, not a click. */
+const CLICK_MAX_TRAVEL_PX = 8
 
 interface PointerEventLike {
   offsetX?: number
   offsetY?: number
   zrX?: number
   zrY?: number
+  event?: { detail?: number }
 }
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
 }
 
-/** Attach ZRender handlers for click-to-place and drag-to-scrub playhead in replay mode. */
+/** Find the event time closest to `timeMs` across the given series, or null when empty. */
+export function resolveNearestEventTimeMs(
+  series: ThreatSeries[],
+  timeMs: number,
+): number | null {
+  return series
+    .flatMap((item) => item.points)
+    .reduce<number | null>((nearest, point) => {
+      if (
+        nearest === null ||
+        Math.abs(point.timeMs - timeMs) < Math.abs(nearest - timeMs)
+      ) {
+        return point.timeMs
+      }
+      return nearest
+    }, null)
+}
+
+/** Attach ZRender handlers so a click on empty chart space sets T (never on a point or line). */
 export function useThreatChartPlayhead({
   chartRef,
   isChartReady,
-  enabled,
   bounds,
+  visibleSeries,
   onPlayheadChange,
 }: {
   chartRef: RefObject<ReactEChartsCore | null>
   isChartReady: boolean
-  enabled: boolean
   bounds: { min: number; max: number }
+  visibleSeries: ThreatSeries[]
   onPlayheadChange: (timeMs: number) => void
 }): void {
+  const visibleSeriesRef = useRef(visibleSeries)
+
   useEffect(() => {
-    if (!enabled || !isChartReady) {
+    visibleSeriesRef.current = visibleSeries
+  }, [visibleSeries])
+
+  useEffect(() => {
+    if (!isChartReady) {
       return
     }
 
@@ -41,7 +71,8 @@ export function useThreatChartPlayhead({
     }
 
     const zr = chart.getZr()
-    let isDragging = false
+    let pressPoint: [number, number] | null = null
+    let didHitSeries = false
 
     const resolvePointer = (
       event: PointerEventLike,
@@ -60,75 +91,60 @@ export function useThreatChartPlayhead({
       return [x, y]
     }
 
-    const pixelToTime = (pixelX: number): number | null => {
-      const clampedX = clamp(pixelX, 0, chart.getWidth())
-      const value = Number(chart.convertFromPixel({ xAxisIndex: 0 }, clampedX))
-      if (!Number.isFinite(value)) {
-        return null
-      }
-
-      return clamp(Math.round(value), bounds.min, bounds.max)
+    // ECharts dispatches its own click first, so this flag is set before the zr click below.
+    const handleSeriesClick = (): void => {
+      didHitSeries = true
     }
 
     const handleMouseDown = (event: PointerEventLike): void => {
-      const pointer = resolvePointer(event)
-      if (!pointer) {
-        return
-      }
-
-      const isInGrid = chart.containPixel({ gridIndex: 0 }, pointer)
-      if (!isInGrid) {
-        return
-      }
-
-      isDragging = true
-      const timeMs = pixelToTime(pointer[0])
-      if (timeMs !== null) {
-        onPlayheadChange(timeMs)
-      }
+      pressPoint = resolvePointer(event)
     }
 
-    const handleMouseMove = (event: PointerEventLike): void => {
-      if (!isDragging) {
-        return
-      }
+    const handleClick = (event: PointerEventLike): void => {
+      const press = pressPoint
+      pressPoint = null
+      const hitSeries = didHitSeries
+      didHitSeries = false
 
       const pointer = resolvePointer(event)
-      if (!pointer) {
+      if (!pointer || hitSeries || (event.event?.detail ?? 1) > 1) {
+        return
+      }
+      if (!chart.containPixel({ gridIndex: 0 }, pointer)) {
+        return
+      }
+      if (
+        press &&
+        Math.hypot(pointer[0] - press[0], pointer[1] - press[1]) >=
+          CLICK_MAX_TRAVEL_PX
+      ) {
         return
       }
 
-      const timeMs = pixelToTime(pointer[0])
-      if (timeMs !== null) {
-        onPlayheadChange(timeMs)
+      const value = Number(
+        chart.convertFromPixel(
+          { xAxisIndex: 0 },
+          clamp(pointer[0], 0, chart.getWidth()),
+        ),
+      )
+      if (!Number.isFinite(value)) {
+        return
       }
+
+      const snapped = resolveNearestEventTimeMs(visibleSeriesRef.current, value)
+      onPlayheadChange(
+        clamp(Math.round(snapped ?? value), bounds.min, bounds.max),
+      )
     }
 
-    const handleMouseUp = (): void => {
-      isDragging = false
-    }
-
-    const handleDocumentMouseUp = (): void => {
-      isDragging = false
-    }
-
+    chart.on('click', 'series', handleSeriesClick)
     zr.on('mousedown', handleMouseDown)
-    zr.on('mousemove', handleMouseMove)
-    zr.on('mouseup', handleMouseUp)
-    window.addEventListener('mouseup', handleDocumentMouseUp)
+    zr.on('click', handleClick)
 
     return () => {
+      chart.off('click', handleSeriesClick)
       zr.off('mousedown', handleMouseDown)
-      zr.off('mousemove', handleMouseMove)
-      zr.off('mouseup', handleMouseUp)
-      window.removeEventListener('mouseup', handleDocumentMouseUp)
+      zr.off('click', handleClick)
     }
-  }, [
-    bounds.max,
-    bounds.min,
-    chartRef,
-    enabled,
-    isChartReady,
-    onPlayheadChange,
-  ])
+  }, [bounds.max, bounds.min, chartRef, isChartReady, onPlayheadChange])
 }

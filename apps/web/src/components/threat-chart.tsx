@@ -63,7 +63,6 @@ export type ThreatChartProps = {
   targetDeathTimeMs?: number | null
   onChartReadyChange?: (isReady: boolean) => void
   onRegisterResetZoom?: (resetZoom: (() => void) | null) => void
-  isReplayMode?: boolean
   playheadMs?: number | null
   onPlayheadChange?: (timeMs: number) => void
   legendContainer?: HTMLElement | null
@@ -100,7 +99,6 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   targetDeathTimeMs = null,
   onChartReadyChange,
   onRegisterResetZoom,
-  isReplayMode = false,
   playheadMs = null,
   onPlayheadChange,
   legendContainer = null,
@@ -137,7 +135,6 @@ export const ThreatChart: FC<ThreatChartProps> = ({
     bounds,
     borderColor: themeColors.border,
     chartRef,
-    enabled: !isReplayMode,
     isChartReady,
     onWindowChange,
     renderer,
@@ -148,8 +145,8 @@ export const ThreatChart: FC<ThreatChartProps> = ({
   useThreatChartPlayhead({
     chartRef,
     isChartReady,
-    enabled: isReplayMode,
     bounds,
+    visibleSeries,
     onPlayheadChange: onPlayheadChange ?? (() => {}),
   })
 
@@ -501,7 +498,6 @@ export const ThreatChart: FC<ThreatChartProps> = ({
           borderColor: item.color,
         },
         emphasis: {
-          disabled: isReplayMode,
           scale: true,
           itemStyle: {
             color: item.color,
@@ -607,7 +603,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
             click: handleSeriesChartClick,
           }}
         />
-        {isZoomed && !isReplayMode ? (
+        {isZoomed ? (
           <Button
             className="absolute right-3 top-3 z-10 bg-background/90 shadow-sm"
             size="sm"
@@ -623,7 +619,7 @@ export const ThreatChart: FC<ThreatChartProps> = ({
         ? createPortal(
             <RosterThreatMeter
               series={series}
-              playheadMs={isReplayMode ? playheadMs : null}
+              playheadMs={playheadMs}
               focusedActorId={focusedActorId}
               isActorVisible={isActorVisible}
               onActorFocus={(actorId) => {

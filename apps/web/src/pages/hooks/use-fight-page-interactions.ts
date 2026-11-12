@@ -22,6 +22,18 @@ export function normalizeIdList(ids: number[]): number[] {
   return [...new Set(ids)].sort((left, right) => left - right)
 }
 
+/** Resolve "everyone": valid players that have a line in the chart (all valid players when unknown). */
+function resolveAllPlayerIds(
+  validPlayerIds: Set<number>,
+  chartPlayerIds: Set<number> | undefined,
+): number[] {
+  return normalizeIdList(
+    [...validPlayerIds].filter(
+      (id) => chartPlayerIds === undefined || chartPlayerIds.has(id),
+    ),
+  )
+}
+
 export interface UseFightPageInteractionsResult {
   handleFocusAndAddPlayer: (playerId: number) => void
   handleFocusAndIsolatePlayer: (playerId: number) => void
@@ -29,10 +41,7 @@ export interface UseFightPageInteractionsResult {
   handleBossDamageModeChange: (bossDamageMode: BossDamageMode) => void
   handleClearSelections: () => void
   handleInferThreatReductionChange: (inferThreatReduction: boolean) => void
-  handleReplayStateChange: (state: {
-    playheadMs?: number | null
-    replay?: boolean
-  }) => void
+  handlePlayheadCommit: (state: { playheadMs?: number | null }) => void
   handleSeriesClick: (playerId: number) => void
   handleShowFixateBandsChange: (showFixateBands: boolean) => void
   handleShowRawThreatChange: (showRawThreat: boolean) => void
@@ -49,6 +58,7 @@ export function useFightPageInteractions({
   queryState,
   updateUserSettings,
   validPlayerIds,
+  chartPlayerIds,
   fightId,
   reportId,
   posthog,
@@ -57,7 +67,7 @@ export function useFightPageInteractions({
     UseFightQueryStateResult,
     | 'setFocusAndPlayers'
     | 'setFocusId'
-    | 'setReplayState'
+    | 'setPlayheadMs'
     | 'setPinnedPlayers'
     | 'setPlayers'
     | 'setTarget'
@@ -66,6 +76,8 @@ export function useFightPageInteractions({
   >
   updateUserSettings: UseUserSettingsResult['updateSettings']
   validPlayerIds: Set<number>
+  /** Players that actually have a line in the chart; "everyone" means all of these. */
+  chartPlayerIds?: Set<number>
   fightId: number
   reportId: string
   posthog?: PostHog
@@ -141,7 +153,7 @@ export function useFightPageInteractions({
         return
       }
 
-      const allPlayerIds = normalizeIdList([...validPlayerIds])
+      const allPlayerIds = resolveAllPlayerIds(validPlayerIds, chartPlayerIds)
       const currentPlayers =
         queryState.state.players.length === 0
           ? allPlayerIds
@@ -156,7 +168,7 @@ export function useFightPageInteractions({
       clearIsolateToggleState()
       queryState.setFocusAndPlayers(playerId, normalizedNextPlayers)
     },
-    [clearIsolateToggleState, queryState, validPlayerIds],
+    [chartPlayerIds, clearIsolateToggleState, queryState, validPlayerIds],
   )
 
   const handleClearSelections = useCallback((): void => {
@@ -166,7 +178,7 @@ export function useFightPageInteractions({
 
   const handleVisiblePlayerIdsChange = useCallback(
     (visiblePlayerIds: number[]): void => {
-      const allPlayerIds = normalizeIdList([...validPlayerIds])
+      const allPlayerIds = resolveAllPlayerIds(validPlayerIds, chartPlayerIds)
       const normalizedVisiblePlayerIds = normalizeIdList(visiblePlayerIds)
       const nextPlayers = areEqualIdLists(
         normalizedVisiblePlayerIds,
@@ -188,6 +200,7 @@ export function useFightPageInteractions({
       queryState.setPlayers(nextPlayers)
     },
     [
+      chartPlayerIds,
       clearIsolateToggleState,
       fightId,
       posthog,
@@ -288,9 +301,11 @@ export function useFightPageInteractions({
     [fightId, posthog, reportId, updateUserSettings],
   )
 
-  const handleReplayStateChange = useCallback(
-    (state: { playheadMs?: number | null; replay?: boolean }): void => {
-      queryState.setReplayState(state)
+  const handlePlayheadCommit = useCallback(
+    (state: { playheadMs?: number | null }): void => {
+      if (state.playheadMs !== undefined) {
+        queryState.setPlayheadMs(state.playheadMs)
+      }
     },
     [queryState],
   )
@@ -302,7 +317,7 @@ export function useFightPageInteractions({
     handleToggleFocusedPlayerIsolation,
     handleBossDamageModeChange,
     handleInferThreatReductionChange,
-    handleReplayStateChange,
+    handlePlayheadCommit,
     handleSeriesClick,
     handleShowFixateBandsChange,
     handleShowRawThreatChange,

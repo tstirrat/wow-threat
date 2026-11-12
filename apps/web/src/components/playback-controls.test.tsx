@@ -13,14 +13,12 @@ import {
 
 const baseProps: PlaybackControlsProps = {
   isPlaying: false,
-  isReplayMode: false,
   playbackSpeed: 1,
   hasPlayhead: false,
   playheadMs: null,
   onTogglePlayPause: vi.fn(),
   onIncreaseSpeed: vi.fn(),
   onDecreaseSpeed: vi.fn(),
-  onToggleReplayMode: vi.fn(),
   onClearPlayhead: vi.fn(),
 }
 
@@ -44,22 +42,22 @@ describe('PlaybackControls', () => {
     ).toBeInTheDocument()
   })
 
-  it('shows only the replay entry point and an empty cursor before replay', () => {
+  it('always shows play and speed, with an empty cursor and no clear before T is set', () => {
     render(<PlaybackControls {...baseProps} />)
 
-    expect(screen.getByRole('button', { name: 'Replay' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Play' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument()
+    expect(screen.getByText('1x')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Replay' })).toBeNull()
     expect(screen.getByTestId('transport-cursor')).toHaveTextContent('Cursor —')
-    expect(screen.queryByRole('button', { name: 'Clear' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Clear/ })).toBeNull()
   })
 
-  it('shows play, speed, cursor time and clear while replaying', async () => {
+  it('shows the cursor time and a clear button once T is set', async () => {
     const user = userEvent.setup()
     const onClearPlayhead = vi.fn()
     render(
       <PlaybackControls
         {...baseProps}
-        isReplayMode
         hasPlayhead
         playheadMs={65_250}
         playbackSpeed={2}
@@ -67,23 +65,18 @@ describe('PlaybackControls', () => {
       />,
     )
 
-    expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument()
     expect(screen.getByText('2x')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Exit Replay' })).toBeVisible()
     expect(screen.getByTestId('transport-cursor')).toHaveTextContent(
       'Cursor 1:05.250',
     )
 
-    await user.click(screen.getByRole('button', { name: 'Clear' }))
+    await user.click(screen.getByRole('button', { name: /Clear/ }))
     expect(onClearPlayhead).toHaveBeenCalledOnce()
   })
 
-  it('offers resume replay when a playhead exists outside replay mode', () => {
-    render(<PlaybackControls {...baseProps} hasPlayhead playheadMs={1000} />)
+  it('shows Pause while playing', () => {
+    render(<PlaybackControls {...baseProps} isPlaying />)
 
-    expect(
-      screen.getByRole('button', { name: 'Resume Replay' }),
-    ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Clear' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Pause' })).toBeInTheDocument()
   })
 })

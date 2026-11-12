@@ -113,6 +113,18 @@ export class ThreatChartObject {
     return this.legendRoot().getByRole('button', { name: 'All', exact: true })
   }
 
+  /** Click plot-area space near the top-left corner, where no line or point sits. */
+  async clickEmptyChartSpace(): Promise<void> {
+    const box = await this.page
+      .getByTestId('threat-chart-canvas-region')
+      .boundingBox()
+    if (!box) {
+      throw new Error('Chart region is not visible')
+    }
+
+    await this.page.mouse.click(box.x + 90, box.y + 40)
+  }
+
   async renderer(): Promise<ChartRenderer> {
     const chartContainer = this.chartContainer()
     if ((await chartContainer.count()) === 0) {

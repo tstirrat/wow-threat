@@ -70,7 +70,8 @@ jobs:
   e2e:
     needs: detect_changes
     if: ${{ needs.detect_changes.outputs.frontend == 'true' }}
-    runs-on: ubuntu-latest
+    # Playwright doesn't support ubuntu-latest (26.04) yet, so pin the e2e runner.
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:

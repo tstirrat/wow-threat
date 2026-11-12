@@ -1,5 +1,5 @@
 /**
- * Page object for replay mode interactions on the fight page.
+ * Page object for playhead (T) and playback interactions on the fight page.
  */
 import { type Locator, type Page } from '@playwright/test'
 
@@ -11,22 +11,11 @@ export class ReplayModeObject {
   }
 
   clearButton(): Locator {
-    return this.transport().getByRole('button', { name: 'Clear', exact: true })
+    return this.transport().getByRole('button', { name: /^Clear/ })
   }
 
   cursorReadout(): Locator {
     return this.transport().getByTestId('transport-cursor')
-  }
-
-  replayButton(): Locator {
-    return this.page.getByRole('button', { name: 'Replay', exact: true })
-  }
-
-  exitReplayButton(): Locator {
-    return this.page.getByRole('button', {
-      name: 'Exit Replay',
-      exact: true,
-    })
   }
 
   playPauseButton(): Locator {
@@ -42,7 +31,7 @@ export class ReplayModeObject {
     await this.page.keyboard.press('Space')
   }
 
-  async exitWithEscape(): Promise<void> {
+  async pressEscape(): Promise<void> {
     await this.page.keyboard.press('Escape')
   }
 }

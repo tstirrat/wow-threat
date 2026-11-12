@@ -14,16 +14,11 @@ export interface UseFightQueryStateResult {
   state: FightQueryState
   setPlayers: (players: number[]) => void
   setPinnedPlayers: (pinnedPlayers: number[]) => void
-  setFocusId: (focusId: number | null) => void
+  setFocusId: (focusId: number | null, options?: { replace?: boolean }) => void
   setFocusAndPlayers: (focusId: number | null, players: number[]) => void
   setTarget: (target: FightTarget | null) => void
   setWindow: (startMs: number | null, endMs: number | null) => void
   setPlayheadMs: (playheadMs: number | null) => void
-  setReplay: (replay: boolean) => void
-  setReplayState: (state: {
-    playheadMs?: number | null
-    replay?: boolean
-  }) => void
 }
 
 /** Manage fight query params with parsing + normalization rules. */
@@ -90,9 +85,11 @@ export function useFightQueryState({
   )
 
   const setFocusId = useCallback(
-    (focusId: number | null): void => {
-      setSearchParams((currentSearchParams) =>
-        applyFightQueryState(currentSearchParams, { focusId }),
+    (focusId: number | null, options?: { replace?: boolean }): void => {
+      setSearchParams(
+        (currentSearchParams) =>
+          applyFightQueryState(currentSearchParams, { focusId }),
+        { replace: options?.replace },
       )
     },
     [setSearchParams],
@@ -128,24 +125,6 @@ export function useFightQueryState({
     [setSearchParams],
   )
 
-  const setReplay = useCallback(
-    (replay: boolean): void => {
-      setSearchParams((currentSearchParams) =>
-        applyFightQueryState(currentSearchParams, { replay }),
-      )
-    },
-    [setSearchParams],
-  )
-
-  const setReplayState = useCallback(
-    (replayState: { playheadMs?: number | null; replay?: boolean }): void => {
-      setSearchParams((currentSearchParams) =>
-        applyFightQueryState(currentSearchParams, replayState),
-      )
-    },
-    [setSearchParams],
-  )
-
   return useMemo(
     () => ({
       state,
@@ -156,8 +135,6 @@ export function useFightQueryState({
       setTarget,
       setWindow,
       setPlayheadMs,
-      setReplay,
-      setReplayState,
     }),
     [
       setFocusAndPlayers,
@@ -165,8 +142,6 @@ export function useFightQueryState({
       setPlayheadMs,
       setPinnedPlayers,
       setPlayers,
-      setReplay,
-      setReplayState,
       setTarget,
       setWindow,
       state,

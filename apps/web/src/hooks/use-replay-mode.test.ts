@@ -1,9 +1,9 @@
 /**
- * Unit tests for the replay mode hook.
+ * Unit tests for the playhead/playback hook.
  */
 import { act, renderHook } from '@testing-library/react'
 import type { PostHog } from 'posthog-js'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useReplayMode } from './use-replay-mode'
 
@@ -16,170 +16,204 @@ function createProps(
 ): Parameters<typeof useReplayMode>[0] {
   return {
     committedPlayheadMs: null,
-    committedReplay: false,
     onCommitState: vi.fn(),
-    resetZoom: vi.fn(),
     maxMs: 60000,
     ...overrides,
   }
 }
 
 describe('useReplayMode', () => {
+  let frameTime = 0
+  let pendingFrame: FrameRequestCallback | null = null
+
+  beforeEach(() => {
+    frameTime = 0
+    pendingFrame = null
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+      pendingFrame = cb
+      return 1
+    })
+    vi.stubGlobal('cancelAnimationFrame', () => {
+      pendingFrame = null
+    })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  /** Advance the mocked animation clock by `deltaMs` of wall time. */
+  function advance(deltaMs: number): void {
+    const callback = pendingFrame
+    pendingFrame = null
+    frameTime += deltaMs
+    callback?.(frameTime)
+  }
+
   describe('initial state', () => {
-    it('starts inactive when committedReplay is false', () => {
+    it('has no playhead and is paused', () => {
       const { result } = renderHook(() => useReplayMode(createProps()))
 
-      expect(result.current.isReplayMode).toBe(false)
       expect(result.current.effectivePlayheadMs).toBeNull()
       expect(result.current.isPlaying).toBe(false)
       expect(result.current.playbackSpeed).toBe(1)
     })
 
-    it('starts active when committedReplay is true', () => {
+    it('adopts the committed playhead', () => {
       const { result } = renderHook(() =>
-        useReplayMode(
-          createProps({ committedReplay: true, committedPlayheadMs: 5000 }),
-        ),
+        useReplayMode(createProps({ committedPlayheadMs: 5000 })),
       )
 
-      expect(result.current.isReplayMode).toBe(true)
       expect(result.current.effectivePlayheadMs).toBe(5000)
     })
   })
 
-  describe('enterReplayMode', () => {
-    it('enters replay mode and resets zoom', () => {
-      const resetZoom = vi.fn()
-      const onCommitState = vi.fn()
-      const { result } = renderHook(() =>
-        useReplayMode(createProps({ resetZoom, onCommitState })),
-      )
-
-      act(() => {
-        result.current.enterReplayMode()
-      })
-
-      expect(result.current.isReplayMode).toBe(true)
-      expect(result.current.effectivePlayheadMs).toBe(0)
-      expect(resetZoom).toHaveBeenCalled()
-      expect(onCommitState).toHaveBeenCalledWith({ replay: true })
-    })
-
-    it('resumes from committed playhead position', () => {
-      const { result } = renderHook(() =>
-        useReplayMode(createProps({ committedPlayheadMs: 15000 })),
-      )
-
-      act(() => {
-        result.current.enterReplayMode()
-      })
-
-      expect(result.current.effectivePlayheadMs).toBe(15000)
-    })
-  })
-
-  describe('exitReplayMode', () => {
-    it('exits replay mode and commits playhead and replay state', () => {
-      const onCommitState = vi.fn()
-      const { result } = renderHook(() =>
-        useReplayMode(createProps({ committedReplay: true, onCommitState })),
-      )
-
-      act(() => {
-        result.current.setPlayheadMs(8000)
-      })
-
-      act(() => {
-        result.current.exitReplayMode()
-      })
-
-      expect(result.current.isReplayMode).toBe(false)
-      expect(onCommitState).toHaveBeenCalledWith({
-        replay: false,
-        playheadMs: 8000,
-      })
-    })
-  })
-
-  describe('toggleReplayMode', () => {
-    it('enters when not in replay mode', () => {
-      const { result } = renderHook(() => useReplayMode(createProps()))
-
-      act(() => {
-        result.current.toggleReplayMode()
-      })
-
-      expect(result.current.isReplayMode).toBe(true)
-    })
-
-    it('exits when in replay mode', () => {
-      const { result } = renderHook(() =>
-        useReplayMode(createProps({ committedReplay: true })),
-      )
-
-      act(() => {
-        result.current.toggleReplayMode()
-      })
-
-      expect(result.current.isReplayMode).toBe(false)
-    })
-  })
-
   describe('togglePlayPause', () => {
-    it('enters replay mode and starts playing when not in replay mode', () => {
+    it('plays from the start when no playhead exists', () => {
       const { result } = renderHook(() => useReplayMode(createProps()))
 
       act(() => {
         result.current.togglePlayPause()
       })
 
-      expect(result.current.isReplayMode).toBe(true)
       expect(result.current.isPlaying).toBe(true)
+      expect(result.current.effectivePlayheadMs).toBe(0)
     })
 
-    it('pauses when already playing', () => {
-      const { result } = renderHook(() => useReplayMode(createProps()))
+    it('plays from the existing playhead', () => {
+      const { result } = renderHook(() =>
+        useReplayMode(createProps({ committedPlayheadMs: 12000 })),
+      )
+
+      act(() => {
+        result.current.togglePlayPause()
+      })
+
+      expect(result.current.isPlaying).toBe(true)
+      expect(result.current.effectivePlayheadMs).toBe(12000)
+    })
+
+    it('pauses and commits the playhead when already playing', () => {
+      const onCommitState = vi.fn()
+      const { result } = renderHook(() =>
+        useReplayMode(createProps({ onCommitState })),
+      )
 
       act(() => {
         result.current.togglePlayPause()
       })
       act(() => {
+        advance(0)
+        advance(2000)
+      })
+      act(() => {
         result.current.togglePlayPause()
       })
 
-      expect(result.current.isReplayMode).toBe(true)
       expect(result.current.isPlaying).toBe(false)
+      expect(onCommitState).toHaveBeenLastCalledWith({ playheadMs: 2000 })
+    })
+
+    it('stops at the right edge of the window', () => {
+      const onCommitState = vi.fn()
+      const { result } = renderHook(() =>
+        useReplayMode(
+          createProps({
+            onCommitState,
+            committedPlayheadMs: 1000,
+            playbackEndMs: 3000,
+          }),
+        ),
+      )
+
+      act(() => {
+        result.current.togglePlayPause()
+      })
+      act(() => {
+        advance(0)
+        advance(10000)
+      })
+
+      expect(result.current.isPlaying).toBe(false)
+      expect(result.current.effectivePlayheadMs).toBe(3000)
+      expect(onCommitState).toHaveBeenLastCalledWith({ playheadMs: 3000 })
+    })
+
+    it('restarts from the window start when played from the right edge', () => {
+      const { result } = renderHook(() =>
+        useReplayMode(
+          createProps({
+            committedPlayheadMs: 3000,
+            playbackStartMs: 500,
+            playbackEndMs: 3000,
+          }),
+        ),
+      )
+
+      act(() => {
+        result.current.togglePlayPause()
+      })
+
+      expect(result.current.isPlaying).toBe(true)
+      expect(result.current.effectivePlayheadMs).toBe(500)
     })
   })
 
   describe('clearPlayhead', () => {
-    it('clears everything and commits null state', () => {
+    it('clears the playhead, stops playback, and commits null', () => {
       const onCommitState = vi.fn()
       const { result } = renderHook(() =>
-        useReplayMode(createProps({ committedReplay: true, onCommitState })),
+        useReplayMode(createProps({ onCommitState })),
       )
 
       act(() => {
-        result.current.setPlayheadMs(5000)
+        result.current.togglePlayPause()
       })
-
       act(() => {
         result.current.clearPlayhead()
       })
 
-      expect(result.current.isReplayMode).toBe(false)
+      expect(result.current.isPlaying).toBe(false)
       expect(result.current.effectivePlayheadMs).toBeNull()
-      expect(onCommitState).toHaveBeenCalledWith({
-        replay: false,
-        playheadMs: null,
+      expect(onCommitState).toHaveBeenLastCalledWith({ playheadMs: null })
+    })
+  })
+
+  describe('setPlayheadMs', () => {
+    it('commits the new playhead', () => {
+      const onCommitState = vi.fn()
+      const { result } = renderHook(() =>
+        useReplayMode(createProps({ onCommitState })),
+      )
+
+      act(() => {
+        result.current.setPlayheadMs(4200)
       })
+
+      expect(result.current.effectivePlayheadMs).toBe(4200)
+      expect(onCommitState).toHaveBeenLastCalledWith({ playheadMs: 4200 })
+    })
+  })
+
+  describe('posthog tracking', () => {
+    it('captures playback_started when playback begins', () => {
+      const posthog = createMockPosthog()
+      const { result } = renderHook(() =>
+        useReplayMode(createProps({ posthog })),
+      )
+
+      act(() => {
+        result.current.togglePlayPause()
+      })
+
+      expect(posthog.capture).toHaveBeenCalledWith('playback_started')
     })
   })
 
   describe('setPlayheadMs', () => {
     it('clamps to valid range', () => {
       const { result } = renderHook(() =>
-        useReplayMode(createProps({ committedReplay: true, maxMs: 10000 })),
+        useReplayMode(createProps({ maxMs: 10000 })),
       )
 
       act(() => {
@@ -198,9 +232,7 @@ describe('useReplayMode', () => {
 
   describe('speed controls', () => {
     it('increases speed through tiers', () => {
-      const { result } = renderHook(() =>
-        useReplayMode(createProps({ committedReplay: true })),
-      )
+      const { result } = renderHook(() => useReplayMode(createProps()))
 
       expect(result.current.playbackSpeed).toBe(1)
 
@@ -216,9 +248,7 @@ describe('useReplayMode', () => {
     })
 
     it('decreases speed through tiers', () => {
-      const { result } = renderHook(() =>
-        useReplayMode(createProps({ committedReplay: true })),
-      )
+      const { result } = renderHook(() => useReplayMode(createProps()))
 
       act(() => {
         result.current.decreaseSpeed()
@@ -232,9 +262,7 @@ describe('useReplayMode', () => {
     })
 
     it('clamps at min and max speed', () => {
-      const { result } = renderHook(() =>
-        useReplayMode(createProps({ committedReplay: true })),
-      )
+      const { result } = renderHook(() => useReplayMode(createProps()))
 
       act(() => {
         result.current.increaseSpeed()
@@ -256,56 +284,9 @@ describe('useReplayMode', () => {
     })
   })
 
-  describe('posthog tracking', () => {
-    it('captures replay_mode_entered when entering replay mode', () => {
-      const posthog = createMockPosthog()
-      const { result } = renderHook(() =>
-        useReplayMode(createProps({ posthog })),
-      )
-
-      act(() => {
-        result.current.enterReplayMode()
-      })
-
-      expect(posthog.capture).toHaveBeenCalledWith('replay_mode_entered')
-    })
-
-    it('captures replay_mode_exited when exiting replay mode', () => {
-      const posthog = createMockPosthog()
-      const { result } = renderHook(() =>
-        useReplayMode(createProps({ committedReplay: true, posthog })),
-      )
-
-      act(() => {
-        result.current.exitReplayMode()
-      })
-
-      expect(posthog.capture).toHaveBeenCalledWith('replay_mode_exited')
-    })
-
-    it('captures the correct event on toggleReplayMode', () => {
-      const posthog = createMockPosthog()
-      const { result } = renderHook(() =>
-        useReplayMode(createProps({ posthog })),
-      )
-
-      act(() => {
-        result.current.toggleReplayMode()
-      })
-      expect(posthog.capture).toHaveBeenLastCalledWith('replay_mode_entered')
-
-      act(() => {
-        result.current.toggleReplayMode()
-      })
-      expect(posthog.capture).toHaveBeenLastCalledWith('replay_mode_exited')
-    })
-  })
-
   describe('stepping', () => {
     it('steps forward by 1 second', () => {
-      const { result } = renderHook(() =>
-        useReplayMode(createProps({ committedReplay: true })),
-      )
+      const { result } = renderHook(() => useReplayMode(createProps()))
 
       act(() => {
         result.current.setPlayheadMs(5000)
@@ -319,9 +300,7 @@ describe('useReplayMode', () => {
     })
 
     it('steps forward by 100ms with fineStep', () => {
-      const { result } = renderHook(() =>
-        useReplayMode(createProps({ committedReplay: true })),
-      )
+      const { result } = renderHook(() => useReplayMode(createProps()))
 
       act(() => {
         result.current.setPlayheadMs(5000)
@@ -335,9 +314,7 @@ describe('useReplayMode', () => {
     })
 
     it('steps backward by 1 second', () => {
-      const { result } = renderHook(() =>
-        useReplayMode(createProps({ committedReplay: true })),
-      )
+      const { result } = renderHook(() => useReplayMode(createProps()))
 
       act(() => {
         result.current.setPlayheadMs(5000)
@@ -351,9 +328,7 @@ describe('useReplayMode', () => {
     })
 
     it('steps backward by 100ms with fineStep', () => {
-      const { result } = renderHook(() =>
-        useReplayMode(createProps({ committedReplay: true })),
-      )
+      const { result } = renderHook(() => useReplayMode(createProps()))
 
       act(() => {
         result.current.setPlayheadMs(5000)
@@ -368,7 +343,7 @@ describe('useReplayMode', () => {
 
     it('clamps step forward at maxMs', () => {
       const { result } = renderHook(() =>
-        useReplayMode(createProps({ committedReplay: true, maxMs: 5500 })),
+        useReplayMode(createProps({ maxMs: 5500 })),
       )
 
       act(() => {
@@ -383,9 +358,7 @@ describe('useReplayMode', () => {
     })
 
     it('clamps step backward at 0', () => {
-      const { result } = renderHook(() =>
-        useReplayMode(createProps({ committedReplay: true })),
-      )
+      const { result } = renderHook(() => useReplayMode(createProps()))
 
       act(() => {
         result.current.setPlayheadMs(500)
