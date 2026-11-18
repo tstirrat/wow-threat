@@ -1,29 +1,19 @@
 {
   "manifest_version": 3,
   "name": "WoW Threat Companion",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Open the current WCL fight in wow-threat.web.app",
+  "icons": { "128": "assets/store-icon.png" },
   "permissions": ["storage"],
-  "host_permissions": [
-    "*://classic.warcraftlogs.com/reports/*",
-    "*://vanilla.warcraftlogs.com/reports/*",
-    "*://fresh.warcraftlogs.com/reports/*",
-    "*://sod.warcraftlogs.com/reports/*",
-    "*://www.warcraftlogs.com/reports/*"
-  ],
+  "host_permissions": ["*://*.warcraftlogs.com/reports/*"],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "WoW Threat Companion"
+    "default_title": "WoW Threat Companion",
+    "default_icon": { "128": "assets/store-icon.png" }
   },
   "content_scripts": [
     {
-      "matches": [
-        "*://classic.warcraftlogs.com/reports/*",
-        "*://vanilla.warcraftlogs.com/reports/*",
-        "*://fresh.warcraftlogs.com/reports/*",
-        "*://sod.warcraftlogs.com/reports/*",
-        "*://www.warcraftlogs.com/reports/*"
-      ],
+      "matches": ["*://*.warcraftlogs.com/reports/*"],
       "js": ["content.js"],
       "run_at": "document_start"
     }
