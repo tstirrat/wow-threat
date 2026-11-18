@@ -30,6 +30,7 @@ jobs:
               - 'pnpm-workspace.yaml'
               - 'turbo.json'
               - '.nvmrc'
+              - '.github/workflows/ci-pull-request.yml'
 
   lint:
     runs-on: ubuntu-latest
