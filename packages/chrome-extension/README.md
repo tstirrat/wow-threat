@@ -21,9 +21,4 @@ Click the extension icon to open the popup. Click **Switch to Localhost :5173** 
 
 ## Supported sites
 
-- `classic.warcraftlogs.com`
-- `vanilla.warcraftlogs.com`
-- `forever.warcraftlogs.com`
-- `fresh.warcraftlogs.com`
-- `sod.warcraftlogs.com`
-- `www.warcraftlogs.com`
+- `*.warcraftlogs.com` (every subdomain, including classic, vanilla, fresh, forever, sod, and www)

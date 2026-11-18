@@ -3,14 +3,11 @@
   "name": "WoW Threat Companion",
   "version": "1.1.0",
   "description": "Open the current WCL fight in wow-threat.web.app",
-  "permissions": ["storage"],
+  "permissions": [
+    "storage"
+  ],
   "host_permissions": [
-    "*://classic.warcraftlogs.com/reports/*",
-    "*://vanilla.warcraftlogs.com/reports/*",
-    "*://forever.warcraftlogs.com/reports/*",
-    "*://fresh.warcraftlogs.com/reports/*",
-    "*://sod.warcraftlogs.com/reports/*",
-    "*://www.warcraftlogs.com/reports/*"
+    "*://*.warcraftlogs.com/reports/*"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -19,14 +16,11 @@
   "content_scripts": [
     {
       "matches": [
-        "*://classic.warcraftlogs.com/reports/*",
-        "*://vanilla.warcraftlogs.com/reports/*",
-        "*://forever.warcraftlogs.com/reports/*",
-    "*://fresh.warcraftlogs.com/reports/*",
-        "*://sod.warcraftlogs.com/reports/*",
-        "*://www.warcraftlogs.com/reports/*"
+        "*://*.warcraftlogs.com/reports/*"
       ],
-      "js": ["content.js"],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_start"
     }
   ]
