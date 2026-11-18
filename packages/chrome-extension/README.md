@@ -13,7 +13,7 @@ The extension icon will appear in your toolbar.
 
 ## Usage
 
-Navigate to any WCL report page (classic, vanilla, fresh, SoD, or retail). A **Threat** tab appears in the report's tab bar. Clicking it opens the current fight with the selected player pre-filled in wow-threat.
+Navigate to any WCL report page (classic, vanilla, fresh, forever, SoD, or retail). A **Threat** tab appears in the report's tab bar. Clicking it opens the current fight with the selected player pre-filled in wow-threat.
 
 ## Switching to localhost
 
@@ -23,6 +23,7 @@ Click the extension icon to open the popup. Click **Switch to Localhost :5173** 
 
 - `classic.warcraftlogs.com`
 - `vanilla.warcraftlogs.com`
+- `forever.warcraftlogs.com`
 - `fresh.warcraftlogs.com`
 - `sod.warcraftlogs.com`
 - `www.warcraftlogs.com`
