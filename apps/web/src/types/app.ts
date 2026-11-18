@@ -7,6 +7,7 @@ import type { HitType, PlayerClass } from '@wow-threat/wcl-types'
 import type { ReportActorRole } from './api'
 
 export type WarcraftLogsHost =
+  | 'forever.warcraftlogs.com'
   | 'fresh.warcraftlogs.com'
   | 'sod.warcraftlogs.com'
   | 'vanilla.warcraftlogs.com'

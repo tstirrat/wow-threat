@@ -8,6 +8,8 @@ import type {
 
 export const FRESH_TBC_CUTOVER_TIMESTAMP_MS = Date.UTC(2026, 0, 13)
 export const CLASSIC_GAME_VERSIONS = [2, 3] as const
+/** WCL gameVersion reported for forever.warcraftlogs.com reports. */
+export const FOREVER_GAME_VERSION = 7
 
 export function isSupportedClassicGameVersion(gameVersion: number): boolean {
   return CLASSIC_GAME_VERSIONS.includes(

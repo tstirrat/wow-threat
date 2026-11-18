@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url'
 const HOSTS = {
   retail: 'https://www.warcraftlogs.com',
   classic: 'https://classic.warcraftlogs.com',
+  forever: 'https://forever.warcraftlogs.com',
   fresh: 'https://fresh.warcraftlogs.com',
   vanilla: 'https://vanilla.warcraftlogs.com',
   sod: 'https://sod.warcraftlogs.com',

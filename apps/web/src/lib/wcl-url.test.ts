@@ -32,6 +32,17 @@ describe('wcl-url', () => {
     })
   })
 
+  it('parses forever report urls', () => {
+    expect(
+      parseWarcraftLogsReportUrl(
+        'https://forever.warcraftlogs.com/reports/dQmnBzMhCqTFX3vg?fight=8',
+      ),
+    ).toEqual({
+      reportId: 'dQmnBzMhCqTFX3vg',
+      host: 'forever.warcraftlogs.com',
+    })
+  })
+
   it('parses retail report urls with a query string', () => {
     expect(
       parseWarcraftLogsReportUrl(

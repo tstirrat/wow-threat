@@ -66,6 +66,7 @@ interface StoredUserSettings {
 }
 
 const supportedWarcraftLogsHosts: WarcraftLogsHost[] = [
+  'forever.warcraftlogs.com',
   'fresh.warcraftlogs.com',
   'sod.warcraftlogs.com',
   'vanilla.warcraftlogs.com',

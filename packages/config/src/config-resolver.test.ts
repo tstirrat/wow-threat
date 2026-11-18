@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 
 import { resolveConfigOrNull } from './config-resolver'
 import { eraConfig } from './era'
+import { foreverConfig } from './forever'
 import { sodConfig } from './sod'
 import { tbcConfig } from './tbc'
 
@@ -243,5 +244,15 @@ describe('resolveConfigOrNull', () => {
     const config = resolveConfigOrNull(createResolverInput({ gameVersion: 2 }))
 
     expect(config).toBeNull()
+  })
+
+  it('resolves forever for gameVersion 7 reports without zone metadata', () => {
+    expect(
+      resolveConfigOrNull(
+        createResolverInput({
+          gameVersion: 7,
+        }),
+      ),
+    ).toBe(foreverConfig)
   })
 })
