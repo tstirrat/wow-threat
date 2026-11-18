@@ -3,6 +3,8 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { groupPathnameBeforeSend, normalizePathname } from './posthog'
+
 describe('isPostHogEnabled', () => {
   afterEach(() => {
     vi.unstubAllEnvs()
@@ -71,5 +73,44 @@ describe('posthogOptions', () => {
     const { posthogOptions } = await import('./posthog')
 
     expect(posthogOptions.person_profiles).toBe('identified_only')
+  })
+})
+
+describe('normalizePathname', () => {
+  it.each([
+    ['/report/MvrY6aBgftZxj1QX/fight/1', '/report/:reportId/fight/:fightId'],
+    ['/report/MvrY6aBgftZxj1QX', '/report/:reportId'],
+    ['/report/MvrY6aBgftZxj1QX/', '/report/:reportId'],
+    ['/reports/guild/123', '/reports/:entityType/:entityId'],
+    ['/', '/'],
+    ['/auth/complete', '/auth/complete'],
+  ])('maps %s to %s', (input, expected) => {
+    expect(normalizePathname(input)).toBe(expected)
+  })
+})
+
+describe('groupPathnameBeforeSend', () => {
+  it('replaces $pathname with the route template and keeps the raw path', () => {
+    const event = {
+      uuid: 'id',
+      event: '$pageview',
+      properties: { $pathname: '/report/abc/fight/2', other: 1 },
+    }
+
+    expect(groupPathnameBeforeSend(event)?.properties).toEqual({
+      $pathname: '/report/:reportId/fight/:fightId',
+      raw_pathname: '/report/abc/fight/2',
+      other: 1,
+    })
+  })
+
+  it('passes events without a $pathname through unchanged', () => {
+    const event = { uuid: 'id', event: 'custom', properties: { a: 1 } }
+
+    expect(groupPathnameBeforeSend(event)).toEqual(event)
+  })
+
+  it('passes null through', () => {
+    expect(groupPathnameBeforeSend(null)).toBeNull()
   })
 })
