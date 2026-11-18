@@ -1,8 +1,8 @@
 /**
  * Tests for usePageViewTracking hook.
  */
-import { renderHook } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { act, renderHook } from '@testing-library/react'
+import { MemoryRouter, useNavigate } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { usePageViewTracking } from './use-page-view-tracking'
@@ -63,5 +63,32 @@ describe('usePageViewTracking', () => {
 
     rerender()
     expect(mockCapture).not.toHaveBeenCalled()
+  })
+
+  it('captures a new $pageview when navigating between fights', async () => {
+    const usePostHog = await getUsePostHog()
+    usePostHog.mockReturnValue(mockPosthog as ReturnType<typeof usePostHog>)
+
+    const { result } = renderHook(
+      () => {
+        usePageViewTracking()
+        return useNavigate()
+      },
+      {
+        wrapper: ({ children }) =>
+          MemoryRouter({
+            children,
+            initialEntries: ['/report/abc123/fight/1'],
+          }) as JSX.Element,
+      },
+    )
+    mockCapture.mockClear()
+
+    act(() => result.current('/report/abc123/fight/2?targetId=5'))
+
+    expect(mockCapture).toHaveBeenCalledOnce()
+    expect(mockCapture).toHaveBeenCalledWith('$pageview', {
+      path: '/report/abc123/fight/2',
+    })
   })
 })

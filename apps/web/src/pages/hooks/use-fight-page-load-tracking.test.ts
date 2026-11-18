@@ -205,4 +205,57 @@ describe('useFightPageLoadTracking', () => {
       expect(calls).toHaveLength(1)
     })
   })
+
+  describe('navigation between pages', () => {
+    it('captures fight_loaded again for the same fightId in a different report', () => {
+      const posthog = createMockPosthog()
+      const { rerender } = renderHook(
+        (props) => useFightPageLoadTracking(props),
+        {
+          initialProps: createProps({
+            reportId: 'AAA',
+            fightData: { name: 'Onyxia' },
+            posthog,
+          }),
+        },
+      )
+
+      rerender(
+        createProps({
+          reportId: 'BBB',
+          fightData: { name: 'Onyxia' },
+          posthog,
+        }),
+      )
+
+      expect(posthog.capture).toHaveBeenCalledTimes(2)
+      expect(posthog.capture).toHaveBeenLastCalledWith(
+        'fight_loaded',
+        expect.objectContaining({ report_id: 'BBB', fight_id: 1 }),
+      )
+    })
+
+    it('measures load_time_ms from the navigation, not the first mount', () => {
+      const posthog = createMockPosthog()
+      const now = vi.spyOn(performance, 'now')
+      now.mockReturnValue(1000)
+      const { rerender } = renderHook(
+        (props) => useFightPageLoadTracking(props),
+        { initialProps: createProps({ posthog }) },
+      )
+
+      now.mockReturnValue(61_000)
+      rerender(createProps({ fightId: 2, posthog }))
+      now.mockReturnValue(61_250)
+      rerender(
+        createProps({ fightId: 2, fightData: { name: 'Onyxia' }, posthog }),
+      )
+
+      expect(posthog.capture).toHaveBeenCalledWith(
+        'fight_loaded',
+        expect.objectContaining({ fight_id: 2, load_time_ms: 250 }),
+      )
+      now.mockRestore()
+    })
+  })
 })
