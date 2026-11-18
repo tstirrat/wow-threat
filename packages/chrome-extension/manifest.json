@@ -3,11 +3,13 @@
   "name": "WoW Threat Companion",
   "version": "1.1.0",
   "description": "Open the current WCL fight in wow-threat.web.app",
+  "icons": { "128": "assets/store-icon.png" },
   "permissions": ["storage"],
   "host_permissions": ["*://*.warcraftlogs.com/reports/*"],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "WoW Threat Companion"
+    "default_title": "WoW Threat Companion",
+    "default_icon": { "128": "assets/store-icon.png" }
   },
   "content_scripts": [
     {
