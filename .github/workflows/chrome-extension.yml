@@ -1,0 +1,35 @@
+name: chrome-extension
+on:
+  pull_request:
+    paths:
+      - 'packages/chrome-extension/**'
+      - 'scripts/package-extension.sh'
+      - '.github/workflows/chrome-extension.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/chrome-extension/**'
+      - 'scripts/package-extension.sh'
+      - '.github/workflows/chrome-extension.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Build Chrome Web Store zip
+        run: ./scripts/package-extension.sh
+      - name: Read extension version
+        id: version
+        run: echo "value=$(node -p "require('./packages/chrome-extension/manifest.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wow-threat-extension-${{ steps.version.outputs.value }}
+          path: dist/wow-threat-extension-*.zip
+          if-no-files-found: error
