@@ -9,9 +9,12 @@ ext="$root/packages/chrome-extension"
 version="$(node -p "require('$ext/manifest.json').version")"
 out="$root/dist/wow-threat-extension-$version.zip"
 
-mkdir -p "$root/dist"
-rm -f "$out"
-(cd "$ext" && zip -q -X "$out" manifest.json content.js popup.html popup.js assets/store-icon.png)
+files=(manifest.json content.js popup.html popup.js assets/store-icon.png)
+
+rm -rf "$root/dist/extension" "$out"
+mkdir -p "$root/dist/extension/assets"
+for f in "${files[@]}"; do cp "$ext/$f" "$root/dist/extension/$f"; done
+(cd "$root/dist/extension" && zip -q -X "$out" "${files[@]}")
 
 echo "$out"
 unzip -l "$out"

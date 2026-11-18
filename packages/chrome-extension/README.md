@@ -31,4 +31,4 @@ Build the upload zip from the repo root:
 pnpm package:extension
 ```
 
-This writes `dist/wow-threat-extension-<version>.zip`. The `chrome-extension` GitHub Action builds the same zip on every change to `packages/chrome-extension/**` and attaches it to the run as an artifact. Bump `version` in `manifest.json` before uploading; the store requires it to increase.
+This writes `dist/wow-threat-extension-<version>.zip`. The `chrome-extension` GitHub Action builds the same files on every change to `packages/chrome-extension/**` and attaches them to the run as an artifact. GitHub zips the artifact itself, so the downloaded file is the store-ready zip (no extra wrapper to unpack). Bump `version` in `manifest.json` before uploading; the store requires it to increase.
