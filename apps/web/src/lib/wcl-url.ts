@@ -9,6 +9,7 @@ export interface ParsedReportInput {
 }
 
 const supportedHosts = new Set<WarcraftLogsHost>([
+  'forever.warcraftlogs.com',
   'fresh.warcraftlogs.com',
   'sod.warcraftlogs.com',
   'vanilla.warcraftlogs.com',

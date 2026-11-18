@@ -3,14 +3,14 @@
  *
  * Exports config resolvers and shared threat calculation utilities.
  */
-import { CLASSIC_GAME_VERSIONS } from './shared/utils'
+import { CLASSIC_GAME_VERSIONS, FOREVER_GAME_VERSION } from './shared/utils'
 
 /**
  * Get all supported game versions
  */
 export function getSupportedGameVersions(): number[] {
-  // Resolver supports WCL classic-era variants via metadata.
-  return [...CLASSIC_GAME_VERSIONS]
+  // Resolver supports WCL classic-era variants via metadata, plus Forever.
+  return [...CLASSIC_GAME_VERSIONS, FOREVER_GAME_VERSION]
 }
 
 export { resolveConfig, resolveConfigOrNull } from './config-resolver'

@@ -7,11 +7,12 @@ import type { ThreatConfig } from '@wow-threat/shared'
 import type { ThreatConfigResolutionInput } from '@wow-threat/shared'
 
 import { eraConfig } from './era'
+import { foreverConfig } from './forever'
 import { sodConfig } from './sod'
 import { tbcConfig } from './tbc'
 
 // Resolver precedence matters for overlapping metadata buckets.
-const configs: ThreatConfig[] = [sodConfig, tbcConfig, eraConfig]
+const configs: ThreatConfig[] = [foreverConfig, sodConfig, tbcConfig, eraConfig]
 
 /**
  * Resolve the best threat config for report metadata.

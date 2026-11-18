@@ -59,6 +59,7 @@ Use the correct Warcraft Logs host for the game branch you are inspecting:
 
 - `www.warcraftlogs.com` -> Retail
 - `classic.warcraftlogs.com` -> Classic progression (currently Mists of Pandaria)
+- `forever.warcraftlogs.com` -> WoW Forever (WCL `gameVersion` 7; reports carry no zone, season, or partition metadata)
 - `fresh.warcraftlogs.com` -> Anniversary Edition progression (currently Burning Crusade)
 - `vanilla.warcraftlogs.com` -> Classic Era (does not progress to Burning Crusade)
 - `sod.warcraftlogs.com` -> Season of Discovery
